@@ -16,7 +16,13 @@ import Svg, { Path } from "react-native-svg";
 import { Screen, rankColors } from "../ui";
 import { Program, ranks, milestones, rankOf } from "../model";
 import { RankThemeProvider, useRankTheme, tint } from "./theme";
-import { palette, RankMark, SectionLabel, TimerDial } from "./visuals";
+import {
+  palette,
+  RankMark,
+  SectionLabel,
+  TimerDial,
+  ArrowIcon,
+} from "./visuals";
 import {
   summary,
   dayActivity,
@@ -227,6 +233,7 @@ function DetailBody({
             >
               {i === rank ? "CURRENT" : i <= prime ? "DOSAŽENO" : "UZAMČENO"}
             </Text>
+            <ArrowIcon color={rankColors[i]} size={14} />
           </Pressable>
         ))}
         <Text style={s.body}>
@@ -309,9 +316,10 @@ function DetailBody({
             </View>
           ))}
           <View style={[s.row, { flexWrap: "wrap" }]}>
-            <Text style={[s.small, { color: accent }]}>● Splněný den</Text>
+            <Text style={[s.small, { color: accent }]}>● Splněno</Text>
             <Text style={[s.small, { color: palette.red }]}>● Reset</Text>
-            <Text style={s.small}>● Dnes · světlý obrys = výběr</Text>
+            <Text style={[s.small, { color: accent }]}>● Dnes</Text>
+            <Text style={s.small}>□ Vybraný den</Text>
           </View>
         </View>
         <View style={s.card}>
@@ -573,7 +581,17 @@ function EventRow({
   const { accent } = useRankTheme();
   const s = makeStyles(accent);
   return (
-    <View style={[s.row, { alignItems: "flex-start" }]}>
+    <View
+      style={[
+        s.row,
+        {
+          alignItems: "flex-start",
+          paddingTop: 12,
+          borderTopWidth: 1,
+          borderTopColor: "#2a2725",
+        },
+      ]}
+    >
       <View style={{ flex: 1, gap: 4 }}>
         <Text style={s.body}>{label}</Text>
         <Text style={s.small}>
@@ -583,7 +601,18 @@ function EventRow({
           })}
         </Text>
       </View>
-      <Text style={s.body}>{value}</Text>
+      <Text
+        style={[
+          s.body,
+          {
+            maxWidth: "48%",
+            textAlign: "right",
+            fontVariant: ["tabular-nums"],
+          },
+        ]}
+      >
+        {value}
+      </Text>
     </View>
   );
 }
@@ -592,7 +621,7 @@ const makeStyles = (accent: string) =>
     editor: {
       minHeight: 220,
       padding: 20,
-      borderRadius: 16,
+      borderRadius: 20,
       borderWidth: 1,
       borderColor: tint(accent, 0.22),
       backgroundColor: tint(accent, 0.05),
@@ -603,7 +632,7 @@ const makeStyles = (accent: string) =>
     },
     header: {
       paddingHorizontal: 24,
-      paddingVertical: 18,
+      paddingVertical: 16,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
@@ -616,9 +645,9 @@ const makeStyles = (accent: string) =>
       fontWeight: "600",
       letterSpacing: 1,
     },
-    content: { padding: 24, gap: 20, paddingBottom: 40 },
+    content: { padding: 22, gap: 18, paddingBottom: 40 },
     heading: {
-      fontSize: 34,
+      fontSize: 32,
       fontWeight: "600",
       letterSpacing: -1,
       color: palette.text,
@@ -629,11 +658,11 @@ const makeStyles = (accent: string) =>
       backgroundColor: palette.panel,
       borderWidth: 1,
       borderColor: palette.border,
-      borderRadius: 16,
+      borderRadius: 20,
     },
     row: { flexDirection: "row", gap: 16, alignItems: "center" },
-    body: { color: "#adb3a6", fontSize: 14, lineHeight: 23 },
-    small: { color: palette.muted, fontSize: 11, lineHeight: 18 },
+    body: { color: "#bcb5af", fontSize: 14, lineHeight: 23 },
+    small: { color: palette.muted, fontSize: 12, lineHeight: 19 },
     title: {
       color: palette.text,
       fontSize: 22,
@@ -648,7 +677,8 @@ const makeStyles = (accent: string) =>
       letterSpacing: -0.6,
     },
     rankItem: {
-      borderRadius: 14,
+      minHeight: 86,
+      borderRadius: 20,
       borderWidth: 1,
       borderColor: palette.border,
       padding: 16,
@@ -661,37 +691,37 @@ const makeStyles = (accent: string) =>
       flex: 1,
       textAlign: "center",
       color: palette.muted,
-      fontSize: 9,
+      fontSize: 10,
     },
     day: {
       flex: 1,
-      height: 36,
+      height: 40,
       borderRadius: 8,
       borderWidth: 1,
       alignItems: "center",
       justifyContent: "center",
     },
     resetDot: {
-      width: 3,
-      height: 3,
+      width: 4,
+      height: 4,
       borderRadius: 2,
       backgroundColor: palette.red,
       position: "absolute",
       bottom: 4,
     },
     manifest: {
-      padding: 24,
-      gap: 16,
+      padding: 22,
+      gap: 18,
       backgroundColor: tint(accent, 0.05),
       borderWidth: 1,
       borderColor: tint(accent, 0.22),
-      borderRadius: 18,
+      borderRadius: 20,
     },
     quote: { color: accent, fontSize: 60, lineHeight: 45 },
     manifestText: {
       color: "#ede6e1",
-      fontSize: 21,
-      lineHeight: 32,
+      fontSize: 20,
+      lineHeight: 31,
       fontWeight: "400",
     },
     rule: { height: 1, backgroundColor: tint(accent, 0.2), marginVertical: 6 },

@@ -83,7 +83,7 @@ function DashboardBody({
     <>
       <View style={s.titleRow}>
         <View>
-          <SectionLabel>DETOX / 01</SectionLabel>
+          <SectionLabel>TVŮJ OSOBNÍ PROGRES</SectionLabel>
           <Text style={s.title}>Porn Reboot</Text>
         </View>
         <View style={s.live}>
@@ -95,7 +95,10 @@ function DashboardBody({
         accessibilityRole="button"
         accessibilityLabel="Otevřít ranky Porn Reboot"
         onPress={() => setDetail("ranks")}
-        style={s.rankPanel}
+        style={({ pressed }) => [
+          s.rankPanel,
+          pressed && { backgroundColor: "#201c19" },
+        ]}
       >
         <View style={s.rankCurrent}>
           <RankMark rank={rank} size={48} />
@@ -106,45 +109,50 @@ function DashboardBody({
         </View>
         <View style={s.prime}>
           <Text style={[s.primeLabel, { color: rankColors[prime] }]}>
-            PRIME ›
+            PRIME
           </Text>
           <Text style={[s.primeName, { color: rankColors[prime] }]}>
             {ranks[prime]}
           </Text>
+          <ArrowIcon color={rankColors[prime]} size={12} />
         </View>
       </Pressable>
-      {unlocked && (
-        <Text
-          accessibilityRole="alert"
-          style={{ color: accent, textAlign: "center", fontSize: 12 }}
-        >
-          Nový rank · {ranks[rank]}. Tvůj ciferník je odemčený.
-        </Text>
-      )}
-      <TimerDial seconds={seconds} progress={progress} />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Zobrazit cestu k dalšímu ranku"
-        onPress={() => setDetail("ranks")}
-        style={s.next}
-      >
-        <View style={s.spread}>
-          <Text style={s.nextTitle}>
-            {rank === 9
-              ? "Nejvyšší rank dosažen"
-              : `Další milník · ${ranks[rank + 1]}`}
+      <View style={s.hero}>
+        {unlocked && (
+          <Text
+            accessibilityRole="alert"
+            style={{ color: accent, textAlign: "center", fontSize: 12 }}
+          >
+            Nový rank · {ranks[rank]}. Tvůj ciferník je odemčený.
           </Text>
-          <Text style={s.percent}>{Math.floor(progress * 100)} %</Text>
+        )}
+        <View style={s.clockStage}>
+          <TimerDial seconds={seconds} progress={progress} />
         </View>
-        <View style={s.track}>
-          <View style={[s.fill, { width: `${progress * 100}%` }]} />
-        </View>
-        <Text style={s.caption}>
-          {rank === 9
-            ? "Obsidian. Teď udržuj svůj směr."
-            : `Zbývá ${leftDays} dní · ${leftHours} h · ${leftMinutes} min`}
-        </Text>
-      </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Zobrazit cestu k dalšímu ranku"
+          onPress={() => setDetail("ranks")}
+          style={s.next}
+        >
+          <View style={s.spread}>
+            <Text style={s.nextTitle}>
+              {rank === 9
+                ? "Nejvyšší rank dosažen"
+                : `Další milník · ${ranks[rank + 1]}`}
+            </Text>
+            <Text style={s.percent}>{Math.floor(progress * 100)} %</Text>
+          </View>
+          <View style={s.track}>
+            <View style={[s.fill, { width: `${progress * 100}%` }]} />
+          </View>
+          <Text style={s.caption}>
+            {rank === 9
+              ? "Obsidian. Teď udržuj svůj směr."
+              : `Zbývá ${leftDays} dní · ${leftHours} h · ${leftMinutes} min`}
+          </Text>
+        </Pressable>
+      </View>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="SOS: Zastavit impulz"
@@ -407,34 +415,50 @@ const makeStyles = (accent: string) =>
       borderRadius: 3,
       backgroundColor: accent,
     },
-    liveText: { fontSize: 8, color: accent, letterSpacing: 1 },
+    liveText: { fontSize: 9, color: accent, letterSpacing: 0.9 },
     rankPanel: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      borderRadius: 16,
+      paddingVertical: 17,
+      paddingHorizontal: 18,
+      borderRadius: 20,
       borderWidth: 1,
-      borderColor: palette.border,
-      backgroundColor: palette.panel,
+      borderColor: tint(accent, 0.21),
+      backgroundColor: "#171514",
     },
     rankCurrent: { flexDirection: "row", alignItems: "center", gap: 14 },
     rankName: {
-      fontSize: 23,
+      fontSize: 24,
       color: palette.text,
       letterSpacing: -0.5,
       fontWeight: "500",
     },
-    prime: { alignItems: "flex-end", gap: 7 },
+    prime: { alignItems: "flex-end", gap: 4 },
     primeLabel: {
       color: accent,
-      fontSize: 9,
-      fontWeight: "700",
-      letterSpacing: 1.5,
+      fontSize: 10,
+      fontWeight: "600",
+      letterSpacing: 1.2,
     },
     primeName: { fontSize: 16, color: "#d0bff2", fontWeight: "500" },
-    next: { gap: 10, paddingHorizontal: 4 },
+    hero: {
+      backgroundColor: "#0e0e0f",
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: "#262324",
+      overflow: "hidden",
+    },
+    clockStage: { paddingTop: 16, paddingBottom: 14, alignItems: "center" },
+    next: {
+      gap: 11,
+      paddingHorizontal: 20,
+      paddingTop: 17,
+      paddingBottom: 19,
+      borderTopWidth: 1,
+      borderTopColor: "#252323",
+      backgroundColor: "#121111",
+    },
     spread: {
       flexDirection: "row",
       alignItems: "center",
@@ -457,7 +481,7 @@ const makeStyles = (accent: string) =>
     caption: { fontSize: 12, color: palette.muted, lineHeight: 19 },
     sos: {
       padding: 18,
-      backgroundColor: "#1c1216",
+      backgroundColor: "#1b1215",
       borderWidth: 1,
       borderColor: "#62303d",
       borderRadius: 20,
@@ -482,7 +506,7 @@ const makeStyles = (accent: string) =>
     },
     sosBody: { flexDirection: "row", alignItems: "center", gap: 12 },
     sosTitle: {
-      color: "#ffd6da",
+      color: "#ffe4e7",
       fontSize: 20,
       fontWeight: "600",
       letterSpacing: -0.4,
@@ -509,8 +533,8 @@ const makeStyles = (accent: string) =>
     },
     metricUnit: { fontSize: 10, color: palette.muted, fontWeight: "400" },
     card: {
-      padding: 18,
-      borderRadius: 16,
+      padding: 20,
+      borderRadius: 22,
       borderColor: palette.border,
       borderWidth: 1,
       backgroundColor: palette.panel,
@@ -520,7 +544,7 @@ const makeStyles = (accent: string) =>
     matrixRow: { flexDirection: "row", gap: 6 },
     miniCell: {
       flex: 1,
-      height: 20,
+      height: 22,
       borderRadius: 4,
       borderWidth: 1,
       alignItems: "center",
@@ -532,10 +556,10 @@ const makeStyles = (accent: string) =>
       backgroundColor: palette.red,
       borderRadius: 2,
     },
-    link: { fontSize: 11, color: accent, letterSpacing: 1 },
+    link: { fontSize: 10, color: accent, letterSpacing: 0.8 },
     manifest: {
       padding: 20,
-      borderRadius: 16,
+      borderRadius: 20,
       backgroundColor: tint(accent, 0.05),
       borderWidth: 1,
       borderColor: tint(accent, 0.22),
@@ -547,7 +571,7 @@ const makeStyles = (accent: string) =>
       lineHeight: 28,
       fontWeight: "400",
     },
-    manifestFoot: { color: "#b4a399", fontSize: 10, lineHeight: 16 },
+    manifestFoot: { color: "#b4a399", fontSize: 12, lineHeight: 19 },
     reset: {
       position: "relative",
       overflow: "hidden",
@@ -566,7 +590,7 @@ const makeStyles = (accent: string) =>
       backgroundColor: palette.red,
     },
     foot: {
-      fontSize: 10,
+      fontSize: 11,
       color: "#a39b96",
       lineHeight: 17,
       textAlign: "center",

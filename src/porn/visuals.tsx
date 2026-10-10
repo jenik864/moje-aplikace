@@ -7,7 +7,6 @@ import Svg, {
   LinearGradient,
   Stop,
   Line,
-  RadialGradient,
   Polygon,
 } from "react-native-svg";
 import { rankColors } from "../ui";
@@ -87,6 +86,7 @@ export function TimerDial({
 }) {
   const { rank, accent } = useRankTheme();
   const design = designs[rank];
+  const [size, setSize] = React.useState(preview ? 208 : 268);
   const id = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const r = 125,
     circ = 2 * Math.PI * r;
@@ -98,19 +98,14 @@ export function TimerDial({
   return (
     <View
       accessibilityLabel={`Ciferník ${ranks[rank]} · ${design.name}`}
-      style={[s.dial, preview && { maxWidth: 220 }]}
+      onLayout={({ nativeEvent }) => {
+        const width = nativeEvent.layout.width;
+        if (width > 0 && Math.abs(width - size) > 0.5) setSize(width);
+      }}
+      style={[s.dial, preview && { maxWidth: 208 }]}
     >
-      <Svg width="100%" height="100%" viewBox="0 0 300 300">
+      <Svg width={size} height={size} viewBox="0 0 300 300">
         <Defs>
-          <RadialGradient id={id}>
-            <Stop offset="0" stopColor="#101010" />
-            <Stop offset={0.72} stopColor="#101010" />
-            <Stop
-              offset="1"
-              stopColor={accent}
-              stopOpacity={rank >= 5 ? 0.19 : 0.06}
-            />
-          </RadialGradient>
           <LinearGradient id={`${id}metal`} x1="0" y1="0" x2="1" y2="1">
             <Stop offset="0" stopColor={accent} />
             <Stop offset={0.5} stopColor="#383332" />
@@ -121,10 +116,21 @@ export function TimerDial({
           cx="150"
           cy="150"
           r="146"
-          fill={`url(#${id})`}
+          fill="#0d0d0e"
           stroke={tint(accent, 0.22)}
           strokeWidth={rank === 0 ? 0.7 : 1}
         />
+        {rank >= 3 && (
+          <Circle
+            cx="150"
+            cy="150"
+            r="146"
+            stroke={accent}
+            strokeOpacity={0.1}
+            strokeWidth={4}
+            fill="none"
+          />
+        )}
         {rank === 1 &&
           [0, 1, 2, 3].map((i) => (
             <Circle
@@ -435,7 +441,7 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
 const s = StyleSheet.create({
   dial: {
     width: "100%",
-    maxWidth: 286,
+    maxWidth: 268,
     aspectRatio: 1,
     alignSelf: "center",
     marginVertical: 0,
@@ -449,19 +455,19 @@ const s = StyleSheet.create({
   label: {
     color: palette.muted,
     fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 2,
+    fontWeight: "600",
+    letterSpacing: 1.4,
   },
   days: {
     color: palette.text,
     fontSize: 74,
-    fontWeight: "600",
-    letterSpacing: -4,
+    fontWeight: "400",
+    letterSpacing: -3,
     fontVariant: ["tabular-nums"],
     lineHeight: 86,
   },
   dayLabel: { color: "#b7aca4", fontSize: 9, letterSpacing: 1.5 },
-  clock: { flexDirection: "row", gap: 22, marginTop: 18 },
+  clock: { flexDirection: "row", gap: 22, marginTop: 15 },
   clockUnit: { alignItems: "center", gap: 5 },
   clockNumber: {
     fontVariant: ["tabular-nums"],

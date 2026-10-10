@@ -47,7 +47,16 @@ export function SosProtocol({
   return (
     <Screen modal>
       <View style={s.topBar}>
-        <Pressable accessibilityRole="button" onPress={close} hitSlop={10}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={close}
+          hitSlop={10}
+          style={
+            id === "porn"
+              ? { minHeight: 40, minWidth: 96, justifyContent: "center" }
+              : undefined
+          }
+        >
           <Text style={s.muted}>✕ ZAVŘÍT</Text>
         </Pressable>
       </View>
@@ -171,15 +180,24 @@ export function SosProtocol({
           ))}
         </View>
         <Text style={s.muted}>
-          Při návratu se uloží záznam SOS. Spouštěč je volitelný. Pauza nemění
-          rank. Kamera a blokování zatím nejsou aktivní.
+          {id === "porn"
+            ? "Spouštěč je dobrovolný. Návrat uloží záznam SOS; pauza nemění rank."
+            : "Při návratu se uloží záznam SOS. Spouštěč je volitelný. Pauza nemění rank. Kamera a blokování zatím nejsou aktivní."}
         </Text>
       </ScrollView>
       <View style={s.footer}>
         <Pressable
           accessibilityRole="button"
           onPress={finish}
-          style={[s.button, { backgroundColor: "#202020" }]}
+          style={[
+            s.button,
+            {
+              backgroundColor: id === "porn" ? "#171516" : "#202020",
+              ...(id === "porn"
+                ? { borderWidth: 1, borderColor: "#3c3135" }
+                : {}),
+            },
+          ]}
         >
           <Text style={[s.buttonText, { color: "#fff" }]}>
             {started !== null && remaining > 0
@@ -255,8 +273,8 @@ const baseStyles = StyleSheet.create({
 
 // Porn Reboot has its own visual treatment; daily programs retain theirs.
 const pornStyles = StyleSheet.create({
-  topBar: { paddingHorizontal: 24, paddingTop: 14, paddingBottom: 10 },
-  content: { padding: 24, gap: 18, paddingBottom: 32 },
+  topBar: { paddingHorizontal: 22, paddingTop: 4, paddingBottom: 0 },
+  content: { padding: 22, gap: 18, paddingBottom: 32 },
   heading: {
     color: "#f3f3ed",
     fontSize: 34,
@@ -268,13 +286,13 @@ const pornStyles = StyleSheet.create({
     gap: 18,
     borderWidth: 1,
     borderColor: "#62303d",
-    borderRadius: 24,
-    backgroundColor: "#171112",
+    borderRadius: 22,
+    backgroundColor: "#181215",
   },
   label: {
     color: "#ff9096",
     fontSize: 10,
-    letterSpacing: 2,
+    letterSpacing: 1.3,
     fontWeight: "600",
   },
   title: {
@@ -288,9 +306,9 @@ const pornStyles = StyleSheet.create({
     backgroundColor: "#131512",
     padding: 22,
     gap: 14,
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#282b25",
+    borderColor: "#34302b",
   },
   timer: {
     color: "#ff999e",
@@ -314,13 +332,14 @@ const pornStyles = StyleSheet.create({
     fontWeight: "700",
   },
   chip: {
-    padding: 13,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: "#31342d",
-    borderRadius: 10,
+    borderColor: "#3a3433",
+    borderRadius: 14,
   },
   footer: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 22,
     paddingVertical: 14,
     backgroundColor: "#050505",
     borderTopWidth: 1,

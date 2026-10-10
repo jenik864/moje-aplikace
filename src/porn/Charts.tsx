@@ -28,7 +28,7 @@ export function SeriesChart({
   const [selected, setSelected] = React.useState<string | null>("current");
   const maximum = Math.max(60000, ...data.map((d) => d.duration));
   const points = data.map((item, i) => ({
-    x: data.length === 1 ? 164 : 52 + (i * 224) / (data.length - 1),
+    x: data.length === 1 ? 178 : 78 + (i * 198) / (data.length - 1),
     y: 140 - (item.duration / maximum) * 105,
   }));
   const path = points
@@ -53,7 +53,7 @@ export function SeriesChart({
         {[35, 87, 140].map((y, i) => (
           <React.Fragment key={y}>
             <Line
-              x1="52"
+              x1="78"
               x2="282"
               y1={y}
               y2={y}
@@ -61,7 +61,7 @@ export function SeriesChart({
               strokeDasharray="3 5"
             />
             {!compact && (
-              <SvgText x="4" y={y + 3} fontSize="10" fill="#b0a49c">
+              <SvgText x="4" y={y + 3} fontSize="10" fill="#beb7b1">
                 {axisDuration(maximum * (1 - i / 2))}
               </SvgText>
             )}
@@ -149,7 +149,7 @@ export function SeriesChart({
           <Text style={s.muted}>
             ● Ukončené série · ○ Běžící série (přerušovaně)
           </Text>
-          <Text style={s.muted}>
+          <Text style={[s.muted, { color: palette.text, marginTop: 8 }]}>
             {pick
               ? `${pick.current ? "Aktuální série" : "Ukončená série"} · ${durationLabel(pick.duration)}`
               : "Vyber sérii pro přesnou délku."}
@@ -174,7 +174,7 @@ export function ActivityChart({ p, now }: { p: Program; now: number }) {
         viewBox="0 0 300 150"
         accessibilityLabel="Počty resetů a SOS za posledních 14 dní"
       >
-        <SvgText x="4" y="18" fontSize="10" fill="#b0a49c">
+        <SvgText x="4" y="18" fontSize="10" fill="#beb7b1">
           Počet událostí
         </SvgText>
         {[35, 72, 110].map((y, i) => (
@@ -187,7 +187,7 @@ export function ActivityChart({ p, now }: { p: Program; now: number }) {
               stroke="#34302d"
               strokeDasharray="3 5"
             />
-            <SvgText x="8" y={y + 3} fontSize="10" fill="#b0a49c">
+            <SvgText x="8" y={y + 3} fontSize="10" fill="#beb7b1">
               {Math.round(max * (1 - i / 2))}
             </SvgText>
           </React.Fragment>
@@ -263,7 +263,7 @@ export function ActivityChart({ p, now }: { p: Program; now: number }) {
   );
 }
 const s = StyleSheet.create({
-  muted: { color: palette.muted, fontSize: 12, lineHeight: 19 },
+  muted: { color: palette.muted, fontSize: 12, lineHeight: 20 },
   selectors: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -272,18 +272,22 @@ const s = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderColor: palette.border,
-    padding: 10,
-    borderRadius: 8,
+    borderColor: "#34302d",
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    borderRadius: 12,
   },
 });
 
 function axisDuration(ms: number) {
-  const m = ms / 60000;
-  if (ms < 60000) return `${Math.round(ms / 1000)} s`;
-  return m >= 1440
-    ? `${Math.round((m / 1440) * 10) / 10} dní`
-    : m >= 60
-      ? `${Math.round((m / 60) * 10) / 10} h`
-      : `${m} min`;
+  const seconds = Math.max(0, Math.round(ms / 1000));
+  if (seconds < 60) return `${seconds} s`;
+  const minutes = Math.round(seconds / 60);
+  const days = Math.floor(minutes / 1440);
+  if (days) return `${days} ${days === 1 ? "den" : days < 5 ? "dny" : "dní"}`;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return hours
+    ? `${hours} h${remainder ? ` ${remainder} min` : ""}`
+    : `${minutes} min`;
 }

@@ -785,7 +785,10 @@ export default function App() {
               automaticallyAdjustContentInsets={false}
               key={id}
               style={{ width }}
-              contentContainerStyle={s.content}
+              contentContainerStyle={[
+                s.content,
+                id === "porn" && { padding: 20, gap: 16 },
+              ]}
             >
               {id !== "porn" && (
                 <>
