@@ -1,5 +1,11 @@
 import React from "react";
-import { Text, View, StyleSheet } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  useWindowDimensions,
+  Platform,
+} from "react-native";
 import Svg, {
   Circle,
   Path,
@@ -8,6 +14,7 @@ import Svg, {
   Stop,
   Line,
   Polygon,
+  Text as SvgText,
 } from "react-native-svg";
 import { rankColors } from "../ui";
 import { ranks } from "../model";
@@ -86,7 +93,18 @@ export function TimerDial({
 }) {
   const { rank, accent } = useRankTheme();
   const design = designs[rank];
-  const [size, setSize] = React.useState(preview ? 208 : 268);
+  const { width } = useWindowDimensions();
+  const size = Math.min(
+    preview ? 236 : 292,
+    Math.max(160, width - (preview ? 128 : 84)),
+  );
+  const font =
+    Platform.OS === "ios"
+      ? "Helvetica Neue"
+      : Platform.OS === "android"
+        ? "sans-serif"
+        : "Arial";
+  const days = Math.floor(seconds / 86400);
   const id = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const r = 125,
     circ = 2 * Math.PI * r;
@@ -97,12 +115,9 @@ export function TimerDial({
     }).join(" ");
   return (
     <View
-      accessibilityLabel={`Ciferník ${ranks[rank]} · ${design.name}`}
-      onLayout={({ nativeEvent }) => {
-        const width = nativeEvent.layout.width;
-        if (width > 0 && Math.abs(width - size) > 0.5) setSize(width);
-      }}
-      style={[s.dial, preview && { maxWidth: 208 }]}
+      accessible
+      accessibilityLabel={`Ciferník ${ranks[rank]} · ${design.name} · ${days} dní bez porna, ${Math.floor(seconds / 3600) % 24} hodin, ${Math.floor(seconds / 60) % 60} minut, ${seconds % 60} sekund`}
+      style={{ width: size, height: size, alignSelf: "center" }}
     >
       <Svg width={size} height={size} viewBox="0 0 300 300">
         <Defs>
@@ -111,15 +126,22 @@ export function TimerDial({
             <Stop offset={0.5} stopColor="#383332" />
             <Stop offset="1" stopColor={accent} />
           </LinearGradient>
+          <LinearGradient id={`${id}bezel`} x1="0" y1="0" x2="1" y2="1">
+            <Stop offset={0} stopColor={tint(accent, 0.45)} />
+            <Stop offset={0.35} stopColor="#191719" />
+            <Stop offset={0.7} stopColor="#141315" />
+            <Stop offset={1} stopColor={tint(accent, 0.3)} />
+          </LinearGradient>
         </Defs>
         <Circle
           cx="150"
           cy="150"
           r="146"
-          fill="#0d0d0e"
+          fill={`url(#${id}bezel)`}
           stroke={tint(accent, 0.22)}
           strokeWidth={rank === 0 ? 0.7 : 1}
         />
+        <Circle cx={150} cy={150} r={128} fill="#0b0b0d" />
         {rank >= 3 && (
           <Circle
             cx="150"
@@ -364,74 +386,175 @@ export function TimerDial({
             origin="150,150"
           />
         )}
+        <SvgText
+          x={150}
+          y={65}
+          textAnchor="middle"
+          fontFamily={font}
+          fontSize={preview ? 12 : 10}
+          fontWeight="500"
+          letterSpacing={2}
+          fill={accent}
+        >
+          {ranks[rank].toUpperCase()}
+        </SvgText>
+        <Path d="M147 77 L150 74 L153 77 L150 80 Z" fill={accent} />
+        <SvgText
+          x={150}
+          y={100}
+          textAnchor="middle"
+          fontFamily={font}
+          fontSize={preview ? 11 : 10}
+          letterSpacing={2}
+          fill="#bcb5af"
+        >
+          BEZ PORNA
+        </SvgText>
+        <SvgText
+          x={150}
+          y={172}
+          textAnchor="middle"
+          fontFamily={font}
+          fontSize={days > 999 ? 54 : 76}
+          fontWeight="300"
+          fill={accent}
+        >
+          {days}
+        </SvgText>
+        <SvgText
+          x={150}
+          y={190}
+          textAnchor="middle"
+          fontFamily={font}
+          fontSize={preview ? 11 : 10}
+          letterSpacing={1.4}
+          fill="#bcb5af"
+        >
+          {days === 1 ? "DEN" : days > 1 && days < 5 ? "DNY" : "DNÍ"} V SÉRII
+        </SvgText>
+        <Line x1={112} x2={188} y1={204} y2={204} stroke={tint(accent, 0.25)} />
+        {[
+          { v: Math.floor(seconds / 3600) % 24, l: "HOD", x: 105 },
+          { v: Math.floor(seconds / 60) % 60, l: "MIN", x: 150 },
+          { v: seconds % 60, l: "SEK", x: 195 },
+        ].map(({ v, l, x }) => (
+          <React.Fragment key={l}>
+            <SvgText
+              x={x}
+              y={230}
+              textAnchor="middle"
+              fontFamily={font}
+              fontSize={preview ? 24 : 22}
+              fontWeight="500"
+              fill={accent}
+            >
+              {String(v).padStart(2, "0")}
+            </SvgText>
+            <SvgText
+              x={x}
+              y={244}
+              textAnchor="middle"
+              fontFamily={font}
+              fontSize={preview ? 11 : 9}
+              letterSpacing={1.5}
+              fill="#bcb5af"
+            >
+              {l}
+            </SvgText>
+          </React.Fragment>
+        ))}
       </Svg>
-      <View pointerEvents="none" style={s.dialText}>
-        <Text style={[s.label, { fontSize: preview ? 8 : 10 }]}>BEZ PORNA</Text>
-        <Text
-          style={[
-            s.days,
-            {
-              color: accent,
-              fontSize: preview ? 48 : 68,
-              lineHeight: preview ? 58 : 78,
-            },
-          ]}
-        >
-          {Math.floor(seconds / 86400)}
-        </Text>
-        <Text
-          style={[s.dayLabel, { color: "#b7aca4", fontSize: preview ? 7 : 9 }]}
-        >
-          {Math.floor(seconds / 86400) === 1 ? "DEN" : "DNÍ"} V AKTUÁLNÍ SÉRII
-        </Text>
-        <View style={[s.clock, preview && { marginTop: 10, gap: 16 }]}>
-          {[
-            { v: Math.floor(seconds / 3600) % 24, l: "HOD" },
-            { v: Math.floor(seconds / 60) % 60, l: "MIN" },
-            { v: seconds % 60, l: "SEK" },
-          ].map(({ v, l }) => (
-            <View key={l} style={s.clockUnit}>
-              <Text
-                style={[
-                  s.clockNumber,
-                  { color: accent, fontSize: preview ? 15 : 22 },
-                ]}
-              >
-                {String(v).padStart(2, "0")}
-              </Text>
-              <Text style={s.clockLabel}>{l}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
     </View>
   );
 }
 export function SosSymbol({ size = 58 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 64 64">
-      <Circle cx="32" cy="32" r="29" fill="#221419" stroke="#713640" />
+      <Circle cx={32} cy={32} r={30} fill="#ffb0b7" />
       <Path
-        d="M32 10 L48 20 V36 L32 53 L16 36 V20 Z"
-        stroke="#ff969e"
-        strokeWidth="1.3"
-        fill="#351b23"
-      />
-      <Path
-        d="M24 30 V27 M28 27 V24 M32 27 V23 M36 28 V26 M24 28 V36 Q24 43 32 43 Q40 43 40 35 V31 Q40 28 37 31 L36 33"
-        stroke="#ffb6bc"
-        strokeWidth="2"
-        fill="none"
+        d="M25 23 V41 M39 23 V41"
+        stroke="#2d111a"
+        strokeWidth={5}
         strokeLinecap="round"
       />
+    </Svg>
+  );
+}
+export function PauseDial({
+  remaining,
+  duration,
+}: {
+  remaining: number;
+  duration: number;
+}) {
+  const { width } = useWindowDimensions();
+  const size = Math.min(224, Math.max(144, width - 96));
+  const font =
+    Platform.OS === "ios"
+      ? "Helvetica Neue"
+      : Platform.OS === "android"
+        ? "sans-serif"
+        : "Arial";
+  const progress = Math.max(0, Math.min(1, remaining / duration));
+  const circumference = 2 * Math.PI * 103;
+  return (
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 240 240"
+      accessibilityLabel={`Pauza: ${Math.floor(remaining / 60)} minut ${remaining % 60} sekund`}
+    >
+      <Circle cx={120} cy={120} r={115} fill="#171116" />
       <Circle
-        cx="32"
-        cy="32"
-        r="24"
-        stroke="#713640"
-        strokeDasharray="2 5"
+        cx={120}
+        cy={120}
+        r={103}
+        stroke="#38212a"
+        strokeWidth={3}
         fill="none"
       />
+      {progress > 0 && (
+        <Circle
+          cx={120}
+          cy={120}
+          r={103}
+          stroke="#ffb0b7"
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeDasharray={`${circumference * progress} ${circumference}`}
+          rotation={-90}
+          origin="120,120"
+          fill="none"
+        />
+      )}
+      <Path
+        d="M112 57 V70 M128 57 V70"
+        stroke="#ffb0b7"
+        strokeWidth={3}
+        strokeLinecap="round"
+      />
+      <SvgText
+        x={120}
+        y={136}
+        fontFamily={font}
+        fontSize={53}
+        fontWeight="300"
+        textAnchor="middle"
+        fill="#fff0f1"
+      >
+        {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}
+      </SvgText>
+      <SvgText
+        x={120}
+        y={164}
+        fontFamily={font}
+        fontSize={8}
+        letterSpacing={1.8}
+        textAnchor="middle"
+        fill="#c59aa4"
+      >
+        CHVÍLE PRO TEBE
+      </SvgText>
     </Svg>
   );
 }
@@ -439,43 +562,12 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
   return <Text style={s.label}>{children}</Text>;
 }
 const s = StyleSheet.create({
-  dial: {
-    width: "100%",
-    maxWidth: 268,
-    aspectRatio: 1,
-    alignSelf: "center",
-    marginVertical: 0,
-  },
-  dialText: {
-    position: "absolute",
-    inset: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   label: {
     color: palette.muted,
     fontSize: 10,
     fontWeight: "600",
     letterSpacing: 1.4,
   },
-  days: {
-    color: palette.text,
-    fontSize: 74,
-    fontWeight: "400",
-    letterSpacing: -3,
-    fontVariant: ["tabular-nums"],
-    lineHeight: 86,
-  },
-  dayLabel: { color: "#b7aca4", fontSize: 9, letterSpacing: 1.5 },
-  clock: { flexDirection: "row", gap: 22, marginTop: 15 },
-  clockUnit: { alignItems: "center", gap: 5 },
-  clockNumber: {
-    fontVariant: ["tabular-nums"],
-    fontSize: 20,
-    fontWeight: "500",
-    color: "#ddd2cc",
-  },
-  clockLabel: { fontSize: 9, color: "#ada49e", letterSpacing: 1.5 },
 });
 
 export function ArrowIcon({

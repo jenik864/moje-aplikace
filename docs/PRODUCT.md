@@ -43,3 +43,8 @@ SOS má vlastní symbol ruky ve štítu, dvouminutový nouzový panel a připom�
 Hodiny a postup k dalšímu ranku tvoří jeden kompaktní panel. Ciferník má matný neutrální podklad bez plošné radiální záře; barvu a geometrii stále určuje aktuální rank. SVG používá rozměry změřeného panelu, aby velikost a rozestupy nezávisely na výpočtu procentní výšky na telefonu.
 
 Dashboard, SOS a detaily mají sjednocenou typografii, jemnější rámečky, rozestupy a zaoblení. Ranky mají šipku pro náhled, kalendář stručnější legendu a události oddělené řádky. Graf délek zobrazuje hodiny a minuty místo desetinných hodin. SOS ponechává hlavní akci výraznou a návrat k plánu trvale dostupný; jeho text vysvětluje ukládání záznamu bez technických poznámek o budoucích funkcích. Pravidla, uložená data a ostatní programy zůstávají beze změny.
+
+## Oprava rozložení a přepracování ciferníku a SOS
+Fotky z iPhonu odhalily posunuté texty v ciferníku a nadměrnou výšku jeho panelu. Ciferník nyní používá explicitní čtvercové rozměry a kreslí čísla, popisky i obvod v jednom SVG souřadnicovém systému. Samostatná absolutně umístěná vrstva textu a kombinace procentní šířky, maximální šířky a poměru stran jsou odstraněné. Náhledy ranků používají stejný způsob rozložení. Hodiny mají kovový obvod v barvě ranku, název ranku na ciferníku, výrazné počítadlo dnů a oddělený čas. Deset geometrií a stávající milníky zůstávají.
+
+Hlavní SOS akce má novou kompozici s plnou kontrastní plochou tlačítka a jednoduchým symbolem pauzy místo ruky ve štítu. SOS obrazovka zobrazuje osobní důvody jako krátký citát a pauzu jako kruhový odpočet. Kruhový průběh zobrazuje zbývající čas; dvouminutová logika, dobrovolný spouštěč, ukládání návratů a trvale dostupný návrat k plánu se nemění. Úpravy se týkají Porn Rebootu.

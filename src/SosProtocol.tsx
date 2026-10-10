@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, Text, View, Pressable, StyleSheet } from "react-native";
-import { SosSymbol } from "./porn/visuals";
-import { tint } from "./porn/theme";
+import { PauseDial } from "./porn/visuals";
 import { Screen, rankColors } from "./ui";
 import { definitions, ProgramId, protocolRemaining } from "./model";
 import { programContent } from "./programContent";
@@ -68,12 +67,8 @@ export function SosProtocol({
         <Text style={s.label}>SOS · {definitions[id].title.toUpperCase()}</Text>
         <Text style={s.heading}>Teď máš volbu.</Text>
         {id === "porn" && (
-          <View
-            style={[s.panel, { borderColor: tint(accent, 0.28), padding: 18 }]}
-          >
-            <Text style={[s.title, { color: accent }]}>
-              PŘIPOMEŇ SI SVOJE PROČ
-            </Text>
+          <View style={[s.panel, { borderLeftColor: accent }]}>
+            <Text style={[s.title, { color: accent }]}>TVOJE PROČ</Text>
             <Text numberOfLines={3} style={s.body}>
               {reasons}
             </Text>
@@ -89,43 +84,14 @@ export function SosProtocol({
           </Text>
           <Text style={s.body}>{definitions[id].action}</Text>
           {id === "porn" ? (
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 22,
-              }}
-            >
-              <SosSymbol size={72} />
-              <Text style={s.timer}>
-                {Math.floor(remaining / 60)}:
-                {String(remaining % 60).padStart(2, "0")}
-              </Text>
+            <View style={{ alignItems: "center", paddingVertical: 4 }}>
+              <PauseDial remaining={remaining} duration={duration} />
             </View>
           ) : (
             <Text style={s.timer}>
               {Math.floor(remaining / 60)}:
               {String(remaining % 60).padStart(2, "0")}
             </Text>
-          )}
-          {id === "porn" && (
-            <View
-              style={{
-                height: 3,
-                backgroundColor: "#43252f",
-                borderRadius: 2,
-                overflow: "hidden",
-              }}
-            >
-              <View
-                style={{
-                  height: 3,
-                  width: `${((duration - remaining) / duration) * 100}%`,
-                  backgroundColor: "#ff999e",
-                }}
-              />
-            </View>
           )}
           {started === null ? (
             <Pressable
@@ -135,7 +101,10 @@ export function SosProtocol({
                 setNow(at);
                 setStarted(at);
               }}
-              style={s.button}
+              style={({ pressed }) => [
+                s.button,
+                id === "porn" && pressed && { opacity: 0.8 },
+              ]}
             >
               <Text style={s.buttonText}>SPUSTIT PAUZU</Text>
             </Pressable>
@@ -153,7 +122,11 @@ export function SosProtocol({
             <Text style={s.body}>{reasons}</Text>
           </View>
         )}
-        <Text style={s.title}>CO SPUSTILO IMPULZ?</Text>
+        <Text style={s.title}>
+          {id === "porn"
+            ? "CO ZA TÍM BYLO? · VOLITELNÉ"
+            : "CO SPUSTILO IMPULZ?"}
+        </Text>
         <View style={s.row}>
           {(id === "food"
             ? ["Hlad", "Stres", "Nuda", "Zvyk"]
@@ -192,9 +165,9 @@ export function SosProtocol({
           style={[
             s.button,
             {
-              backgroundColor: id === "porn" ? "#171516" : "#202020",
+              backgroundColor: id === "porn" ? "#21171d" : "#202020",
               ...(id === "porn"
-                ? { borderWidth: 1, borderColor: "#3c3135" }
+                ? { borderWidth: 1, borderColor: "#4c303c" }
                 : {}),
             },
           ]}
@@ -282,15 +255,13 @@ const pornStyles = StyleSheet.create({
     letterSpacing: -1,
   },
   task: {
-    padding: 24,
+    padding: 20,
     gap: 18,
-    borderWidth: 1,
-    borderColor: "#62303d",
-    borderRadius: 22,
-    backgroundColor: "#181215",
+    borderRadius: 24,
+    backgroundColor: "#100d11",
   },
   label: {
-    color: "#ff9096",
+    color: "#ffc1c7",
     fontSize: 10,
     letterSpacing: 1.3,
     fontWeight: "600",
@@ -301,14 +272,12 @@ const pornStyles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 1.5,
   },
-  body: { color: "#bfc0b8", fontSize: 14, lineHeight: 24 },
+  body: { color: "#d9cbd0", fontSize: 14, lineHeight: 23 },
   panel: {
-    backgroundColor: "#131512",
-    padding: 22,
-    gap: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#34302b",
+    paddingLeft: 16,
+    paddingVertical: 3,
+    gap: 10,
+    borderLeftWidth: 2,
   },
   timer: {
     color: "#ff999e",
@@ -320,7 +289,7 @@ const pornStyles = StyleSheet.create({
     paddingVertical: 4,
   },
   button: {
-    backgroundColor: "#ff999e",
+    backgroundColor: "#ffb0b7",
     padding: 18,
     borderRadius: 14,
     alignItems: "center",

@@ -149,7 +149,7 @@ function DashboardBody({
           <Text style={s.caption}>
             {rank === 9
               ? "Obsidian. Teď udržuj svůj směr."
-              : `Zbývá ${leftDays} dní · ${leftHours} h · ${leftMinutes} min`}
+              : `Zbývá ${leftDays} ${leftDays === 1 ? "den" : leftDays > 1 && leftDays < 5 ? "dny" : "dní"} · ${leftHours} h · ${leftMinutes} min`}
           </Text>
         </Pressable>
       </View>
@@ -160,21 +160,20 @@ function DashboardBody({
         style={({ pressed }) => [s.sos, pressed && { opacity: 0.8 }]}
       >
         <View style={s.sosTop}>
-          <Text style={s.sosEyebrow}>SOS / ZÍSKEJ ODSTUP</Text>
-          <Text style={s.sosDuration}>02:00</Text>
+          <Text style={s.sosEyebrow}>SOS · CHVÍLE PRO TEBE</Text>
+          <Text style={s.sosDuration}>2 MIN</Text>
         </View>
         <View style={s.sosBody}>
-          <SosSymbol />
-          <View style={{ flex: 1, gap: 6 }}>
-            <Text style={s.sosTitle}>Zastavit impulz</Text>
-            <Text style={s.sosCaption}>Dvě minuty pro tvoje rozhodnutí.</Text>
+          <View style={{ flex: 1, gap: 7 }}>
+            <Text style={s.sosTitle}>Získej zpět svůj prostor.</Text>
+            <Text style={s.sosCaption}>Změň místo. Zpomal. Rozhodni se.</Text>
           </View>
-          <ArrowIcon color="#ffb6bc" size={22} />
+          <SosSymbol size={42} />
         </View>
-        <View style={s.sosRule} />
-        <Text style={s.sosFoot}>
-          Změň místo. Zpomal. Vrať se ke svému plánu.
-        </Text>
+        <View style={s.sosAction}>
+          <Text style={s.sosActionText}>Zastavit impulz</Text>
+          <ArrowIcon color="#2d111a" size={20} />
+        </View>
       </Pressable>
       <View style={s.metrics}>
         <Pressable
@@ -425,7 +424,7 @@ const makeStyles = (accent: string) =>
       borderRadius: 20,
       borderWidth: 1,
       borderColor: tint(accent, 0.21),
-      backgroundColor: "#171514",
+      backgroundColor: "#131214",
     },
     rankCurrent: { flexDirection: "row", alignItems: "center", gap: 14 },
     rankName: {
@@ -443,13 +442,13 @@ const makeStyles = (accent: string) =>
     },
     primeName: { fontSize: 16, color: "#d0bff2", fontWeight: "500" },
     hero: {
-      backgroundColor: "#0e0e0f",
+      backgroundColor: "#0a0a0c",
       borderRadius: 24,
       borderWidth: 1,
       borderColor: "#262324",
       overflow: "hidden",
     },
-    clockStage: { paddingTop: 16, paddingBottom: 14, alignItems: "center" },
+    clockStage: { paddingTop: 20, paddingBottom: 20, alignItems: "center" },
     next: {
       gap: 11,
       paddingHorizontal: 20,
@@ -480,12 +479,12 @@ const makeStyles = (accent: string) =>
     fill: { height: 3, backgroundColor: accent },
     caption: { fontSize: 12, color: palette.muted, lineHeight: 19 },
     sos: {
-      padding: 18,
-      backgroundColor: "#1b1215",
+      padding: 20,
+      backgroundColor: "#1c1219",
       borderWidth: 1,
-      borderColor: "#62303d",
-      borderRadius: 20,
-      gap: 14,
+      borderColor: "#422732",
+      borderRadius: 24,
+      gap: 18,
       overflow: "hidden",
     },
     sosTop: {
@@ -494,26 +493,39 @@ const makeStyles = (accent: string) =>
       justifyContent: "space-between",
     },
     sosEyebrow: {
-      color: "#d5919b",
+      color: "#ffc1c7",
       fontSize: 9,
-      letterSpacing: 1.8,
+      letterSpacing: 1.2,
       fontWeight: "600",
     },
     sosDuration: {
-      color: "#c7848e",
-      fontSize: 11,
+      color: "#e5b6c0",
+      fontSize: 9,
+      backgroundColor: "#34202b",
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+      borderRadius: 8,
       fontVariant: ["tabular-nums"],
     },
     sosBody: { flexDirection: "row", alignItems: "center", gap: 12 },
     sosTitle: {
-      color: "#ffe4e7",
+      color: "#fff0f1",
       fontSize: 20,
-      fontWeight: "600",
+      lineHeight: 26,
+      fontWeight: "500",
       letterSpacing: -0.4,
     },
     sosCaption: { color: "#c6a2aa", fontSize: 12, lineHeight: 18 },
-    sosRule: { height: 1, backgroundColor: "#3e242d" },
-    sosFoot: { color: "#ba969f", fontSize: 11, lineHeight: 18 },
+    sosAction: {
+      backgroundColor: "#ffb0b7",
+      minHeight: 50,
+      borderRadius: 14,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 18,
+    },
+    sosActionText: { color: "#2d111a", fontSize: 15, fontWeight: "600" },
     metrics: { flexDirection: "row", gap: 10 },
     metric: {
       flex: 1,
