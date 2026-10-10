@@ -52,7 +52,9 @@ export function DailyDetails({
   const [editing, setEditing] = React.useState(false),
     [reasons, setReasons] = React.useState(p.reasons);
   const [previewRank, setPreviewRank] = React.useState(rank);
-  React.useEffect(() => { if (kind === "ranks") setPreviewRank(rank); }, [kind]);
+  React.useEffect(() => {
+    if (kind === "ranks") setPreviewRank(rank);
+  }, [kind]);
   const scroll = React.useRef<ScrollView>(null);
   React.useEffect(() => setEditing(false), [kind]);
   const { width } = useWindowDimensions();
@@ -136,27 +138,49 @@ export function DailyDetails({
                       </View>
                     </View>
                     <Text style={s.body}>
-                      Current sleduje potvrzené dny v aktuální sérii. PRIME
-                      uchovává nejvyšší dosažený rank.
+                      {id === "food"
+                        ? "Current sleduje potvrzené dny s dodrženými aktivními pilíři podle tvých zápisů. PRIME uchovává nejvyšší dosažený rank."
+                        : "Current sleduje potvrzené dny v aktuální sérii. PRIME uchovává nejvyšší dosažený rank."}
                     </Text>
                     <Text style={s.muted}>
                       Dnešní koncept se nepočítá. Chybějící potvrzení přeruší
                       navazující sérii.
                     </Text>
                   </View>
-                  <View style={[s.card, { borderColor: tint(rankColors[previewRank], 0.35), alignItems: "center" }]}>
-                    <Text style={[s.label, { color: rankColors[previewRank] }]}>EMBLÉM / {ranks[previewRank].toUpperCase()}</Text>
+                  <View
+                    style={[
+                      s.card,
+                      {
+                        borderColor: tint(rankColors[previewRank], 0.35),
+                        alignItems: "center",
+                      },
+                    ]}
+                  >
+                    <Text style={[s.label, { color: rankColors[previewRank] }]}>
+                      EMBLÉM / {ranks[previewRank].toUpperCase()}
+                    </Text>
                     <RankMark rank={previewRank} size={150} />
-                    <Text style={[s.value, { color: rankColors[previewRank] }]}>{ranks[previewRank]}</Text>
-                    <Text style={s.muted}>{previewRank === 0 ? "Od začátku" : `Odemkneš za ${milestones[previewRank]} dokončených dní v řadě.`}</Text>
-                    <Text style={[s.muted, { textAlign: "center" }]}>Klepni na rank v seznamu a prohlédni si jeho emblém.</Text>
+                    <Text style={[s.value, { color: rankColors[previewRank] }]}>
+                      {ranks[previewRank]}
+                    </Text>
+                    <Text style={s.muted}>
+                      {previewRank === 0
+                        ? "Od začátku"
+                        : `Odemkneš za ${milestones[previewRank]} dokončených dní v řadě.`}
+                    </Text>
+                    <Text style={[s.muted, { textAlign: "center" }]}>
+                      Klepni na rank v seznamu a prohlédni si jeho emblém.
+                    </Text>
                   </View>
                   {ranks.map((name, i) => (
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Náhled emblému ${name}`}
                       accessibilityState={{ selected: previewRank === i }}
-                      onPress={() => { setPreviewRank(i); scroll.current?.scrollTo({ y: 0, animated: true }); }}
+                      onPress={() => {
+                        setPreviewRank(i);
+                        scroll.current?.scrollTo({ y: 0, animated: true });
+                      }}
                       key={name}
                       style={[
                         s.card,

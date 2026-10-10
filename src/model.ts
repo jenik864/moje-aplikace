@@ -1,3 +1,4 @@
+import type { FoodPillar } from "./food/model.ts";
 import { usageSummary, type UsageDay } from "./scroll/scoring.ts";
 export const ranks = [
   "Copper",
@@ -22,6 +23,8 @@ export type TriggerEvent = {
   pauseStarted?: boolean;
 };
 export type Program = {
+  foodPillars?: FoodPillar[];
+  foodEntries?: Record<string, Record<string, boolean>>;
   rankVersion?: 2;
   screenTimeVersion?: 1;
   legacyScrollPrime?: number;
@@ -101,7 +104,7 @@ export const definitions = {
     color: "#ffbd7a",
     symbol: "◈",
     description:
-      "Nastav konkrétní pravidlo. Cílem není hladovění ani trestání, ale omezení návyku, který ti nevyhovuje.",
+      "Sleduj jeden nebo více konkrétních pilířů kolem jídla. Rank vychází z tvých potvrzených dní, ne z automatického měření.",
     target: "Bez sladkých nápojů",
     prompt: "Proč chceš změnit tento návyk?",
     action:
@@ -155,6 +158,8 @@ export function saveDailyRecord(
   confirmed: boolean,
   now = Date.now(),
 ): Program {
+  if (id === "food" && p.foodPillars)
+    throw new Error("Use individual food pillar records");
   const today = dayKey(new Date(now));
   const date = new Date(now);
   date.setDate(date.getDate() - 1);

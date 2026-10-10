@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, Text, View, Pressable, StyleSheet } from "react-native";
+import { FoodProtocol } from "./food/Protocol";
 import { PauseDial } from "./porn/visuals";
 import { Screen, rankColors } from "./ui";
 import { definitions, ProgramId, protocolRemaining } from "./model";
 import { programContent } from "./programContent";
-export function SosProtocol({
+function GeneralSosProtocol({
   id,
   reasons,
   rank = 0,
@@ -286,3 +287,13 @@ const protocolStyles = StyleSheet.create({
     borderTopColor: "#252824",
   },
 });
+
+export function SosProtocol(
+  props: React.ComponentProps<typeof GeneralSosProtocol>,
+) {
+  return props.id === "food" ? (
+    <FoodProtocol {...props} />
+  ) : (
+    <GeneralSosProtocol {...props} />
+  );
+}

@@ -261,7 +261,9 @@ function Setup({
             <Text style={s.eyebrow}>
               {id === "scroll"
                 ? "SLEDOVANÉ SOCIÁLNÍ APLIKACE"
-                : "MOJE PRAVIDLO"}
+                : id === "food"
+                  ? "PRVNÍ PILÍŘ"
+                  : "MOJE PRAVIDLO"}
             </Text>
             <TextInput
               value={target}
@@ -269,6 +271,11 @@ function Setup({
               editable={id === "food"}
               style={s.input}
             />
+            {id === "food" && (
+              <Text style={s.muted}>
+                Další pilíře přidáš po aktivaci. Každý má vlastní denní zápis.
+              </Text>
+            )}
             {id === "scroll" && (
               <>
                 <Text style={s.eyebrow}>DENNÍ LIMIT V MINUTÁCH</Text>

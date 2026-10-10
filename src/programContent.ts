@@ -51,14 +51,11 @@ export const programContent: Record<
   food: {
     headline: "Rozhoduj vědomě.\nBez extrémů.",
     intro:
-      "Vyber jeden konkrétní návyk kolem jídla, který chceš změnit. Plán má podporovat tvoje tělo, ne ho trestat.",
-    focus: "JEDNO JASNÉ PRAVIDLO",
-    detail: "Denní check-in, přehled konzistence a pomoc při impulzivní chuti.",
-    steps: [
-      "Zvol konkrétní pravidlo",
-      "Pojmenuj své důvody",
-      "Podepiš svůj závazek",
-    ],
+      "Sestav vlastní pilíře kolem jídla. Sleduj každý zvlášť a postupuj po malých krocích.",
+    focus: "TVÉ PILÍŘE A KAŽDODENNÍ VOLBY",
+    detail:
+      "Zahrada návyků, zápisy jednotlivých pilířů a pomoc s dalším krokem.",
+    steps: ["Zvol první pilíř", "Pojmenuj své důvody", "Podepiš svůj závazek"],
     examples: [
       "Chci omezit impulzivní objednávky.",
       "Chci změnit zvyk pití sladkých nápojů.",
