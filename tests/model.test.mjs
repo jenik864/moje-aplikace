@@ -69,3 +69,10 @@ test("consistency includes previous series, reset days and pending today", async
   assert.equal(consistencyStatus(old, new Date(now), now), "pending");
   assert.equal(consistencyStatus(old, new Date(2026, 9, 1), now), "empty");
 });
+
+test("SOS countdown follows its deadline after background time and clamps at zero", async () => {
+  const { protocolRemaining } = await import("../src/model.ts");
+  assert.equal(protocolRemaining(now + 120000, now), 120);
+  assert.equal(protocolRemaining(now + 120000, now + 119001), 1);
+  assert.equal(protocolRemaining(now + 120000, now + 150000), 0);
+});

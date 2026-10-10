@@ -18,3 +18,6 @@
 Lokální data, onboarding s kresleným podpisem, časovač Porn, ruční včerejší check-in ostatních disciplín, menší ranky, PRIME, SOS, matice. Doomscrolling/Junk Food zatím používají stejnou dočasnou řadu milníků. Celkový Copper je výchozí stav, ne vypočtený výsledek. Zbylé pilíře jsou informační návrhy, bez funkčních aktivit. Bez účtů, cloudu, žebříčků, blokování, kamery a plateb. Spouštěč SOS se ukládá při návratu k plánu. Porn Reboot zobrazuje poslední série, nejlepší sérii a umožňuje upravovat manifest bez resetu. Matice rozlišuje dokončené dny, dnešek a dny resetu.
 
 Aktuální pokyn uživatele: pokračovat samostatně podle dohodnutého směru a postupně aplikaci vylepšovat. Pro neujasněné produktové volby používat konzervativní výchozí řešení a vysvětlit je.
+
+## Třetí kolo
+Programy mají vlastní úvodní ilustraci a odlišné texty a kroky onboardingu. Osobní důvody lze doplnit volitelnými příklady. Podpis se uchová při návratu zpět v otevřeném onboardingu, při kreslení se neprotáčí stránka. Přepínání programů ukazuje aktuální výběr. SOS obsahuje dobrovolnou časovanou pauzu (Porn 2 minuty, Doomscrolling 5 minut, Junk Food 2 minuty); lze ji ukončit kdykoli, bez přidávání bodů. Při návratu s vybraným spouštěčem se uloží i skutečně uplynulý čas, nejvýše délka protokolu.

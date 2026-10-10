@@ -12,7 +12,11 @@ export const ranks = [
 ] as const;
 export const milestones = [0, 3, 5, 9, 14, 21, 30, 60, 90, 180];
 export type ProgramId = "porn" | "scroll" | "food";
-export type TriggerEvent = { at: number; trigger: string };
+export type TriggerEvent = {
+  at: number;
+  trigger: string;
+  durationSeconds?: number;
+};
 export type Program = {
   signedAt?: number;
   triggers?: TriggerEvent[];
@@ -123,4 +127,8 @@ export function consistencyStatus(
   return ranges.some((r) => r.from < end.getTime() && r.to >= end.getTime())
     ? "success"
     : "empty";
+}
+
+export function protocolRemaining(deadline: number, now = Date.now()) {
+  return Math.max(0, Math.ceil((deadline - now) / 1000));
 }

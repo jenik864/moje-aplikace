@@ -38,6 +38,10 @@ import {
 
 import { Screen, RankBadge, RankEmblem } from "./src/ui";
 
+import { programContent } from "./src/programContent";
+import { ProgramIntro } from "./src/ProgramIntro";
+import { SosProtocol } from "./src/SosProtocol";
+
 const Tab = createBottomTabNavigator();
 const ids: ProgramId[] = ["porn", "scroll", "food"];
 const STORAGE = "quitter.v1";
@@ -65,32 +69,70 @@ function Button({
     </Pressable>
   );
 }
-function Signature({ onChange }: { onChange: (value: string) => void }) {
-  const [path, setPath] = useState("");
-  const current = useRef("");
+function Signature({
+  initialValue,
+  color,
+  onChange,
+  onDrawing,
+}: {
+  initialValue: string;
+  color: string;
+  onChange: (value: string) => void;
+  onDrawing: (drawing: boolean) => void;
+}) {
+  const [path, setPath] = useState(initialValue);
+  const current = useRef(initialValue);
+  const width = useRef(300);
+  const callbacks = useRef({ onChange, onDrawing });
+  callbacks.current = { onChange, onDrawing };
+  const point = (x: number, y: number) =>
+    `${Math.max(0, Math.min(300, (x / width.current) * 300))} ${Math.max(0, Math.min(130, y))}`;
   const responder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: (e) => {
-        current.current += ` M ${e.nativeEvent.locationX} ${e.nativeEvent.locationY}`;
+        callbacks.current.onDrawing(true);
+        current.current += ` M ${point(e.nativeEvent.locationX, e.nativeEvent.locationY)}`;
         setPath(current.current);
       },
       onPanResponderMove: (e) => {
-        current.current += ` L ${e.nativeEvent.locationX} ${e.nativeEvent.locationY}`;
+        current.current += ` L ${point(e.nativeEvent.locationX, e.nativeEvent.locationY)}`;
         setPath(current.current);
       },
-      onPanResponderRelease: () => onChange(current.current),
+      onPanResponderRelease: () => {
+        callbacks.current.onChange(current.current);
+        callbacks.current.onDrawing(false);
+      },
+      onPanResponderTerminate: () => {
+        callbacks.current.onChange(current.current);
+        callbacks.current.onDrawing(false);
+      },
     }),
   ).current;
   return (
     <>
-      <View {...responder.panHandlers} style={s.signature}>
-        <Svg width="100%" height="130">
-          <Path d={path} stroke={purple} strokeWidth={3} fill="none" />
+      <View
+        accessibilityLabel="Pole pro podpis"
+        onLayout={(e) => {
+          width.current = Math.max(1, e.nativeEvent.layout.width);
+        }}
+        {...responder.panHandlers}
+        style={s.signature}
+      >
+        <Svg
+          width="100%"
+          height="130"
+          viewBox="0 0 300 130"
+          preserveAspectRatio="none"
+        >
+          <Path d={path} stroke={color} strokeWidth={3} fill="none" />
         </Svg>
       </View>
       <Pressable
+        accessibilityRole="button"
+        hitSlop={10}
         onPress={() => {
           current.current = "";
           setPath("");
@@ -113,6 +155,13 @@ function Setup({
 }) {
   const d = definitions[id];
   const [step, setStep] = useState(0);
+  const [drawing, setDrawing] = useState(false);
+  const setupScroll = useRef<ScrollView>(null);
+  const moveStep = (next: number) => {
+    setStep(next);
+    setDrawing(false);
+    setupScroll.current?.scrollTo({ y: 0, animated: false });
+  };
   const [reasons, setReasons] = useState("");
   const [target, setTarget] = useState(d.target);
   const [limit, setLimit] = useState("45");
@@ -126,6 +175,8 @@ function Setup({
       <ScrollView
         contentInsetAdjustmentBehavior="never"
         automaticallyAdjustContentInsets={false}
+        ref={setupScroll}
+        scrollEnabled={!drawing}
         contentContainerStyle={s.modalContent}
         keyboardShouldPersistTaps="handled"
       >
@@ -133,30 +184,45 @@ function Setup({
           <Text style={s.muted}>✕ ZAVŘÍT</Text>
         </Pressable>
         <Text style={[s.eyebrow, { color: d.color }]}>
-          ZÁVAZEK · {step + 1} / 3
+          {d.title.toUpperCase()} · {step + 1} / 3
         </Text>
+        <View style={s.stepTrack}>
+          {[0, 1, 2].map((i) => (
+            <View
+              key={i}
+              style={[
+                s.stepSegment,
+                { backgroundColor: i <= step ? d.color : "#292929" },
+              ]}
+            />
+          ))}
+        </View>
         <Text style={s.heading}>
           {step === 0
-            ? "Změna začíná\nrozhodnutím."
+            ? programContent[id].headline
             : step === 1
               ? "Tvoje vlastní proč."
               : "Slib sám sobě."}
         </Text>
         {step === 0 && (
           <>
-            <Text style={s.body}>{d.description}</Text>
+            <Text style={s.body}>{programContent[id].intro}</Text>
             <View style={s.panel}>
-              <Text style={s.cardTitle}>{d.title}</Text>
-              <Text style={s.body}>
-                Všimni si, co ti tento návyk bere a co chceš změnit. Jeden
-                výpadek nesmaže tvou historii. Tvoje důvody budou připravené,
-                když přijde těžká chvíle.
-              </Text>
+              <Text style={s.cardTitle}>TVŮJ PRVNÍ KROK</Text>
+              {programContent[id].steps.map((text, i) => (
+                <View style={s.row} key={text}>
+                  <Text style={{ color: d.color, fontWeight: "800" }}>
+                    0{i + 1}
+                  </Text>
+                  <Text style={[s.body, { flex: 1 }]}>{text}</Text>
+                </View>
+              ))}
             </View>
+            <Text style={s.muted}>{d.description}</Text>
             <Button
               title="CHCI ZAČÍT"
               color={d.color}
-              onPress={() => setStep(1)}
+              onPress={() => moveStep(1)}
             />
           </>
         )}
@@ -171,6 +237,29 @@ function Setup({
               onChangeText={setReasons}
               style={[s.input, { minHeight: 120 }]}
             />
+            <Text style={s.muted}>
+              Inspirace — vyber, co je pro tebe pravdivé:
+            </Text>
+            <View style={s.row}>
+              {programContent[id].examples.map((example) => (
+                <Pressable
+                  accessibilityRole="button"
+                  key={example}
+                  onPress={() =>
+                    setReasons((prev) =>
+                      prev.includes(example)
+                        ? prev
+                        : prev.trim()
+                          ? `${prev.trim()}\n${example}`
+                          : example,
+                    )
+                  }
+                  style={s.reasonChip}
+                >
+                  <Text style={s.muted}>{example}</Text>
+                </Pressable>
+              ))}
+            </View>
             <Text style={s.eyebrow}>
               {id === "scroll" ? "OMEZOVANÉ APLIKACE / WEBY" : "MOJE PRAVIDLO"}
             </Text>
@@ -200,7 +289,7 @@ function Setup({
               color={d.color}
               onPress={() =>
                 valid
-                  ? setStep(2)
+                  ? moveStep(2)
                   : Alert.alert(
                       "Doplň závazek",
                       "Vyplň důvody, pravidlo a platný limit.",
@@ -219,7 +308,12 @@ function Setup({
               Podepiš se prstem nebo myší. Je to osobní připomínka tvého
               rozhodnutí.
             </Text>
-            <Signature onChange={setSignature} />
+            <Signature
+              initialValue={signature}
+              color={d.color}
+              onChange={setSignature}
+              onDrawing={setDrawing}
+            />
             <Button
               title="PODEPSAT A ZAČÍT"
               color={d.color}
@@ -246,7 +340,7 @@ function Setup({
           </>
         )}
         {step > 0 && (
-          <Button secondary title="ZPĚT" onPress={() => setStep(step - 1)} />
+          <Button secondary title="ZPĚT" onPress={() => moveStep(step - 1)} />
         )}
       </ScrollView>
     </Screen>
@@ -453,7 +547,10 @@ function Dashboard({
         <Text style={s.muted}>
           Podepsáno{" "}
           {new Date(
-            p.signedAt ?? (p.history[0] ? p.history[0].at - p.history[0].duration : p.startedAt),
+            p.signedAt ??
+              (p.history[0]
+                ? p.history[0].at - p.history[0].duration
+                : p.startedAt),
           ).toLocaleDateString("cs-CZ")}
         </Text>
       </View>
@@ -557,35 +654,35 @@ function Dashboard({
   );
 }
 const Placeholder = ({
-    title,
-    label,
-    text,
-    items,
-  }: {
-    title: string;
-    label: string;
-    text: string;
-    items: string[];
-  }) => (
-    <Screen>
-      <ScrollView
-        contentInsetAdjustmentBehavior="never"
-        automaticallyAdjustContentInsets={false}
-        contentContainerStyle={s.content}
-      >
-        <Text style={[s.eyebrow, { color: purple }]}>{label}</Text>
-        <Text style={s.heading}>{title}.</Text>
-        <Text style={s.body}>{text}</Text>
-        {items.map((item, i) => (
-          <View key={item} style={s.panel}>
-            <Text style={s.muted}>0{i + 1} / PŘIPRAVUJEME</Text>
-            <Text style={s.sectionTitle}>{item}</Text>
-          </View>
-        ))}
-        <Text style={s.muted}>Tato sekce zatím nepřidává body ani ranky.</Text>
-      </ScrollView>
-    </Screen>
-  );
+  title,
+  label,
+  text,
+  items,
+}: {
+  title: string;
+  label: string;
+  text: string;
+  items: string[];
+}) => (
+  <Screen>
+    <ScrollView
+      contentInsetAdjustmentBehavior="never"
+      automaticallyAdjustContentInsets={false}
+      contentContainerStyle={s.content}
+    >
+      <Text style={[s.eyebrow, { color: purple }]}>{label}</Text>
+      <Text style={s.heading}>{title}.</Text>
+      <Text style={s.body}>{text}</Text>
+      {items.map((item, i) => (
+        <View key={item} style={s.panel}>
+          <Text style={s.muted}>0{i + 1} / PŘIPRAVUJEME</Text>
+          <Text style={s.sectionTitle}>{item}</Text>
+        </View>
+      ))}
+      <Text style={s.muted}>Tato sekce zatím nepřidává body ani ranky.</Text>
+    </ScrollView>
+  </Screen>
+);
 
 export default function App() {
   const [data, setData] = useState<Data>({});
@@ -595,7 +692,7 @@ export default function App() {
   const [now, setNow] = useState(Date.now());
   const [setup, setSetup] = useState<ProgramId | null>(null);
   const [sos, setSos] = useState<ProgramId | null>(null);
-  const [trigger, setTrigger] = useState("");
+  const [activeProgram, setActiveProgram] = useState<ProgramId>("porn");
   const [editing, setEditing] = useState<ProgramId | null>(null);
   const { width } = useWindowDimensions();
   const pager = useRef<ScrollView>(null);
@@ -661,17 +758,35 @@ export default function App() {
           <Text style={s.brand}>QUITTER</Text>
           <Text style={s.heading}>Quit.</Text>
         </View>
-        <Text style={s.headerNote}>ZÍSKEJ ZPĚT\nKONTROLU.</Text>
+        <Text style={s.headerNote}>{"ZÍSKEJ ZPĚT\nKONTROLU."}</Text>
       </View>
       <View style={s.tabs}>
         {ids.map((id, i) => (
           <Pressable
             key={id}
-            onPress={() =>
-              pager.current?.scrollTo({ x: i * width, animated: true })
-            }
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeProgram === id }}
+            aria-selected={activeProgram === id}
+            style={[
+              s.programTab,
+              {
+                borderBottomColor:
+                  activeProgram === id ? definitions[id].color : "transparent",
+              },
+            ]}
+            onPress={() => {
+              setActiveProgram(id);
+              pager.current?.scrollTo({ x: i * width, animated: true });
+            }}
           >
-            <Text style={[s.smallTab, { color: definitions[id].color }]}>
+            <Text
+              style={[
+                s.smallTab,
+                {
+                  color: activeProgram === id ? definitions[id].color : "#888",
+                },
+              ]}
+            >
               {definitions[id].title}
             </Text>
           </Pressable>
@@ -683,6 +798,16 @@ export default function App() {
         ref={pager}
         horizontal
         pagingEnabled
+        onMomentumScrollEnd={(e) =>
+          setActiveProgram(
+            ids[
+              Math.max(
+                0,
+                Math.min(2, Math.round(e.nativeEvent.contentOffset.x / width)),
+              )
+            ],
+          )
+        }
         showsHorizontalScrollIndicator={false}
       >
         {ids.map((id) => {
@@ -706,23 +831,16 @@ export default function App() {
                   update={(p) => update(id, p)}
                   edit={() => setEditing(id)}
                   sos={() => {
-                    setTrigger("");
                     setSos(id);
                   }}
                 />
               ) : (
                 <>
-                  <View style={[s.emptySymbol, { borderColor: d.color }]}>
-                    <Text style={{ fontSize: 64, color: d.color }}>
-                      {d.symbol}
-                    </Text>
-                  </View>
-                  <Text style={s.body}>{d.description}</Text>
-                  <View style={s.panel}>
-                    <Text style={s.cardTitle}>Začni vlastním závazkem.</Text>
-                    <Text style={s.body}>
-                      Tvoje důvody. Tvůj podpis. Tvůj první Copper rank.
-                    </Text>
+                  <ProgramIntro id={id} />
+                  <Text style={s.body}>{programContent[id].detail}</Text>
+                  <View style={s.rankRow}>
+                    <RankBadge value={0} />
+                    <Text style={s.muted}>Tady začíná tvoje série.</Text>
                   </View>
                   <Button
                     title="AKTIVOVAT PROGRAM"
@@ -916,66 +1034,23 @@ export default function App() {
       >
         {sos && (
           <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-            <Screen modal>
-              <ScrollView
-                contentInsetAdjustmentBehavior="never"
-                automaticallyAdjustContentInsets={false}
-                contentContainerStyle={s.modalContent}
-              >
-                <Text style={[s.eyebrow, { color: "#ff5964" }]}>
-                  SOS PROTOKOL
-                </Text>
-                <Text style={s.heading}>Zastav se.\nMáš volbu.</Text>
-                <View style={s.panel}>
-                  <Text style={s.cardTitle}>TVŮJ DŮVOD</Text>
-                  <Text style={s.body}>{data[sos]?.reasons}</Text>
-                </View>
-                <Text style={s.eyebrow}>CO SPUSTILO IMPULZ?</Text>
-                <View style={s.row}>
-                  {(sos === "food"
-                    ? ["Hlad", "Stres", "Nuda", "Zvyk"]
-                    : ["Nuda", "Stres", "Samota", "Zvyk"]
-                  ).map((t) => (
-                    <Pressable
-                      key={t}
-                      onPress={() => setTrigger(t)}
-                      style={[
-                        s.chip,
-                        trigger === t && { borderColor: "#ff5964" },
-                      ]}
-                    >
-                      <Text
-                        style={{ color: trigger === t ? "#ff5964" : "#ccc" }}
-                      >
-                        {t}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-                <Text style={s.body}>{definitions[sos].action}</Text>
-                <Text style={s.muted}>
-                  Po návratu k plánu se vybraný spouštěč uloží do historie
-                  tohoto programu. Kamera a systémové blokování zatím nejsou
-                  zapnuté.
-                </Text>
-                <Button
-                  title="VRÁTIT SE K MÉMU PLÁNU"
-                  color="#ff5964"
-                  onPress={() => {
-                    const p = data[sos];
-                    if (p && trigger)
-                      update(sos, {
-                        ...p,
-                        triggers: [
-                          ...(p.triggers ?? []),
-                          { at: Date.now(), trigger },
-                        ],
-                      });
-                    setSos(null);
-                  }}
-                />
-              </ScrollView>
-            </Screen>
+            <SosProtocol
+              id={sos}
+              reasons={data[sos]?.reasons ?? ""}
+              close={() => setSos(null)}
+              complete={(trigger, elapsed) => {
+                const p = data[sos];
+                if (p && trigger)
+                  update(sos, {
+                    ...p,
+                    triggers: [
+                      ...(p.triggers ?? []),
+                      { at: Date.now(), trigger, durationSeconds: elapsed },
+                    ],
+                  });
+                setSos(null);
+              }}
+            />
           </SafeAreaProvider>
         )}
       </Modal>
@@ -1047,6 +1122,21 @@ function ManifestEditor({
   );
 }
 const s = StyleSheet.create({
+  programTab: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 14,
+    borderBottomWidth: 2,
+  },
+  stepTrack: { flexDirection: "row", gap: 6 },
+  stepSegment: { flex: 1, height: 3, borderRadius: 2 },
+  reasonChip: {
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#333",
+    backgroundColor: "#141414",
+  },
   progressPanel: {
     gap: 12,
     padding: 18,
@@ -1085,7 +1175,7 @@ const s = StyleSheet.create({
     justifyContent: "space-around",
     borderBottomWidth: 1,
     borderBottomColor: "#242424",
-    paddingVertical: 15,
+    paddingVertical: 0,
   },
   smallTab: { fontSize: 12, fontWeight: "700" },
   eyebrow: { color: "#aaa", fontSize: 10, letterSpacing: 2, fontWeight: "700" },
