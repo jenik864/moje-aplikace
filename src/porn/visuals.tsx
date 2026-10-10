@@ -16,6 +16,7 @@ import Svg, {
   Polygon,
   Text as SvgText,
 } from "react-native-svg";
+import { RankArtwork } from "../RankArtwork";
 import { rankColors } from "../ui";
 import { ranks } from "../model";
 import { useRankTheme, tint } from "./theme";
@@ -28,55 +29,18 @@ export const palette = {
   red: "#ff777e",
 };
 export function RankMark({ rank, size = 42 }: { rank: number; size?: number }) {
-  const id = React.useId().replace(/[^a-zA-Z0-9]/g, "");
-  const c = rankColors[rank];
-  return (
-    <Svg
-      width={size}
-      height={size}
-      viewBox="0 0 80 88"
-      accessibilityLabel={`${ranks[rank]} emblém`}
-    >
-      <Defs>
-        <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={c} />
-          <Stop offset="1" stopColor="#252925" />
-        </LinearGradient>
-      </Defs>
-      <Path
-        d="M40 3 L70 19 V56 L40 84 L10 56 V19 Z"
-        fill={`url(#${id})`}
-        stroke={c}
-        strokeWidth="1"
-      />
-      <Path
-        d="M40 13 L60 25 V52 L40 72 L20 52 V25 Z"
-        fill="#121512"
-        stroke={c}
-        strokeWidth="1"
-      />
-      <Path
-        d="M40 24 L54 43 L40 61 L26 43 Z"
-        fill={`${c}25`}
-        stroke={c}
-        strokeWidth="1.5"
-      />
-      <Path d="M40 24 V61 M26 43 H54" stroke={c} strokeWidth={0.7} />
-      {rank >= 4 && (
-        <Path d="M13 57 L40 80 L67 57" stroke={c} strokeWidth="2" fill="none" />
-      )}
-      {rank >= 7 && <Circle cx="40" cy="43" r="4" fill={c} />}
-    </Svg>
-  );
+  return <RankArtwork rank={rank} color={rankColors[rank]} size={size} />;
 }
 // Each rank unlocks a distinct silhouette, not just a recolored circle.
 const designs = [
   { name: "Origin", ticks: 12, frame: 0 },
   { name: "Forged", ticks: 24, frame: 1 },
+  { name: "Armature", ticks: 32, frame: 10 },
   { name: "Precision", ticks: 60, frame: 2 },
   { name: "Radiance", ticks: 60, frame: 3 },
   { name: "Orbit", ticks: 60, frame: 4 },
   { name: "Prism", ticks: 60, frame: 5 },
+  { name: "Geode", ticks: 48, frame: 11 },
   { name: "Sovereign", ticks: 60, frame: 6 },
   { name: "Sanctum", ticks: 60, frame: 7 },
   { name: "Celestial", ticks: 60, frame: 8 },
@@ -93,6 +57,7 @@ export function TimerDial({
 }) {
   const { rank, accent } = useRankTheme();
   const design = designs[rank];
+  const frame = design.frame;
   const { width } = useWindowDimensions();
   const size = Math.min(
     preview ? 236 : 292,
@@ -139,10 +104,10 @@ export function TimerDial({
           r="146"
           fill={`url(#${id}bezel)`}
           stroke={tint(accent, 0.22)}
-          strokeWidth={rank === 0 ? 0.7 : 1}
+          strokeWidth={frame === 0 ? 0.7 : 1}
         />
         <Circle cx={150} cy={150} r={128} fill="#0b0b0d" />
-        {rank >= 3 && (
+        {frame >= 3 && (
           <Circle
             cx="150"
             cy="150"
@@ -153,7 +118,16 @@ export function TimerDial({
             fill="none"
           />
         )}
-        {rank === 1 &&
+        {frame === 10 && <>
+          <Polygon points={polygon(144, 8, Math.PI / 8)} stroke={accent} strokeWidth={2} fill="none" />
+          {[0, 1, 2, 3].map(i => <Circle key={i} cx={150 + Math.sin(i * Math.PI / 2) * 137} cy={150 - Math.cos(i * Math.PI / 2) * 137} r={3} fill={accent} />)}
+        </>}
+        {frame === 11 && <>
+          <Polygon points={polygon(146, 6)} stroke={accent} strokeWidth={2} fill="none" />
+          <Polygon points={polygon(139, 6, Math.PI / 6)} stroke={tint(accent, 0.5)} fill="none" />
+          <Circle cx={150} cy={150} r={115} stroke={tint(accent, 0.3)} fill="none" />
+        </>}
+        {frame === 1 &&
           [0, 1, 2, 3].map((i) => (
             <Circle
               key={i}
@@ -164,7 +138,7 @@ export function TimerDial({
               fill="#131110"
             />
           ))}
-        {rank === 2 && (
+        {frame === 2 && (
           <>
             <Circle
               cx="150"
@@ -183,7 +157,7 @@ export function TimerDial({
             />
           </>
         )}
-        {rank === 3 &&
+        {frame === 3 &&
           Array.from({ length: 12 }, (_, i) => {
             const a = (i * Math.PI) / 6;
             return (
@@ -195,7 +169,7 @@ export function TimerDial({
               />
             );
           })}
-        {rank === 4 && (
+        {frame === 4 && (
           <>
             <Circle
               cx="150"
@@ -215,7 +189,7 @@ export function TimerDial({
             />
           </>
         )}
-        {rank === 5 && (
+        {frame === 5 && (
           <>
             <Polygon
               points={polygon(146, 6)}
@@ -230,7 +204,7 @@ export function TimerDial({
             />
           </>
         )}
-        {rank === 6 && (
+        {frame === 6 && (
           <>
             <Polygon
               points={polygon(146, 12)}
@@ -260,7 +234,7 @@ export function TimerDial({
             })}
           </>
         )}
-        {rank === 7 && (
+        {frame === 7 && (
           <>
             <Polygon
               points={polygon(146, 8, Math.PI / 8)}
@@ -282,7 +256,7 @@ export function TimerDial({
             />
           </>
         )}
-        {rank === 8 && (
+        {frame === 8 && (
           <>
             {[0, 1].map((i) => (
               <Polygon
@@ -307,7 +281,7 @@ export function TimerDial({
             })}
           </>
         )}
-        {rank === 9 && (
+        {frame === 9 && (
           <>
             <Circle
               cx="150"
@@ -369,7 +343,7 @@ export function TimerDial({
           cy="150"
           r={r}
           stroke={tint(accent, 0.15)}
-          strokeWidth={rank >= 6 ? 3 : 2}
+          strokeWidth={frame >= 6 ? 3 : 2}
           fill="none"
         />
         {progress > 0 && (
@@ -378,7 +352,7 @@ export function TimerDial({
             cy="150"
             r={r}
             stroke={accent}
-            strokeWidth={rank >= 6 ? 3 : 2}
+            strokeWidth={frame >= 6 ? 3 : 2}
             fill="none"
             strokeDasharray={`${circ * progress} ${circ}`}
             strokeLinecap="round"

@@ -4,20 +4,20 @@ import { rankForDays, rankOf, streak, dayKey } from "../src/model.ts";
 const now = new Date(2026, 9, 10, 12).getTime();
 const p = { startedAt: now, prime: 0, days: {}, history: [] };
 test("all rank thresholds and lower/upper bounds", () => {
-  const boundaries = [0, 3, 5, 9, 14, 21, 30, 60, 90, 180];
+  const boundaries = [0, 3, 4, 5, 9, 14, 21, 25, 30, 60, 90, 180];
   boundaries.forEach((day, index) => {
     assert.equal(rankForDays(day), index);
     if (index > 0) assert.equal(rankForDays(day - 0.001), index - 1);
   });
   assert.equal(rankForDays(-1), 0);
-  assert.equal(rankForDays(999), 9);
+  assert.equal(rankForDays(999), 11);
 });
 test("porn rank uses exact elapsed time; resetting only current series preserves prime", () => {
-  const old = { ...p, startedAt: now - 30 * 86400000, prime: 6 };
-  assert.equal(rankOf("porn", old, now), 6);
+  const old = { ...p, startedAt: now - 30 * 86400000, prime: 8 };
+  assert.equal(rankOf("porn", old, now), 8);
   const reset = { ...old, startedAt: now };
   assert.equal(rankOf("porn", reset, now), 0);
-  assert.equal(reset.prime, 6);
+  assert.equal(reset.prime, 8);
 });
 test("daily streak counts only completed consecutive local days", () => {
   const days = {};
@@ -47,11 +47,11 @@ test("reset preserves manifest, trigger history and best rank", async () => {
     reasons: "My why",
     signature: "M 0 0 L 1 1",
     triggers: [{ at: now - 1000, trigger: "Stres" }],
-    prime: 6,
+    prime: 8,
   };
   const next = resetProgram(old, now);
   assert.equal(rankOf("porn", next, now), 0);
-  assert.equal(next.prime, 6);
+  assert.equal(next.prime, 8);
   assert.equal(next.reasons, old.reasons);
   assert.deepEqual(next.triggers, old.triggers);
   assert.deepEqual(next.history, [{ at: now, duration: 9 * 86400000 }]);
@@ -146,4 +146,17 @@ test("series durations include minutes rather than rounding short attempts to ze
     formatDuration(86400000 + 2 * 3600000 + 3 * 60000),
     "1 dní · 2 h · 3 min",
   );
+});
+
+test("rank migration preserves all old PRIME identities and is idempotent", async () => {
+  const { migrateRanks, ranks } = await import("../src/model.ts");
+  const names = ["Copper", "Bronze", "Silver", "Gold", "Platinum", "Sapphire", "Ruby", "Emerald", "Diamond", "Obsidian"];
+  names.forEach((name, prime) => {
+    const data = { porn: { ...p, prime, reasons: "Keep me" }, food: { ...p, prime } };
+    const migrated = migrateRanks(data);
+    assert.equal(ranks[migrated.porn.prime], name);
+    assert.equal(ranks[migrated.food.prime], name);
+    assert.equal(migrated.porn.reasons, "Keep me");
+    assert.deepEqual(migrateRanks(migrated), migrated);
+  });
 });

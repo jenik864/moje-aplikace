@@ -28,6 +28,7 @@ import {
   definitions,
   ranks,
   rankOf,
+  migrateRanks,
 } from "./src/model";
 
 import { Screen, RankBadge, RankEmblem, rankColors } from "./src/ui";
@@ -325,6 +326,7 @@ function Setup({
                       signedAt: Date.now(),
                       triggers: [],
                       prime: 0,
+                      rankVersion: 2,
                       days: {},
                       history: [],
                     })
@@ -403,7 +405,7 @@ export default function App() {
             )
           )
             throw new Error("Invalid data");
-          setData(parsed);
+          setData(migrateRanks(parsed));
         }
         setReady(true);
       })

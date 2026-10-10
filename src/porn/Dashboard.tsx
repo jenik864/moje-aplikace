@@ -58,7 +58,7 @@ function DashboardBody({
   }, [rank]);
   const seconds = Math.floor(stats.current / 1000);
   const progress =
-    rank === 9
+    rank === ranks.length - 1
       ? 1
       : Math.max(
           0,
@@ -69,7 +69,7 @@ function DashboardBody({
           ),
         );
   const remaining =
-    rank === 9
+    rank === ranks.length - 1
       ? 0
       : Math.max(0, milestones[rank + 1] * 86400000 - stats.current);
   const totalMinutes = Math.ceil(remaining / 60000);
@@ -137,7 +137,7 @@ function DashboardBody({
         >
           <View style={s.spread}>
             <Text style={s.nextTitle}>
-              {rank === 9
+              {rank === ranks.length - 1
                 ? "Nejvyšší rank dosažen"
                 : `Další milník · ${ranks[rank + 1]}`}
             </Text>
@@ -147,7 +147,7 @@ function DashboardBody({
             <View style={[s.fill, { width: `${progress * 100}%` }]} />
           </View>
           <Text style={s.caption}>
-            {rank === 9
+            {rank === ranks.length - 1
               ? "Obsidian. Teď udržuj svůj směr."
               : `Zbývá ${leftDays} ${leftDays === 1 ? "den" : leftDays > 1 && leftDays < 5 ? "dny" : "dní"} · ${leftHours} h · ${leftMinutes} min`}
           </Text>

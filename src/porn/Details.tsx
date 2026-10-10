@@ -181,6 +181,10 @@ function DetailBody({
           <SectionLabel>
             NÁHLED CIFERNÍKU / {ranks[previewRank].toUpperCase()}
           </SectionLabel>
+          <View style={{ alignItems: "center", gap: 8 }}>
+            <RankMark rank={previewRank} size={112} />
+            <Text style={[s.title, { color: rankColors[previewRank] }]}>{ranks[previewRank]}</Text>
+          </View>
           <RankThemeProvider rank={previewRank}>
             <TimerDial
               seconds={milestones[previewRank] * 86400}
@@ -196,7 +200,7 @@ function DetailBody({
         {ranks.map((name, i) => (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Náhled ciferníku ${name}`}
+            accessibilityLabel={`Náhled ranku ${name}`}
             accessibilityState={{ selected: previewRank === i }}
             onPress={() => {
               setPreviewRank(i);
@@ -211,7 +215,7 @@ function DetailBody({
               },
             ]}
           >
-            <RankMark rank={i} size={44} />
+            <RankMark rank={i} size={54} />
             <View style={{ flex: 1, gap: 4 }}>
               <Text
                 style={[

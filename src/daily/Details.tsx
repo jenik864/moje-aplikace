@@ -51,6 +51,8 @@ export function DailyDetails({
     stats = dailySummary(p, now);
   const [editing, setEditing] = React.useState(false),
     [reasons, setReasons] = React.useState(p.reasons);
+  const [previewRank, setPreviewRank] = React.useState(rank);
+  React.useEffect(() => { if (kind === "ranks") setPreviewRank(rank); }, [kind]);
   const scroll = React.useRef<ScrollView>(null);
   React.useEffect(() => setEditing(false), [kind]);
   const { width } = useWindowDimensions();
@@ -142,8 +144,19 @@ export function DailyDetails({
                       navazující sérii.
                     </Text>
                   </View>
+                  <View style={[s.card, { borderColor: tint(rankColors[previewRank], 0.35), alignItems: "center" }]}>
+                    <Text style={[s.label, { color: rankColors[previewRank] }]}>EMBLÉM / {ranks[previewRank].toUpperCase()}</Text>
+                    <RankMark rank={previewRank} size={150} />
+                    <Text style={[s.value, { color: rankColors[previewRank] }]}>{ranks[previewRank]}</Text>
+                    <Text style={s.muted}>{previewRank === 0 ? "Od začátku" : `Odemkneš za ${milestones[previewRank]} dokončených dní v řadě.`}</Text>
+                    <Text style={[s.muted, { textAlign: "center" }]}>Klepni na rank v seznamu a prohlédni si jeho emblém.</Text>
+                  </View>
                   {ranks.map((name, i) => (
-                    <View
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Náhled emblému ${name}`}
+                      accessibilityState={{ selected: previewRank === i }}
+                      onPress={() => { setPreviewRank(i); scroll.current?.scrollTo({ y: 0, animated: true }); }}
                       key={name}
                       style={[
                         s.card,
@@ -157,7 +170,7 @@ export function DailyDetails({
                         },
                       ]}
                     >
-                      <RankMark rank={i} size={38} />
+                      <RankMark rank={i} size={54} />
                       <View style={{ flex: 1, gap: 5 }}>
                         <Text
                           style={[
@@ -173,8 +186,8 @@ export function DailyDetails({
                         <Text style={s.muted}>
                           {i === 0
                             ? "Od začátku"
-                            : milestones[i] === 3
-                              ? "3 dokončené dny v řadě"
+                            : milestones[i] < 5
+                              ? `${milestones[i]} dokončené dny v řadě`
                               : `${milestones[i]} dokončených dní v řadě`}
                         </Text>
                       </View>
@@ -190,7 +203,7 @@ export function DailyDetails({
                             ? "DOSAŽENO"
                             : "UZAMČENO"}
                       </Text>
-                    </View>
+                    </Pressable>
                   ))}
                 </>
               ) : kind === "matrix" ? (

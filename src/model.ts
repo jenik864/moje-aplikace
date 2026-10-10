@@ -1,16 +1,18 @@
 export const ranks = [
   "Copper",
   "Bronze",
+  "Iron",
   "Silver",
   "Gold",
   "Platinum",
   "Sapphire",
+  "Amethyst",
   "Ruby",
   "Emerald",
   "Diamond",
   "Obsidian",
 ] as const;
-export const milestones = [0, 3, 5, 9, 14, 21, 30, 60, 90, 180];
+export const milestones = [0, 3, 4, 5, 9, 14, 21, 25, 30, 60, 90, 180];
 export type ProgramId = "porn" | "scroll" | "food";
 export type TriggerEvent = {
   at: number;
@@ -19,6 +21,7 @@ export type TriggerEvent = {
   pauseStarted?: boolean;
 };
 export type Program = {
+  rankVersion?: 2;
   signedAt?: number;
   dailyLogs?: Record<
     string,
@@ -177,4 +180,13 @@ export function saveDailyRecord(
 export function formatDuration(milliseconds: number) {
   const seconds = Math.max(0, Math.floor(milliseconds / 1000));
   return `${Math.floor(seconds / 86400)} dní · ${Math.floor(seconds / 3600) % 24} h · ${Math.floor(seconds / 60) % 60} min`;
+}
+
+// PRIME was an index into the original ten-rank ladder. Translate once on load.
+export function migrateRanks(data: Data): Data {
+  const original = [0, 1, 3, 4, 5, 6, 8, 9, 10, 11];
+  return Object.fromEntries(Object.entries(data).filter(([, p]) => p != null).map(([id, p]) => [id,
+    p.rankVersion === 2 ? p : { ...p, rankVersion: 2,
+      prime: original[Math.max(0, Math.min(9, Math.floor(p.prime || 0)))] },
+  ])) as Data;
 }

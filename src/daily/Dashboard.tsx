@@ -43,7 +43,7 @@ export function DailyDashboard({
   const today = p.dailyLogs?.[dayKey(new Date(now))];
   const minutes = today?.minutes ?? null;
   const progress =
-    rank === 9
+    rank === ranks.length - 1
       ? 1
       : (count - milestones[rank]) / (milestones[rank + 1] - milestones[rank]);
   const days = dailyTrend(p, now);
@@ -210,7 +210,7 @@ export function DailyDashboard({
             />
           </View>
           <Text style={s.muted}>
-            {rank === 9
+            {rank === ranks.length - 1
               ? "Obsidian · nejvyšší rank dosažen"
               : `Další milník · ${ranks[rank + 1]} · ${count} / ${milestones[rank + 1]} dokončených dní`}
           </Text>
