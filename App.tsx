@@ -259,12 +259,14 @@ function Setup({
               ))}
             </View>
             <Text style={s.eyebrow}>
-              {id === "scroll" ? "OMEZOVANÉ APLIKACE / WEBY" : "MOJE PRAVIDLO"}
+              {id === "scroll"
+                ? "SLEDOVANÉ SOCIÁLNÍ APLIKACE"
+                : "MOJE PRAVIDLO"}
             </Text>
             <TextInput
               value={target}
               onChangeText={setTarget}
-              editable={id !== "porn"}
+              editable={id === "food"}
               style={s.input}
             />
             {id === "scroll" && (
@@ -277,8 +279,9 @@ function Setup({
                   style={s.input}
                 />
                 <Text style={s.muted}>
-                  V této verzi jde o ruční záznam. Systémové měření a blokování
-                  zatím nejsou aktivní.
+                  Rank vychází z měření systému, ne z ručního potvrzení. V Expo
+                  Go a na iPhonu zatím není měření dostupné. Denní limit je
+                  osobní cíl.
                 </Text>
               </>
             )}
@@ -327,6 +330,9 @@ function Setup({
                       triggers: [],
                       prime: 0,
                       rankVersion: 2,
+                      ...(id === "scroll"
+                        ? { screenTimeVersion: 1 as const }
+                        : {}),
                       days: {},
                       history: [],
                     })

@@ -1,3 +1,4 @@
+import { usageSummary, type UsageDay } from "./scroll/scoring.ts";
 export const ranks = [
   "Copper",
   "Bronze",
@@ -22,6 +23,9 @@ export type TriggerEvent = {
 };
 export type Program = {
   rankVersion?: 2;
+  screenTimeVersion?: 1;
+  legacyScrollPrime?: number;
+  usageDays?: Record<string, UsageDay>;
   signedAt?: number;
   dailyLogs?: Record<
     string,
@@ -58,6 +62,7 @@ export function rankForDays(days: number) {
   );
 }
 export function rankOf(id: ProgramId, p: Program, now = Date.now()) {
+  if (id === "scroll") return usageSummary(p, now).rank;
   return rankForDays(
     id === "porn"
       ? Math.max(0, (now - p.startedAt) / 86400000)
@@ -83,8 +88,9 @@ export const definitions = {
     color: "#c5fa67",
     symbol: "↯",
     description:
-      "Zvol aplikace a společný denní limit. Série roste za dokončené dny, kdy svůj limit dodržíš.",
-    target: "Instagram, TikTok, YouTube",
+      "Denní cíl je tvoje pomůcka. Rank určuje průměr skutečného času v sociálních aplikacích za sedm dokončených dní. Měření vyžaduje podporovanou nativní aplikaci.",
+    target:
+      "Instagram, TikTok, YouTube, Facebook, X, Reddit, Snapchat, Threads, Pinterest, Twitch, Discord",
     prompt: "Čemu chceš věnovat svůj čas?",
     action:
       "Polož telefon displejem dolů. Vyber jednu věc mimo obrazovku a věnuj jí příštích pět minut.",
@@ -175,7 +181,10 @@ export function saveDailyRecord(
     },
     days: confirmed ? { ...p.days, [key]: success } : p.days,
   };
-  return { ...next, prime: Math.max(p.prime, rankOf(id, next, now)) };
+  return {
+    ...next,
+    prime: id === "scroll" ? p.prime : Math.max(p.prime, rankOf(id, next, now)),
+  };
 }
 export function formatDuration(milliseconds: number) {
   const seconds = Math.max(0, Math.floor(milliseconds / 1000));
@@ -185,8 +194,28 @@ export function formatDuration(milliseconds: number) {
 // PRIME was an index into the original ten-rank ladder. Translate once on load.
 export function migrateRanks(data: Data): Data {
   const original = [0, 1, 3, 4, 5, 6, 8, 9, 10, 11];
-  return Object.fromEntries(Object.entries(data).filter(([, p]) => p != null).map(([id, p]) => [id,
-    p.rankVersion === 2 ? p : { ...p, rankVersion: 2,
-      prime: original[Math.max(0, Math.min(9, Math.floor(p.prime || 0)))] },
-  ])) as Data;
+  const migrated = Object.fromEntries(
+    Object.entries(data)
+      .filter(([, p]) => p != null)
+      .map(([id, p]) => [
+        id,
+        p.rankVersion === 2
+          ? p
+          : {
+              ...p,
+              rankVersion: 2,
+              prime:
+                original[Math.max(0, Math.min(9, Math.floor(p.prime || 0)))],
+            },
+      ]),
+  ) as Data;
+  if (migrated.scroll && migrated.scroll.screenTimeVersion !== 1) {
+    migrated.scroll = {
+      ...migrated.scroll,
+      legacyScrollPrime: migrated.scroll.prime,
+      prime: 0,
+      screenTimeVersion: 1,
+    };
+  }
+  return migrated;
 }

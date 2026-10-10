@@ -516,7 +516,7 @@ export function PauseDial({
         textAnchor="middle"
         fill="#fff0f1"
       >
-        {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}
+        {`${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`}
       </SvgText>
       <SvgText
         x={120}

@@ -35,9 +35,9 @@ export const programContent: Record<
       "Dej scrollování hranici. Vyber aplikace, stanov rozpočet a rozhodni, čemu věnuješ získaný čas.",
     focus: "DENNÍ ČASOVÝ ROZPOČET",
     detail:
-      "Vlastní limit, přehled dokončených dní a rychlá pauza od obrazovky.",
+      "Skutečný čas v sociálních aplikacích, sedmidenní přehled a rychlá pauza od feedu.",
     steps: [
-      "Vyber aplikace a weby",
+      "Prohlédni si sledované aplikace",
       "Nastav denní limit",
       "Podepiš plán pro svůj čas",
     ],

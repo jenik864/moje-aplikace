@@ -77,7 +77,7 @@ test("SOS countdown follows its deadline after background time and clamps at zer
   assert.equal(protocolRemaining(now + 120000, now + 150000), 0);
 });
 
-test("daily drafts do not count until a completed day is confirmed", async () => {
+test("manual scrolling records never raise the measured-time rank", async () => {
   const { saveDailyRecord } = await import("../src/model.ts");
   const base = {
     ...p,
@@ -103,8 +103,8 @@ test("daily drafts do not count until a completed day is confirmed", async () =>
     true,
     now,
   );
-  assert.equal(rankOf("scroll", confirmed, now), 1);
-  assert.equal(confirmed.prime, 1);
+  assert.equal(rankOf("scroll", confirmed, now), 0);
+  assert.equal(confirmed.prime, 0);
   const failed = saveDailyRecord(
     "scroll",
     confirmed,
@@ -114,7 +114,7 @@ test("daily drafts do not count until a completed day is confirmed", async () =>
     now,
   );
   assert.equal(rankOf("scroll", failed, now), 0);
-  assert.equal(failed.prime, 1);
+  assert.equal(failed.prime, 0);
 });
 test("daily record validation rejects unfinished, future and pre-activation days", async () => {
   const { saveDailyRecord } = await import("../src/model.ts");

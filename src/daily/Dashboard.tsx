@@ -1,4 +1,5 @@
 import React from "react";
+import { ScrollDashboard } from "../scroll/Dashboard";
 import { Text, View, Pressable } from "react-native";
 import {
   type Program,
@@ -20,7 +21,7 @@ import { dailyStyles } from "./styles";
 import { DailyDetails, type DailyDetail } from "./Details";
 import { DailyChart } from "./Charts";
 
-export function DailyDashboard({
+function FoodDashboard({
   id,
   p,
   now,
@@ -410,9 +411,11 @@ export function DailyWelcome({
       <View style={s.row}>
         <RankMark rank={0} size={40} />
         <View style={{ flex: 1, gap: 4 }}>
-          <Text style={s.title}>Tvoje první série.</Text>
+          <Text style={s.title}>Tvoje první kroky.</Text>
           <Text style={s.muted}>
-            Začínáš na Copper. Každý potvrzený den se počítá.
+            {id === "scroll"
+              ? "Začínáš na Copper. Rank určí skutečný čas ze systému, až bude měření připojené."
+              : "Začínáš na Copper. Každý potvrzený den se počítá."}
           </Text>
         </View>
       </View>
@@ -420,5 +423,15 @@ export function DailyWelcome({
         <Text style={s.buttonText}>AKTIVOVAT PROGRAM</Text>
       </Pressable>
     </>
+  );
+}
+
+export function DailyDashboard(
+  props: React.ComponentProps<typeof FoodDashboard>,
+) {
+  return props.id === "scroll" ? (
+    <ScrollDashboard {...props} />
+  ) : (
+    <FoodDashboard {...props} />
   );
 }
