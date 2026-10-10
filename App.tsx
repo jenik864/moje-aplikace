@@ -36,7 +36,7 @@ import {
   formatDuration,
 } from "./src/model";
 
-import { Screen, RankBadge, RankEmblem } from "./src/ui";
+import { Screen, RankBadge, RankEmblem, rankColors } from "./src/ui";
 
 import { programContent } from "./src/programContent";
 import { ProgramIntro } from "./src/ProgramIntro";
@@ -158,7 +158,10 @@ function Setup({
   close: () => void;
   save: (p: Program) => void;
 }) {
-  const d = definitions[id];
+  const d =
+    id === "porn"
+      ? { ...definitions[id], color: rankColors[0] }
+      : definitions[id];
   const [step, setStep] = useState(0);
   const [drawing, setDrawing] = useState(false);
   const setupScroll = useRef<ScrollView>(null);
@@ -688,6 +691,7 @@ export default function App() {
   }, [now, ready]);
   const update = (id: ProgramId, p: Program) =>
     setData((prev) => ({ ...prev, [id]: p }));
+  const pornAccent = rankColors[data.porn ? rankOf("porn", data.porn, now) : 0];
   const Quit = () => (
     <Screen>
       <View
@@ -724,7 +728,11 @@ export default function App() {
               s.programTab,
               {
                 borderBottomColor:
-                  activeProgram === id ? definitions[id].color : "transparent",
+                  activeProgram === id
+                    ? id === "porn"
+                      ? pornAccent
+                      : definitions[id].color
+                    : "transparent",
               },
             ]}
             onPress={() => {
@@ -736,7 +744,12 @@ export default function App() {
               style={[
                 s.smallTab,
                 {
-                  color: activeProgram === id ? definitions[id].color : "#888",
+                  color:
+                    activeProgram === id
+                      ? id === "porn"
+                        ? pornAccent
+                        : definitions[id].color
+                      : "#888",
                 },
               ]}
             >
@@ -903,7 +916,10 @@ export default function App() {
         <Tab.Navigator
           screenOptions={({ route }) => ({
             headerShown: false,
-            tabBarActiveTintColor: "#c5fa67",
+            tabBarActiveTintColor:
+              route.name === "Quit" && activeProgram === "porn"
+                ? pornAccent
+                : "#c5fa67",
             tabBarInactiveTintColor: "#777",
             tabBarStyle: {
               backgroundColor: "#111",
@@ -1004,9 +1020,12 @@ export default function App() {
           <SafeAreaProvider initialMetrics={initialWindowMetrics}>
             <SosProtocol
               id={sos}
+              rank={
+                sos === "porn" && data.porn ? rankOf("porn", data.porn, now) : 0
+              }
               reasons={data[sos]?.reasons ?? ""}
               close={() => setSos(null)}
-              complete={(trigger, elapsed) => {
+              complete={(trigger, elapsed, pauseStarted) => {
                 const p = data[sos];
                 if (p)
                   update(sos, {
@@ -1017,6 +1036,7 @@ export default function App() {
                         at: Date.now(),
                         trigger: trigger || "Neuvedeno",
                         durationSeconds: elapsed,
+                        ...(sos === "porn" ? { pauseStarted } : {}),
                       },
                     ],
                   });

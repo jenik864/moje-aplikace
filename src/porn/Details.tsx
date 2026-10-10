@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   View,
@@ -15,7 +15,8 @@ import {
 import Svg, { Path } from "react-native-svg";
 import { Screen, rankColors } from "../ui";
 import { Program, ranks, milestones, rankOf } from "../model";
-import { palette, RankMark, SectionLabel } from "./visuals";
+import { RankThemeProvider, useRankTheme, tint } from "./theme";
+import { palette, RankMark, SectionLabel, TimerDial } from "./visuals";
 import {
   summary,
   dayActivity,
@@ -47,6 +48,9 @@ export function PornDetails({
   close: () => void;
   update: (p: Program) => void;
 }) {
+  const scroll = useRef<ScrollView>(null);
+  const { accent } = useRankTheme();
+  const s = makeStyles(accent);
   const [editing, setEditing] = useState(false);
   const [reasons, setReasons] = useState(p.reasons);
   useEffect(() => {
@@ -65,6 +69,7 @@ export function PornDetails({
               <Text style={s.small}>PORN REBOOT</Text>
             </View>
             <ScrollView
+              ref={scroll}
               contentInsetAdjustmentBehavior="never"
               automaticallyAdjustContentInsets={false}
               contentContainerStyle={s.content}
@@ -107,6 +112,9 @@ export function PornDetails({
                   kind={kind}
                   p={p}
                   now={now}
+                  onPreview={() =>
+                    scroll.current?.scrollTo({ y: 0, animated: true })
+                  }
                   edit={() => {
                     setReasons(p.reasons);
                     setEditing(true);
@@ -122,19 +130,24 @@ export function PornDetails({
 }
 
 function DetailBody({
+  onPreview,
   kind,
   p,
   now,
   edit,
 }: {
   kind: DetailKind;
+  onPreview: () => void;
   p: Program;
   now: number;
   edit: () => void;
 }) {
+  const { accent } = useRankTheme();
+  const s = makeStyles(accent);
   const stats = summary(p, now);
   const rank = rankOf("porn", p, now);
   const prime = Math.max(rank, p.prime);
+  const [previewRank, setPreviewRank] = useState(rank);
   const [selected, setSelected] = useState(now);
   const selectedDate = new Date(selected);
   const detail = dayActivity(p, selectedDate, now);
@@ -158,14 +171,37 @@ function DetailBody({
             dosažený rank i po resetu.
           </Text>
         </View>
+        <View style={s.card}>
+          <SectionLabel>
+            NÁHLED CIFERNÍKU / {ranks[previewRank].toUpperCase()}
+          </SectionLabel>
+          <RankThemeProvider rank={previewRank}>
+            <TimerDial
+              seconds={milestones[previewRank] * 86400}
+              progress={0.35}
+              preview
+            />
+          </RankThemeProvider>
+          <Text style={s.small}>
+            Vyber rank v seznamu a prohlédni si jeho ciferník. Náhled nemění
+            tvoji sérii ani rank.
+          </Text>
+        </View>
         {ranks.map((name, i) => (
-          <View
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Náhled ciferníku ${name}`}
+            accessibilityState={{ selected: previewRank === i }}
+            onPress={() => {
+              setPreviewRank(i);
+              onPreview();
+            }}
             key={name}
             style={[
               s.rankItem,
               i === rank && {
                 borderColor: `${rankColors[i]}70`,
-                backgroundColor: "#191c17",
+                backgroundColor: tint(accent, 0.08),
               },
             ]}
           >
@@ -176,7 +212,7 @@ function DetailBody({
                   s.title,
                   {
                     fontSize: 18,
-                    color: i <= rank ? rankColors[i] : "#8b8f86",
+                    color: i <= prime ? rankColors[i] : "#8b8f86",
                   },
                 ]}
               >
@@ -187,14 +223,11 @@ function DetailBody({
               </Text>
             </View>
             <Text
-              style={[
-                s.small,
-                { color: i === rank ? palette.green : palette.muted },
-              ]}
+              style={[s.small, { color: i === rank ? accent : palette.muted }]}
             >
-              {i === rank ? "CURRENT" : i < rank ? "DOSAŽENO" : "UZAMČENO"}
+              {i === rank ? "CURRENT" : i <= prime ? "DOSAŽENO" : "UZAMČENO"}
             </Text>
-          </View>
+          </Pressable>
         ))}
         <Text style={s.body}>
           Každý milník otevírá další rank. Nejbližší cíl sleduj na hlavním
@@ -238,24 +271,37 @@ function DetailBody({
                           backgroundColor: day.resets.length
                             ? "#2d171b"
                             : day.successful
-                              ? "#202d18"
-                              : "#191c18",
+                              ? tint(accent, 0.18)
+                              : "#201e1d",
                           borderColor: chosen
                             ? palette.text
                             : day.pending
-                              ? palette.green
+                              ? accent
                               : "transparent",
                         },
                       ]}
                     >
                       <Text
                         style={{
-                          color: day.active ? palette.text : "#555c51",
+                          color: day.active ? palette.text : "#89827d",
                           fontSize: 13,
                         }}
                       >
                         {day.date.getDate()}
                       </Text>
+                      {day.pending && (
+                        <View
+                          style={{
+                            position: "absolute",
+                            top: 4,
+                            right: 4,
+                            width: 4,
+                            height: 4,
+                            borderRadius: 2,
+                            backgroundColor: accent,
+                          }}
+                        />
+                      )}
                       {day.resets.length > 0 && <View style={s.resetDot} />}
                     </Pressable>
                   );
@@ -263,11 +309,9 @@ function DetailBody({
             </View>
           ))}
           <View style={[s.row, { flexWrap: "wrap" }]}>
-            <Text style={[s.small, { color: palette.green }]}>
-              ● Splněný den
-            </Text>
+            <Text style={[s.small, { color: accent }]}>● Splněný den</Text>
             <Text style={[s.small, { color: palette.red }]}>● Reset</Text>
-            <Text style={s.small}>○ Dnes probíhá</Text>
+            <Text style={s.small}>● Dnes · světlý obrys = výběr</Text>
           </View>
         </View>
         <View style={s.card}>
@@ -296,7 +340,7 @@ function DetailBody({
           {detail.resets.map((event, i) => (
             <EventRow
               key={`r${i}`}
-              label="Reset série"
+              label="Ukončená série"
               value={durationLabel(event.duration)}
               at={event.at}
             />
@@ -304,15 +348,19 @@ function DetailBody({
           {detail.sos.map((event, i) => (
             <EventRow
               key={`s${i}`}
-              label={event.trigger}
-              value={`${event.durationSeconds ?? 0} s pauzy`}
+              label={
+                event.trigger === "Neuvedeno"
+                  ? "Spouštěč nevybrán"
+                  : event.trigger
+              }
+              value={pauseLabel(event)}
               at={event.at}
             />
           ))}
         </View>
         <Text style={s.body}>
-          Červený bod a zelený obrys se mohou objevit současně: dnes proběhl
-          reset, ale nová série už pokračuje.
+          Malá značka v rohu označuje dnešek. Světlý obrys označuje vybraný den;
+          červená tečka zaznamenaný reset.
         </Text>
       </>
     );
@@ -336,7 +384,7 @@ function DetailBody({
             <Metric label="NEJLEPŠÍ SÉRIE" value={durationLabel(stats.best)} />
           </View>
           <View style={[s.card, { flex: 1 }]}>
-            <Metric label="POKUSY" value={String(stats.attempts)} />
+            <Metric label="VŠECHNY SÉRIE" value={String(stats.attempts)} />
           </View>
         </View>
         <View style={s.card}>
@@ -379,9 +427,7 @@ function DetailBody({
             triggers.map(([trigger, count]) => (
               <View key={trigger} style={s.row}>
                 <Text style={[s.body, { flex: 1 }]}>{trigger}</Text>
-                <Text style={{ color: palette.violet, fontSize: 18 }}>
-                  {count}
-                </Text>
+                <Text style={{ color: accent, fontSize: 18 }}>{count}</Text>
               </View>
             ))
           ) : (
@@ -416,7 +462,7 @@ function DetailBody({
           <Svg width="100%" height={100} viewBox={`${x} ${y} ${w} ${h}`}>
             <Path
               d={p.signature}
-              stroke={palette.violet}
+              stroke={accent}
               strokeWidth={2}
               strokeLinecap="round"
               fill="none"
@@ -491,8 +537,12 @@ function DetailBody({
           .map((event, i) => (
             <View key={`${event.at}-${i}`} style={s.card}>
               <EventRow
-                label={event.trigger}
-                value={`${event.durationSeconds ?? 0} s pauzy`}
+                label={
+                  event.trigger === "Neuvedeno"
+                    ? "Spouštěč nevybrán"
+                    : event.trigger
+                }
+                value={pauseLabel(event)}
                 at={event.at}
               />
             </View>
@@ -502,6 +552,8 @@ function DetailBody({
   );
 }
 function Metric({ label, value }: { label: string; value: string }) {
+  const { accent } = useRankTheme();
+  const s = makeStyles(accent);
   return (
     <View style={{ flex: 1, gap: 8 }}>
       <SectionLabel>{label}</SectionLabel>
@@ -518,6 +570,8 @@ function EventRow({
   value: string;
   at: number;
 }) {
+  const { accent } = useRankTheme();
+  const s = makeStyles(accent);
   return (
     <View style={[s.row, { alignItems: "flex-start" }]}>
       <View style={{ flex: 1, gap: 4 }}>
@@ -533,118 +587,138 @@ function EventRow({
     </View>
   );
 }
-const s = StyleSheet.create({
-  editor: {
-    minHeight: 220,
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#32263f",
-    backgroundColor: "#16121d",
-    color: palette.text,
-    fontSize: 17,
-    lineHeight: 27,
-    textAlignVertical: "top",
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingVertical: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: palette.border,
-  },
-  back: {
-    color: palette.text,
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: 1,
-  },
-  content: { padding: 24, gap: 20, paddingBottom: 40 },
-  heading: {
-    fontSize: 34,
-    fontWeight: "600",
-    letterSpacing: -1,
-    color: palette.text,
-  },
-  card: {
-    padding: 20,
-    gap: 14,
-    backgroundColor: palette.panel,
-    borderWidth: 1,
-    borderColor: palette.border,
-    borderRadius: 16,
-  },
-  row: { flexDirection: "row", gap: 16, alignItems: "center" },
-  body: { color: "#adb3a6", fontSize: 14, lineHeight: 23 },
-  small: { color: palette.muted, fontSize: 11, lineHeight: 18 },
-  title: {
-    color: palette.text,
-    fontSize: 22,
-    fontWeight: "500",
-    letterSpacing: -0.5,
-  },
-  stat: {
-    color: palette.text,
-    fontSize: 25,
-    fontWeight: "500",
-    fontVariant: ["tabular-nums"],
-    letterSpacing: -0.6,
-  },
-  rankItem: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 16,
-    flexDirection: "row",
-    gap: 14,
-    alignItems: "center",
-  },
-  calendarRow: { flexDirection: "row", gap: 5 },
-  weekday: { flex: 1, textAlign: "center", color: palette.muted, fontSize: 9 },
-  day: {
-    flex: 1,
-    height: 36,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  resetDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: palette.red,
-    position: "absolute",
-    bottom: 4,
-  },
-  manifest: {
-    padding: 24,
-    gap: 16,
-    backgroundColor: "#16121d",
-    borderWidth: 1,
-    borderColor: "#32263f",
-    borderRadius: 18,
-  },
-  quote: { color: palette.violet, fontSize: 60, lineHeight: 45 },
-  manifestText: {
-    color: "#e5dff0",
-    fontSize: 21,
-    lineHeight: 32,
-    fontWeight: "400",
-  },
-  rule: { height: 1, backgroundColor: "#362a45", marginVertical: 6 },
-  action: {
-    padding: 18,
-    borderRadius: 12,
-    backgroundColor: palette.violet,
-    alignItems: "center",
-  },
-  actionText: {
-    color: "#121016",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-});
+const makeStyles = (accent: string) =>
+  StyleSheet.create({
+    editor: {
+      minHeight: 220,
+      padding: 20,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: tint(accent, 0.22),
+      backgroundColor: tint(accent, 0.05),
+      color: palette.text,
+      fontSize: 17,
+      lineHeight: 27,
+      textAlignVertical: "top",
+    },
+    header: {
+      paddingHorizontal: 24,
+      paddingVertical: 18,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      borderBottomWidth: 1,
+      borderBottomColor: palette.border,
+    },
+    back: {
+      color: palette.text,
+      fontSize: 12,
+      fontWeight: "600",
+      letterSpacing: 1,
+    },
+    content: { padding: 24, gap: 20, paddingBottom: 40 },
+    heading: {
+      fontSize: 34,
+      fontWeight: "600",
+      letterSpacing: -1,
+      color: palette.text,
+    },
+    card: {
+      padding: 20,
+      gap: 14,
+      backgroundColor: palette.panel,
+      borderWidth: 1,
+      borderColor: palette.border,
+      borderRadius: 16,
+    },
+    row: { flexDirection: "row", gap: 16, alignItems: "center" },
+    body: { color: "#adb3a6", fontSize: 14, lineHeight: 23 },
+    small: { color: palette.muted, fontSize: 11, lineHeight: 18 },
+    title: {
+      color: palette.text,
+      fontSize: 22,
+      fontWeight: "500",
+      letterSpacing: -0.5,
+    },
+    stat: {
+      color: palette.text,
+      fontSize: 25,
+      fontWeight: "500",
+      fontVariant: ["tabular-nums"],
+      letterSpacing: -0.6,
+    },
+    rankItem: {
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: palette.border,
+      padding: 16,
+      flexDirection: "row",
+      gap: 14,
+      alignItems: "center",
+    },
+    calendarRow: { flexDirection: "row", gap: 5 },
+    weekday: {
+      flex: 1,
+      textAlign: "center",
+      color: palette.muted,
+      fontSize: 9,
+    },
+    day: {
+      flex: 1,
+      height: 36,
+      borderRadius: 8,
+      borderWidth: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    resetDot: {
+      width: 3,
+      height: 3,
+      borderRadius: 2,
+      backgroundColor: palette.red,
+      position: "absolute",
+      bottom: 4,
+    },
+    manifest: {
+      padding: 24,
+      gap: 16,
+      backgroundColor: tint(accent, 0.05),
+      borderWidth: 1,
+      borderColor: tint(accent, 0.22),
+      borderRadius: 18,
+    },
+    quote: { color: accent, fontSize: 60, lineHeight: 45 },
+    manifestText: {
+      color: "#ede6e1",
+      fontSize: 21,
+      lineHeight: 32,
+      fontWeight: "400",
+    },
+    rule: { height: 1, backgroundColor: tint(accent, 0.2), marginVertical: 6 },
+    action: {
+      padding: 18,
+      borderRadius: 12,
+      backgroundColor: accent,
+      alignItems: "center",
+    },
+    actionText: {
+      color: "#121016",
+      fontSize: 12,
+      fontWeight: "700",
+      letterSpacing: 1,
+    },
+  });
+
+function pauseLabel(event: {
+  durationSeconds?: number;
+  pauseStarted?: boolean;
+}) {
+  const seconds = event.durationSeconds ?? 0;
+  return seconds > 0
+    ? `${seconds} s pauzy`
+    : event.pauseStarted
+      ? "Pauza kratší než 1 s"
+      : event.pauseStarted === false
+        ? "Pauza nespuštěna"
+        : "Bez zaznamenané pauzy";
+}

@@ -16,6 +16,7 @@ export type TriggerEvent = {
   at: number;
   trigger: string;
   durationSeconds?: number;
+  pauseStarted?: boolean;
 };
 export type Program = {
   signedAt?: number;

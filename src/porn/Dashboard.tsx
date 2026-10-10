@@ -7,11 +7,27 @@ import {
   TimerDial,
   SectionLabel,
   ArrowIcon,
+  SosSymbol,
 } from "./visuals";
 import { summary, trendDays, durationLabel } from "./analytics";
 import { PornDetails, DetailKind } from "./Details";
+import { rankColors } from "../ui";
+import { RankThemeProvider, useRankTheme, tint } from "./theme";
 import { SeriesChart } from "./Charts";
-export function PornDashboard({
+type DashboardProps = {
+  p: Program;
+  now: number;
+  update: (p: Program) => void;
+  sos: () => void;
+};
+export function PornDashboard(props: DashboardProps) {
+  return (
+    <RankThemeProvider rank={rankOf("porn", props.p, props.now)}>
+      <DashboardBody {...props} />
+    </RankThemeProvider>
+  );
+}
+function DashboardBody({
   p,
   now,
   update,
@@ -22,10 +38,24 @@ export function PornDashboard({
   update: (p: Program) => void;
   sos: () => void;
 }) {
+  const { accent } = useRankTheme();
+  const s = React.useMemo(() => makeStyles(accent), [accent]);
   const [detail, setDetail] = useState<DetailKind | null>(null);
   const rank = rankOf("porn", p, now);
   const prime = Math.max(rank, p.prime);
   const stats = summary(p, now);
+  const lastRank = useRef(rank);
+  const [unlocked, setUnlocked] = useState(false);
+  useEffect(() => {
+    if (rank > lastRank.current) {
+      setUnlocked(true);
+      const timer = setTimeout(() => setUnlocked(false), 6000);
+      lastRank.current = rank;
+      return () => clearTimeout(timer);
+    }
+    lastRank.current = rank;
+    setUnlocked(false);
+  }, [rank]);
   const seconds = Math.floor(stats.current / 1000);
   const progress =
     rank === 9
@@ -75,10 +105,22 @@ export function PornDashboard({
           </View>
         </View>
         <View style={s.prime}>
-          <Text style={s.primeLabel}>PRIME ›</Text>
-          <Text style={s.primeName}>{ranks[prime]}</Text>
+          <Text style={[s.primeLabel, { color: rankColors[prime] }]}>
+            PRIME ›
+          </Text>
+          <Text style={[s.primeName, { color: rankColors[prime] }]}>
+            {ranks[prime]}
+          </Text>
         </View>
       </Pressable>
+      {unlocked && (
+        <Text
+          accessibilityRole="alert"
+          style={{ color: accent, textAlign: "center", fontSize: 12 }}
+        >
+          Nový rank · {ranks[rank]}. Tvůj ciferník je odemčený.
+        </Text>
+      )}
       <TimerDial seconds={seconds} progress={progress} />
       <Pressable
         accessibilityRole="button"
@@ -103,19 +145,28 @@ export function PornDashboard({
             : `Zbývá ${leftDays} dní · ${leftHours} h · ${leftMinutes} min`}
         </Text>
       </Pressable>
-      <Pressable accessibilityRole="button" onPress={sos} style={s.sos}>
-        <View style={s.sosIcon}>
-          <Text style={{ color: palette.red, fontSize: 20, fontWeight: "700" }}>
-            !
-          </Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="SOS: Zastavit impulz"
+        onPress={sos}
+        style={({ pressed }) => [s.sos, pressed && { opacity: 0.8 }]}
+      >
+        <View style={s.sosTop}>
+          <Text style={s.sosEyebrow}>SOS / ZÍSKEJ ODSTUP</Text>
+          <Text style={s.sosDuration}>02:00</Text>
         </View>
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={s.sosTitle}>Potřebuju zastavit impulz</Text>
-          <Text style={s.sosCaption}>
-            SOS protokol · vrať se ke svému rozhodnutí
-          </Text>
+        <View style={s.sosBody}>
+          <SosSymbol />
+          <View style={{ flex: 1, gap: 6 }}>
+            <Text style={s.sosTitle}>Zastavit impulz</Text>
+            <Text style={s.sosCaption}>Dvě minuty pro tvoje rozhodnutí.</Text>
+          </View>
+          <ArrowIcon color="#ffb6bc" size={22} />
         </View>
-        <ArrowIcon color={palette.red} />
+        <View style={s.sosRule} />
+        <Text style={s.sosFoot}>
+          Změň místo. Zpomal. Vrať se ke svému plánu.
+        </Text>
       </Pressable>
       <View style={s.metrics}>
         <Pressable
@@ -134,7 +185,14 @@ export function PornDashboard({
           <SectionLabel>NÁVRATY ZE SOS ›</SectionLabel>
           <Text style={s.metricValue}>
             {stats.sos}
-            <Text style={s.metricUnit}> záznamů</Text>
+            <Text style={s.metricUnit}>
+              {" "}
+              {stats.sos === 1
+                ? "záznam"
+                : stats.sos < 5 && stats.sos > 0
+                  ? "záznamy"
+                  : "záznamů"}
+            </Text>
           </Text>
         </Pressable>
       </View>
@@ -155,13 +213,13 @@ export function PornDashboard({
                     s.miniCell,
                     {
                       backgroundColor: !day.active
-                        ? "#1a1f17"
+                        ? "#201e1c"
                         : day.resets.length
                           ? "#47262c"
                           : day.successful
-                            ? "#a4ce65"
-                            : "#222c1b",
-                      borderColor: day.pending ? palette.green : "transparent",
+                            ? accent
+                            : tint(accent, 0.14),
+                      borderColor: day.pending ? accent : "transparent",
                     },
                   ]}
                 >
@@ -190,7 +248,7 @@ export function PornDashboard({
           <Text style={s.caption}>
             {stats.attempts === 1
               ? "První série právě vzniká."
-              : `${stats.attempts} sérií ve tvé historii`}
+              : `${p.history.length} ukončených · 1 právě běží`}
           </Text>
           <Text style={s.link}>ANALÝZA ›</Text>
         </View>
@@ -227,6 +285,8 @@ export function PornDashboard({
   );
 }
 function CardHeading({ label, detail }: { label: string; detail: string }) {
+  const { accent } = useRankTheme();
+  const s = makeStyles(accent);
   return (
     <View style={s.spread}>
       <SectionLabel>{label}</SectionLabel>
@@ -235,6 +295,8 @@ function CardHeading({ label, detail }: { label: string; detail: string }) {
   );
 }
 function ResetHold({ onReset }: { onReset: () => void }) {
+  const { accent } = useRankTheme();
+  const s = makeStyles(accent);
   const [fraction, setFraction] = useState(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const callback = useRef(onReset);
@@ -280,6 +342,8 @@ function ResetHold({ onReset }: { onReset: () => void }) {
   );
 }
 export function PornWelcome({ activate }: { activate: () => void }) {
+  const { accent } = useRankTheme();
+  const s = makeStyles(accent);
   return (
     <>
       <SectionLabel>DETOX / 01</SectionLabel>
@@ -312,7 +376,7 @@ export function PornWelcome({ activate }: { activate: () => void }) {
         style={s.activate}
       >
         <Text style={s.activateText}>AKTIVOVAT PROGRAM</Text>
-        <ArrowIcon color="#18200f" />
+        <ArrowIcon color="#1a110d" />
       </Pressable>
       <Text style={s.foot}>
         Série sleduje vědomé sledování porna. Masturbace bez porna ani náhodné
@@ -321,213 +385,232 @@ export function PornWelcome({ activate }: { activate: () => void }) {
     </>
   );
 }
-const s = StyleSheet.create({
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  title: {
-    fontSize: 29,
-    fontWeight: "600",
-    letterSpacing: -1,
-    color: palette.text,
-    marginTop: 7,
-  },
-  live: { flexDirection: "row", alignItems: "center", gap: 6 },
-  liveDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: palette.green,
-  },
-  liveText: { fontSize: 8, color: "#879c70", letterSpacing: 1 },
-  rankPanel: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: palette.border,
-    backgroundColor: palette.panel,
-  },
-  rankCurrent: { flexDirection: "row", alignItems: "center", gap: 14 },
-  rankName: {
-    fontSize: 23,
-    color: palette.text,
-    letterSpacing: -0.5,
-    fontWeight: "500",
-  },
-  prime: { alignItems: "flex-end", gap: 7 },
-  primeLabel: {
-    color: palette.violet,
-    fontSize: 9,
-    fontWeight: "700",
-    letterSpacing: 1.5,
-  },
-  primeName: { fontSize: 16, color: "#d0bff2", fontWeight: "500" },
-  next: { gap: 10, paddingHorizontal: 4 },
-  spread: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  nextTitle: { fontSize: 12, color: "#c8d1be", fontWeight: "500" },
-  percent: {
-    color: palette.green,
-    fontSize: 11,
-    fontVariant: ["tabular-nums"],
-  },
-  track: {
-    height: 3,
-    backgroundColor: "#283121",
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  fill: { height: 3, backgroundColor: palette.green },
-  caption: { fontSize: 10, color: palette.muted, lineHeight: 17 },
-  sos: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    padding: 16,
-    backgroundColor: "#211316",
-    borderWidth: 1,
-    borderColor: "#55232b",
-    borderRadius: 14,
-    marginTop: 6,
-  },
-  sosIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#71313b",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sosTitle: { color: "#ffa3a6", fontSize: 14, fontWeight: "600" },
-  sosCaption: { color: "#b37d80", fontSize: 10, lineHeight: 16 },
-  metrics: { flexDirection: "row", gap: 10 },
-  metric: {
-    flex: 1,
-    backgroundColor: palette.panel,
-    borderColor: palette.border,
-    borderWidth: 1,
-    padding: 16,
-    borderRadius: 14,
-    gap: 14,
-  },
-  metricValue: {
-    color: palette.text,
-    fontSize: 21,
-    fontWeight: "500",
-    letterSpacing: -0.5,
-    fontVariant: ["tabular-nums"],
-  },
-  metricUnit: { fontSize: 10, color: palette.muted, fontWeight: "400" },
-  card: {
-    padding: 18,
-    borderRadius: 16,
-    borderColor: palette.border,
-    borderWidth: 1,
-    backgroundColor: palette.panel,
-    gap: 16,
-  },
-  miniMatrix: { gap: 6 },
-  matrixRow: { flexDirection: "row", gap: 6 },
-  miniCell: {
-    flex: 1,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  resetDot: {
-    width: 3,
-    height: 3,
-    backgroundColor: palette.red,
-    borderRadius: 2,
-  },
-  link: { fontSize: 9, color: palette.green, letterSpacing: 1 },
-  manifest: {
-    padding: 20,
-    borderRadius: 16,
-    backgroundColor: "#17131d",
-    borderWidth: 1,
-    borderColor: "#33273f",
-    gap: 16,
-  },
-  manifestText: {
-    color: "#e1d8ed",
-    fontSize: 18,
-    lineHeight: 28,
-    fontWeight: "400",
-  },
-  manifestFoot: { color: "#877791", fontSize: 10, lineHeight: 16 },
-  reset: {
-    position: "relative",
-    overflow: "hidden",
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#272522",
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 6,
-  },
-  resetFill: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    height: 2,
-    backgroundColor: palette.red,
-  },
-  foot: { fontSize: 10, color: "#6e7667", lineHeight: 17, textAlign: "center" },
-  welcome: {
-    alignItems: "center",
-    padding: 24,
-    gap: 24,
-    borderRadius: 22,
-    borderColor: "#2c3125",
-    borderWidth: 1,
-    backgroundColor: palette.panel,
-  },
-  welcomeTitle: {
-    color: palette.text,
-    fontSize: 30,
-    lineHeight: 38,
-    fontWeight: "600",
-    textAlign: "center",
-    letterSpacing: -0.8,
-  },
-  welcomeBody: {
-    color: "#a8b09f",
-    fontSize: 14,
-    lineHeight: 23,
-    flexShrink: 1,
-  },
-  number: {
-    color: palette.green,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-  activate: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 20,
-    borderRadius: 14,
-    backgroundColor: palette.green,
-  },
-  activateText: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-    color: "#18200f",
-  },
-});
+const makeStyles = (accent: string) =>
+  StyleSheet.create({
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    title: {
+      fontSize: 29,
+      fontWeight: "600",
+      letterSpacing: -1,
+      color: palette.text,
+      marginTop: 7,
+    },
+    live: { flexDirection: "row", alignItems: "center", gap: 6 },
+    liveDot: {
+      width: 5,
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: accent,
+    },
+    liveText: { fontSize: 8, color: accent, letterSpacing: 1 },
+    rankPanel: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.panel,
+    },
+    rankCurrent: { flexDirection: "row", alignItems: "center", gap: 14 },
+    rankName: {
+      fontSize: 23,
+      color: palette.text,
+      letterSpacing: -0.5,
+      fontWeight: "500",
+    },
+    prime: { alignItems: "flex-end", gap: 7 },
+    primeLabel: {
+      color: accent,
+      fontSize: 9,
+      fontWeight: "700",
+      letterSpacing: 1.5,
+    },
+    primeName: { fontSize: 16, color: "#d0bff2", fontWeight: "500" },
+    next: { gap: 10, paddingHorizontal: 4 },
+    spread: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    nextTitle: { fontSize: 12, color: "#ded5cf", fontWeight: "500" },
+    percent: {
+      color: accent,
+      fontSize: 11,
+      fontVariant: ["tabular-nums"],
+    },
+    track: {
+      height: 3,
+      backgroundColor: tint(accent, 0.18),
+      borderRadius: 2,
+      overflow: "hidden",
+    },
+    fill: { height: 3, backgroundColor: accent },
+    caption: { fontSize: 12, color: palette.muted, lineHeight: 19 },
+    sos: {
+      padding: 18,
+      backgroundColor: "#1c1216",
+      borderWidth: 1,
+      borderColor: "#62303d",
+      borderRadius: 20,
+      gap: 14,
+      overflow: "hidden",
+    },
+    sosTop: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    sosEyebrow: {
+      color: "#d5919b",
+      fontSize: 9,
+      letterSpacing: 1.8,
+      fontWeight: "600",
+    },
+    sosDuration: {
+      color: "#c7848e",
+      fontSize: 11,
+      fontVariant: ["tabular-nums"],
+    },
+    sosBody: { flexDirection: "row", alignItems: "center", gap: 12 },
+    sosTitle: {
+      color: "#ffd6da",
+      fontSize: 20,
+      fontWeight: "600",
+      letterSpacing: -0.4,
+    },
+    sosCaption: { color: "#c6a2aa", fontSize: 12, lineHeight: 18 },
+    sosRule: { height: 1, backgroundColor: "#3e242d" },
+    sosFoot: { color: "#ba969f", fontSize: 11, lineHeight: 18 },
+    metrics: { flexDirection: "row", gap: 10 },
+    metric: {
+      flex: 1,
+      backgroundColor: palette.panel,
+      borderColor: palette.border,
+      borderWidth: 1,
+      padding: 16,
+      borderRadius: 14,
+      gap: 14,
+    },
+    metricValue: {
+      color: palette.text,
+      fontSize: 21,
+      fontWeight: "500",
+      letterSpacing: -0.5,
+      fontVariant: ["tabular-nums"],
+    },
+    metricUnit: { fontSize: 10, color: palette.muted, fontWeight: "400" },
+    card: {
+      padding: 18,
+      borderRadius: 16,
+      borderColor: palette.border,
+      borderWidth: 1,
+      backgroundColor: palette.panel,
+      gap: 16,
+    },
+    miniMatrix: { gap: 6 },
+    matrixRow: { flexDirection: "row", gap: 6 },
+    miniCell: {
+      flex: 1,
+      height: 20,
+      borderRadius: 4,
+      borderWidth: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    resetDot: {
+      width: 3,
+      height: 3,
+      backgroundColor: palette.red,
+      borderRadius: 2,
+    },
+    link: { fontSize: 11, color: accent, letterSpacing: 1 },
+    manifest: {
+      padding: 20,
+      borderRadius: 16,
+      backgroundColor: tint(accent, 0.05),
+      borderWidth: 1,
+      borderColor: tint(accent, 0.22),
+      gap: 16,
+    },
+    manifestText: {
+      color: "#ede5df",
+      fontSize: 18,
+      lineHeight: 28,
+      fontWeight: "400",
+    },
+    manifestFoot: { color: "#b4a399", fontSize: 10, lineHeight: 16 },
+    reset: {
+      position: "relative",
+      overflow: "hidden",
+      padding: 16,
+      borderWidth: 1,
+      borderColor: "#272522",
+      borderRadius: 12,
+      alignItems: "center",
+      marginTop: 6,
+    },
+    resetFill: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      height: 2,
+      backgroundColor: palette.red,
+    },
+    foot: {
+      fontSize: 10,
+      color: "#a39b96",
+      lineHeight: 17,
+      textAlign: "center",
+    },
+    welcome: {
+      alignItems: "center",
+      padding: 24,
+      gap: 24,
+      borderRadius: 22,
+      borderColor: "#2c3125",
+      borderWidth: 1,
+      backgroundColor: palette.panel,
+    },
+    welcomeTitle: {
+      color: palette.text,
+      fontSize: 30,
+      lineHeight: 38,
+      fontWeight: "600",
+      textAlign: "center",
+      letterSpacing: -0.8,
+    },
+    welcomeBody: {
+      color: "#a8b09f",
+      fontSize: 14,
+      lineHeight: 23,
+      flexShrink: 1,
+    },
+    number: {
+      color: accent,
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 1,
+    },
+    activate: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      padding: 20,
+      borderRadius: 14,
+      backgroundColor: accent,
+    },
+    activateText: {
+      fontSize: 12,
+      fontWeight: "700",
+      letterSpacing: 1,
+      color: "#1a110d",
+    },
+  });

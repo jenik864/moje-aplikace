@@ -1,19 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, Text, View, Pressable, StyleSheet } from "react-native";
-import { Screen } from "./ui";
+import { SosSymbol } from "./porn/visuals";
+import { tint } from "./porn/theme";
+import { Screen, rankColors } from "./ui";
 import { definitions, ProgramId, protocolRemaining } from "./model";
 import { programContent } from "./programContent";
 export function SosProtocol({
   id,
   reasons,
+  rank = 0,
   close,
   complete,
 }: {
   id: ProgramId;
   reasons: string;
+  rank?: number;
   close: () => void;
-  complete: (trigger: string, elapsed: number) => void;
+  complete: (trigger: string, elapsed: number, pauseStarted?: boolean) => void;
 }) {
+  const accent = rankColors[rank];
   const s = { ...baseStyles, ...(id === "porn" ? pornStyles : {}) };
   const [trigger, setTrigger] = useState("");
   const [started, setStarted] = useState<number | null>(null);
@@ -37,6 +42,7 @@ export function SosProtocol({
             duration,
             Math.floor(Math.max(0, Date.now() - started) / 1000),
           ),
+      started !== null,
     );
   return (
     <Screen modal>
@@ -52,6 +58,18 @@ export function SosProtocol({
       >
         <Text style={s.label}>SOS · {definitions[id].title.toUpperCase()}</Text>
         <Text style={s.heading}>Teď máš volbu.</Text>
+        {id === "porn" && (
+          <View
+            style={[s.panel, { borderColor: tint(accent, 0.28), padding: 18 }]}
+          >
+            <Text style={[s.title, { color: accent }]}>
+              PŘIPOMEŇ SI SVOJE PROČ
+            </Text>
+            <Text numberOfLines={3} style={s.body}>
+              {reasons}
+            </Text>
+          </View>
+        )}
         <View style={s.task}>
           <Text style={s.label}>
             {started === null
@@ -61,10 +79,45 @@ export function SosProtocol({
                 : "PAUZA DOKONČENA"}
           </Text>
           <Text style={s.body}>{definitions[id].action}</Text>
-          <Text style={s.timer}>
-            {Math.floor(remaining / 60)}:
-            {String(remaining % 60).padStart(2, "0")}
-          </Text>
+          {id === "porn" ? (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 22,
+              }}
+            >
+              <SosSymbol size={72} />
+              <Text style={s.timer}>
+                {Math.floor(remaining / 60)}:
+                {String(remaining % 60).padStart(2, "0")}
+              </Text>
+            </View>
+          ) : (
+            <Text style={s.timer}>
+              {Math.floor(remaining / 60)}:
+              {String(remaining % 60).padStart(2, "0")}
+            </Text>
+          )}
+          {id === "porn" && (
+            <View
+              style={{
+                height: 3,
+                backgroundColor: "#43252f",
+                borderRadius: 2,
+                overflow: "hidden",
+              }}
+            >
+              <View
+                style={{
+                  height: 3,
+                  width: `${((duration - remaining) / duration) * 100}%`,
+                  backgroundColor: "#ff999e",
+                }}
+              />
+            </View>
+          )}
           {started === null ? (
             <Pressable
               accessibilityRole="button"
@@ -85,10 +138,12 @@ export function SosProtocol({
             </Text>
           )}
         </View>
-        <View style={s.panel}>
-          <Text style={s.title}>TVŮJ DŮVOD</Text>
-          <Text style={s.body}>{reasons}</Text>
-        </View>
+        {id !== "porn" && (
+          <View style={s.panel}>
+            <Text style={s.title}>TVŮJ DŮVOD</Text>
+            <Text style={s.body}>{reasons}</Text>
+          </View>
+        )}
         <Text style={s.title}>CO SPUSTILO IMPULZ?</Text>
         <View style={s.row}>
           {(id === "food"
@@ -201,7 +256,7 @@ const baseStyles = StyleSheet.create({
 // Porn Reboot has its own visual treatment; daily programs retain theirs.
 const pornStyles = StyleSheet.create({
   topBar: { paddingHorizontal: 24, paddingTop: 14, paddingBottom: 10 },
-  content: { padding: 24, gap: 24, paddingBottom: 32 },
+  content: { padding: 24, gap: 18, paddingBottom: 32 },
   heading: {
     color: "#f3f3ed",
     fontSize: 34,
@@ -210,9 +265,9 @@ const pornStyles = StyleSheet.create({
   },
   task: {
     padding: 24,
-    gap: 22,
+    gap: 18,
     borderWidth: 1,
-    borderColor: "#522b31",
+    borderColor: "#62303d",
     borderRadius: 24,
     backgroundColor: "#171112",
   },
@@ -239,12 +294,12 @@ const pornStyles = StyleSheet.create({
   },
   timer: {
     color: "#ff999e",
-    fontSize: 68,
+    fontSize: 50,
     fontWeight: "500",
     letterSpacing: -3,
     textAlign: "center",
     fontVariant: ["tabular-nums"],
-    paddingVertical: 16,
+    paddingVertical: 4,
   },
   button: {
     backgroundColor: "#ff999e",

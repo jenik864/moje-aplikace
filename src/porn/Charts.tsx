@@ -12,6 +12,7 @@ import Svg, {
 } from "react-native-svg";
 import type { Program } from "../model";
 import { seriesData, durationLabel, trendDays } from "./analytics";
+import { useRankTheme, tint } from "./theme";
 import { palette } from "./visuals";
 export function SeriesChart({
   p,
@@ -22,11 +23,12 @@ export function SeriesChart({
   now: number;
   compact?: boolean;
 }) {
+  const { accent } = useRankTheme();
   const data = seriesData(p, now).slice(-8);
-  const [selected, setSelected] = React.useState<string | null>(null);
+  const [selected, setSelected] = React.useState<string | null>("current");
   const maximum = Math.max(60000, ...data.map((d) => d.duration));
   const points = data.map((item, i) => ({
-    x: data.length === 1 ? 150 : 30 + (i * 240) / (data.length - 1),
+    x: data.length === 1 ? 164 : 52 + (i * 224) / (data.length - 1),
     y: 140 - (item.duration / maximum) * 105,
   }));
   const path = points
@@ -44,25 +46,26 @@ export function SeriesChart({
       >
         <Defs>
           <LinearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={palette.green} stopOpacity=".18" />
-            <Stop offset="1" stopColor={palette.green} stopOpacity="0" />
+            <Stop offset="0" stopColor={accent} stopOpacity=".18" />
+            <Stop offset="1" stopColor={accent} stopOpacity="0" />
           </LinearGradient>
         </Defs>
-        {!compact && (
-          <SvgText x="24" y="18" fontSize="10" fill="#8a9582">
-            {durationLabel(maximum)}
-          </SvgText>
-        )}
-        {[35, 87, 140].map((y) => (
-          <Line
-            key={y}
-            x1="24"
-            x2="282"
-            y1={y}
-            y2={y}
-            stroke="#272d25"
-            strokeDasharray="3 5"
-          />
+        {[35, 87, 140].map((y, i) => (
+          <React.Fragment key={y}>
+            <Line
+              x1="52"
+              x2="282"
+              y1={y}
+              y2={y}
+              stroke="#34302d"
+              strokeDasharray="3 5"
+            />
+            {!compact && (
+              <SvgText x="4" y={y + 3} fontSize="10" fill="#b0a49c">
+                {axisDuration(maximum * (1 - i / 2))}
+              </SvgText>
+            )}
+          </React.Fragment>
         ))}
         {data.length > 1 && (
           <>
@@ -70,7 +73,24 @@ export function SeriesChart({
               d={`${path} L ${points[points.length - 1].x} 145 L ${points[0].x} 145 Z`}
               fill={`url(#${gradient})`}
             />
-            <Path d={path} fill="none" stroke={palette.green} strokeWidth="2" />
+            {points.length > 2 && (
+              <Path
+                d={points
+                  .slice(0, -1)
+                  .map((pt, i) => `${i ? "L" : "M"} ${pt.x} ${pt.y}`)
+                  .join(" ")}
+                fill="none"
+                stroke={accent}
+                strokeWidth="2"
+              />
+            )}
+            <Path
+              d={`M ${points[points.length - 2].x} ${points[points.length - 2].y} L ${points[points.length - 1].x} ${points[points.length - 1].y}`}
+              fill="none"
+              stroke={accent}
+              strokeWidth="2"
+              strokeDasharray="4 5"
+            />
           </>
         )}
         {points.map((point, i) => (
@@ -79,14 +99,17 @@ export function SeriesChart({
               cx={point.x}
               cy={point.y}
               r={data[i].current ? 5 : 3}
-              fill={data[i].current ? palette.green : "#a4b394"}
+              fill={data[i].current ? "#111111" : accent}
+              stroke={accent}
+              strokeWidth={data[i].current ? 2 : 0}
+              onPress={() => setSelected(data[i].id)}
             />
             <SvgText
               x={point.x}
               y="169"
               textAnchor="middle"
               fontSize="10"
-              fill="#8a9582"
+              fill="#b0a49c"
             >
               {data[i].current
                 ? "Teď"
@@ -103,13 +126,19 @@ export function SeriesChart({
                 key={item.id}
                 accessibilityRole="button"
                 accessibilityLabel={`Detail ${item.current ? "aktuální série" : `série ${p.history.length - data.length + 2 + i}`}`}
+                accessibilityState={{ selected: selected === item.id }}
                 onPress={() => setSelected(item.id)}
                 style={[
                   s.chip,
-                  selected === item.id && { borderColor: palette.green },
+                  selected === item.id && {
+                    borderColor: accent,
+                    backgroundColor: tint(accent, 0.1),
+                  },
                 ]}
               >
-                <Text style={s.muted}>
+                <Text
+                  style={[s.muted, selected === item.id && { color: accent }]}
+                >
                   {item.current
                     ? "Teď"
                     : `#${p.history.length - data.length + 2 + i}`}
@@ -118,9 +147,12 @@ export function SeriesChart({
             ))}
           </View>
           <Text style={s.muted}>
+            ● Ukončené série · ○ Běžící série (přerušovaně)
+          </Text>
+          <Text style={s.muted}>
             {pick
               ? `${pick.current ? "Aktuální série" : "Ukončená série"} · ${durationLabel(pick.duration)}`
-              : "Délka jednotlivých sérií; poslední bod je stále rozpracovaný."}
+              : "Vyber sérii pro přesnou délku."}
           </Text>
         </>
       )}
@@ -128,8 +160,12 @@ export function SeriesChart({
   );
 }
 export function ActivityChart({ p, now }: { p: Program; now: number }) {
+  const { accent } = useRankTheme();
+  const [selected, setSelected] = React.useState<number | null>(null);
   const data = trendDays(p, now);
-  const max = Math.max(1, ...data.map((d) => d.resets.length + d.sos.length));
+  const peak = Math.max(0, ...data.map((d) => d.resets.length + d.sos.length));
+  const max = Math.max(2, Math.ceil(peak / 2) * 2);
+  const selectedDay = selected === null ? null : data[selected];
   return (
     <View>
       <Svg
@@ -138,40 +174,54 @@ export function ActivityChart({ p, now }: { p: Program; now: number }) {
         viewBox="0 0 300 150"
         accessibilityLabel="Počty resetů a SOS za posledních 14 dní"
       >
-        <SvgText x="4" y="18" fontSize="10" fill="#8a9582">
-          {max} {max === 1 ? "událost" : max < 5 ? "události" : "událostí"}
+        <SvgText x="4" y="18" fontSize="10" fill="#b0a49c">
+          Počet událostí
         </SvgText>
-        <Line x1="4" x2="296" y1="110" y2="110" stroke="#333" />
+        {[35, 72, 110].map((y, i) => (
+          <React.Fragment key={y}>
+            <Line
+              x1="30"
+              x2="288"
+              y1={y}
+              y2={y}
+              stroke="#34302d"
+              strokeDasharray="3 5"
+            />
+            <SvgText x="8" y={y + 3} fontSize="10" fill="#b0a49c">
+              {Math.round(max * (1 - i / 2))}
+            </SvgText>
+          </React.Fragment>
+        ))}
         {data.map((day, i) => {
           const resets = (day.resets.length * 75) / max;
           const sos = (day.sos.length * 75) / max;
           return (
             <React.Fragment key={i}>
               <Rect
-                x={8 + i * 21}
+                x={34 + i * 18}
                 y={110 - resets}
-                width="12"
+                width="11"
                 height={resets}
                 rx="2"
                 fill={palette.red}
               />
               <Rect
-                x={8 + i * 21}
+                x={34 + i * 18}
                 y={110 - resets - sos}
-                width="12"
+                width="11"
                 height={sos}
                 rx="2"
-                fill={palette.violet}
+                fill={accent}
               />
-              {i % 3 === 0 && (
+              {[0, 6, 13].includes(i) && (
                 <SvgText
-                  x={14 + i * 21}
+                  x={39 + i * 18}
                   y="134"
                   textAnchor="middle"
-                  fontSize="9"
-                  fill="#8a9582"
+                  fontSize="10"
+                  fill="#b0a49c"
                 >
-                  {day.date.getDate()}.{day.date.getMonth() + 1}.
+                  {`${day.date.getDate()}. ${day.date.getMonth() + 1}.`}
                 </SvgText>
               )}
             </React.Fragment>
@@ -180,10 +230,31 @@ export function ActivityChart({ p, now }: { p: Program; now: number }) {
       </Svg>
       <View style={s.selectors}>
         <Text style={[s.muted, { color: palette.red }]}>● Reset</Text>
-        <Text style={[s.muted, { color: palette.violet }]}>
-          ● Návrat ze SOS
-        </Text>
+        <Text style={[s.muted, { color: accent }]}>● Návrat ze SOS</Text>
       </View>
+      <View style={s.selectors}>
+        {data.map((day, i) =>
+          day.resets.length + day.sos.length > 0 ? (
+            <Pressable
+              key={i}
+              accessibilityRole="button"
+              accessibilityLabel={`Události ${day.date.toLocaleDateString("cs-CZ")}`}
+              onPress={() => setSelected(i)}
+              style={[s.chip, selected === i && { borderColor: accent }]}
+            >
+              <Text style={s.muted}>
+                {day.date.getDate()}. {day.date.getMonth() + 1}.
+              </Text>
+            </Pressable>
+          ) : null,
+        )}
+      </View>
+      {selectedDay && (
+        <Text style={s.muted}>
+          {selectedDay.date.toLocaleDateString("cs-CZ")} · Resety:{" "}
+          {selectedDay.resets.length} · Návraty SOS: {selectedDay.sos.length}
+        </Text>
+      )}
       <Text style={s.muted}>
         Výška sloupců odpovídá počtu uložených událostí. Prázdný den znamená
         žádnou uloženou událost.
@@ -206,3 +277,13 @@ const s = StyleSheet.create({
     borderRadius: 8,
   },
 });
+
+function axisDuration(ms: number) {
+  const m = ms / 60000;
+  if (ms < 60000) return `${Math.round(ms / 1000)} s`;
+  return m >= 1440
+    ? `${Math.round((m / 1440) * 10) / 10} dní`
+    : m >= 60
+      ? `${Math.round((m / 60) * 10) / 10} h`
+      : `${m} min`;
+}
