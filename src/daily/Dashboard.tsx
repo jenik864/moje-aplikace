@@ -45,7 +45,7 @@ export function DailyDashboard(props: {
   p: Program;
   now: number;
   update: (p: Program) => void;
-  sos: () => void;
+  sos: (pillarId?: string) => void;
 }) {
   return props.id === "scroll" ? (
     <ScrollDashboard {...props} />

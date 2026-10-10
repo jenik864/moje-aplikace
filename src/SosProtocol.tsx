@@ -1,299 +1,351 @@
-import React, { useEffect, useState } from "react";
-import { ScrollView, Text, View, Pressable, StyleSheet } from "react-native";
-import { FoodProtocol } from "./food/Protocol";
-import { PauseDial } from "./porn/visuals";
+import React from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { Screen, rankColors } from "./ui";
-import { definitions, ProgramId, protocolRemaining } from "./model";
-import { programContent } from "./programContent";
-function GeneralSosProtocol({
+import {
+  dayKey,
+  definitions,
+  protocolRemaining,
+  type Program,
+  type ProgramId,
+} from "./model";
+import { activePillars } from "./food/model";
+import { dailyStyles } from "./daily/styles";
+import { supportFor, supportProgress } from "./sos/content";
+export type SosProps = {
+  id: ProgramId;
+  reasons: string;
+  program?: Program;
+  pillarId?: string;
+  rank?: number;
+  close: () => void;
+  complete: (
+    trigger: string,
+    elapsed: number,
+    pauseStarted?: boolean,
+    outcome?: string,
+    pillarId?: string,
+  ) => void;
+};
+export function SosProtocol({
   id,
   reasons,
+  program,
+  pillarId,
   rank = 0,
   close,
   complete,
-}: {
-  id: ProgramId;
-  reasons: string;
-  rank?: number;
-  close: () => void;
-  complete: (trigger: string, elapsed: number, pauseStarted?: boolean) => void;
-}) {
-  const accent = rankColors[rank];
-  const s = { ...baseStyles, ...protocolStyles };
-  const [trigger, setTrigger] = useState("");
-  const [started, setStarted] = useState<number | null>(null);
-  const [now, setNow] = useState(Date.now());
-  const duration = programContent[id].duration;
-  useEffect(() => {
-    if (started === null) return;
-    const timer = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(timer);
-  }, [started]);
+}: SosProps) {
+  const [selected, setSelected] = React.useState(pillarId);
+  const [trigger, setTrigger] = React.useState("");
+  const [started, setStarted] = React.useState<number | null>(null);
+  const [accumulated, setAccumulated] = React.useState(0);
+  const [deadline, setDeadline] = React.useState<number | null>(null);
+  const [clock, setClock] = React.useState(Date.now());
+  const [outcome, setOutcome] = React.useState("");
+  const scroll = React.useRef<ScrollView>(null);
+  const food = id === "food";
+  const accent = food ? "#e5b1a6" : id === "scroll" ? "#b6c9dd" : "#ffb0b7";
+  const s = dailyStyles(accent);
+  const pillars =
+    food && program ? activePillars(program, dayKey(new Date(clock))) : [];
+  const pillar = pillars.find((v) => v.id === selected);
+  const content = supportFor(id, pillar?.label);
+  const duration = food ? 120 : 300;
   const remaining =
-    started === null
-      ? duration
-      : protocolRemaining(started + duration * 1000, now);
-  const finish = () =>
+    deadline === null ? duration : protocolRemaining(deadline, clock);
+  const hunger =
+    food && (trigger === "Hlad" || content.kind === "PRAVIDELNÁ JÍDLA");
+  React.useEffect(() => {
+    if (deadline === null) return;
+    const timer = setInterval(() => setClock(Date.now()), 250);
+    return () => clearInterval(timer);
+  }, [deadline]);
+  const begin = () => {
+    const at = Date.now();
+    if (started !== null)
+      setAccumulated(
+        (total) => total + Math.max(0, Math.min(at, deadline ?? at) - started),
+      );
+    setStarted(at);
+    setClock(at);
+    setDeadline(at + duration * 1000);
+    setOutcome("");
+  };
+  const finish = (result = outcome || "Návrat k plánu") =>
     complete(
-      trigger,
+      trigger || "Neuvedeno",
       started === null
         ? 0
-        : Math.min(
-            duration,
-            Math.floor(Math.max(0, Date.now() - started) / 1000),
+        : Math.floor(
+            (accumulated +
+              Math.max(
+                0,
+                Math.min(Date.now(), deadline ?? Date.now()) - started,
+              )) /
+              1000,
           ),
       started !== null,
+      result,
+      food ? selected : undefined,
     );
+  const choice = (
+    value: string,
+    checked: boolean,
+    action: () => void,
+    label = value,
+  ) => (
+    <Pressable
+      key={value}
+      accessibilityRole="radio"
+      accessibilityLabel={label}
+      accessibilityState={{ checked }}
+      aria-checked={checked}
+      onPress={action}
+      style={{
+        minHeight: 48,
+        padding: 13,
+        borderRadius: 13,
+        borderWidth: 1,
+        borderColor: checked ? accent : "#393438",
+        backgroundColor: checked ? "#33282c" : "#151416",
+        justifyContent: "center",
+      }}
+    >
+      <Text style={[s.body, checked && { color: accent }]}>{value}</Text>
+    </Pressable>
+  );
+  const elapsedFraction =
+    deadline === null ? 0 : Math.min(1, 1 - remaining / duration);
   return (
     <Screen modal>
-      <View style={s.topBar}>
+      <View style={s.header}>
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel="Zavřít SOS bez uložení"
           onPress={close}
-          hitSlop={10}
-          style={{ minHeight: 40, minWidth: 96, justifyContent: "center" }}
+          style={s.back}
         >
-          <Text style={s.muted}>✕ ZAVŘÍT</Text>
+          <Text style={s.body}>✕ ZAVŘÍT</Text>
         </Pressable>
-      </View>
-      <ScrollView
-        contentInsetAdjustmentBehavior="never"
-        automaticallyAdjustContentInsets={false}
-        contentContainerStyle={s.content}
-      >
-        <Text style={s.label}>SOS · {definitions[id].title.toUpperCase()}</Text>
-        <Text style={s.heading}>Teď máš volbu.</Text>
-        <View style={[s.panel, { borderLeftColor: accent }]}>
-          <Text style={[s.title, { color: accent }]}>TVOJE PROČ</Text>
-          <Text numberOfLines={3} style={s.body}>
-            {reasons}
-          </Text>
-        </View>
-        <View style={s.task}>
-          <Text style={s.label}>
-            {started === null
-              ? "TVŮJ DALŠÍ KROK"
-              : remaining
-                ? "DEJ SI PROSTOR"
-                : "PAUZA DOKONČENA"}
-          </Text>
-          <Text style={s.body}>{definitions[id].action}</Text>
-          <View style={{ alignItems: "center", paddingVertical: 4 }}>
-            <PauseDial remaining={remaining} duration={duration} />
-          </View>
-          {started === null ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                const at = Date.now();
-                setNow(at);
-                setStarted(at);
-              }}
-              style={({ pressed }) => [s.button, pressed && { opacity: 0.8 }]}
-            >
-              <Text style={s.buttonText}>SPUSTIT PAUZU</Text>
-            </Pressable>
-          ) : (
-            <Text style={s.muted}>
-              {remaining
-                ? "Můžeš odložit telefon. Čas běží i mimo aplikaci."
-                : "Zkus si všimnout, jak se tvoje chuť změnila."}
-            </Text>
-          )}
-        </View>
-        <Text style={s.title}>CO ZA TÍM BYLO? · VOLITELNÉ</Text>
-        <View style={s.row}>
-          {(id === "food"
-            ? ["Hlad", "Stres", "Nuda", "Zvyk"]
-            : ["Nuda", "Stres", "Samota", "Zvyk"]
-          ).map((t) => (
-            <Pressable
-              accessibilityRole="radio"
-              accessibilityState={{ checked: trigger === t }}
-              aria-checked={trigger === t}
-              key={t}
-              onPress={() => setTrigger(t)}
-              style={[
-                s.chip,
-                trigger === t && {
-                  borderColor: "#ff5964",
-                  backgroundColor: "#321216",
-                },
-              ]}
-            >
-              <Text style={{ color: trigger === t ? "#ff8b93" : "#ccc" }}>
-                {t}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-        <Text style={s.muted}>
-          Spouštěč je dobrovolný. Návrat uloží záznam SOS; pauza nemění rank.
+        <Text style={[s.label, { flexShrink: 1, textAlign: "right" }]}>
+          SOS · {definitions[id].title.toUpperCase()}
         </Text>
-      </ScrollView>
-      <View style={s.footer}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={finish}
+      </View>
+      <ScrollView ref={scroll} contentContainerStyle={[s.content, { gap: 18 }]}>
+        {food && !pillar && pillars.length > 0 && (
+          <View style={s.card}>
+            <Text style={s.label}>S ČÍM TEĎ CHCEŠ POMOCT?</Text>
+            {pillars.map((v) =>
+              choice(
+                v.label,
+                false,
+                () => {
+                  setSelected(v.id);
+                  setTrigger("");
+                },
+                `SOS pro ${v.label}`,
+              ),
+            )}
+          </View>
+        )}
+        {pillar && (
+          <View style={s.row}>
+            <Text style={[s.label, { flex: 1 }]}>{pillar.label}</Text>
+            {!started && (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setSelected(undefined)}
+                style={{
+                  minHeight: 44,
+                  justifyContent: "center",
+                  paddingHorizontal: 8,
+                }}
+              >
+                <Text style={s.link}>ZMĚNIT</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+        <View style={{ gap: 12 }}>
+          <Text style={s.label}>{content.kind}</Text>
+          <Text style={s.heading}>{content.title}</Text>
+        </View>
+        <View
           style={[
-            s.button,
+            s.card,
             {
-              backgroundColor: "#21171d",
-              borderWidth: 1,
-              borderColor: "#4c303c",
+              backgroundColor: food
+                ? "#231c18"
+                : id === "scroll"
+                  ? "#17212a"
+                  : "#251820",
+              borderColor: accent,
+              gap: 12,
             },
           ]}
         >
-          <Text style={[s.buttonText, { color: "#fff" }]}>
+          <Text style={s.label}>QUITTER JE TU S TEBOU</Text>
+          <Text style={[s.title, { fontSize: 22, lineHeight: 31 }]}>
             {started !== null && remaining > 0
-              ? "UKONČIT A VRÁTIT SE K PLÁNU"
-              : "VRÁTIT SE K MÉMU PLÁNU"}
+              ? content.reminders[Math.min(2, Math.floor(elapsedFraction * 3))]
+              : content.message}
+          </Text>
+          <Text style={s.muted}>
+            {started !== null && remaining > 0
+              ? "Nutkání může zeslábnout. Teď stačí projít touhle chvílí."
+              : "Nemusíš být dokonalý. Rozhodnout se můžeš znovu právě teď."}
+          </Text>
+        </View>
+        {program && (
+          <View
+            style={{
+              borderLeftWidth: 2,
+              borderLeftColor: rankColors[rank],
+              paddingLeft: 14,
+              gap: 6,
+            }}
+          >
+            <Text style={[s.label, { color: rankColors[rank] }]}>
+              TVŮJ DOSAVADNÍ POKROK
+            </Text>
+            <Text style={s.body}>
+              {supportProgress(id, program, clock, selected)}
+            </Text>
+          </View>
+        )}
+        {!!reasons.trim() && (
+          <View style={{ gap: 8 }}>
+            <Text style={s.label}>PŘIPOMEŇ SI SVOJE PROČ</Text>
+            <Text style={s.body}>{reasons}</Text>
+          </View>
+        )}
+        <View style={s.card}>
+          <Text style={s.label}>JEDEN KROK TEĎ</Text>
+          <Text style={s.body}>
+            {hunger
+              ? "Dej si dostupné syté jídlo nebo svačinu. Hlad nemusíš překonávat čekáním; tvůj plán je tu pro péči o sebe."
+              : trigger === "Stres" && food
+                ? "Zkus klidně vydechnout a na chvíli změnit místo. Pokud máš zároveň hlad, dej si jídlo. Pak se rozhodni podle svého plánu."
+                : content.action}
+          </Text>
+          {hunger && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => finish("Pokračovat s jídlem")}
+              style={s.button}
+            >
+              <Text style={s.buttonText}>POKRAČOVAT S JÍDLEM</Text>
+            </Pressable>
+          )}
+        </View>
+        {food && (
+          <View style={s.card}>
+            <Text style={s.label}>CO TEĎ CÍTÍŠ? · VOLITELNÉ</Text>
+            <View style={{ gap: 8 }}>
+              {["Hlad", "Chuť", "Stres", "Nevím"].map((v) =>
+                choice(v, trigger === v, () => setTrigger(v)),
+              )}
+            </View>
+          </View>
+        )}
+        {(!hunger || started !== null) && (
+          <View style={[s.card, { borderColor: "#44343e" }]}>
+            <View style={s.row}>
+              <Text style={[s.label, { flex: 1 }]}>
+                {deadline === null
+                  ? "CHVÍLE PRO VLASTNÍ VOLBU"
+                  : remaining
+                    ? "DEJ SI PROSTOR"
+                    : "JAK JE TI TEĎ?"}
+              </Text>
+              <Text
+                style={{
+                  color: accent,
+                  fontSize: 38,
+                  fontWeight: "500",
+                  fontVariant: ["tabular-nums"],
+                }}
+              >{`${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`}</Text>
+            </View>
+            <View
+              style={{
+                height: 5,
+                borderRadius: 3,
+                backgroundColor: "#352a31",
+                overflow: "hidden",
+              }}
+            >
+              <View
+                style={{
+                  height: 5,
+                  width: `${elapsedFraction * 100}%`,
+                  backgroundColor: accent,
+                }}
+              />
+            </View>
+            {deadline === null ? (
+              <>
+                <Text style={s.body}>
+                  Dej si {food ? "dvě" : "pět"} minuty prostoru. Pak znovu
+                  zhodnoť, co potřebuješ.
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={begin}
+                  style={s.button}
+                >
+                  <Text style={s.buttonText}>SPUSTIT PAUZU</Text>
+                </Pressable>
+              </>
+            ) : remaining ? (
+              <Text style={s.muted}>
+                Odlož telefon. Čas běží i mimo aplikaci; vrátit se můžeš
+                kdykoli.
+              </Text>
+            ) : (
+              <>
+                <Text style={s.body}>
+                  Pokud nutkání zůstává, není to prohra. Vyber, co ti pomůže
+                  dál.
+                </Text>
+                {choice("Je to slabší", outcome === "Je to slabší", () =>
+                  setOutcome("Je to slabší"),
+                )}
+                {choice("Potřebuju ještě chvíli", false, begin)}
+                <Text style={s.muted}>
+                  Další pauza navazuje na tu předchozí. Můžeš také změnit místo
+                  nebo oslovit někoho, komu důvěřuješ.
+                </Text>
+              </>
+            )}
+          </View>
+        )}
+        {!food && (
+          <View style={{ gap: 10 }}>
+            <Text style={s.label}>CO ZA TÍM BYLO? · VOLITELNÉ</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {["Nuda", "Stres", "Samota", "Zvyk"].map((v) =>
+                choice(v, trigger === v, () => setTrigger(v)),
+              )}
+            </View>
+          </View>
+        )}
+        <Text style={s.muted}>
+          Návrat uloží tuto chvíli podpory. SOS samo nemění rank ani denní
+          zápisy.
+        </Text>
+      </ScrollView>
+      <View style={[s.header, { borderBottomWidth: 0, borderTopWidth: 1 }]}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => finish()}
+          style={[s.button, { flex: 1, backgroundColor: "#2a2428" }]}
+        >
+          <Text style={[s.buttonText, { color: "#f3e2ed" }]}>
+            VRÁTIT SE K MÉMU PLÁNU
           </Text>
         </Pressable>
       </View>
     </Screen>
-  );
-}
-const baseStyles = StyleSheet.create({
-  topBar: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 6 },
-  footer: {
-    paddingHorizontal: 22,
-    paddingVertical: 12,
-    backgroundColor: "#050505",
-    borderTopWidth: 1,
-    borderTopColor: "#292929",
-  },
-  content: { padding: 22, gap: 22, paddingBottom: 40 },
-  muted: { color: "#888", fontSize: 12, lineHeight: 19 },
-  label: {
-    color: "#ff7882",
-    fontSize: 10,
-    letterSpacing: 2,
-    fontWeight: "800",
-  },
-  heading: {
-    color: "#fff",
-    fontSize: 38,
-    fontWeight: "800",
-    letterSpacing: -1,
-  },
-  title: { color: "#ddd", fontSize: 12, fontWeight: "800", letterSpacing: 1 },
-  body: { color: "#ccc", fontSize: 15, lineHeight: 24 },
-  panel: { backgroundColor: "#1a1a1a", padding: 20, gap: 12, borderRadius: 16 },
-  row: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: {
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#383838",
-    borderRadius: 12,
-  },
-  task: {
-    padding: 22,
-    gap: 18,
-    borderWidth: 1,
-    borderColor: "#793039",
-    borderRadius: 20,
-    backgroundColor: "#1e1012",
-  },
-  timer: {
-    color: "#ff7882",
-    fontSize: 54,
-    fontWeight: "800",
-    textAlign: "center",
-    fontVariant: ["tabular-nums"],
-  },
-  button: {
-    backgroundColor: "#ff7882",
-    padding: 18,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  buttonText: {
-    fontSize: 12,
-    letterSpacing: 0.5,
-    color: "#050505",
-    fontWeight: "800",
-  },
-});
-
-// Shared visual treatment; each program keeps its own instructions and duration.
-const protocolStyles = StyleSheet.create({
-  topBar: { paddingHorizontal: 22, paddingTop: 4, paddingBottom: 0 },
-  content: { padding: 22, gap: 18, paddingBottom: 32 },
-  heading: {
-    color: "#f3f3ed",
-    fontSize: 34,
-    fontWeight: "600",
-    letterSpacing: -1,
-  },
-  task: {
-    padding: 20,
-    gap: 18,
-    borderRadius: 24,
-    backgroundColor: "#100d11",
-  },
-  label: {
-    color: "#ffc1c7",
-    fontSize: 10,
-    letterSpacing: 1.3,
-    fontWeight: "600",
-  },
-  title: {
-    color: "#b6b9b0",
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1.5,
-  },
-  body: { color: "#d9cbd0", fontSize: 14, lineHeight: 23 },
-  panel: {
-    paddingLeft: 16,
-    paddingVertical: 3,
-    gap: 10,
-    borderLeftWidth: 2,
-  },
-  timer: {
-    color: "#ff999e",
-    fontSize: 50,
-    fontWeight: "500",
-    letterSpacing: -3,
-    textAlign: "center",
-    fontVariant: ["tabular-nums"],
-    paddingVertical: 4,
-  },
-  button: {
-    backgroundColor: "#ffb0b7",
-    padding: 18,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-  buttonText: {
-    fontSize: 11,
-    letterSpacing: 1,
-    color: "#271316",
-    fontWeight: "700",
-  },
-  chip: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: "#3a3433",
-    borderRadius: 14,
-  },
-  footer: {
-    paddingHorizontal: 22,
-    paddingVertical: 14,
-    backgroundColor: "#050505",
-    borderTopWidth: 1,
-    borderTopColor: "#252824",
-  },
-});
-
-export function SosProtocol(
-  props: React.ComponentProps<typeof GeneralSosProtocol>,
-) {
-  return props.id === "food" ? (
-    <FoodProtocol {...props} />
-  ) : (
-    <GeneralSosProtocol {...props} />
   );
 }

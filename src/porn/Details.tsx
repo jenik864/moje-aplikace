@@ -32,7 +32,12 @@ import {
 } from "./analytics";
 import { SeriesChart, ActivityChart } from "./Charts";
 export type DetailKind =
-  "ranks" | "matrix" | "analytics" | "manifest" | "history" | "sos";
+  | "ranks"
+  | "matrix"
+  | "analytics"
+  | "manifest"
+  | "history"
+  | "sos";
 const titles: Record<DetailKind, string> = {
   ranks: "Tvoje ranky",
   matrix: "Konzistence",
@@ -183,7 +188,9 @@ function DetailBody({
           </SectionLabel>
           <View style={{ alignItems: "center", gap: 8 }}>
             <RankMark rank={previewRank} size={112} />
-            <Text style={[s.title, { color: rankColors[previewRank] }]}>{ranks[previewRank]}</Text>
+            <Text style={[s.title, { color: rankColors[previewRank] }]}>
+              {ranks[previewRank]}
+            </Text>
           </View>
           <RankThemeProvider rank={previewRank}>
             <TimerDial
@@ -557,6 +564,7 @@ function DetailBody({
                 value={pauseLabel(event)}
                 at={event.at}
               />
+              {event.outcome && <Text style={s.small}>{event.outcome}</Text>}
             </View>
           ))
       )}

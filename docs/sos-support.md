@@ -1,0 +1,9 @@
+# Contextual SOS support
+
+SOS is support, not a scoring shortcut. Closing dismisses without a record; returning stores trigger, elapsed pause seconds, optional outcome, and Food pillar ID. It never marks daily goals or awards rank points. Historical events without the new fields remain supported.
+
+Porn and Doomscrolling offer an optional five-minute pause. Food uses two minutes, with content tailored to drinks, sweets, orders/fast food, meals or custom goals. Food opens directly from a pillar or lets the person choose through the general entry. Hunger and regular-meal goals provide an immediate eating route rather than obligatory delay.
+
+The first view combines encouragement from Quitter, genuine progress, personal reasons and one actionable next step. During a pause, encouragement changes at one-third intervals. Wording suggests an urge may weaken; it does not promise it will disappear on a deadline or frame lingering urges as failure. After completion users can select “Je to slabší”, add another pause, or return. Additional pauses sum only their active durations, excluding gaps between pauses.
+
+Countdowns use wall-clock deadlines and catch up after backgrounding. Food progress counts confirmed recorded successful slots, and treats legacy whole-pillar records as one record rather than inventing historical slots. Porn shows elapsed current-series time. Doomscrolling shows a valid seven-day system-measured average or explicitly reports incomplete measurement.

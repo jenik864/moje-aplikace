@@ -502,6 +502,7 @@ export default function App() {
   const [now, setNow] = useState(Date.now());
   const [setup, setSetup] = useState<ProgramId | null>(null);
   const [sos, setSos] = useState<ProgramId | null>(null);
+  const [sosPillar, setSosPillar] = useState<string | undefined>();
   const [activeProgram, setActiveProgram] = useState<ProgramId>("porn");
   const { width } = useWindowDimensions();
   const pager = useRef<ScrollView>(null);
@@ -646,7 +647,10 @@ export default function App() {
                     p={p}
                     now={now}
                     update={(p) => update(id, p)}
-                    sos={() => setSos(id)}
+                    sos={() => {
+                      setSosPillar(undefined);
+                      setSos(id);
+                    }}
                   />
                 ) : (
                   <PornWelcome activate={() => setSetup(id)} />
@@ -657,7 +661,10 @@ export default function App() {
                   p={p}
                   now={now}
                   update={(p) => update(id, p)}
-                  sos={() => {
+                  sos={(pillarId?: string) => {
+                    setSosPillar(
+                      typeof pillarId === "string" ? pillarId : undefined,
+                    );
                     setSos(id);
                   }}
                 />
@@ -858,10 +865,12 @@ export default function App() {
           <SafeAreaProvider initialMetrics={initialWindowMetrics}>
             <SosProtocol
               id={sos}
+              program={data[sos]}
+              pillarId={sosPillar}
               rank={data[sos] ? rankOf(sos, data[sos]!, now) : 0}
               reasons={data[sos]?.reasons ?? ""}
               close={() => setSos(null)}
-              complete={(trigger, elapsed, pauseStarted) => {
+              complete={(trigger, elapsed, pauseStarted, outcome, pillarId) => {
                 const p = data[sos];
                 if (p)
                   update(sos, {
@@ -873,6 +882,8 @@ export default function App() {
                         trigger: trigger || "Neuvedeno",
                         durationSeconds: elapsed,
                         pauseStarted,
+                        outcome,
+                        pillarId,
                       },
                     ],
                   });

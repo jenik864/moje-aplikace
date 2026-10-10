@@ -330,7 +330,7 @@ export function ScrollDashboard({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="SOS: Doomscrolling"
-          onPress={sos}
+          onPress={() => sos()}
           style={[s.button, { backgroundColor: "#dfbcec" }]}
         >
           <Text style={s.buttonText}>ODLOŽIT TELEFON · 5 MIN</Text>

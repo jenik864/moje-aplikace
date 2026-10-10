@@ -415,6 +415,13 @@ export function DailyDetails({
                               {new Date(e.at).toLocaleDateString("cs-CZ")}
                             </Text>
                           </View>
+                          {e.pillarId && (
+                            <Text style={s.body}>
+                              {p.foodPillars?.find((v) => v.id === e.pillarId)
+                                ?.label ?? "Pilíř"}
+                            </Text>
+                          )}
+                          {e.outcome && <Text style={s.body}>{e.outcome}</Text>}
                           <Text style={s.muted}>
                             {new Date(e.at).toLocaleTimeString("cs-CZ", {
                               hour: "2-digit",

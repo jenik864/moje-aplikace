@@ -31,7 +31,7 @@ export function FoodDashboard({
   p: Program;
   now: number;
   update: (p: Program) => void;
-  sos: () => void;
+  sos: (pillarId?: string) => void;
 }) {
   const rank = rankOf("food", p, now),
     accent = rankColors[rank],
@@ -76,7 +76,30 @@ export function FoodDashboard({
     foodDay(p, key).pillars.map((pillar, index) => (
       <View key={pillar.id} style={{ gap: 12, paddingTop: index ? 20 : 0 }}>
         <Text style={s.label}>PILÍŘ {index + 1}</Text>
-        <Text style={s.title}>{pillar.label}</Text>
+        <View style={s.row}>
+          <Text style={[s.title, { flex: 1 }]}>{pillar.label}</Text>
+          {key === today && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`SOS pro ${pillar.label}`}
+              onPress={() => sos(pillar.id)}
+              style={{
+                minHeight: 44,
+                minWidth: 52,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 12,
+                backgroundColor: "#39242e",
+              }}
+            >
+              <Text
+                style={{ color: "#ffc1c7", fontWeight: "600", fontSize: 12 }}
+              >
+                SOS
+              </Text>
+            </Pressable>
+          )}
+        </View>
         {pillarSlots(pillar).map((slot) => {
           const answer = slotAnswer(p, key, pillar, slot.id);
           const locked = key === today && new Date(now).getHours() < slot.end;
@@ -370,7 +393,7 @@ export function FoodDashboard({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="SOS: Junk Food"
-          onPress={sos}
+          onPress={() => sos()}
           style={[s.button, { backgroundColor: "#e5b1a6" }]}
         >
           <Text style={s.buttonText}>ROZLIŠIT HLAD A CHUŤ</Text>

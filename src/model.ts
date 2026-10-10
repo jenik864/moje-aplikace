@@ -21,6 +21,8 @@ export type TriggerEvent = {
   trigger: string;
   durationSeconds?: number;
   pauseStarted?: boolean;
+  outcome?: string;
+  pillarId?: string;
 };
 export type Program = {
   foodPillars?: FoodPillar[];
