@@ -55,7 +55,7 @@ export function RankMark({ rank, size = 42 }: { rank: number; size?: number }) {
         stroke={c}
         strokeWidth="1.5"
       />
-      <Path d="M40 24 V61 M26 43 H54" stroke={c} strokeWidth=".7" />
+      <Path d="M40 24 V61 M26 43 H54" stroke={c} strokeWidth={0.7} />
       {rank >= 4 && (
         <Path d="M13 57 L40 80 L67 57" stroke={c} strokeWidth="2" fill="none" />
       )}
@@ -104,7 +104,7 @@ export function TimerDial({
         <Defs>
           <RadialGradient id={id}>
             <Stop offset="0" stopColor="#101010" />
-            <Stop offset=".72" stopColor="#101010" />
+            <Stop offset={0.72} stopColor="#101010" />
             <Stop
               offset="1"
               stopColor={accent}
@@ -113,7 +113,7 @@ export function TimerDial({
           </RadialGradient>
           <LinearGradient id={`${id}metal`} x1="0" y1="0" x2="1" y2="1">
             <Stop offset="0" stopColor={accent} />
-            <Stop offset=".5" stopColor="#383332" />
+            <Stop offset={0.5} stopColor="#383332" />
             <Stop offset="1" stopColor={accent} />
           </LinearGradient>
         </Defs>
@@ -288,7 +288,7 @@ export function TimerDial({
               fill="none"
               stroke={accent}
               strokeWidth="4"
-              strokeOpacity=".15"
+              strokeOpacity={0.15}
             />
             <Circle
               cx="150"
