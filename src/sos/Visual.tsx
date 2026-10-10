@@ -3,7 +3,7 @@ import { AccessibilityInfo, Animated, Text, View } from "react-native";
 import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
 import { TimerDial } from "../porn/visuals";
 import { RankThemeProvider } from "../porn/theme";
-import type { ProgramId } from "../model";
+import { milestones, ranks, type ProgramId } from "../model";
 export function SosVisual({
   id,
   rank,
@@ -69,7 +69,18 @@ export function SosVisual({
         <RankThemeProvider rank={rank}>
           <TimerDial
             seconds={seconds}
-            progress={(seconds % 86400) / 86400}
+            progress={
+              rank === ranks.length - 1
+                ? 1
+                : Math.max(
+                    0,
+                    Math.min(
+                      1,
+                      (seconds / 86400 - milestones[rank]) /
+                        (milestones[rank + 1] - milestones[rank]),
+                    ),
+                  )
+            }
             preview
           />
         </RankThemeProvider>
@@ -105,7 +116,7 @@ export function SosVisual({
               width={114}
               height={194}
               rx={27}
-              fill="#111c23"
+              fill="#1b1713"
               stroke={accent}
               strokeWidth={1.5}
             />
@@ -125,7 +136,7 @@ export function SosVisual({
                 width={5}
                 height={25 + Math.sin(i * 0.8) * 20}
                 rx={2.5}
-                fill={i / 12 < fraction ? accent : "#314653"}
+                fill={i / 12 < fraction ? accent : "#493c30"}
               />
             ))}
             <Circle cx={115} cy={185} r={3} fill={accent} />
@@ -136,7 +147,7 @@ export function SosVisual({
               fontSize: 56,
               fontWeight: "500",
               fontVariant: ["tabular-nums"],
-              backgroundColor: "#111c23",
+              backgroundColor: "#1b1713",
               paddingHorizontal: 10,
             }}
           >
@@ -144,7 +155,7 @@ export function SosVisual({
           </Text>
           <Text
             style={{
-              color: "#b7c6cf",
+              color: "#b7ada3",
               fontSize: 9,
               letterSpacing: 2,
               marginTop: 8,

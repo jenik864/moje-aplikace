@@ -27,7 +27,7 @@ export const programContent: Record<
       "Chci mít čas na věci, na kterých mi záleží.",
       "Chci rozhodovat o svých návycích.",
     ],
-    duration: 120,
+    duration: 300,
   },
   scroll: {
     headline: "Tvůj den není\nnekonečný feed.",

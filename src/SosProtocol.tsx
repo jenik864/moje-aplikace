@@ -10,6 +10,9 @@ import {
 } from "./model";
 import { activePillars } from "./food/model";
 import { dailyStyles } from "./daily/styles";
+import { tint } from "./porn/theme";
+import { Encouragement } from "./sos/Encouragement";
+import { programContent } from "./programContent";
 import { SosVisual } from "./sos/Visual";
 import { supportFor, supportProgress } from "./sos/content";
 export type SosProps = {
@@ -49,13 +52,13 @@ export function SosProtocol({
   const [outcome, setOutcome] = React.useState("");
   const scroll = React.useRef<ScrollView>(null);
   const food = id === "food";
-  const accent = food ? "#e5b1a6" : id === "scroll" ? "#b6c9dd" : "#ffb0b7";
+  const accent = rankColors[rank];
   const s = dailyStyles(accent);
   const pillars =
     food && program ? activePillars(program, dayKey(new Date(clock))) : [];
   const pillar = pillars.find((v) => v.id === selected);
   const content = supportFor(id, pillar?.label);
-  const duration = food ? 120 : 300;
+  const duration = programContent[id].duration;
   const remaining =
     deadline === null ? duration : protocolRemaining(deadline, clock);
   const hunger =
@@ -110,8 +113,8 @@ export function SosProtocol({
         padding: 13,
         borderRadius: 13,
         borderWidth: 1,
-        borderColor: checked ? accent : "#393438",
-        backgroundColor: checked ? "#33282c" : "#151416",
+        borderColor: checked ? accent : "#39332c",
+        backgroundColor: checked ? tint(accent, 0.16) : "#151412",
         justifyContent: "center",
       }}
     >
@@ -227,19 +230,12 @@ export function SosProtocol({
                 )}
               </View>
             )}
-            <Text
-              style={[
-                s.title,
-                { fontSize: 18, lineHeight: 25, textAlign: "center" },
-              ]}
-            >
-              {punch}
-            </Text>
+            <Encouragement messages={[punch, ...content.reminders]} />
             {running && id !== "scroll" && (
               <View
                 style={[
                   s.row,
-                  { borderRadius: 14, backgroundColor: "#1e171c", padding: 12 },
+                  { borderRadius: 14, backgroundColor: "#1b1814", padding: 12 },
                 ]}
               >
                 <Text style={s.label}>TVOJE PAUZA</Text>
@@ -350,7 +346,7 @@ export function SosProtocol({
               {hunger ? "POKRAČOVAT S JÍDLEM" : "SPUSTIT PAUZU"}
             </Text>
             {!hunger && (
-              <Text style={{ fontSize: 10, color: "#342029", marginTop: 3 }}>
+              <Text style={{ fontSize: 10, color: "#241c14", marginTop: 3 }}>
                 {food ? "2 MINUTY PRO TVOJI VOLBU" : "5 MINUT PRO TVOJI VOLBU"}
               </Text>
             )}

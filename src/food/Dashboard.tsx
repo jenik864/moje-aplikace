@@ -89,12 +89,10 @@ export function FoodDashboard({
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: 12,
-                backgroundColor: "#39242e",
+                backgroundColor: tint(accent, 0.14),
               }}
             >
-              <Text
-                style={{ color: "#ffc1c7", fontWeight: "600", fontSize: 12 }}
-              >
+              <Text style={{ color: accent, fontWeight: "600", fontSize: 12 }}>
                 SOS
               </Text>
             </Pressable>
@@ -380,10 +378,14 @@ export function FoodDashboard({
       <View
         style={[
           s.card,
-          { backgroundColor: "#201919", borderColor: "#4b3534", gap: 16 },
+          {
+            backgroundColor: tint(accent, 0.07),
+            borderColor: tint(accent, 0.28),
+            gap: 16,
+          },
         ]}
       >
-        <Text style={[s.label, { color: "#e5b1a6" }]}>
+        <Text style={[s.label, { color: accent }]}>
           CHVÍLE PŘED DALŠÍ VOLBOU
         </Text>
         <Text style={s.title}>Co teď potřebuješ?</Text>
@@ -394,7 +396,7 @@ export function FoodDashboard({
           accessibilityRole="button"
           accessibilityLabel="SOS: Junk Food"
           onPress={() => sos()}
-          style={[s.button, { backgroundColor: "#e5b1a6" }]}
+          style={[s.button, { backgroundColor: accent }]}
         >
           <Text style={s.buttonText}>ROZLIŠIT HLAD A CHUŤ</Text>
         </Pressable>

@@ -317,12 +317,14 @@ export function ScrollDashboard({
       <View
         style={[
           s.card,
-          { backgroundColor: "#1b1420", borderColor: "#403047", gap: 18 },
+          {
+            backgroundColor: tint(accent, 0.07),
+            borderColor: tint(accent, 0.28),
+            gap: 18,
+          },
         ]}
       >
-        <Text style={[s.label, { color: "#dfbcec" }]}>
-          PŘERUŠ NEKONEČNÝ FEED
-        </Text>
+        <Text style={[s.label, { color: accent }]}>PŘERUŠ NEKONEČNÝ FEED</Text>
         <Text style={s.title}>Další příspěvek může počkat.</Text>
         <Text style={s.body}>
           Pět minut mimo obrazovku. Vyber si, co uděláš místo scrollování.
@@ -331,7 +333,7 @@ export function ScrollDashboard({
           accessibilityRole="button"
           accessibilityLabel="SOS: Doomscrolling"
           onPress={() => sos()}
-          style={[s.button, { backgroundColor: "#dfbcec" }]}
+          style={[s.button, { backgroundColor: accent }]}
         >
           <Text style={s.buttonText}>ODLOŽIT TELEFON · 5 MIN</Text>
         </Pressable>

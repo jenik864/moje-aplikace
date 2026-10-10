@@ -161,7 +161,7 @@ function DashboardBody({
       >
         <View style={s.sosTop}>
           <Text style={s.sosEyebrow}>SOS · CHVÍLE PRO TEBE</Text>
-          <Text style={s.sosDuration}>2 MIN</Text>
+          <Text style={s.sosDuration}>5 MIN</Text>
         </View>
         <View style={s.sosBody}>
           <View style={{ flex: 1, gap: 7 }}>
@@ -172,7 +172,7 @@ function DashboardBody({
         </View>
         <View style={s.sosAction}>
           <Text style={s.sosActionText}>Zastavit impulz</Text>
-          <ArrowIcon color="#2d111a" size={20} />
+          <ArrowIcon color="#17120f" size={20} />
         </View>
       </Pressable>
       <View style={s.metrics}>
@@ -480,9 +480,9 @@ const makeStyles = (accent: string) =>
     caption: { fontSize: 12, color: palette.muted, lineHeight: 19 },
     sos: {
       padding: 20,
-      backgroundColor: "#1c1219",
+      backgroundColor: tint(accent, 0.07),
       borderWidth: 1,
-      borderColor: "#422732",
+      borderColor: tint(accent, 0.28),
       borderRadius: 24,
       gap: 18,
       overflow: "hidden",
@@ -493,15 +493,15 @@ const makeStyles = (accent: string) =>
       justifyContent: "space-between",
     },
     sosEyebrow: {
-      color: "#ffc1c7",
+      color: accent,
       fontSize: 9,
       letterSpacing: 1.2,
       fontWeight: "600",
     },
     sosDuration: {
-      color: "#e5b6c0",
+      color: accent,
       fontSize: 9,
-      backgroundColor: "#34202b",
+      backgroundColor: tint(accent, 0.14),
       paddingHorizontal: 9,
       paddingVertical: 5,
       borderRadius: 8,
@@ -509,15 +509,15 @@ const makeStyles = (accent: string) =>
     },
     sosBody: { flexDirection: "row", alignItems: "center", gap: 12 },
     sosTitle: {
-      color: "#fff0f1",
+      color: "#f3f0eb",
       fontSize: 20,
       lineHeight: 26,
       fontWeight: "500",
       letterSpacing: -0.4,
     },
-    sosCaption: { color: "#c6a2aa", fontSize: 12, lineHeight: 18 },
+    sosCaption: { color: "#b7ada3", fontSize: 12, lineHeight: 18 },
     sosAction: {
-      backgroundColor: "#ffb0b7",
+      backgroundColor: accent,
       minHeight: 50,
       borderRadius: 14,
       flexDirection: "row",
@@ -525,7 +525,7 @@ const makeStyles = (accent: string) =>
       justifyContent: "space-between",
       paddingHorizontal: 18,
     },
-    sosActionText: { color: "#2d111a", fontSize: 15, fontWeight: "600" },
+    sosActionText: { color: "#17120f", fontSize: 15, fontWeight: "600" },
     metrics: { flexDirection: "row", gap: 10 },
     metric: {
       flex: 1,

@@ -47,7 +47,7 @@ const designs = [
   { name: "Eclipse", ticks: 60, frame: 9 },
 ];
 export function TimerDial({
-  seconds,
+  seconds: rawSeconds,
   progress,
   preview = false,
 }: {
@@ -69,6 +69,9 @@ export function TimerDial({
       : Platform.OS === "android"
         ? "sans-serif"
         : "Arial";
+  const seconds = Number.isFinite(rawSeconds)
+    ? Math.max(0, Math.floor(rawSeconds))
+    : 0;
   const days = Math.floor(seconds / 86400);
   const id = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const r = 125,
@@ -118,15 +121,47 @@ export function TimerDial({
             fill="none"
           />
         )}
-        {frame === 10 && <>
-          <Polygon points={polygon(144, 8, Math.PI / 8)} stroke={accent} strokeWidth={2} fill="none" />
-          {[0, 1, 2, 3].map(i => <Circle key={i} cx={150 + Math.sin(i * Math.PI / 2) * 137} cy={150 - Math.cos(i * Math.PI / 2) * 137} r={3} fill={accent} />)}
-        </>}
-        {frame === 11 && <>
-          <Polygon points={polygon(146, 6)} stroke={accent} strokeWidth={2} fill="none" />
-          <Polygon points={polygon(139, 6, Math.PI / 6)} stroke={tint(accent, 0.5)} fill="none" />
-          <Circle cx={150} cy={150} r={115} stroke={tint(accent, 0.3)} fill="none" />
-        </>}
+        {frame === 10 && (
+          <>
+            <Polygon
+              points={polygon(144, 8, Math.PI / 8)}
+              stroke={accent}
+              strokeWidth={2}
+              fill="none"
+            />
+            {[0, 1, 2, 3].map((i) => (
+              <Circle
+                key={i}
+                cx={150 + Math.sin((i * Math.PI) / 2) * 137}
+                cy={150 - Math.cos((i * Math.PI) / 2) * 137}
+                r={3}
+                fill={accent}
+              />
+            ))}
+          </>
+        )}
+        {frame === 11 && (
+          <>
+            <Polygon
+              points={polygon(146, 6)}
+              stroke={accent}
+              strokeWidth={2}
+              fill="none"
+            />
+            <Polygon
+              points={polygon(139, 6, Math.PI / 6)}
+              stroke={tint(accent, 0.5)}
+              fill="none"
+            />
+            <Circle
+              cx={150}
+              cy={150}
+              r={115}
+              stroke={tint(accent, 0.3)}
+              fill="none"
+            />
+          </>
+        )}
         {frame === 1 &&
           [0, 1, 2, 3].map((i) => (
             <Circle
@@ -404,7 +439,7 @@ export function TimerDial({
           letterSpacing={1.4}
           fill="#bcb5af"
         >
-          {days === 1 ? "DEN" : days > 1 && days < 5 ? "DNY" : "DNÍ"} V SÉRII
+          {`${days === 1 ? "DEN" : days > 1 && days < 5 ? "DNY" : "DNÍ"} V SÉRII`}
         </SvgText>
         <Line x1={112} x2={188} y1={204} y2={204} stroke={tint(accent, 0.25)} />
         {[
@@ -442,12 +477,13 @@ export function TimerDial({
   );
 }
 export function SosSymbol({ size = 58 }: { size?: number }) {
+  const { accent } = useRankTheme();
   return (
     <Svg width={size} height={size} viewBox="0 0 64 64">
-      <Circle cx={32} cy={32} r={30} fill="#ffb0b7" />
+      <Circle cx={32} cy={32} r={30} fill={accent} />
       <Path
         d="M25 23 V41 M39 23 V41"
-        stroke="#2d111a"
+        stroke="#17120f"
         strokeWidth={5}
         strokeLinecap="round"
       />
