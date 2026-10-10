@@ -29,6 +29,7 @@ import {
   ranks,
   rankOf,
   migrateRanks,
+  dayKey,
 } from "./src/model";
 
 import { Screen, RankBadge, RankEmblem, rankColors } from "./src/ui";
@@ -39,6 +40,8 @@ import { SosProtocol } from "./src/SosProtocol";
 import { DailyDashboard, DailyWelcome } from "./src/daily/Dashboard";
 
 import { PornDashboard, PornWelcome } from "./src/porn/Dashboard";
+
+import { foodPresets, type FoodPillar } from "./src/food/model";
 
 const Tab = createBottomTabNavigator();
 const ids: ProgramId[] = ["porn", "scroll", "food"];
@@ -162,11 +165,15 @@ function Setup({
   };
   const [reasons, setReasons] = useState("");
   const [target, setTarget] = useState(d.target);
+  const [foodSelection, setFoodSelection] = useState<string[]>([
+    foodPresets[0].label,
+  ]);
+  const [customFood, setCustomFood] = useState("");
   const [limit, setLimit] = useState("45");
   const [signature, setSignature] = useState("");
   const valid =
     reasons.trim().length > 0 &&
-    target.trim().length > 0 &&
+    (id === "food" ? foodSelection.length > 0 : target.trim().length > 0) &&
     (id !== "scroll" || (Number(limit) >= 1 && Number(limit) <= 1440));
   return (
     <Screen modal>
@@ -262,19 +269,98 @@ function Setup({
               {id === "scroll"
                 ? "SLEDOVANÉ SOCIÁLNÍ APLIKACE"
                 : id === "food"
-                  ? "PRVNÍ PILÍŘ"
+                  ? "MOJE PILÍŘE"
                   : "MOJE PRAVIDLO"}
             </Text>
-            <TextInput
-              value={target}
-              onChangeText={setTarget}
-              editable={id === "food"}
-              style={s.input}
-            />
-            {id === "food" && (
-              <Text style={s.muted}>
-                Další pilíře přidáš po aktivaci. Každý má vlastní denní zápis.
-              </Text>
+            {id === "food" ? (
+              <>
+                <Text style={s.muted}>
+                  Vyber 1 až 6 pilířů. Všechny přispívají do jednoho ranku.
+                  Během programu výběr zatím zůstává stejný.
+                </Text>
+                {foodPresets.map((preset) => (
+                  <Pressable
+                    key={preset.label}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{
+                      checked: foodSelection.includes(preset.label),
+                    }}
+                    onPress={() =>
+                      setFoodSelection((previous) =>
+                        previous.includes(preset.label)
+                          ? previous.filter((v) => v !== preset.label)
+                          : previous.length < 6
+                            ? [...previous, preset.label]
+                            : previous,
+                      )
+                    }
+                    style={s.reasonChip}
+                  >
+                    <Text style={s.body}>
+                      {foodSelection.includes(preset.label) ? "✓ " : "○ "}
+                      {preset.label}
+                    </Text>
+                    <Text style={s.muted}>
+                      {preset.mode === "periods"
+                        ? "Ráno · den · večer"
+                        : preset.mode === "meals"
+                          ? "Snídaně · oběd · večeře"
+                          : "Celý den"}
+                    </Text>
+                  </Pressable>
+                ))}
+                {foodSelection
+                  .filter(
+                    (label) => !foodPresets.some((v) => v.label === label),
+                  )
+                  .map((label) => (
+                    <Pressable
+                      key={label}
+                      onPress={() =>
+                        setFoodSelection((previous) =>
+                          previous.filter((v) => v !== label),
+                        )
+                      }
+                      style={s.reasonChip}
+                    >
+                      <Text style={s.body}>✓ {label} · celý den</Text>
+                    </Pressable>
+                  ))}
+                <TextInput
+                  accessibilityLabel="Vlastní pilíř před začátkem"
+                  value={customFood}
+                  onChangeText={setCustomFood}
+                  maxLength={80}
+                  placeholder="Vlastní celodenní pravidlo"
+                  placeholderTextColor="#857b73"
+                  style={s.input}
+                />
+                <Button
+                  title="PŘIDAT DO VÝBĚRU"
+                  color={d.color}
+                  onPress={() => {
+                    const label = customFood.trim();
+                    if (
+                      label &&
+                      foodSelection.length < 6 &&
+                      !foodSelection.some(
+                        (v) =>
+                          v.toLocaleLowerCase() === label.toLocaleLowerCase(),
+                      )
+                    ) {
+                      setFoodSelection((previous) => [...previous, label]);
+                      setCustomFood("");
+                    }
+                  }}
+                />
+              </>
+            ) : (
+              <TextInput
+                value={target}
+                onChangeText={setTarget}
+                editable={false}
+                style={s.input}
+              />
             )}
             {id === "scroll" && (
               <>
@@ -309,7 +395,9 @@ function Setup({
         {step === 2 && (
           <>
             <View style={s.panel}>
-              <Text style={s.cardTitle}>{target}</Text>
+              <Text style={s.cardTitle}>
+                {id === "food" ? foodSelection.join("\n") : target}
+              </Text>
               <Text style={s.body}>{reasons}</Text>
             </View>
             <Text style={s.body}>
@@ -330,7 +418,24 @@ function Setup({
                   ? save({
                       startedAt: Date.now(),
                       reasons: reasons.trim(),
-                      target: target.trim(),
+                      target:
+                        id === "food"
+                          ? foodSelection.join(" · ")
+                          : target.trim(),
+                      ...(id === "food"
+                        ? {
+                            foodPillars: foodSelection.map(
+                              (label, index): FoodPillar => ({
+                                id: `food-${index}`,
+                                label,
+                                startDay: dayKey(new Date()),
+                                mode:
+                                  foodPresets.find((v) => v.label === label)
+                                    ?.mode ?? "day",
+                              }),
+                            ),
+                          }
+                        : {}),
                       limit: Number(limit),
                       signature,
                       signedAt: Date.now(),
@@ -592,8 +697,14 @@ export default function App() {
               <>
                 <RankBadge value={rankOf(id, data[id]!, now)} />
                 <Text style={s.muted}>
-                  PRIME ·{" "}
-                  {ranks[Math.max(data[id]!.prime, rankOf(id, data[id]!, now))]}
+                  {id === "food" ? "CELKOVÝ RANK" : "PRIME"} ·{" "}
+                  {
+                    ranks[
+                      id === "food"
+                        ? rankOf(id, data[id]!, now)
+                        : Math.max(data[id]!.prime, rankOf(id, data[id]!, now))
+                    ]
+                  }
                 </Text>
               </>
             ) : (

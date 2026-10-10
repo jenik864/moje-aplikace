@@ -54,8 +54,8 @@ export const programContent: Record<
       "Sestav vlastní pilíře kolem jídla. Sleduj každý zvlášť a postupuj po malých krocích.",
     focus: "TVÉ PILÍŘE A KAŽDODENNÍ VOLBY",
     detail:
-      "Zahrada návyků, zápisy jednotlivých pilířů a pomoc s dalším krokem.",
-    steps: ["Zvol první pilíř", "Pojmenuj své důvody", "Podepiš svůj závazek"],
+      "Jeden společný rank, denní části podle tvých cílů a pomoc s dalším krokem.",
+    steps: ["Vyber své pilíře", "Pojmenuj své důvody", "Podepiš svůj závazek"],
     examples: [
       "Chci omezit impulzivní objednávky.",
       "Chci změnit zvyk pití sladkých nápojů.",

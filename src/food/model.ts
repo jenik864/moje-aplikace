@@ -4,6 +4,7 @@ export type FoodPillar = {
   label: string;
   startDay: string;
   endDay?: string;
+  mode?: "periods" | "meals" | "day";
 };
 export function foodPillars(p: Program): FoodPillar[] {
   return (
@@ -76,6 +77,10 @@ export function saveFoodAnswer(
   else delete dailyLogs[key];
   const result = {
     ...next,
+    foodScores:
+      confirmed && day.complete
+        ? { ...p.foodScores, [key]: foodDayPoints(next, key) }
+        : p.foodScores,
     dailyLogs,
     days:
       confirmed && day.complete
@@ -96,6 +101,7 @@ export function confirmFoodDay(p: Program, key: string, now: number): Program {
     ...p,
     foodPillars: foodPillars(p),
     foodEntries: { ...p.foodEntries, [key]: day.answers },
+    foodScores: { ...p.foodScores, [key]: foodDayPoints(p, key) },
     days: { ...p.days, [key]: success },
     dailyLogs: { ...p.dailyLogs, [key]: { success, confirmed: true } },
   };
@@ -156,4 +162,121 @@ export function resumeFoodPillar(p: Program, id: string, now: number): Program {
   }
   // A resumed pillar is a new period; its previous answers remain historical.
   return addFoodPillar(p, pillar.label, now);
+}
+
+export const foodPresets: {
+  label: string;
+  mode: NonNullable<FoodPillar["mode"]>;
+}[] = [
+  { label: "Bez sladkých nápojů", mode: "periods" },
+  { label: "Sladkosti podle plánu", mode: "periods" },
+  { label: "Bez impulzivních objednávek", mode: "day" },
+  { label: "Bez fast foodu", mode: "day" },
+  { label: "Pravidelná hlavní jídla", mode: "meals" },
+];
+export function pillarSlots(pillar: FoodPillar) {
+  const mode =
+    pillar.mode ??
+    (/sladk|nápoj/i.test(pillar.label)
+      ? "periods"
+      : /hlavní jíd|pravidelné jíd/i.test(pillar.label)
+        ? "meals"
+        : "day");
+  if (mode === "periods")
+    return [
+      { id: "morning", label: "Ráno · do 10:00", end: 10 },
+      { id: "afternoon", label: "Den · 10–16", end: 16 },
+      { id: "evening", label: "Večer · od 16:00", end: 24 },
+    ];
+  if (mode === "meals")
+    return [
+      { id: "breakfast", label: "Snídaně", end: 10 },
+      { id: "lunch", label: "Oběd", end: 16 },
+      { id: "dinner", label: "Večeře", end: 24 },
+    ];
+  return [{ id: "day", label: "Celý den", end: 24 }];
+}
+export function slotAnswer(
+  p: Program,
+  key: string,
+  pillar: FoodPillar,
+  slot: string,
+) {
+  const slots = p.foodSlots?.[key];
+  if (slots) return slots[`${pillar.id}:${slot}`];
+  return foodAnswers(p, key)[pillar.id];
+}
+export function foodDayPoints(p: Program, key: string) {
+  const pillars = activePillars(p, key);
+  if (!pillars.length) return 0;
+  return (
+    (100 *
+      pillars.reduce((sum, pillar) => {
+        const slots = pillarSlots(pillar);
+        return (
+          sum +
+          slots.filter((slot) => slotAnswer(p, key, pillar, slot.id) === true)
+            .length /
+            slots.length
+        );
+      }, 0)) /
+    pillars.length
+  );
+}
+export function foodPoints(p: Program, now: number) {
+  const today = dayKey(new Date(now));
+  const start = dayKey(new Date(p.signedAt ?? p.startedAt));
+  return Object.entries(p.days).reduce((total, [key, value]) => {
+    if (key >= today || key < start || typeof value !== "boolean") return total;
+    const score = p.foodScores?.[key];
+    return (
+      total +
+      (typeof score === "number" && Number.isFinite(score)
+        ? Math.max(0, Math.min(100, score))
+        : value
+          ? 100
+          : 0)
+    );
+  }, 0);
+}
+export function saveFoodSlot(
+  p: Program,
+  key: string,
+  pillarId: string,
+  slotId: string,
+  value: boolean,
+  now: number,
+): Program {
+  const today = dayKey(new Date(now));
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (key !== today && key !== dayKey(yesterday))
+    throw new Error("Upravit můžeš dnešek nebo včerejšek.");
+  const pillar = activePillars(p, key).find((v) => v.id === pillarId);
+  const slot = pillar && pillarSlots(pillar).find((v) => v.id === slotId);
+  if (!pillar || !slot) throw new Error("Neplatná část pilíře.");
+  if (key === today && new Date(now).getHours() < slot.end)
+    throw new Error("Tuto část můžeš vyplnit až po jejím skončení.");
+  // Preserve answers belonging to other pillars when moving an existing day to slot records.
+  const initial: Record<string, boolean> = { ...p.foodSlots?.[key] };
+  if (!p.foodSlots?.[key])
+    for (const v of activePillars(p, key))
+      for (const part of pillarSlots(v)) {
+        const old = foodAnswers(p, key)[v.id];
+        if (typeof old === "boolean") initial[`${v.id}:${part.id}`] = old;
+      }
+  initial[`${pillarId}:${slotId}`] = value;
+  const slots = pillarSlots(pillar);
+  const complete = slots.every(
+    (v) => typeof initial[`${pillarId}:${v.id}`] === "boolean",
+  );
+  const next = { ...p, foodSlots: { ...p.foodSlots, [key]: initial } };
+  if (!complete) return next;
+  return saveFoodAnswer(
+    next,
+    key,
+    pillarId,
+    slots.every((v) => initial[`${pillarId}:${v.id}`] === true),
+    now,
+  );
 }

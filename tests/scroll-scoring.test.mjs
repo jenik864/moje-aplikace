@@ -94,5 +94,8 @@ test("food keeps confirmed-day ranking independently of screen-time rules", () =
     d.setDate(d.getDate() - i);
     days[dayKey(d)] = true;
   }
-  assert.equal(rankOf("food", { ...base, days }, now), 2);
+  assert.equal(
+    rankOf("food", { ...base, startedAt: now - 7 * 86400000, days }, now),
+    2,
+  );
 });

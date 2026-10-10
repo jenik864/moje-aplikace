@@ -1,48 +1,27 @@
 import React from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import {
   SafeAreaProvider,
   initialWindowMetrics,
 } from "react-native-safe-area-context";
-import {
-  dayKey,
-  milestones,
-  ranks,
-  rankOf,
-  streak,
-  type Program,
-} from "../model";
+import { dayKey, milestones, ranks, rankOf, type Program } from "../model";
 import { Screen, rankColors } from "../ui";
 import { RankMark } from "../porn/visuals";
 import { tint } from "../porn/theme";
 import { dailyStyles } from "../daily/styles";
 import { dailySummary, dailyTrend } from "../daily/analytics";
 import { DailyDetails } from "../daily/Details";
-import { HabitGarden } from "./Garden";
 import {
   activePillars,
-  addFoodPillar,
   confirmFoodDay,
   foodDay,
   foodPillars,
-  pauseFoodPillar,
-  resumeFoodPillar,
-  saveFoodAnswer,
+  foodPoints,
+  foodDayPoints,
+  pillarSlots,
+  slotAnswer,
+  saveFoodSlot,
 } from "./model";
-const presets = [
-  "Bez sladkých nápojů",
-  "Bez impulzivních objednávek",
-  "Omezit fast food",
-  "Sladkosti jen při plánované příležitosti",
-  "Pravidelné hlavní jídlo",
-];
 export function FoodDashboard({
   p,
   now,
@@ -64,12 +43,10 @@ export function FoodDashboard({
   const pillars = activePillars(p, today),
     day = foodDay(p, today),
     previous = foodDay(p, yesterday),
-    stats = dailySummary(p, now),
-    count = streak(p, now);
+    stats = dailySummary(p, now);
   const [panel, setPanel] = React.useState<
       "pillars" | "days" | "ranks" | "manifest" | "sos" | null
     >(null),
-    [label, setLabel] = React.useState(""),
     [error, setError] = React.useState("");
   const [selected, setSelected] = React.useState(today);
   React.useEffect(() => setSelected(today), [today]);
@@ -90,95 +67,97 @@ export function FoodDashboard({
     accessibilityLabel: name,
     onPress: () => open(kind),
   });
-  const answerRows = (key: string) => {
-    const record = foodDay(p, key);
-    return record.pillars.map((pillar, index) => {
-      const answer = record.answers[pillar.id];
-      return (
-        <View
-          key={pillar.id}
-          style={{
-            gap: 12,
-            paddingTop: index ? 16 : 0,
-            borderTopWidth: index ? 1 : 0,
-            borderTopColor: "#342d28",
-          }}
-        >
-          <View style={s.row}>
-            <Text style={[s.label, { color: "#a69b8f" }]}>
-              PILÍŘ {index + 1}
-            </Text>
-            <Text
-              style={[
-                s.muted,
-                {
-                  color:
-                    answer === false
-                      ? "#e8a1ab"
-                      : answer === true
-                        ? accent
-                        : "#a69b8f",
-                },
-              ]}
-            >
-              {answer === true
-                ? "✓ V plánu"
-                : answer === false
-                  ? "Mimo plán"
-                  : "Čeká na zápis"}
-            </Text>
-          </View>
-          <Text style={s.title}>{pillar.label}</Text>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            {[true, false].map((value) => (
-              <Pressable
-                key={String(value)}
-                accessibilityRole="button"
-                accessibilityLabel={`${key === today ? "Dnes" : "Včera"} ${pillar.label}: ${value ? "dodrženo" : "mimo plán"}`}
-                accessibilityState={{ selected: answer === value }}
-                aria-pressed={answer === value}
-                onPress={() =>
-                  run(() => saveFoodAnswer(p, key, pillar.id, value, now))
-                }
-                style={{
-                  flex: 1,
-                  minHeight: 48,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor:
-                    answer === value ? (value ? accent : "#df909e") : "#443c36",
-                  backgroundColor:
-                    answer === value
-                      ? value
-                        ? tint(accent, 0.2)
-                        : "#382129"
-                      : "#171514",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  paddingHorizontal: 8,
-                }}
-              >
-                <Text
-                  style={{
-                    color:
-                      answer === value
-                        ? value
-                          ? accent
-                          : "#f6c2cb"
-                        : "#c5b9ae",
-                    fontSize: 12,
-                    fontWeight: "600",
-                  }}
-                >
-                  {value ? "Dodrženo" : "Mimo plán"}
+  const points = foodPoints(p, now);
+  const nextThreshold = milestones[Math.min(rank + 1, ranks.length - 1)] * 100;
+  const floor = milestones[rank] * 100;
+  const progress =
+    rank === ranks.length - 1 ? 1 : (points - floor) / (nextThreshold - floor);
+  const answerRows = (key: string) =>
+    foodDay(p, key).pillars.map((pillar, index) => (
+      <View key={pillar.id} style={{ gap: 12, paddingTop: index ? 20 : 0 }}>
+        <Text style={s.label}>PILÍŘ {index + 1}</Text>
+        <Text style={s.title}>{pillar.label}</Text>
+        {pillarSlots(pillar).map((slot) => {
+          const answer = slotAnswer(p, key, pillar, slot.id);
+          const locked = key === today && new Date(now).getHours() < slot.end;
+          return (
+            <View key={slot.id} style={{ gap: 8 }}>
+              <View style={s.row}>
+                <Text style={s.body}>{slot.label}</Text>
+                <Text style={s.muted}>
+                  {locked
+                    ? slot.end === 24
+                      ? "Zítra"
+                      : `Od ${slot.end}:00`
+                    : answer === undefined
+                      ? "Bez zápisu"
+                      : answer
+                        ? "✓"
+                        : "Mimo plán"}
                 </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      );
-    });
-  };
+              </View>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {[true, false].map((value) => (
+                  <Pressable
+                    key={String(value)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${key === today ? "Dnes" : "Včera"} ${pillar.label}, ${slot.label}: ${value ? "dodrženo" : "mimo plán"}`}
+                    accessibilityState={{
+                      selected: answer === value,
+                      disabled: locked,
+                    }}
+                    aria-pressed={answer === value}
+                    disabled={locked}
+                    onPress={() =>
+                      run(() =>
+                        saveFoodSlot(p, key, pillar.id, slot.id, value, now),
+                      )
+                    }
+                    style={{
+                      flex: 1,
+                      minHeight: 48,
+                      borderRadius: 12,
+                      padding: 12,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderWidth: 1,
+                      opacity: locked ? 0.4 : 1,
+                      borderColor:
+                        answer === value
+                          ? value
+                            ? accent
+                            : "#df909e"
+                          : "#393332",
+                      backgroundColor:
+                        answer === value
+                          ? value
+                            ? tint(accent, 0.18)
+                            : "#382129"
+                          : "#171514",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color:
+                          answer === value
+                            ? value
+                              ? accent
+                              : "#f6c2cb"
+                            : "#c5b9ae",
+                        fontSize: 12,
+                        fontWeight: "600",
+                      }}
+                    >
+                      {value ? "Dodrženo" : "Mimo plán"}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    ));
   const days = dailyTrend(p, now),
     detail = foodDay(p, selected),
     selectedInfo = days.find((d) => d.key === selected);
@@ -188,52 +167,82 @@ export function FoodDashboard({
         <Text style={s.label}>MALÉ VOLBY. VLASTNÍ TEMPO.</Text>
         <Text style={s.heading}>Junk Food</Text>
       </View>
-      <View
+      <Pressable
+        {...button("ranks", "Otevřít společný rank Junk Food")}
         style={[
           s.card,
           {
-            backgroundColor: "#141410",
-            borderColor: tint(accent, 0.3),
-            gap: 18,
+            alignItems: "center",
+            paddingVertical: 28,
+            gap: 14,
+            borderColor: tint(accent, 0.4),
+            backgroundColor: "#151312",
           },
         ]}
       >
-        <View style={s.row}>
-          <Text style={s.label}>ZAHRADA TVÝCH NÁVYKŮ</Text>
-          <Text style={s.muted}>7 DNÍ</Text>
-        </View>
-        <HabitGarden p={p} pillars={pillars} now={now} accent={accent} />
-        <Text style={s.muted}>
-          Každý list představuje jeden dokončený den podle tvého zápisu.
-          Nezapsané dny zůstávají prázdné.
+        <Text style={s.label}>TVŮJ JUNK FOOD RANK</Text>
+        <RankMark rank={rank} size={158} />
+        <Text style={{ color: accent, fontSize: 34, fontWeight: "600" }}>
+          {ranks[rank]}
         </Text>
-        <View style={{ height: 1, backgroundColor: "#373127" }} />
+        <Text style={s.muted}>
+          {Math.round(points)} BODŮ · JEDEN SPOLEČNÝ POSTUP
+        </Text>
+        <View style={{ width: "100%", gap: 12, marginTop: 10 }}>
+          <View style={s.row}>
+            <Text style={s.body}>
+              {rank === ranks.length - 1
+                ? "Nejvyšší rank dosažen"
+                : `Další rank · ${ranks[rank + 1]}`}
+            </Text>
+            <Text style={s.link}>
+              {rank === ranks.length - 1
+                ? "✓"
+                : `${Math.round(points)} / ${nextThreshold}`}
+            </Text>
+          </View>
+          <View
+            style={{
+              height: 5,
+              borderRadius: 3,
+              backgroundColor: "#302823",
+              overflow: "hidden",
+            }}
+          >
+            <View
+              style={{
+                height: 5,
+                width: `${Math.min(100, Math.max(0, progress * 100))}%`,
+                backgroundColor: accent,
+              }}
+            />
+          </View>
+          <Text style={s.muted}>
+            Každý uzavřený den až 100 bodů. Všechny pilíře mají stejnou váhu.
+          </Text>
+        </View>
+        <Text style={s.link}>PROHLÉDNOUT RANKY ›</Text>
+      </Pressable>
+      <View style={s.card}>
         <View style={s.row}>
           <Text style={s.label}>
             DNES · {new Date(now).toLocaleDateString("cs-CZ")}
           </Text>
           <Text style={s.muted}>
-            {day.recorded} / {pillars.length} zapsáno
+            {Math.round(foodDayPoints(p, today))} / 100 b · průběžně
           </Text>
         </View>
         {answerRows(today)}
         <Text style={s.muted}>
-          Dnešek je průběžný. Zítra potvrdíš celý den; rank zvýší jen den s
-          dodrženými aktivními pilíři.
+          Část dne zaznamenáš po jejím skončení. Večer a celodenní cíle uzavřeš
+          zítra. Body získáš po potvrzení celého dne.
         </Text>
         <Pressable
-          {...button("pillars", "Spravovat pilíře Junk Food")}
-          style={[
-            s.button,
-            {
-              backgroundColor: "#28251f",
-              borderWidth: 1,
-              borderColor: tint(accent, 0.4),
-            },
-          ]}
+          {...button("pillars", "Prohlédnout vybrané pilíře")}
+          style={[s.button, { backgroundColor: "#28231f" }]}
         >
           <Text style={[s.buttonText, { color: accent }]}>
-            + UPRAVIT PILÍŘE
+            MOJE VYBRANÉ PILÍŘE
           </Text>
         </Pressable>
       </View>
@@ -268,7 +277,7 @@ export function FoodDashboard({
             </Pressable>
           ) : (
             <Text style={s.muted}>
-              Oprava volby upraví výsledek celého dne. PRIME zůstává.
+              Oprava volby přepočítá body tohoto dne. Ostatní dny zůstávají.
             </Text>
           )}
           {!previous.complete && (
@@ -345,26 +354,6 @@ export function FoodDashboard({
           ✓ Dodrženo · růžová = mimo plán · — bez zápisu
         </Text>
       </Pressable>
-      <Pressable
-        {...button("ranks", "Otevřít ranky Junk Food")}
-        style={[s.card, s.row]}
-      >
-        <RankMark rank={rank} size={58} />
-        <View style={{ flex: 1, gap: 6 }}>
-          <Text style={s.label}>
-            {ranks[rank]} · {count} dní v řadě
-          </Text>
-          <Text style={s.muted}>
-            {rank === ranks.length - 1
-              ? "Nejvyšší rank dosažen"
-              : `Další milník: ${ranks[rank + 1]} · ${count} / ${milestones[rank + 1]} dní`}
-          </Text>
-          <Text style={s.muted}>
-            Vlastní zápisy, bez automatického ověření.
-          </Text>
-        </View>
-        <Text style={s.link}>›</Text>
-      </Pressable>
       <View
         style={[
           s.card,
@@ -437,117 +426,27 @@ export function FoodDashboard({
               {panel === "pillars" ? (
                 <>
                   <Text style={s.body}>
-                    Vyber konkrétní pravidla, která chceš sledovat. Můžeš mít až
-                    6 aktivních pilířů. Nový se počítá od dneška; pozastavení od
-                    zítřka.
+                    Pilíře jsou vybrané na začátku programu. Společně přispívají
+                    do jednoho ranku; počet pilířů nezrychluje postup.
                   </Text>
                   {foodPillars(p).map((pillar) => (
                     <View key={pillar.id} style={s.card}>
                       <Text style={s.title}>{pillar.label}</Text>
                       <Text style={s.muted}>
-                        {pillar.endDay
-                          ? `Pozastaveno od ${pillar.endDay}`
-                          : `Aktivní od ${pillar.startDay}`}
+                        {pillarSlots(pillar)
+                          .map((slot) => slot.label)
+                          .join(" · ")}
                       </Text>
-                      {!pillar.endDay && (
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Pozastavit ${pillar.label}`}
-                          onPress={() =>
-                            run(() => pauseFoodPillar(p, pillar.id, now))
-                          }
-                          style={[s.button, { backgroundColor: "#29231f" }]}
-                        >
-                          <Text style={[s.buttonText, { color: accent }]}>
-                            POZASTAVIT OD ZÍTŘKA
-                          </Text>
-                        </Pressable>
-                      )}
                       {pillar.endDay && (
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Obnovit ${pillar.label}`}
-                          onPress={() =>
-                            run(() => resumeFoodPillar(p, pillar.id, now))
-                          }
-                          style={[s.button, { backgroundColor: "#29231f" }]}
-                        >
-                          <Text style={[s.buttonText, { color: accent }]}>
-                            {pillar.endDay > today
-                              ? "ZRUŠIT POZASTAVENÍ"
-                              : "OBNOVIT OD DNEŠKA"}
-                          </Text>
-                        </Pressable>
+                        <Text style={s.muted}>
+                          Historický pilíř · do {pillar.endDay}
+                        </Text>
                       )}
                     </View>
                   ))}
-                  <View style={s.card}>
-                    <Text style={s.label}>PŘIDAT PILÍŘ</Text>
-                    <Text style={s.body}>
-                      Inspirace — uprav formulaci podle svého plánu.
-                    </Text>
-                    <View style={{ gap: 8 }}>
-                      {presets.map((preset) => (
-                        <Pressable
-                          key={preset}
-                          accessibilityRole="button"
-                          onPress={() => setLabel(preset)}
-                          style={{
-                            padding: 14,
-                            minHeight: 44,
-                            borderWidth: 1,
-                            borderColor: label === preset ? accent : "#3a332c",
-                            borderRadius: 12,
-                          }}
-                        >
-                          <Text style={s.body}>{preset}</Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                    <TextInput
-                      accessibilityLabel="Nový pilíř Junk Food"
-                      value={label}
-                      onChangeText={setLabel}
-                      maxLength={80}
-                      multiline
-                      placeholder="Moje konkrétní pravidlo…"
-                      placeholderTextColor="#857b73"
-                      style={[s.editor, { minHeight: 90, fontSize: 16 }]}
-                    />
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Přidat nový pilíř"
-                      onPress={() => {
-                        try {
-                          update(addFoodPillar(p, label, now));
-                          setLabel("");
-                          setError("");
-                        } catch (e) {
-                          setError(
-                            e instanceof Error
-                              ? e.message
-                              : "Pilíř se nepodařilo přidat.",
-                          );
-                        }
-                      }}
-                      disabled={!label.trim()}
-                      accessibilityState={{ disabled: !label.trim() }}
-                      style={[s.button, !label.trim() && { opacity: 0.4 }]}
-                    >
-                      <Text style={s.buttonText}>PŘIDAT PILÍŘ</Text>
-                    </Pressable>
-                  </View>
-                  {!!error && (
-                    <Text
-                      accessibilityRole="alert"
-                      style={{ color: "#ffb8c3" }}
-                    >
-                      {error}
-                    </Text>
-                  )}
                   <Text style={s.muted}>
-                    Zvol pravidla, která podporují pravidelné jídlo a vědomé
-                    volby.
+                    Plán během programu zatím neměníš. Tvoje předchozí záznamy
+                    zůstávají uložené.
                   </Text>
                 </>
               ) : (
@@ -617,8 +516,9 @@ export function FoodDashboard({
                       </View>
                     ))}
                     <Text style={s.muted}>
-                      Barva ranku = dodrženo · růžová = mimo plán. Nezapsané dny
-                      a dny před zahájením nemají hodnocení.
+                      Barva ranku = všechny cíle dodrženy · růžová = částečně
+                      nebo mimo plán. Nezapsané dny a dny před zahájením nemají
+                      hodnocení.
                     </Text>
                   </View>
                   <View style={s.card}>
@@ -636,6 +536,16 @@ export function FoodDashboard({
                           : typeof p.days[selected] === "boolean"
                             ? "Potvrzený den"
                             : "Den bez potvrzeného výsledku"}
+                    </Text>
+                    <Text style={s.value}>
+                      {Math.round(
+                        selected === today ||
+                          typeof p.days[selected] !== "boolean"
+                          ? 0
+                          : (p.foodScores?.[selected] ??
+                              (p.days[selected] ? 100 : 0)),
+                      )}{" "}
+                      bodů
                     </Text>
                     {detail.pillars.map((pillar) => (
                       <View key={pillar.id} style={s.row}>

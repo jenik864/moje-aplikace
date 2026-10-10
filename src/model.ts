@@ -1,4 +1,4 @@
-import type { FoodPillar } from "./food/model.ts";
+import { foodPoints, type FoodPillar } from "./food/model.ts";
 import { usageSummary, type UsageDay } from "./scroll/scoring.ts";
 export const ranks = [
   "Copper",
@@ -24,6 +24,8 @@ export type TriggerEvent = {
 };
 export type Program = {
   foodPillars?: FoodPillar[];
+  foodSlots?: Record<string, Record<string, boolean>>;
+  foodScores?: Record<string, number>;
   foodEntries?: Record<string, Record<string, boolean>>;
   rankVersion?: 2;
   screenTimeVersion?: 1;
@@ -66,6 +68,7 @@ export function rankForDays(days: number) {
 }
 export function rankOf(id: ProgramId, p: Program, now = Date.now()) {
   if (id === "scroll") return usageSummary(p, now).rank;
+  if (id === "food") return rankForDays(foodPoints(p, now) / 100);
   return rankForDays(
     id === "porn"
       ? Math.max(0, (now - p.startedAt) / 86400000)

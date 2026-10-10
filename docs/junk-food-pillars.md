@@ -1,13 +1,11 @@
-# Junk Food: individual habit pillars
+# Junk Food: one shared rank
 
-The food dashboard has its own habit garden, integrated per-pillar daily choices, a weekly day strip and a selectable 28-day history. There are no calorie, weight or portion targets. Plant leaves represent each pillar's real **self-reported, confirmed** results in the last seven completed days; unknown days stay empty. Plants are a visual metaphor, not a health measurement.
+Choose 1–6 pillars during activation. The active program exposes the selection read-only; adding or pausing pillars during a program is deferred. Legacy pillars, entries, paused periods, original signature, reasons and SOS records remain stored.
 
-A program supports one to six active pillars, including a custom rule up to 80 characters. Existing `target`, signature, reasons, rank/PRIME, daily logs and trigger history remain intact. Existing one-rule records map to the virtual `original` pillar until pillar settings/answers are first persisted.
+Presets: drinks and sweets use morning (before 10), daytime (10–16), evening (16–midnight). Meals use breakfast, lunch, dinner with the same closing times. Orders, fast food and custom rules are daily goals. Existing familiar labels infer these modes. This version uses local fixed closing times; individual meal schedules and weekly limits are not implemented.
 
-`foodPillars` stores each rule's ID, label and inclusive start date / exclusive end date. `foodEntries[day][pillarId]` stores its boolean answer. New pillars start today and never become yesterday's requirements. Pause takes effect tomorrow, leaving today's and previous days' requirements intact. A scheduled pause can be cancelled. Resuming an already ended pillar creates a new period/ID; old entries remain historical.
+A part can be recorded only after its closing time. Evening and daily goals close at midnight and are recorded the next day. Today is a draft. Yesterday requires all parts of all active pillars to be entered before confirmation. Corrections recompute that day's score; repeated confirmation never adds another reward.
 
-Today is a draft. Yesterday can be confirmed only after **all pillars active on that date** have answers. A whole-day success requires every active pillar to be kept. One day's multiple pillar answers can never award multiple rank days. Correcting yesterday's answer recomputes a previously confirmed whole-day result immediately; PRIME remains the historical maximum. Missing confirmations break the series as before. Ranks retain the existing confirmed-day milestones.
+Daily points = 100 × average across active pillars of each pillar's fraction of successful parts. Every pillar has equal weight and each day earns at most 100 points, independent of pillar count. Zero points for missing/unconfirmed days, future days, preactivation days, app openings or SOS. Points accumulate across days; unsuccessful days do not reset prior progress. Rank thresholds use the common milestone list multiplied by 100 (Bronze 300, Iron 400, Silver 500, … Obsidian 18000). No individual pillar ranks.
 
-The food-specific SOS asks about hunger, craving, stress or uncertainty. Hunger offers an immediate normal-meal route without a timer. The two-minute pause is optional, uses a wall-clock deadline, and can be ended at any time. Return stores the chosen need and actual pause duration; closing stores nothing. SOS does not change any pillar or rank.
-
-Automated detection of eating is not claimed. All food progress is explicitly based on the user's records. Porn Reboot and Doomscrolling data/scoring are unchanged.
+Confirmed scores are stored per date and not recomputed from later pillar selections. Legacy confirmed whole-day success earns 100, failure 0. Historical PRIME remains stored, while Food displays the current cumulative rank as its main rank. Intake is self-reported, not automatically verified.

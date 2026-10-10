@@ -45,7 +45,7 @@ export function DailyDetails({
   close: () => void;
 }) {
   const rank = rankOf(id, p, now),
-    prime = Math.max(rank, p.prime),
+    prime = id === "food" ? rank : Math.max(rank, p.prime),
     accent = rankColors[rank];
   const s = dailyStyles(accent),
     stats = dailySummary(p, now);
@@ -127,24 +127,37 @@ export function DailyDetails({
                 <>
                   <View style={s.card}>
                     <View style={s.row}>
-                      <RankMark rank={prime} size={64} />
+                      <RankMark rank={id === "food" ? rank : prime} size={64} />
                       <View style={{ flex: 1, gap: 8 }}>
-                        <Text style={[s.label, { color: rankColors[prime] }]}>
-                          PRIME / OSOBNÍ REKORD
+                        <Text
+                          style={[
+                            s.label,
+                            { color: rankColors[id === "food" ? rank : prime] },
+                          ]}
+                        >
+                          {id === "food"
+                            ? "JUNK FOOD / CELKOVÝ RANK"
+                            : "PRIME / OSOBNÍ REKORD"}
                         </Text>
-                        <Text style={[s.value, { color: rankColors[prime] }]}>
-                          {ranks[prime]}
+                        <Text
+                          style={[
+                            s.value,
+                            { color: rankColors[id === "food" ? rank : prime] },
+                          ]}
+                        >
+                          {ranks[id === "food" ? rank : prime]}
                         </Text>
                       </View>
                     </View>
                     <Text style={s.body}>
                       {id === "food"
-                        ? "Current sleduje potvrzené dny s dodrženými aktivními pilíři podle tvých zápisů. PRIME uchovává nejvyšší dosažený rank."
+                        ? "Jeden společný rank za celý Junk Food. Body jsou průměrem dodržování všech vybraných pilířů, nejvýše 100 za uzavřený den."
                         : "Current sleduje potvrzené dny v aktuální sérii. PRIME uchovává nejvyšší dosažený rank."}
                     </Text>
                     <Text style={s.muted}>
-                      Dnešní koncept se nepočítá. Chybějící potvrzení přeruší
-                      navazující sérii.
+                      {id === "food"
+                        ? "Dnešní koncept se nepočítá. Horší den přinese méně bodů, předchozí postup nemaže. Záznamy zadáváš sám."
+                        : "Dnešní koncept se nepočítá. Chybějící potvrzení přeruší navazující sérii."}
                     </Text>
                   </View>
                   <View
@@ -166,7 +179,9 @@ export function DailyDetails({
                     <Text style={s.muted}>
                       {previewRank === 0
                         ? "Od začátku"
-                        : `Odemkneš za ${milestones[previewRank]} dokončených dní v řadě.`}
+                        : id === "food"
+                          ? `Odemkneš za ${milestones[previewRank] * 100} bodů.`
+                          : `Odemkneš za ${milestones[previewRank]} dokončených dní v řadě.`}
                     </Text>
                     <Text style={[s.muted, { textAlign: "center" }]}>
                       Klepni na rank v seznamu a prohlédni si jeho emblém.
@@ -210,9 +225,11 @@ export function DailyDetails({
                         <Text style={s.muted}>
                           {i === 0
                             ? "Od začátku"
-                            : milestones[i] < 5
-                              ? `${milestones[i]} dokončené dny v řadě`
-                              : `${milestones[i]} dokončených dní v řadě`}
+                            : id === "food"
+                              ? `${milestones[i] * 100} bodů celkem`
+                              : milestones[i] < 5
+                                ? `${milestones[i]} dokončené dny v řadě`
+                                : `${milestones[i]} dokončených dní v řadě`}
                         </Text>
                       </View>
                       <Text
