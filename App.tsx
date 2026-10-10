@@ -33,7 +33,7 @@ import {
   streak,
   dayKey,
   resetProgram,
-  consistencyStatus,
+  formatDuration,
 } from "./src/model";
 
 import { Screen, RankBadge, RankEmblem } from "./src/ui";
@@ -41,6 +41,9 @@ import { Screen, RankBadge, RankEmblem } from "./src/ui";
 import { programContent } from "./src/programContent";
 import { ProgramIntro } from "./src/ProgramIntro";
 import { SosProtocol } from "./src/SosProtocol";
+
+import { DailyCheckIn } from "./src/DailyCheckIn";
+import { ConsistencyMatrix } from "./src/ConsistencyMatrix";
 
 const Tab = createBottomTabNavigator();
 const ids: ProgramId[] = ["porn", "scroll", "food"];
@@ -402,21 +405,19 @@ function Dashboard({
   const rank = rankOf(id, p, now);
   const seconds = Math.max(0, Math.floor((now - p.startedAt) / 1000));
   const days = Math.floor(seconds / 86400);
-  const [minutes, setMinutes] = useState("");
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const key = dayKey(yesterday);
   const reset = () => update(resetProgram(p));
-  const checkin = (success: boolean) => {
-    const next = { ...p, days: { ...p.days, [key]: success } };
-    update({ ...next, prime: Math.max(p.prime, rankOf(id, next, now)) });
-  };
   return (
     <>
       <View style={s.rankRow}>
         <RankBadge value={rank} />
         <Text style={s.muted}>PRIME · {ranks[Math.max(p.prime, rank)]}</Text>
       </View>
+      <Pressable onPress={sos} style={s.sos}>
+        <Text style={s.sosTitle}>SOS — ZASTAVIT IMPULZ</Text>
+        <Text style={{ color: "#ffb3b8", marginTop: 5 }}>
+          Připomeň si, pro co ses rozhodl. →
+        </Text>
+      </Pressable>
       {id === "porn" ? (
         <View style={[s.ring, { borderColor: d.color }]}>
           <Text style={s.eyebrow}>BEZ PORNA</Text>
@@ -436,12 +437,39 @@ function Dashboard({
           <Text style={[s.eyebrow, { color: d.color }]}>
             {id === "scroll" ? "DENNÍ ČASOVÝ ROZPOČET" : "MOJE PRAVIDLO"}
           </Text>
-          <Text style={s.big}>
-            {id === "scroll" ? `${p.limit} min` : p.target}
+          <Text style={[s.big, id === "food" && { fontSize: 26 }]}>
+            {id === "scroll"
+              ? `${p.dailyLogs?.[dayKey(new Date(now))]?.minutes ?? "—"} / ${p.limit} min`
+              : p.target}
           </Text>
           <Text style={s.body}>
             {id === "scroll" ? p.target : "Pravidelnost, ne dokonalost."}
           </Text>
+          {id === "scroll" && (
+            <>
+              <View style={s.track}>
+                <View
+                  style={[
+                    s.progress,
+                    {
+                      backgroundColor:
+                        (p.dailyLogs?.[dayKey(new Date(now))]?.minutes ?? 0) >
+                        p.limit
+                          ? "#ff7882"
+                          : d.color,
+                      width: `${Math.min(100, ((p.dailyLogs?.[dayKey(new Date(now))]?.minutes ?? 0) / p.limit) * 100)}%`,
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={s.muted}>
+                {p.dailyLogs?.[dayKey(new Date(now))]?.minutes === undefined
+                  ? "Dnešní čas zatím není zaznamenaný."
+                  : `Zbývá ${Math.max(0, p.limit - p.dailyLogs[dayKey(new Date(now))].minutes!)} min z limitu.`}{" "}
+                Ruční přehled.
+              </Text>
+            </>
+          )}
           <Text style={s.cardTitle}>
             {streak(p, now)} dokončených dní v řadě
           </Text>
@@ -474,67 +502,8 @@ function Dashboard({
           </>
         )}
       </View>
-      {id !== "porn" && key < dayKey(new Date(p.startedAt)) && (
-        <Text style={s.muted}>
-          První check-in bude dostupný zítra po dokončení dne.
-        </Text>
-      )}
-      {id !== "porn" && key >= dayKey(new Date(p.startedAt)) && (
-        <View style={s.panel}>
-          <Text style={s.cardTitle}>Včerejší check-in · {key}</Text>
-          <Text style={s.muted}>
-            Hodnotíme dokončený den. Ruční záznam lze opravit.
-          </Text>
-          {id === "scroll" ? (
-            <>
-              <TextInput
-                value={minutes}
-                onChangeText={setMinutes}
-                keyboardType="number-pad"
-                placeholder="Skutečný počet minut"
-                placeholderTextColor="#777"
-                style={s.input}
-              />
-              <Button
-                title="ULOŽIT ČAS"
-                color={d.color}
-                onPress={() => {
-                  if (
-                    !minutes.trim() ||
-                    !Number.isFinite(Number(minutes)) ||
-                    Number(minutes) < 0 ||
-                    Number(minutes) > 1440
-                  )
-                    return Alert.alert(
-                      "Neplatný čas",
-                      "Zadej 0 až 1440 minut.",
-                    );
-                  checkin(Number(minutes) <= p.limit);
-                }}
-              />
-            </>
-          ) : (
-            <View style={s.row}>
-              <Button
-                title="DODRŽENO"
-                color={d.color}
-                onPress={() => checkin(true)}
-              />
-              <Button
-                secondary
-                title="PORUŠENO"
-                onPress={() => checkin(false)}
-              />
-            </View>
-          )}
-          <Text style={s.muted}>
-            {p.days[key] === undefined
-              ? "Zatím nezaznamenáno"
-              : p.days[key]
-                ? "✓ Den splněn"
-                : "Den nesplněn · série přerušena"}
-          </Text>
-        </View>
+      {id !== "porn" && (
+        <DailyCheckIn id={id} p={p} now={now} update={update} />
       )}
       <View style={s.panel}>
         <View style={s.rankRow}>
@@ -554,62 +523,19 @@ function Dashboard({
           ).toLocaleDateString("cs-CZ")}
         </Text>
       </View>
-      <Pressable onPress={sos} style={s.sos}>
-        <Text style={s.sosTitle}>SOS — ZASTAVIT IMPULZ</Text>
-        <Text style={{ color: "#ffb3b8", marginTop: 5 }}>
-          Připomeň si, pro co ses rozhodl. →
-        </Text>
-      </Pressable>
-      <View style={s.panel}>
-        <Text style={s.cardTitle}>MATICE KONZISTENCE</Text>
-        <View style={s.matrix}>
-          {Array.from({ length: 28 }, (_, i) => {
-            const date = new Date(now);
-            date.setDate(date.getDate() - 27 + i);
-            const status =
-              id === "porn"
-                ? consistencyStatus(p, date, now)
-                : p.days[dayKey(date)] === true
-                  ? "success"
-                  : "empty";
-            const success = status === "success";
-            return (
-              <View
-                accessibilityLabel={`${dayKey(date)} ${status === "pending" ? "dnešek probíhá" : status === "reset" ? "přerušená série" : success ? "splněno" : "bez záznamu"}`}
-                key={i}
-                style={[
-                  s.cell,
-                  {
-                    backgroundColor: success
-                      ? d.color
-                      : status === "reset"
-                        ? "#6d2830"
-                        : "#292929",
-                    borderWidth: status === "pending" ? 1 : 0,
-                    borderColor: d.color,
-                  },
-                ]}
-              />
-            );
-          })}
-        </View>
-        <Text style={s.muted}>
-          Posledních 28 dní · {p.history.length} zaznamenaných přerušení
-        </Text>
-      </View>
+      <ConsistencyMatrix id={id} p={p} now={now} />
       {id === "porn" && (
         <>
           <View style={s.panel}>
             <Text style={s.cardTitle}>HISTORIE SÉRIÍ</Text>
             <Text style={s.muted}>
               Nejdelší série:{" "}
-              {Math.floor(
+              {formatDuration(
                 Math.max(
                   now - p.startedAt,
                   ...p.history.map((h) => h.duration),
-                ) / 86400000,
-              )}{" "}
-              dní
+                ),
+              )}
             </Text>
             {p.history.length === 0 ? (
               <Text style={s.muted}>Tvoje první série právě běží.</Text>
@@ -620,18 +546,22 @@ function Dashboard({
                 .map((h) => (
                   <View key={h.at} style={s.rankRow}>
                     <Text style={s.muted}>
-                      {new Date(h.at).toLocaleDateString("cs-CZ")}
+                      {new Date(h.at).toLocaleString("cs-CZ", {
+                        day: "numeric",
+                        month: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </Text>
                     <Text style={s.cardTitle}>
-                      {Math.floor(h.duration / 86400000)} dní ·{" "}
-                      {Math.floor(h.duration / 3600000) % 24} h
+                      {formatDuration(h.duration)}
                     </Text>
                   </View>
                 ))
             )}
           </View>
           <View style={s.panel}>
-            <Text style={s.cardTitle}>ZVLÁDNUTÉ SOS CHVÍLE</Text>
+            <Text style={s.cardTitle}>ZÁZNAMY SOS</Text>
             <Text style={s.muted}>
               {(p.triggers ?? []).length} uložených návratů k plánu
             </Text>
@@ -642,7 +572,12 @@ function Dashboard({
                 <View key={e.at} style={s.rankRow}>
                   <Text style={s.cardTitle}>{e.trigger}</Text>
                   <Text style={s.muted}>
-                    {new Date(e.at).toLocaleDateString("cs-CZ")}
+                    {new Date(e.at).toLocaleString("cs-CZ", {
+                      day: "numeric",
+                      month: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </Text>
                 </View>
               ))}
@@ -1040,12 +975,12 @@ export default function App() {
               close={() => setSos(null)}
               complete={(trigger, elapsed) => {
                 const p = data[sos];
-                if (p && trigger)
+                if (p)
                   update(sos, {
                     ...p,
                     triggers: [
                       ...(p.triggers ?? []),
-                      { at: Date.now(), trigger, durationSeconds: elapsed },
+                      { at: Date.now(), trigger: trigger || "Neuvedeno", durationSeconds: elapsed },
                     ],
                   });
                 setSos(null);

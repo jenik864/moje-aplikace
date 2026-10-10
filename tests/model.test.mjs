@@ -76,3 +76,74 @@ test("SOS countdown follows its deadline after background time and clamps at zer
   assert.equal(protocolRemaining(now + 120000, now + 119001), 1);
   assert.equal(protocolRemaining(now + 120000, now + 150000), 0);
 });
+
+test("daily drafts do not count until a completed day is confirmed", async () => {
+  const { saveDailyRecord } = await import("../src/model.ts");
+  const base = {
+    ...p,
+    startedAt: now - 4 * 86400000,
+    limit: 45,
+    days: { "2026-10-08": true, "2026-10-07": true },
+  };
+  const draft = saveDailyRecord(
+    "scroll",
+    base,
+    "2026-10-10",
+    { minutes: 20, success: true },
+    false,
+    now,
+  );
+  assert.deepEqual(draft.days, base.days);
+  assert.equal(rankOf("scroll", draft, now), 0);
+  const confirmed = saveDailyRecord(
+    "scroll",
+    draft,
+    "2026-10-09",
+    { minutes: 40, success: true },
+    true,
+    now,
+  );
+  assert.equal(rankOf("scroll", confirmed, now), 1);
+  assert.equal(confirmed.prime, 1);
+  const failed = saveDailyRecord(
+    "scroll",
+    confirmed,
+    "2026-10-09",
+    { minutes: 60, success: true },
+    true,
+    now,
+  );
+  assert.equal(rankOf("scroll", failed, now), 0);
+  assert.equal(failed.prime, 1);
+});
+test("daily record validation rejects unfinished, future and pre-activation days", async () => {
+  const { saveDailyRecord } = await import("../src/model.ts");
+  const base = { ...p, limit: 45 };
+  assert.throws(() =>
+    saveDailyRecord("food", base, "2026-10-10", { success: true }, true, now),
+  );
+  assert.throws(() =>
+    saveDailyRecord("food", base, "2026-10-09", { success: true }, true, now),
+  );
+  assert.throws(() =>
+    saveDailyRecord("food", base, "2026-10-11", { success: true }, false, now),
+  );
+  assert.throws(() =>
+    saveDailyRecord(
+      "scroll",
+      base,
+      "2026-10-10",
+      { success: true, minutes: -1 },
+      false,
+      now,
+    ),
+  );
+});
+test("series durations include minutes rather than rounding short attempts to zero hours", async () => {
+  const { formatDuration } = await import("../src/model.ts");
+  assert.equal(formatDuration(5 * 60000), "0 dní · 0 h · 5 min");
+  assert.equal(
+    formatDuration(86400000 + 2 * 3600000 + 3 * 60000),
+    "1 dní · 2 h · 3 min",
+  );
+});

@@ -39,46 +39,18 @@ export function SosProtocol({
     );
   return (
     <Screen modal>
+      <View style={s.topBar}>
+        <Pressable accessibilityRole="button" onPress={close} hitSlop={10}>
+          <Text style={s.muted}>✕ ZAVŘÍT</Text>
+        </Pressable>
+      </View>
       <ScrollView
         contentInsetAdjustmentBehavior="never"
         automaticallyAdjustContentInsets={false}
         contentContainerStyle={s.content}
       >
-        <Pressable accessibilityRole="button" onPress={close} hitSlop={10}>
-          <Text style={s.muted}>✕ ZAVŘÍT</Text>
-        </Pressable>
         <Text style={s.label}>SOS · {definitions[id].title.toUpperCase()}</Text>
         <Text style={s.heading}>Teď máš volbu.</Text>
-        <View style={s.panel}>
-          <Text style={s.title}>TVŮJ DŮVOD</Text>
-          <Text style={s.body}>{reasons}</Text>
-        </View>
-        <Text style={s.title}>CO SPUSTILO IMPULZ?</Text>
-        <View style={s.row}>
-          {(id === "food"
-            ? ["Hlad", "Stres", "Nuda", "Zvyk"]
-            : ["Nuda", "Stres", "Samota", "Zvyk"]
-          ).map((t) => (
-            <Pressable
-              accessibilityRole="radio"
-              accessibilityState={{ checked: trigger === t }}
-              aria-checked={trigger === t}
-              key={t}
-              onPress={() => setTrigger(t)}
-              style={[
-                s.chip,
-                trigger === t && {
-                  borderColor: "#ff5964",
-                  backgroundColor: "#321216",
-                },
-              ]}
-            >
-              <Text style={{ color: trigger === t ? "#ff8b93" : "#ccc" }}>
-                {t}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
         <View style={s.task}>
           <Text style={s.label}>
             {started === null
@@ -112,6 +84,42 @@ export function SosProtocol({
             </Text>
           )}
         </View>
+        <View style={s.panel}>
+          <Text style={s.title}>TVŮJ DŮVOD</Text>
+          <Text style={s.body}>{reasons}</Text>
+        </View>
+        <Text style={s.title}>CO SPUSTILO IMPULZ?</Text>
+        <View style={s.row}>
+          {(id === "food"
+            ? ["Hlad", "Stres", "Nuda", "Zvyk"]
+            : ["Nuda", "Stres", "Samota", "Zvyk"]
+          ).map((t) => (
+            <Pressable
+              accessibilityRole="radio"
+              accessibilityState={{ checked: trigger === t }}
+              aria-checked={trigger === t}
+              key={t}
+              onPress={() => setTrigger(t)}
+              style={[
+                s.chip,
+                trigger === t && {
+                  borderColor: "#ff5964",
+                  backgroundColor: "#321216",
+                },
+              ]}
+            >
+              <Text style={{ color: trigger === t ? "#ff8b93" : "#ccc" }}>
+                {t}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        <Text style={s.muted}>
+          Při návratu se uloží záznam SOS. Spouštěč je volitelný. Pauza nemění
+          rank. Kamera a blokování zatím nejsou aktivní.
+        </Text>
+      </ScrollView>
+      <View style={s.footer}>
         <Pressable
           accessibilityRole="button"
           onPress={finish}
@@ -123,15 +131,19 @@ export function SosProtocol({
               : "VRÁTIT SE K MÉMU PLÁNU"}
           </Text>
         </Pressable>
-        <Text style={s.muted}>
-          Vybraný spouštěč se uloží při návratu k plánu. Pauza není podmínkou
-          pro získání ranku. Kamera a blokování zatím nejsou aktivní.
-        </Text>
-      </ScrollView>
+      </View>
     </Screen>
   );
 }
 const s = StyleSheet.create({
+  topBar: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 6 },
+  footer: {
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    backgroundColor: "#050505",
+    borderTopWidth: 1,
+    borderTopColor: "#292929",
+  },
   content: { padding: 22, gap: 22, paddingBottom: 40 },
   muted: { color: "#888", fontSize: 12, lineHeight: 19 },
   label: {

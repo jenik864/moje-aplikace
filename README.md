@@ -29,9 +29,9 @@ Pokud prostředí nedovoluje zápis do standardní npm cache, použijte `npm_con
 
 ## První verze
 
-Quit má tři odlišné programy s onboardingem, podpisem, důvody a lokálním uložením. Porn Reboot má živý časovač a reset podržením 3 s. Doomscrolling a Junk Food mají ruční check-in dokončeného předchozího dne. Vynechaný check-in přerušuje sérii. Nejde o automatické sledování ostatních aplikací.
+Quit má tři odlišné programy s onboardingem, podpisem, důvody a lokálním uložením. Porn Reboot má živý časovač a reset podržením 3 s. Doomscrolling a Junk Food mají ruční průběžný zápis dneška a potvrzení dokončeného předchozího dne. Dnešní koncept nezvyšuje rank. Doomscrolling ukazuje ručně zapsanou spotřebu vůči limitu. Vynechaný check-in přerušuje sérii. Nejde o automatické sledování ostatních aplikací.
 
-Každý program má vlastní úvod a onboarding s inspirací pro osobní manifest. Podpis zůstává zachovaný při návratu o krok zpět. SOS obsahuje volitelnou časovanou pauzu a ukládá vybraný spouštěč i délku pauzy.
+Každý program má vlastní úvod a onboarding s inspirací pro osobní manifest. Podpis zůstává zachovaný při návratu o krok zpět. SOS obsahuje volitelnou časovanou pauzu a ukládá návrat k plánu, volitelný spouštěč i délku pauzy. Návratové tlačítko je stále dostupné.
 
 Porn Reboot nabízí historii sérií, úpravu manifestu a ukládání spouštěčů SOS. Odznaky ranků mají barvy jednotlivých materiálů.
 

@@ -21,3 +21,6 @@ Aktuální pokyn uživatele: pokračovat samostatně podle dohodnutého směru a
 
 ## Třetí kolo
 Programy mají vlastní úvodní ilustraci a odlišné texty a kroky onboardingu. Osobní důvody lze doplnit volitelnými příklady. Podpis se uchová při návratu zpět v otevřeném onboardingu, při kreslení se neprotáčí stránka. Přepínání programů ukazuje aktuální výběr. SOS obsahuje dobrovolnou časovanou pauzu (Porn 2 minuty, Doomscrolling 5 minut, Junk Food 2 minuty); lze ji ukončit kdykoli, bez přidávání bodů. Při návratu s vybraným spouštěčem se uloží i skutečně uplynulý čas, nejvýše délka protokolu.
+
+## Čtvrté kolo
+Doomscrolling a Junk Food mají průběžný dnešní zápis. Dnešek se ukládá jako koncept bez zvýšení ranku; následující den uživatel potvrdí celý předchozí den, případně opraví zápis. Doomscrolling ukládá skutečné ručně zadané minuty a přehled limitu, bez automatického sledování. Matice má 7 sloupců, datum každého dne, legendu a detail po klepnutí. Historie Porn ukazuje minuty i čas resetu. SOS je dostupné hned pod rankem, fyzický krok je v horní části SOS a návrat je trvale dostupný. Každý návrat k plánu ukládá záznam, i bez spouštěče (Neuvedeno); zavření křížkem ho neukládá. Nejde o ověření úspěšného zvládnutí krize ani zdroj XP.

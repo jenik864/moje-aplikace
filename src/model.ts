@@ -19,6 +19,10 @@ export type TriggerEvent = {
 };
 export type Program = {
   signedAt?: number;
+  dailyLogs?: Record<
+    string,
+    { success: boolean; minutes?: number; confirmed: boolean }
+  >;
   triggers?: TriggerEvent[];
   startedAt: number;
   reasons: string;
@@ -131,4 +135,45 @@ export function consistencyStatus(
 
 export function protocolRemaining(deadline: number, now = Date.now()) {
   return Math.max(0, Math.ceil((deadline - now) / 1000));
+}
+
+export function saveDailyRecord(
+  id: Exclude<ProgramId, "porn">,
+  p: Program,
+  key: string,
+  record: { success: boolean; minutes?: number },
+  confirmed: boolean,
+  now = Date.now(),
+): Program {
+  const today = dayKey(new Date(now));
+  const date = new Date(now);
+  date.setDate(date.getDate() - 1);
+  const yesterday = dayKey(date);
+  if (
+    key < dayKey(new Date(p.signedAt ?? p.startedAt)) ||
+    (confirmed ? key !== yesterday : key !== today)
+  )
+    throw new Error("Invalid day for check-in");
+  if (
+    id === "scroll" &&
+    (record.minutes === undefined ||
+      !Number.isFinite(record.minutes) ||
+      record.minutes < 0 ||
+      record.minutes > 1440)
+  )
+    throw new Error("Invalid minutes");
+  const success = id === "scroll" ? record.minutes! <= p.limit : record.success;
+  const next = {
+    ...p,
+    dailyLogs: {
+      ...(p.dailyLogs ?? {}),
+      [key]: { ...record, success, confirmed },
+    },
+    days: confirmed ? { ...p.days, [key]: success } : p.days,
+  };
+  return { ...next, prime: Math.max(p.prime, rankOf(id, next, now)) };
+}
+export function formatDuration(milliseconds: number) {
+  const seconds = Math.max(0, Math.floor(milliseconds / 1000));
+  return `${Math.floor(seconds / 86400)} dní · ${Math.floor(seconds / 3600) % 24} h · ${Math.floor(seconds / 60) % 60} min`;
 }
