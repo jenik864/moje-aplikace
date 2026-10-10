@@ -14,6 +14,7 @@ export function SosProtocol({
   close: () => void;
   complete: (trigger: string, elapsed: number) => void;
 }) {
+  const s = { ...baseStyles, ...(id === "porn" ? pornStyles : {}) };
   const [trigger, setTrigger] = useState("");
   const [started, setStarted] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -135,7 +136,7 @@ export function SosProtocol({
     </Screen>
   );
 }
-const s = StyleSheet.create({
+const baseStyles = StyleSheet.create({
   topBar: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 6 },
   footer: {
     paddingHorizontal: 22,
@@ -194,5 +195,80 @@ const s = StyleSheet.create({
     letterSpacing: 0.5,
     color: "#050505",
     fontWeight: "800",
+  },
+});
+
+// Porn Reboot has its own visual treatment; daily programs retain theirs.
+const pornStyles = StyleSheet.create({
+  topBar: { paddingHorizontal: 24, paddingTop: 14, paddingBottom: 10 },
+  content: { padding: 24, gap: 24, paddingBottom: 32 },
+  heading: {
+    color: "#f3f3ed",
+    fontSize: 34,
+    fontWeight: "600",
+    letterSpacing: -1,
+  },
+  task: {
+    padding: 24,
+    gap: 22,
+    borderWidth: 1,
+    borderColor: "#522b31",
+    borderRadius: 24,
+    backgroundColor: "#171112",
+  },
+  label: {
+    color: "#ff9096",
+    fontSize: 10,
+    letterSpacing: 2,
+    fontWeight: "600",
+  },
+  title: {
+    color: "#b6b9b0",
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 1.5,
+  },
+  body: { color: "#bfc0b8", fontSize: 14, lineHeight: 24 },
+  panel: {
+    backgroundColor: "#131512",
+    padding: 22,
+    gap: 14,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#282b25",
+  },
+  timer: {
+    color: "#ff999e",
+    fontSize: 68,
+    fontWeight: "500",
+    letterSpacing: -3,
+    textAlign: "center",
+    fontVariant: ["tabular-nums"],
+    paddingVertical: 16,
+  },
+  button: {
+    backgroundColor: "#ff999e",
+    padding: 18,
+    borderRadius: 14,
+    alignItems: "center",
+  },
+  buttonText: {
+    fontSize: 11,
+    letterSpacing: 1,
+    color: "#271316",
+    fontWeight: "700",
+  },
+  chip: {
+    padding: 13,
+    borderWidth: 1,
+    borderColor: "#31342d",
+    borderRadius: 10,
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    backgroundColor: "#050505",
+    borderTopWidth: 1,
+    borderTopColor: "#252824",
   },
 });

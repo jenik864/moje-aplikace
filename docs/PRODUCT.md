@@ -24,3 +24,10 @@ Programy mají vlastní úvodní ilustraci a odlišné texty a kroky onboardingu
 
 ## Čtvrté kolo
 Doomscrolling a Junk Food mají průběžný dnešní zápis. Dnešek se ukládá jako koncept bez zvýšení ranku; následující den uživatel potvrdí celý předchozí den, případně opraví zápis. Doomscrolling ukládá skutečné ručně zadané minuty a přehled limitu, bez automatického sledování. Matice má 7 sloupců, datum každého dne, legendu a detail po klepnutí. Historie Porn ukazuje minuty i čas resetu. SOS je dostupné hned pod rankem, fyzický krok je v horní části SOS a návrat je trvale dostupný. Každý návrat k plánu ukládá záznam, i bez spouštěče (Neuvedeno); zavření křížkem ho neukládá. Nejde o ověření úspěšného zvládnutí krize ani zdroj XP.
+
+## Detailní update Porn Reboot
+Rozsah tohoto updatu je pouze Porn Reboot. Kompaktní hlavička uvolňuje první obrazovku pro Current/PRIME, časovač s minutovými značkami a postup k dalšímu ranku. SOS je až pod časovačem a postupem, s jemnějším vzhledem; jeho dvouminutová logika zůstává.
+
+Ranky, matice, statistiky, historie, záznamy SOS a osobní manifest mají vlastní rozklikávací přehledy. Manifest včetně původního podpisu lze zobrazit a upravit důvody přímo v detailu. Matice ukazuje 28 lokálních kalendářních dnů, odlišuje dny před aktivací, dokončené dny bez resetu, resety a dnešek. Jeden den může obsahovat reset i právě běžící novou sérii. Detail dne ukazuje počty a časy jednotlivých resetů a SOS.
+
+Graf délek ukazuje posledních osm sérií včetně právě běžící; bod lze vybrat pro délku. Graf událostí ukazuje počty resetů a uložených návratů SOS za 14 dní. Konzistence počítá pouze dokončené dny od aktivace v posledních 28 dnech, průměr délek pouze ukončené série. Grafy nemají ukázková ani náhodně generovaná data. Prázdné stavy vysvětlují, co zatím chybí. Reset má průběh třísekundového podržení a ruší se při uvolnění nebo opuštění aplikace. Ukládání a pravidla ostatních programů nejsou změněna.

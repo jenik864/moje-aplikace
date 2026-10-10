@@ -45,6 +45,8 @@ import { SosProtocol } from "./src/SosProtocol";
 import { DailyCheckIn } from "./src/DailyCheckIn";
 import { ConsistencyMatrix } from "./src/ConsistencyMatrix";
 
+import { PornDashboard, PornWelcome } from "./src/porn/Dashboard";
+
 const Tab = createBottomTabNavigator();
 const ids: ProgramId[] = ["porn", "scroll", "food"];
 const STORAGE = "quitter.v1";
@@ -688,12 +690,28 @@ export default function App() {
     setData((prev) => ({ ...prev, [id]: p }));
   const Quit = () => (
     <Screen>
-      <View style={s.header}>
+      <View
+        style={[
+          s.header,
+          activeProgram === "porn" && { paddingTop: 8, paddingBottom: 8 },
+        ]}
+      >
         <View>
           <Text style={s.brand}>QUITTER</Text>
-          <Text style={s.heading}>Quit.</Text>
+          <Text
+            style={[
+              s.heading,
+              activeProgram === "porn" && { fontSize: 27, letterSpacing: -0.8 },
+            ]}
+          >
+            Quit.
+          </Text>
         </View>
-        <Text style={s.headerNote}>{"ZÍSKEJ ZPĚT\nKONTROLU."}</Text>
+        <Text style={s.headerNote}>
+          {activeProgram === "porn"
+            ? "OSOBNÍ ROZVOJ"
+            : "ZÍSKEJ ZPĚT\nKONTROLU."}
+        </Text>
       </View>
       <View style={s.tabs}>
         {ids.map((id, i) => (
@@ -756,9 +774,24 @@ export default function App() {
               style={{ width }}
               contentContainerStyle={s.content}
             >
-              <Text style={[s.eyebrow, { color: d.color }]}>{d.label}</Text>
-              <Text style={s.sectionTitle}>{d.title}</Text>
-              {p ? (
+              {id !== "porn" && (
+                <>
+                  <Text style={[s.eyebrow, { color: d.color }]}>{d.label}</Text>
+                  <Text style={s.sectionTitle}>{d.title}</Text>
+                </>
+              )}
+              {id === "porn" ? (
+                p ? (
+                  <PornDashboard
+                    p={p}
+                    now={now}
+                    update={(p) => update(id, p)}
+                    sos={() => setSos(id)}
+                  />
+                ) : (
+                  <PornWelcome activate={() => setSetup(id)} />
+                )
+              ) : p ? (
                 <Dashboard
                   id={id}
                   p={p}
@@ -980,7 +1013,11 @@ export default function App() {
                     ...p,
                     triggers: [
                       ...(p.triggers ?? []),
-                      { at: Date.now(), trigger: trigger || "Neuvedeno", durationSeconds: elapsed },
+                      {
+                        at: Date.now(),
+                        trigger: trigger || "Neuvedeno",
+                        durationSeconds: elapsed,
+                      },
                     ],
                   });
                 setSos(null);
