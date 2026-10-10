@@ -15,6 +15,6 @@
 - Budoucí Business: projekty, hledání spolupracovníků, AI. RevenueCat pro předplatné.
 
 ## Rozsah první implementace
-Lokální data, onboarding s kresleným podpisem, časovač Porn, ruční včerejší check-in ostatních disciplín, menší ranky, PRIME, SOS, matice. Doomscrolling/Junk Food zatím používají stejnou dočasnou řadu milníků. Celkový Copper je výchozí stav, ne vypočtený výsledek. Zbylé pilíře jsou informační návrhy, bez funkčních aktivit. Bez účtů, cloudu, žebříčků, blokování, kamery a plateb. Spouštěč v SOS není zatím ukládán.
+Lokální data, onboarding s kresleným podpisem, časovač Porn, ruční včerejší check-in ostatních disciplín, menší ranky, PRIME, SOS, matice. Doomscrolling/Junk Food zatím používají stejnou dočasnou řadu milníků. Celkový Copper je výchozí stav, ne vypočtený výsledek. Zbylé pilíře jsou informační návrhy, bez funkčních aktivit. Bez účtů, cloudu, žebříčků, blokování, kamery a plateb. Spouštěč SOS se ukládá při návratu k plánu. Porn Reboot zobrazuje poslední série, nejlepší sérii a umožňuje upravovat manifest bez resetu. Matice rozlišuje dokončené dny, dnešek a dny resetu.
 
-Před další větší implementací předložit strukturu a vyčkat na schválení uživatele.
+Aktuální pokyn uživatele: pokračovat samostatně podle dohodnutého směru a postupně aplikaci vylepšovat. Pro neujasněné produktové volby používat konzervativní výchozí řešení a vysvětlit je.

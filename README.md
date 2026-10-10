@@ -31,6 +31,8 @@ Pokud prostředí nedovoluje zápis do standardní npm cache, použijte `npm_con
 
 Quit má tři odlišné programy s onboardingem, podpisem, důvody a lokálním uložením. Porn Reboot má živý časovač a reset podržením 3 s. Doomscrolling a Junk Food mají ruční check-in dokončeného předchozího dne. Vynechaný check-in přerušuje sérii. Nejde o automatické sledování ostatních aplikací.
 
+Porn Reboot nabízí historii sérií, úpravu manifestu a ukládání spouštěčů SOS. Odznaky ranků mají barvy jednotlivých materiálů.
+
 Me ukazuje ranky disciplín. Celkový rank zatím zůstává Copper: férové bodování Build a Mind není dohodnuté. Build, Mind a Business jsou zatím úvodní obrazovky.
 
 Data se ukládají pouze lokálně přes AsyncStorage (bez šifrování), nikam se neodesílají. Nejde zatím o produkční zabezpečení citlivých dat. Bez systémových blokací, selfie kamery, účtů, žebříčků a předplatného.
