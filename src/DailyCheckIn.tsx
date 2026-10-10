@@ -7,13 +7,9 @@ import {
   Pressable,
   StyleSheet,
 } from "react-native";
-import {
-  Program,
-  ProgramId,
-  dayKey,
-  saveDailyRecord,
-  definitions,
-} from "./model";
+import { Program, ProgramId, dayKey, saveDailyRecord, rankOf } from "./model";
+import { rankColors } from "./ui";
+import { tint } from "./porn/theme";
 export function DailyCheckIn({
   id,
   p,
@@ -39,7 +35,7 @@ export function DailyCheckIn({
     setTodayMinutes(String(p.dailyLogs?.[today]?.minutes ?? ""));
     setPreviousMinutes(String(p.dailyLogs?.[yesterday]?.minutes ?? ""));
   }, [today, yesterday]);
-  const color = definitions[id].color;
+  const color = rankColors[rankOf(id, p, now)];
   const save = (
     key: string,
     confirmed: boolean,
@@ -103,15 +99,31 @@ export function DailyCheckIn({
             key={String(success)}
             accessibilityRole="button"
             onPress={() => save(key, confirmed, success)}
+            accessibilityState={{
+              selected:
+                (confirmed ? p.days[key] : p.dailyLogs?.[key]?.success) ===
+                success,
+            }}
             style={[
               s.button,
-              { flex: 1, backgroundColor: success ? color : "#292929" },
+              {
+                flex: 1,
+                backgroundColor: success ? color : "#21181e",
+                borderWidth: 1,
+                borderColor:
+                  (confirmed ? p.days[key] : p.dailyLogs?.[key]?.success) ===
+                  success
+                    ? "#f3e4da"
+                    : success
+                      ? color
+                      : "#473038",
+              },
             ]}
           >
             <Text
               style={[s.buttonText, { color: success ? "#050505" : "#fff" }]}
             >
-              {success ? "DODRŽENO" : "PORUŠENO"}
+              {success ? "DODRŽENO" : "MIMO PLÁN"}
             </Text>
           </Pressable>
         ))}
@@ -120,7 +132,7 @@ export function DailyCheckIn({
   const draft = p.dailyLogs?.[today];
   return (
     <>
-      <View style={s.panel}>
+      <View style={[s.panel, { borderColor: tint(color, 0.3) }]}>
         <Text style={[s.label, { color }]}>
           DNES · {new Date(now).toLocaleDateString("cs-CZ")}
         </Text>
@@ -142,7 +154,7 @@ export function DailyCheckIn({
           výsledek dne.
         </Text>
       </View>
-      {yesterday >= dayKey(new Date(p.signedAt ?? p.startedAt)) && (
+      {yesterday >= dayKey(new Date(p.signedAt ?? p.startedAt)) ? (
         <View style={s.panel}>
           <Text style={[s.label, { color }]}>
             VČERA · {previous.toLocaleDateString("cs-CZ")}
@@ -160,42 +172,49 @@ export function DailyCheckIn({
             Ulož celkový výsledek za celý den. Chybný zápis můžeš opravit.
           </Text>
         </View>
+      ) : (
+        <Text style={s.muted}>
+          První dokončený den potvrdíš zítra. Dnešní zápis je průběžný.
+        </Text>
       )}
     </>
   );
 }
 const s = StyleSheet.create({
   panel: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#131214",
     borderWidth: 1,
-    borderColor: "#292929",
-    borderRadius: 18,
+    borderColor: "#2b2728",
+    borderRadius: 22,
     padding: 20,
     gap: 14,
   },
-  label: { fontSize: 10, fontWeight: "800", letterSpacing: 1.5 },
-  title: { color: "#eee", fontSize: 18, fontWeight: "700" },
-  muted: { color: "#999", fontSize: 12, lineHeight: 19 },
+  label: { fontSize: 10, fontWeight: "600", letterSpacing: 1.2 },
+  title: { color: "#f3f3ed", fontSize: 21, lineHeight: 28, fontWeight: "500" },
+  muted: { color: "#aca39f", fontSize: 12, lineHeight: 19 },
   input: {
     color: "#fff",
     backgroundColor: "#111",
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: "#443632",
     borderRadius: 12,
     padding: 16,
-    fontSize: 18,
+    fontSize: 24,
+    fontVariant: ["tabular-nums"],
   },
   button: {
     padding: 16,
-    borderRadius: 12,
+    minHeight: 50,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
   buttonText: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "700",
     letterSpacing: 0.5,
     color: "#050505",
+    textAlign: "center",
   },
   row: { flexDirection: "row", gap: 10 },
 });

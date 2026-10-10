@@ -3,8 +3,14 @@ import { View, Text, StyleSheet } from "react-native";
 import Svg, { Circle, Path, Rect, Line } from "react-native-svg";
 import { definitions, ProgramId } from "./model";
 import { programContent } from "./programContent";
-export function ProgramIntro({ id }: { id: ProgramId }) {
-  const d = definitions[id];
+export function ProgramIntro({
+  id,
+  accent,
+}: {
+  id: ProgramId;
+  accent?: string;
+}) {
+  const d = { ...definitions[id], color: accent ?? definitions[id].color };
   const c = programContent[id];
   return (
     <View style={[styles.hero, { borderColor: `${d.color}40` }]}>
@@ -137,7 +143,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     lineHeight: 36,
     letterSpacing: -0.8,
-    fontWeight: "800",
+    fontWeight: "600",
     color: "#fff",
   },
   body: { fontSize: 14, lineHeight: 23, color: "#aaa" },

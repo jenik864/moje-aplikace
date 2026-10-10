@@ -11,7 +11,6 @@ import {
   useWindowDimensions,
   PanResponder,
   Alert,
-  AppState,
 } from "react-native";
 import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -28,22 +27,15 @@ import {
   ProgramId,
   definitions,
   ranks,
-  milestones,
   rankOf,
-  streak,
-  dayKey,
-  resetProgram,
-  formatDuration,
 } from "./src/model";
 
 import { Screen, RankBadge, RankEmblem, rankColors } from "./src/ui";
 
 import { programContent } from "./src/programContent";
-import { ProgramIntro } from "./src/ProgramIntro";
 import { SosProtocol } from "./src/SosProtocol";
 
-import { DailyCheckIn } from "./src/DailyCheckIn";
-import { ConsistencyMatrix } from "./src/ConsistencyMatrix";
+import { DailyDashboard, DailyWelcome } from "./src/daily/Dashboard";
 
 import { PornDashboard, PornWelcome } from "./src/porn/Dashboard";
 
@@ -158,10 +150,7 @@ function Setup({
   close: () => void;
   save: (p: Program) => void;
 }) {
-  const d =
-    id === "porn"
-      ? { ...definitions[id], color: rankColors[0] }
-      : definitions[id];
+  const d = { ...definitions[id], color: rankColors[0] };
   const [step, setStep] = useState(0);
   const [drawing, setDrawing] = useState(false);
   const setupScroll = useRef<ScrollView>(null);
@@ -354,245 +343,6 @@ function Setup({
     </Screen>
   );
 }
-function HoldReset({ reset }: { reset: () => void }) {
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [holding, setHolding] = useState(false);
-  const cancel = () => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = null;
-    setHolding(false);
-  };
-  useEffect(() => {
-    const sub = AppState.addEventListener("change", cancel);
-    return () => {
-      sub.remove();
-      if (timer.current) clearTimeout(timer.current);
-    };
-  }, []);
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Reset série, podržte tři sekundy"
-      onPressIn={() => {
-        setHolding(true);
-        timer.current = setTimeout(() => {
-          cancel();
-          reset();
-        }, 3000);
-      }}
-      onPressOut={cancel}
-      style={s.reset}
-    >
-      <Text style={s.muted}>
-        {holding
-          ? "Drž… reset po 3 sekundách"
-          : "Zaznamenat porušení · podrž 3 s"}
-      </Text>
-    </Pressable>
-  );
-}
-function Dashboard({
-  id,
-  p,
-  now,
-  update,
-  sos,
-  edit,
-}: {
-  id: ProgramId;
-  p: Program;
-  now: number;
-  update: (p: Program) => void;
-  sos: () => void;
-  edit: () => void;
-}) {
-  const d = definitions[id];
-  const rank = rankOf(id, p, now);
-  const seconds = Math.max(0, Math.floor((now - p.startedAt) / 1000));
-  const days = Math.floor(seconds / 86400);
-  const reset = () => update(resetProgram(p));
-  return (
-    <>
-      <View style={s.rankRow}>
-        <RankBadge value={rank} />
-        <Text style={s.muted}>PRIME · {ranks[Math.max(p.prime, rank)]}</Text>
-      </View>
-      <Pressable onPress={sos} style={s.sos}>
-        <Text style={s.sosTitle}>SOS — ZASTAVIT IMPULZ</Text>
-        <Text style={{ color: "#ffb3b8", marginTop: 5 }}>
-          Připomeň si, pro co ses rozhodl. →
-        </Text>
-      </Pressable>
-      {id === "porn" ? (
-        <View style={[s.ring, { borderColor: d.color }]}>
-          <Text style={s.eyebrow}>BEZ PORNA</Text>
-          <Text style={s.timer}>
-            {days}
-            <Text style={{ fontSize: 20 }}> dní</Text>
-          </Text>
-          <Text style={s.clock}>
-            {String(Math.floor(seconds / 3600) % 24).padStart(2, "0")} :{" "}
-            {String(Math.floor(seconds / 60) % 60).padStart(2, "0")} :{" "}
-            {String(seconds % 60).padStart(2, "0")}
-          </Text>
-          <Text style={s.muted}>HODINY · MINUTY · SEKUNDY</Text>
-        </View>
-      ) : (
-        <View style={s.panel}>
-          <Text style={[s.eyebrow, { color: d.color }]}>
-            {id === "scroll" ? "DENNÍ ČASOVÝ ROZPOČET" : "MOJE PRAVIDLO"}
-          </Text>
-          <Text style={[s.big, id === "food" && { fontSize: 26 }]}>
-            {id === "scroll"
-              ? `${p.dailyLogs?.[dayKey(new Date(now))]?.minutes ?? "—"} / ${p.limit} min`
-              : p.target}
-          </Text>
-          <Text style={s.body}>
-            {id === "scroll" ? p.target : "Pravidelnost, ne dokonalost."}
-          </Text>
-          {id === "scroll" && (
-            <>
-              <View style={s.track}>
-                <View
-                  style={[
-                    s.progress,
-                    {
-                      backgroundColor:
-                        (p.dailyLogs?.[dayKey(new Date(now))]?.minutes ?? 0) >
-                        p.limit
-                          ? "#ff7882"
-                          : d.color,
-                      width: `${Math.min(100, ((p.dailyLogs?.[dayKey(new Date(now))]?.minutes ?? 0) / p.limit) * 100)}%`,
-                    },
-                  ]}
-                />
-              </View>
-              <Text style={s.muted}>
-                {p.dailyLogs?.[dayKey(new Date(now))]?.minutes === undefined
-                  ? "Dnešní čas zatím není zaznamenaný."
-                  : `Zbývá ${Math.max(0, p.limit - p.dailyLogs[dayKey(new Date(now))].minutes!)} min z limitu.`}{" "}
-                Ruční přehled.
-              </Text>
-            </>
-          )}
-          <Text style={s.cardTitle}>
-            {streak(p, now)} dokončených dní v řadě
-          </Text>
-        </View>
-      )}
-      <View style={s.progressPanel}>
-        <Text style={s.cardTitle}>
-          {rank < 9
-            ? `DALŠÍ RANK · ${ranks[rank + 1].toUpperCase()}`
-            : "OBSIDIAN · NEJVYŠŠÍ RANK"}
-        </Text>
-        {rank < 9 && (
-          <>
-            <View style={s.track}>
-              <View
-                style={[
-                  s.progress,
-                  {
-                    backgroundColor: d.color,
-                    width: `${Math.min(100, Math.max(0, (((id === "porn" ? seconds / 86400 : streak(p, now)) - milestones[rank]) / (milestones[rank + 1] - milestones[rank])) * 100))}%`,
-                  },
-                ]}
-              />
-            </View>
-            <Text style={s.muted}>
-              {id === "porn"
-                ? `Zbývá ${Math.ceil(Math.max(0, milestones[rank + 1] * 86400 - seconds) / 3600)} hodin`
-                : `${streak(p, now)} / ${milestones[rank + 1]} dokončených dní`}
-            </Text>
-          </>
-        )}
-      </View>
-      {id !== "porn" && (
-        <DailyCheckIn id={id} p={p} now={now} update={update} />
-      )}
-      <View style={s.panel}>
-        <View style={s.rankRow}>
-          <Text style={s.cardTitle}>MOJE PROČ</Text>
-          <Pressable accessibilityRole="button" onPress={edit} hitSlop={12}>
-            <Text style={{ color: purple, fontSize: 12 }}>UPRAVIT</Text>
-          </Pressable>
-        </View>
-        <Text style={s.body}>{p.reasons}</Text>
-        <Text style={s.muted}>
-          Podepsáno{" "}
-          {new Date(
-            p.signedAt ??
-              (p.history[0]
-                ? p.history[0].at - p.history[0].duration
-                : p.startedAt),
-          ).toLocaleDateString("cs-CZ")}
-        </Text>
-      </View>
-      <ConsistencyMatrix id={id} p={p} now={now} />
-      {id === "porn" && (
-        <>
-          <View style={s.panel}>
-            <Text style={s.cardTitle}>HISTORIE SÉRIÍ</Text>
-            <Text style={s.muted}>
-              Nejdelší série:{" "}
-              {formatDuration(
-                Math.max(
-                  now - p.startedAt,
-                  ...p.history.map((h) => h.duration),
-                ),
-              )}
-            </Text>
-            {p.history.length === 0 ? (
-              <Text style={s.muted}>Tvoje první série právě běží.</Text>
-            ) : (
-              p.history
-                .slice(-5)
-                .reverse()
-                .map((h) => (
-                  <View key={h.at} style={s.rankRow}>
-                    <Text style={s.muted}>
-                      {new Date(h.at).toLocaleString("cs-CZ", {
-                        day: "numeric",
-                        month: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </Text>
-                    <Text style={s.cardTitle}>
-                      {formatDuration(h.duration)}
-                    </Text>
-                  </View>
-                ))
-            )}
-          </View>
-          <View style={s.panel}>
-            <Text style={s.cardTitle}>ZÁZNAMY SOS</Text>
-            <Text style={s.muted}>
-              {(p.triggers ?? []).length} uložených návratů k plánu
-            </Text>
-            {(p.triggers ?? [])
-              .slice(-3)
-              .reverse()
-              .map((e) => (
-                <View key={e.at} style={s.rankRow}>
-                  <Text style={s.cardTitle}>{e.trigger}</Text>
-                  <Text style={s.muted}>
-                    {new Date(e.at).toLocaleString("cs-CZ", {
-                      day: "numeric",
-                      month: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Text>
-                </View>
-              ))}
-          </View>
-          <HoldReset reset={reset} />
-        </>
-      )}
-    </>
-  );
-}
 const Placeholder = ({
   title,
   label,
@@ -633,7 +383,6 @@ export default function App() {
   const [setup, setSetup] = useState<ProgramId | null>(null);
   const [sos, setSos] = useState<ProgramId | null>(null);
   const [activeProgram, setActiveProgram] = useState<ProgramId>("porn");
-  const [editing, setEditing] = useState<ProgramId | null>(null);
   const { width } = useWindowDimensions();
   const pager = useRef<ScrollView>(null);
   const queue = useRef(Promise.resolve());
@@ -691,31 +440,19 @@ export default function App() {
   }, [now, ready]);
   const update = (id: ProgramId, p: Program) =>
     setData((prev) => ({ ...prev, [id]: p }));
-  const pornAccent = rankColors[data.porn ? rankOf("porn", data.porn, now) : 0];
+  const activeData = data[activeProgram];
+  const quitAccent =
+    rankColors[activeData ? rankOf(activeProgram, activeData, now) : 0];
   const Quit = () => (
     <Screen>
-      <View
-        style={[
-          s.header,
-          activeProgram === "porn" && { paddingTop: 8, paddingBottom: 8 },
-        ]}
-      >
+      <View style={[s.header, { paddingTop: 8, paddingBottom: 8 }]}>
         <View>
           <Text style={s.brand}>QUITTER</Text>
-          <Text
-            style={[
-              s.heading,
-              activeProgram === "porn" && { fontSize: 27, letterSpacing: -0.8 },
-            ]}
-          >
+          <Text style={[s.heading, { fontSize: 27, letterSpacing: -0.8 }]}>
             Quit.
           </Text>
         </View>
-        <Text style={s.headerNote}>
-          {activeProgram === "porn"
-            ? "OSOBNÍ ROZVOJ"
-            : "ZÍSKEJ ZPĚT\nKONTROLU."}
-        </Text>
+        <Text style={s.headerNote}>OSOBNÍ ROZVOJ</Text>
       </View>
       <View style={s.tabs}>
         {ids.map((id, i) => (
@@ -728,11 +465,7 @@ export default function App() {
               s.programTab,
               {
                 borderBottomColor:
-                  activeProgram === id
-                    ? id === "porn"
-                      ? pornAccent
-                      : definitions[id].color
-                    : "transparent",
+                  activeProgram === id ? quitAccent : "transparent",
               },
             ]}
             onPress={() => {
@@ -744,12 +477,7 @@ export default function App() {
               style={[
                 s.smallTab,
                 {
-                  color:
-                    activeProgram === id
-                      ? id === "porn"
-                        ? pornAccent
-                        : definitions[id].color
-                      : "#888",
+                  color: activeProgram === id ? quitAccent : "#888",
                 },
               ]}
             >
@@ -777,25 +505,21 @@ export default function App() {
         showsHorizontalScrollIndicator={false}
       >
         {ids.map((id) => {
-          const d = definitions[id];
           const p = data[id];
           return (
             <ScrollView
               contentInsetAdjustmentBehavior="never"
               automaticallyAdjustContentInsets={false}
               key={id}
+              accessibilityElementsHidden={activeProgram !== id}
+              importantForAccessibility={
+                activeProgram === id ? "auto" : "no-hide-descendants"
+              }
+              aria-hidden={activeProgram !== id}
               style={{ width }}
-              contentContainerStyle={[
-                s.content,
-                id === "porn" && { padding: 20, gap: 16 },
-              ]}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={[s.content, { padding: 20, gap: 16 }]}
             >
-              {id !== "porn" && (
-                <>
-                  <Text style={[s.eyebrow, { color: d.color }]}>{d.label}</Text>
-                  <Text style={s.sectionTitle}>{d.title}</Text>
-                </>
-              )}
               {id === "porn" ? (
                 p ? (
                   <PornDashboard
@@ -808,30 +532,17 @@ export default function App() {
                   <PornWelcome activate={() => setSetup(id)} />
                 )
               ) : p ? (
-                <Dashboard
+                <DailyDashboard
                   id={id}
                   p={p}
                   now={now}
                   update={(p) => update(id, p)}
-                  edit={() => setEditing(id)}
                   sos={() => {
                     setSos(id);
                   }}
                 />
               ) : (
-                <>
-                  <ProgramIntro id={id} />
-                  <Text style={s.body}>{programContent[id].detail}</Text>
-                  <View style={s.rankRow}>
-                    <RankBadge value={0} />
-                    <Text style={s.muted}>Tady začíná tvoje série.</Text>
-                  </View>
-                  <Button
-                    title="AKTIVOVAT PROGRAM"
-                    color={d.color}
-                    onPress={() => setSetup(id)}
-                  />
-                </>
+                <DailyWelcome id={id} activate={() => setSetup(id)} />
               )}
             </ScrollView>
           );
@@ -920,9 +631,7 @@ export default function App() {
           screenOptions={({ route }) => ({
             headerShown: false,
             tabBarActiveTintColor:
-              route.name === "Quit" && activeProgram === "porn"
-                ? pornAccent
-                : "#c5fa67",
+              route.name === "Quit" ? quitAccent : "#c5fa67",
             tabBarInactiveTintColor: "#777",
             tabBarStyle: {
               backgroundColor: "#111",
@@ -1023,9 +732,7 @@ export default function App() {
           <SafeAreaProvider initialMetrics={initialWindowMetrics}>
             <SosProtocol
               id={sos}
-              rank={
-                sos === "porn" && data.porn ? rankOf("porn", data.porn, now) : 0
-              }
+              rank={data[sos] ? rankOf(sos, data[sos]!, now) : 0}
               reasons={data[sos]?.reasons ?? ""}
               close={() => setSos(null)}
               complete={(trigger, elapsed, pauseStarted) => {
@@ -1039,7 +746,7 @@ export default function App() {
                         at: Date.now(),
                         trigger: trigger || "Neuvedeno",
                         durationSeconds: elapsed,
-                        ...(sos === "porn" ? { pauseStarted } : {}),
+                        pauseStarted,
                       },
                     ],
                   });
@@ -1049,71 +756,7 @@ export default function App() {
           </SafeAreaProvider>
         )}
       </Modal>
-      <Modal
-        visible={editing !== null}
-        animationType="slide"
-        onRequestClose={() => setEditing(null)}
-      >
-        {editing && data[editing] && (
-          <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-            <ManifestEditor
-              key={editing}
-              p={data[editing]!}
-              close={() => setEditing(null)}
-              save={(reasons) => {
-                update(editing, { ...data[editing]!, reasons });
-                setEditing(null);
-              }}
-            />
-          </SafeAreaProvider>
-        )}
-      </Modal>
     </SafeAreaProvider>
-  );
-}
-function ManifestEditor({
-  p,
-  close,
-  save,
-}: {
-  p: Program;
-  close: () => void;
-  save: (reasons: string) => void;
-}) {
-  const [reasons, setReasons] = useState(p.reasons);
-  return (
-    <Screen modal>
-      <ScrollView
-        contentInsetAdjustmentBehavior="never"
-        automaticallyAdjustContentInsets={false}
-        contentContainerStyle={s.modalContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={[s.eyebrow, { color: purple }]}>OSOBNÍ MANIFEST</Text>
-        <Text style={s.heading}>Tvoje proč.</Text>
-        <Text style={s.body}>
-          Důvody se mohou vyvíjet. Úprava nezmění tvoji sérii ani původní
-          podpis.
-        </Text>
-        <TextInput
-          accessibilityLabel="Moje důvody"
-          multiline
-          value={reasons}
-          onChangeText={setReasons}
-          style={[s.input, { minHeight: 180 }]}
-        />
-        <Button
-          title="ULOŽIT DŮVODY"
-          color={purple}
-          onPress={() =>
-            reasons.trim()
-              ? save(reasons.trim())
-              : Alert.alert("Doplň důvody", "Napiš alespoň jeden důvod.")
-          }
-        />
-        <Button secondary title="ZRUŠIT" onPress={close} />
-      </ScrollView>
-    </Screen>
   );
 }
 const s = StyleSheet.create({

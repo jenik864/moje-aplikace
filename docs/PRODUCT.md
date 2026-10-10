@@ -2,6 +2,7 @@
 
 - React Native + Expo; pět záložek Quit, Build, Mind, Business, Me.
 - Vzhled: #050505 pozadí, #1a1a1a panely, zelená úspěch, červená SOS, fialová profil. Profesionální geometrické znaky bez fantasy postav.
+- Všechny programy Quit používají barvu aktuálního ranku v hlavních prvcích a navigaci; PRIME má vlastní historickou barvu. SOS zůstává růžové. Nové panely jsou neutrální a tmavé.
 - Ranky: Copper, Bronze, Silver, Gold, Platinum, Sapphire, Ruby, Emerald, Diamond, Obsidian. Každý začíná na Copper.
 - Current může růst i klesat. PRIME je nejvyšší dosažený potvrzený rank a neklesá.
 - Disciplíny mají stejné názvy ranků, menší odznaky, bez předpony mini.
@@ -48,3 +49,12 @@ Dashboard, SOS a detaily mají sjednocenou typografii, jemnější rámečky, ro
 Fotky z iPhonu odhalily posunuté texty v ciferníku a nadměrnou výšku jeho panelu. Ciferník nyní používá explicitní čtvercové rozměry a kreslí čísla, popisky i obvod v jednom SVG souřadnicovém systému. Samostatná absolutně umístěná vrstva textu a kombinace procentní šířky, maximální šířky a poměru stran jsou odstraněné. Náhledy ranků používají stejný způsob rozložení. Hodiny mají kovový obvod v barvě ranku, název ranku na ciferníku, výrazné počítadlo dnů a oddělený čas. Deset geometrií a stávající milníky zůstávají.
 
 Hlavní SOS akce má novou kompozici s plnou kontrastní plochou tlačítka a jednoduchým symbolem pauzy místo ruky ve štítu. SOS obrazovka zobrazuje osobní důvody jako krátký citát a pauzu jako kruhový odpočet. Kruhový průběh zobrazuje zbývající čas; dvouminutová logika, dobrovolný spouštěč, ukládání návratů a trvale dostupný návrat k plánu se nemění. Úpravy se týkají Porn Rebootu.
+
+## Detailní přehledy Doomscrolling a Junk Food
+Doomscrolling má vlastní ciferník ručně zapsaných dnešních minut vůči společnému dennímu limitu. Nezapsaný čas je neznámý (pomlčka), nikoli nula. Překročení limitu se zobrazí růžově včetně počtu minut nad limitem. Junk Food zdůrazňuje osobní pravidlo a dnešní průběžný stav. Oba programy zobrazují Current/PRIME, aktuální potvrzenou sérii a postup k dalšímu milníku. Barvy, kompaktní hlavička a SOS navazují na Porn Reboot; jeho ciferník a pravidla se nemění.
+
+Denní check-in má samostatný dnešní koncept a potvrzení dokončeného včerejška. Dnešek nezvyšuje rank, oprava potvrzeného dne může změnit Current a zachová PRIME. První den se potvrzení včerejška nenabízí. Junk Food používá volby Dodrženo / Mimo plán. Pravidlo lze založit během onboardingu; úprava manifestu mění pouze důvody.
+
+Ranky, 28denní konzistence, statistiky, manifest s podpisem a návraty ze SOS mají vlastní rozklikávací přehledy. Detail kalendáře ukazuje potvrzený čas nebo průběžný zápis a počet návratů ze SOS. Graf Doomscrollingu zobrazuje ručně zaznamenané minuty za 14 dní a denní limit; graf Junk Food dodržení pravidla. Dnešní koncept má obrys, chybějící zápis není vyhodnocen jako neúspěch. Konzistence používá pouze potvrzené dny od aktivace v posledních 28 dnech. Nejlepší série přeruší návaznost při chybějícím či nesplněném dni; průměr minut nezahrnuje dnešní koncept ani historické dny bez zapsaného času.
+
+Sdílené SOS používá kruhovou pauzu: Doomscrolling 5 minut, Junk Food 2 minuty. Nové záznamy všech programů uchovávají, zda byla pauza spuštěna. Zavření záznam nevytvoří; návrat k plánu ho uloží i bez spouštěče. Data zůstávají lokální, bez automatického měření, systémového blokování či dalších bodů za SOS. Ukládací klíč a starší záznamy zůstávají kompatibilní. Neaktivní programy pageru jsou skryté pro čtečky obrazovky.

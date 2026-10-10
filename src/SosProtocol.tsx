@@ -18,7 +18,7 @@ export function SosProtocol({
   complete: (trigger: string, elapsed: number, pauseStarted?: boolean) => void;
 }) {
   const accent = rankColors[rank];
-  const s = { ...baseStyles, ...(id === "porn" ? pornStyles : {}) };
+  const s = { ...baseStyles, ...protocolStyles };
   const [trigger, setTrigger] = useState("");
   const [started, setStarted] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -50,11 +50,7 @@ export function SosProtocol({
           accessibilityRole="button"
           onPress={close}
           hitSlop={10}
-          style={
-            id === "porn"
-              ? { minHeight: 40, minWidth: 96, justifyContent: "center" }
-              : undefined
-          }
+          style={{ minHeight: 40, minWidth: 96, justifyContent: "center" }}
         >
           <Text style={s.muted}>✕ ZAVŘÍT</Text>
         </Pressable>
@@ -66,14 +62,12 @@ export function SosProtocol({
       >
         <Text style={s.label}>SOS · {definitions[id].title.toUpperCase()}</Text>
         <Text style={s.heading}>Teď máš volbu.</Text>
-        {id === "porn" && (
-          <View style={[s.panel, { borderLeftColor: accent }]}>
-            <Text style={[s.title, { color: accent }]}>TVOJE PROČ</Text>
-            <Text numberOfLines={3} style={s.body}>
-              {reasons}
-            </Text>
-          </View>
-        )}
+        <View style={[s.panel, { borderLeftColor: accent }]}>
+          <Text style={[s.title, { color: accent }]}>TVOJE PROČ</Text>
+          <Text numberOfLines={3} style={s.body}>
+            {reasons}
+          </Text>
+        </View>
         <View style={s.task}>
           <Text style={s.label}>
             {started === null
@@ -83,16 +77,9 @@ export function SosProtocol({
                 : "PAUZA DOKONČENA"}
           </Text>
           <Text style={s.body}>{definitions[id].action}</Text>
-          {id === "porn" ? (
-            <View style={{ alignItems: "center", paddingVertical: 4 }}>
-              <PauseDial remaining={remaining} duration={duration} />
-            </View>
-          ) : (
-            <Text style={s.timer}>
-              {Math.floor(remaining / 60)}:
-              {String(remaining % 60).padStart(2, "0")}
-            </Text>
-          )}
+          <View style={{ alignItems: "center", paddingVertical: 4 }}>
+            <PauseDial remaining={remaining} duration={duration} />
+          </View>
           {started === null ? (
             <Pressable
               accessibilityRole="button"
@@ -101,10 +88,7 @@ export function SosProtocol({
                 setNow(at);
                 setStarted(at);
               }}
-              style={({ pressed }) => [
-                s.button,
-                id === "porn" && pressed && { opacity: 0.8 },
-              ]}
+              style={({ pressed }) => [s.button, pressed && { opacity: 0.8 }]}
             >
               <Text style={s.buttonText}>SPUSTIT PAUZU</Text>
             </Pressable>
@@ -116,17 +100,7 @@ export function SosProtocol({
             </Text>
           )}
         </View>
-        {id !== "porn" && (
-          <View style={s.panel}>
-            <Text style={s.title}>TVŮJ DŮVOD</Text>
-            <Text style={s.body}>{reasons}</Text>
-          </View>
-        )}
-        <Text style={s.title}>
-          {id === "porn"
-            ? "CO ZA TÍM BYLO? · VOLITELNÉ"
-            : "CO SPUSTILO IMPULZ?"}
-        </Text>
+        <Text style={s.title}>CO ZA TÍM BYLO? · VOLITELNÉ</Text>
         <View style={s.row}>
           {(id === "food"
             ? ["Hlad", "Stres", "Nuda", "Zvyk"]
@@ -153,9 +127,7 @@ export function SosProtocol({
           ))}
         </View>
         <Text style={s.muted}>
-          {id === "porn"
-            ? "Spouštěč je dobrovolný. Návrat uloží záznam SOS; pauza nemění rank."
-            : "Při návratu se uloží záznam SOS. Spouštěč je volitelný. Pauza nemění rank. Kamera a blokování zatím nejsou aktivní."}
+          Spouštěč je dobrovolný. Návrat uloží záznam SOS; pauza nemění rank.
         </Text>
       </ScrollView>
       <View style={s.footer}>
@@ -165,10 +137,9 @@ export function SosProtocol({
           style={[
             s.button,
             {
-              backgroundColor: id === "porn" ? "#21171d" : "#202020",
-              ...(id === "porn"
-                ? { borderWidth: 1, borderColor: "#4c303c" }
-                : {}),
+              backgroundColor: "#21171d",
+              borderWidth: 1,
+              borderColor: "#4c303c",
             },
           ]}
         >
@@ -244,8 +215,8 @@ const baseStyles = StyleSheet.create({
   },
 });
 
-// Porn Reboot has its own visual treatment; daily programs retain theirs.
-const pornStyles = StyleSheet.create({
+// Shared visual treatment; each program keeps its own instructions and duration.
+const protocolStyles = StyleSheet.create({
   topBar: { paddingHorizontal: 22, paddingTop: 4, paddingBottom: 0 },
   content: { padding: 22, gap: 18, paddingBottom: 32 },
   heading: {
