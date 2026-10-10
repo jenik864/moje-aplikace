@@ -10,6 +10,7 @@ import {
 } from "./model";
 import { activePillars } from "./food/model";
 import { dailyStyles } from "./daily/styles";
+import { SosVisual } from "./sos/Visual";
 import { supportFor, supportProgress } from "./sos/content";
 export type SosProps = {
   id: ProgramId;
@@ -35,7 +36,11 @@ export function SosProtocol({
   close,
   complete,
 }: SosProps) {
-  const [selected, setSelected] = React.useState(pillarId);
+  const [selected, setSelected] = React.useState(() => {
+    const values = program ? activePillars(program, dayKey(new Date())) : [];
+    return pillarId ?? (values.length === 1 ? values[0].id : undefined);
+  });
+  const [details, setDetails] = React.useState(false);
   const [trigger, setTrigger] = React.useState("");
   const [started, setStarted] = React.useState<number | null>(null);
   const [accumulated, setAccumulated] = React.useState(0);
@@ -56,7 +61,6 @@ export function SosProtocol({
   const hunger =
     food && (trigger === "Hlad" || content.kind === "PRAVIDELNÁ JÍDLA");
   React.useEffect(() => {
-    if (deadline === null) return;
     const timer = setInterval(() => setClock(Date.now()), 250);
     return () => clearInterval(timer);
   }, [deadline]);
@@ -116,25 +120,61 @@ export function SosProtocol({
   );
   const elapsedFraction =
     deadline === null ? 0 : Math.min(1, 1 - remaining / duration);
+  const choosing = food && !pillar && pillars.length > 0;
+  const running = started !== null && remaining > 0;
+  const done = started !== null && remaining === 0;
+  const seconds = program
+    ? Math.floor(Math.max(0, clock - program.startedAt) / 1000)
+    : 0;
+  const title =
+    id === "porn"
+      ? "Tahle série stojí za to."
+      : id === "scroll"
+        ? "Vystup z feedu."
+        : hunger
+          ? "Dej si jídlo."
+          : "Změň další volbu.";
+  const punch = running
+    ? content.reminders[Math.min(2, Math.floor(elapsedFraction * 3))]
+    : done
+      ? "Zastavil ses. Jak je ti teď?"
+      : id === "porn"
+        ? "Už jsi došel až sem. Dej si pět minut před dalším rozhodnutím."
+        : id === "scroll"
+          ? "Telefon stranou. Pět minut patří tobě."
+          : hunger
+            ? "Pravidelné jídlo je součást tvého plánu."
+            : "Zvyk nemusí rozhodnout za tebe.";
   return (
     <Screen modal>
-      <View style={s.header}>
+      <View style={[s.header, { paddingVertical: 5 }]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Zavřít SOS bez uložení"
           onPress={close}
           style={s.back}
         >
-          <Text style={s.body}>✕ ZAVŘÍT</Text>
+          <Text style={s.muted}>✕ ZAVŘÍT</Text>
         </Pressable>
         <Text style={[s.label, { flexShrink: 1, textAlign: "right" }]}>
           SOS · {definitions[id].title.toUpperCase()}
         </Text>
       </View>
-      <ScrollView ref={scroll} contentContainerStyle={[s.content, { gap: 18 }]}>
-        {food && !pillar && pillars.length > 0 && (
-          <View style={s.card}>
-            <Text style={s.label}>S ČÍM TEĎ CHCEŠ POMOCT?</Text>
+      <ScrollView
+        ref={scroll}
+        contentContainerStyle={{
+          paddingHorizontal: 22,
+          paddingTop: 12,
+          paddingBottom: 20,
+          gap: 12,
+        }}
+      >
+        {choosing ? (
+          <>
+            <Text style={s.heading}>Co právě řešíš?</Text>
+            <Text style={s.muted}>
+              Vyber pilíř. Pomoc otevřeme rovnou pro něj.
+            </Text>
             {pillars.map((v) =>
               choice(
                 v.label,
@@ -142,207 +182,199 @@ export function SosProtocol({
                 () => {
                   setSelected(v.id);
                   setTrigger("");
+                  scroll.current?.scrollTo({ y: 0, animated: false });
                 },
                 `SOS pro ${v.label}`,
               ),
             )}
-          </View>
-        )}
-        {pillar && (
-          <View style={s.row}>
-            <Text style={[s.label, { flex: 1 }]}>{pillar.label}</Text>
-            {!started && (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => setSelected(undefined)}
-                style={{
-                  minHeight: 44,
-                  justifyContent: "center",
-                  paddingHorizontal: 8,
-                }}
-              >
-                <Text style={s.link}>ZMĚNIT</Text>
-              </Pressable>
-            )}
-          </View>
-        )}
-        <View style={{ gap: 12 }}>
-          <Text style={s.label}>{content.kind}</Text>
-          <Text style={s.heading}>{content.title}</Text>
-        </View>
-        <View
-          style={[
-            s.card,
-            {
-              backgroundColor: food
-                ? "#231c18"
-                : id === "scroll"
-                  ? "#17212a"
-                  : "#251820",
-              borderColor: accent,
-              gap: 12,
-            },
-          ]}
-        >
-          <Text style={s.label}>QUITTER JE TU S TEBOU</Text>
-          <Text style={[s.title, { fontSize: 22, lineHeight: 31 }]}>
-            {started !== null && remaining > 0
-              ? content.reminders[Math.min(2, Math.floor(elapsedFraction * 3))]
-              : content.message}
-          </Text>
-          <Text style={s.muted}>
-            {started !== null && remaining > 0
-              ? "Nutkání může zeslábnout. Teď stačí projít touhle chvílí."
-              : "Nemusíš být dokonalý. Rozhodnout se můžeš znovu právě teď."}
-          </Text>
-        </View>
-        {program && (
-          <View
-            style={{
-              borderLeftWidth: 2,
-              borderLeftColor: rankColors[rank],
-              paddingLeft: 14,
-              gap: 6,
-            }}
-          >
-            <Text style={[s.label, { color: rankColors[rank] }]}>
-              TVŮJ DOSAVADNÍ POKROK
-            </Text>
-            <Text style={s.body}>
-              {supportProgress(id, program, clock, selected)}
-            </Text>
-          </View>
-        )}
-        {!!reasons.trim() && (
-          <View style={{ gap: 8 }}>
-            <Text style={s.label}>PŘIPOMEŇ SI SVOJE PROČ</Text>
-            <Text style={s.body}>{reasons}</Text>
-          </View>
-        )}
-        <View style={s.card}>
-          <Text style={s.label}>JEDEN KROK TEĎ</Text>
-          <Text style={s.body}>
-            {hunger
-              ? "Dej si dostupné syté jídlo nebo svačinu. Hlad nemusíš překonávat čekáním; tvůj plán je tu pro péči o sebe."
-              : trigger === "Stres" && food
-                ? "Zkus klidně vydechnout a na chvíli změnit místo. Pokud máš zároveň hlad, dej si jídlo. Pak se rozhodni podle svého plánu."
-                : content.action}
-          </Text>
-          {hunger && (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => finish("Pokračovat s jídlem")}
-              style={s.button}
-            >
-              <Text style={s.buttonText}>POKRAČOVAT S JÍDLEM</Text>
-            </Pressable>
-          )}
-        </View>
-        {food && (
-          <View style={s.card}>
-            <Text style={s.label}>CO TEĎ CÍTÍŠ? · VOLITELNÉ</Text>
-            <View style={{ gap: 8 }}>
-              {["Hlad", "Chuť", "Stres", "Nevím"].map((v) =>
-                choice(v, trigger === v, () => setTrigger(v)),
-              )}
-            </View>
-          </View>
-        )}
-        {(!hunger || started !== null) && (
-          <View style={[s.card, { borderColor: "#44343e" }]}>
-            <View style={s.row}>
-              <Text style={[s.label, { flex: 1 }]}>
-                {deadline === null
-                  ? "CHVÍLE PRO VLASTNÍ VOLBU"
-                  : remaining
-                    ? "DEJ SI PROSTOR"
-                    : "JAK JE TI TEĎ?"}
+          </>
+        ) : (
+          <>
+            <View style={{ gap: 4 }}>
+              <Text style={s.label}>
+                {food
+                  ? (pillar?.label ?? "VĚDOMÁ VOLBA")
+                  : id === "porn"
+                    ? "TVÁ SÉRIE PRÁVĚ BĚŽÍ"
+                    : "POZORNOST ZPÁTKY K TOBĚ"}
               </Text>
+              <Text style={[s.heading, { fontSize: 28 }]}>{title}</Text>
+            </View>
+            <SosVisual
+              id={id}
+              rank={rank}
+              seconds={seconds}
+              remaining={remaining}
+              duration={duration}
+              active={started !== null}
+              label={pillar?.label ?? ""}
+              accent={accent}
+            />
+            {id === "porn" && (
               <Text
-                style={{
-                  color: accent,
-                  fontSize: 38,
-                  fontWeight: "500",
-                  fontVariant: ["tabular-nums"],
-                }}
-              >{`${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`}</Text>
-            </View>
-            <View
-              style={{
-                height: 5,
-                borderRadius: 3,
-                backgroundColor: "#352a31",
-                overflow: "hidden",
-              }}
-            >
-              <View
-                style={{
-                  height: 5,
-                  width: `${elapsedFraction * 100}%`,
-                  backgroundColor: accent,
-                }}
-              />
-            </View>
-            {deadline === null ? (
-              <>
-                <Text style={s.body}>
-                  Dej si {food ? "dvě" : "pět"} minuty prostoru. Pak znovu
-                  zhodnoť, co potřebuješ.
-                </Text>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={begin}
-                  style={s.button}
-                >
-                  <Text style={s.buttonText}>SPUSTIT PAUZU</Text>
-                </Pressable>
-              </>
-            ) : remaining ? (
-              <Text style={s.muted}>
-                Odlož telefon. Čas běží i mimo aplikaci; vrátit se můžeš
-                kdykoli.
+                style={[
+                  s.muted,
+                  { textAlign: "center", color: rankColors[rank] },
+                ]}
+              >
+                Živý čas bez porna · aktuální série
               </Text>
-            ) : (
-              <>
-                <Text style={s.body}>
-                  Pokud nutkání zůstává, není to prohra. Vyber, co ti pomůže
-                  dál.
-                </Text>
+            )}
+            {food && (
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                {["Hlad", "Chuť", "Stres", "Nevím"].map((v) =>
+                  choice(v, trigger === v, () => setTrigger(v)),
+                )}
+              </View>
+            )}
+            <Text
+              style={[
+                s.title,
+                { fontSize: 18, lineHeight: 25, textAlign: "center" },
+              ]}
+            >
+              {punch}
+            </Text>
+            {running && id !== "scroll" && (
+              <View
+                style={[
+                  s.row,
+                  { borderRadius: 14, backgroundColor: "#1e171c", padding: 12 },
+                ]}
+              >
+                <Text style={s.label}>TVOJE PAUZA</Text>
+                <Text
+                  style={{
+                    color: accent,
+                    fontSize: 28,
+                    fontVariant: ["tabular-nums"],
+                  }}
+                >{`${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`}</Text>
+              </View>
+            )}
+            {running && (
+              <Text style={[s.muted, { textAlign: "center" }]}>
+                Odlož telefon. Čas běží i mimo aplikaci.
+              </Text>
+            )}
+            {done && (
+              <View style={{ gap: 8 }}>
                 {choice("Je to slabší", outcome === "Je to slabší", () =>
                   setOutcome("Je to slabší"),
                 )}
                 {choice("Potřebuju ještě chvíli", false, begin)}
-                <Text style={s.muted}>
-                  Další pauza navazuje na tu předchozí. Můžeš také změnit místo
-                  nebo oslovit někoho, komu důvěřuješ.
-                </Text>
-              </>
+              </View>
             )}
-          </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: details }}
+              onPress={() => setDetails((v) => !v)}
+              style={{
+                minHeight: 44,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Text style={s.link}>
+                {details ? "MÉNĚ ↑" : "MOJE PROČ A DALŠÍ POMOC ↓"}
+              </Text>
+            </Pressable>
+            {details && (
+              <View style={[s.card, { gap: 12 }]}>
+                {!!reasons.trim() && (
+                  <>
+                    <Text style={s.label}>TVOJE PROČ</Text>
+                    <Text style={s.body}>{reasons}</Text>
+                  </>
+                )}
+                <Text style={s.label}>DALŠÍ KROK</Text>
+                <Text style={s.body}>
+                  {hunger
+                    ? "Při hladu si dej běžné syté jídlo. Pauza není povinnost."
+                    : content.action}
+                </Text>
+                {program && (id !== "scroll" || !!program.usageDays) && (
+                  <Text style={s.muted}>
+                    {supportProgress(id, program, clock, selected)}
+                  </Text>
+                )}
+                {!food && (
+                  <View
+                    style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}
+                  >
+                    {["Nuda", "Stres", "Samota", "Zvyk"].map((v) =>
+                      choice(v, trigger === v, () => setTrigger(v)),
+                    )}
+                  </View>
+                )}
+                {food && !started && pillars.length > 1 && (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setSelected(undefined);
+                      setDetails(false);
+                      setTrigger("");
+                      scroll.current?.scrollTo({ y: 0, animated: false });
+                    }}
+                    style={s.button}
+                  >
+                    <Text style={s.buttonText}>ZMĚNIT PILÍŘ</Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </>
         )}
-        {!food && (
-          <View style={{ gap: 10 }}>
-            <Text style={s.label}>CO ZA TÍM BYLO? · VOLITELNÉ</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {["Nuda", "Stres", "Samota", "Zvyk"].map((v) =>
-                choice(v, trigger === v, () => setTrigger(v)),
-              )}
-            </View>
-          </View>
-        )}
-        <Text style={s.muted}>
-          Návrat uloží tuto chvíli podpory. SOS samo nemění rank ani denní
-          zápisy.
-        </Text>
       </ScrollView>
-      <View style={[s.header, { borderBottomWidth: 0, borderTopWidth: 1 }]}>
+      <View
+        style={{
+          paddingHorizontal: 22,
+          paddingTop: 10,
+          paddingBottom: 4,
+          gap: 2,
+          borderTopWidth: 1,
+          borderTopColor: "#292526",
+          backgroundColor: "#050505",
+        }}
+      >
+        {!choosing && (started === null || hunger) && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              hunger ? "POKRAČOVAT S JÍDLEM" : "SPUSTIT PAUZU"
+            }
+            onPress={hunger ? () => finish("Pokračovat s jídlem") : begin}
+            style={[s.button, { minHeight: 56 }]}
+          >
+            <Text style={[s.buttonText, { fontSize: 13 }]}>
+              {hunger ? "POKRAČOVAT S JÍDLEM" : "SPUSTIT PAUZU"}
+            </Text>
+            {!hunger && (
+              <Text style={{ fontSize: 10, color: "#342029", marginTop: 3 }}>
+                {food ? "2 MINUTY PRO TVOJI VOLBU" : "5 MINUT PRO TVOJI VOLBU"}
+              </Text>
+            )}
+          </Pressable>
+        )}
         <Pressable
           accessibilityRole="button"
           onPress={() => finish()}
-          style={[s.button, { flex: 1, backgroundColor: "#2a2428" }]}
+          style={[
+            s.button,
+            {
+              backgroundColor: running || done ? accent : "transparent",
+              minHeight: 44,
+              padding: 10,
+            },
+          ]}
         >
-          <Text style={[s.buttonText, { color: "#f3e2ed" }]}>
-            VRÁTIT SE K MÉMU PLÁNU
+          <Text
+            style={[
+              s.buttonText,
+              { color: running || done ? "#171015" : "#aca39f", fontSize: 10 },
+            ]}
+          >
+            {"VRÁTIT SE K MÉMU PLÁNU"}
           </Text>
         </Pressable>
       </View>
