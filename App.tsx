@@ -496,6 +496,7 @@ const Placeholder = ({
 );
 
 export default function App() {
+  const [buildAccent, setBuildAccent] = useState(rankColors[0]);
   const [data, setData] = useState<Data>({});
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -768,7 +769,7 @@ export default function App() {
               route.name === "Quit"
                 ? quitAccent
                 : route.name === "Build"
-                  ? "#8cbfff"
+                  ? buildAccent
                   : "#c5fa67",
             tabBarInactiveTintColor: "#777",
             tabBarStyle: {
@@ -806,7 +807,9 @@ export default function App() {
           })}
         >
           <Tab.Screen name="Quit">{Quit}</Tab.Screen>
-          <Tab.Screen name="Build" component={BuildScreen} />
+          <Tab.Screen name="Build">
+            {() => <BuildScreen onAccent={setBuildAccent} />}
+          </Tab.Screen>
           <Tab.Screen name="Mind">
             {() => (
               <Placeholder

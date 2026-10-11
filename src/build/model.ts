@@ -1,3 +1,4 @@
+import { buildRank } from "./ranking.ts";
 import { exerciseById } from "./catalog.ts";
 export type Kind = "run" | "cycle" | "swim" | "strength" | "mobility";
 export const kinds: Record<Kind, { name: string; icon: string }> = {
@@ -47,6 +48,7 @@ export type Profile = {
 };
 export type BuildData = {
   version: 1;
+  prime?: number;
   restEnds?: Record<string, number>;
   metricDrafts?: Record<string, { minutes: string; km: string }>;
   activities: Activity[];
@@ -286,7 +288,7 @@ export function award(data: BuildData, now = Date.now()): BuildData {
   for (const b of badges)
     if (!earned[b.id] && badgeProgress(data, b.id) >= b.target)
       earned[b.id] = now;
-  return { ...data, earned };
+  return { ...data, earned, prime: Math.max(data.prime ?? 0, buildRank(data)) };
 }
 export function complete(
   data: BuildData,
@@ -298,7 +300,11 @@ export function complete(
   if (!canonical) throw new Error("Aktivita už není v plánu.");
   const error = logError(canonical, log, today);
   if (error) throw new Error(error);
-  return award({ ...data, logs: { ...data.logs, [a.id]: log } });
+  return award({
+    ...data,
+    prime: Math.max(data.prime ?? 0, buildRank(data)),
+    logs: { ...data.logs, [a.id]: log },
+  });
 }
 export function generatePlan(profile: Profile, week: string): Activity[] {
   return [...new Set(profile.days)]
@@ -374,6 +380,11 @@ export function applyPlan(
 }
 export function parseBuild(raw: string): BuildData {
   const d = JSON.parse(raw) as BuildData;
+  if (
+    d.prime !== undefined &&
+    (!Number.isInteger(d.prime) || d.prime < 0 || d.prime > 11)
+  )
+    throw new Error("Neplatný rank Build.");
   if (
     !d ||
     d.version !== 1 ||

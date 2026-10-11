@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text } from "react-native";
-import { Button, Chip, s } from "./components";
+import { Button, Chip, s, useBuildStyles } from "./components";
 import { exerciseById } from "./catalog";
 import {
   generatePlan,
@@ -19,6 +19,7 @@ export function PlanEditor({
   week: string;
   onApply: (p: Profile, a: Activity[]) => void;
 }) {
+  const s = useBuildStyles();
   const [p, setP] = useState<Profile>({ ...profile, days: [...profile.days] });
   const [preview, setPreview] = useState<Activity[] | null>(null);
   function patch(change: Partial<Profile>) {

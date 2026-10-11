@@ -1,8 +1,16 @@
 import React, { useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { exercises, exerciseById, muscleNames, type Muscle } from "./catalog";
-import { Chip, Field, Button, ExerciseDetail, s } from "./components";
+import {
+  Chip,
+  Field,
+  Button,
+  ExerciseDetail,
+  s,
+  useBuildStyles,
+} from "./components";
 export function Library() {
+  const s = useBuildStyles();
   const [search, setSearch] = useState("");
   const [muscle, setMuscle] = useState<Muscle | null>(null);
   const [equipment, setEquipment] = useState("Vše");

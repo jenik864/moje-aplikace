@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { View, Text, Pressable } from "react-native";
-import { Button, Chip, Field, ExerciseDetail, s } from "./components";
+import {
+  Button,
+  Chip,
+  Field,
+  ExerciseDetail,
+  s,
+  useBuildStyles,
+} from "./components";
 import { exercises, exerciseById } from "./catalog";
 import {
   activityError,
@@ -48,6 +55,7 @@ export function ActivityDetail({
   onDelete: (id: string) => void;
   onRest: (id: string, end: number) => void;
 }) {
+  const s = useBuildStyles();
   const [a, setA] = useState(() => activity ?? blankActivity(day));
   const [editing, setEditing] = useState(!activity);
   const [duration, setDuration] = useState(String(a.targetMinutes));
@@ -264,7 +272,7 @@ export function ActivityDetail({
                 title={picker ? "Zavřít výběr cviků" : "+ Přidat cvik"}
                 onPress={() => setPicker(!picker)}
               />
-            )}{" "}
+            )}
             {picker && !hasDraft && (
               <View style={s.card}>
                 <Field label="Najít cvik" value={search} onChange={setSearch} />
@@ -411,7 +419,7 @@ export function ActivityDetail({
               />
               {detail === e.exerciseId && (
                 <ExerciseDetail exercise={exerciseById(e.exerciseId)!} />
-              )}{" "}
+              )}
               {setsFor(e.exerciseId, e.sets).map((set, i) => (
                 <View key={i} style={{ gap: 10 }}>
                   <Text style={s.label}>SÉRIE {i + 1}</Text>

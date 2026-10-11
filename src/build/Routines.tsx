@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text } from "react-native";
-import { Button, Chip, Field, s } from "./components";
+import { Button, Chip, Field, s, useBuildStyles } from "./components";
 import { uid, type Routine } from "./model";
 export function Routines({
   routines,
@@ -11,6 +11,7 @@ export function Routines({
   onSave: (r: Routine) => void;
   onRemove: (id: string) => void;
 }) {
+  const s = useBuildStyles();
   const [edit, setEdit] = useState<Routine | null>(null);
   const [steps, setSteps] = useState("");
   const [error, setError] = useState("");
@@ -81,7 +82,7 @@ export function Routines({
             start({ id: uid(), title: "", period: "evening", steps: [] })
           }
         />
-      )}{" "}
+      )}
       {routines.map((r) => (
         <View key={r.id} style={s.card}>
           <Text style={s.label}>

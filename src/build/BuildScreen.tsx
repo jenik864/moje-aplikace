@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,11 @@ import {
   SafeAreaProvider,
   initialWindowMetrics,
 } from "react-native-safe-area-context";
+import { ranks } from "../model";
+import { buildRank, buildPoints, buildMilestones } from "./ranking";
+import { rankColors, RankEmblem } from "../ui";
+import { Calendar } from "./Calendar";
+import { BuildTheme, useBuildStyles } from "./components";
 import { Screen } from "../ui";
 import { useBuild } from "./useBuild";
 import { s, blue, Button, Progress, MissionArtwork } from "./components";
@@ -38,9 +43,19 @@ const nice = (day: string) =>
     month: "numeric",
   });
 type Route =
-  | { type: "plan" | "library" | "badges" | "routines" }
+  | {
+      type:
+        | "plan"
+        | "planner"
+        | "calendar"
+        | "ranks"
+        | "library"
+        | "badges"
+        | "routines";
+    }
   | { type: "activity"; id?: string; day: string };
 function RestBanner({ end, onStop }: { end: number; onStop: () => void }) {
+  const s = useBuildStyles();
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -71,8 +86,30 @@ function RestBanner({ end, onStop }: { end: number; onStop: () => void }) {
     </View>
   );
 }
-export function BuildScreen() {
+export function BuildScreen({
+  onAccent,
+}: {
+  onAccent?: (color: string) => void;
+}) {
+  const store = useBuild();
+  const color = rankColors[buildRank(store.data)];
+  useEffect(() => {
+    if (store.loaded) onAccent?.(color);
+  }, [color, store.loaded, onAccent]);
+  return (
+    <BuildTheme.Provider value={color}>
+      <BuildContent store={store} />
+    </BuildTheme.Provider>
+  );
+}
+function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
+  const s = useBuildStyles();
+  const blue = useContext(BuildTheme);
+  const rank = buildRank(store.data),
+    points = buildPoints(store.data);
   const { width } = useWindowDimensions();
+  const scrollRef = useRef<ScrollView>(null);
+  const weekY = useRef(0);
   const {
     data,
     update,
@@ -82,7 +119,7 @@ export function BuildScreen() {
     saving,
     retryLoad,
     retrySave,
-  } = useBuild();
+  } = store;
   const [today, setToday] = useState(dateKey());
   const [week, setWeek] = useState(monday(dateKey()));
   const [selected, setSelected] = useState(dateKey());
@@ -100,7 +137,6 @@ export function BuildScreen() {
   const missions = data.activities.filter((a) => a.day === today);
   const next = missions.find((a) => !data.logs[a.id]);
   const todayDone = missions.filter((a) => data.logs[a.id]);
-  const selectedActivities = weekActivities.filter((a) => a.day === selected);
   const pinned = badges.find((b) => b.id === data.pinnedBadgeId) ?? badges[0];
   const pinnedProgress = badgeProgress(data, pinned.id);
   function plan() {
@@ -112,39 +148,13 @@ export function BuildScreen() {
       setWeek(shiftDay(currentWeek, 7));
       setSelected(shiftDay(currentWeek, 7));
     }
-    setRoute({ type: "plan" });
+    setRoute({ type: "planner" });
   }
   function changeWeek(delta: number) {
     const next = shiftDay(week, delta * 7);
     setWeek(next);
     setSelected(next);
     setNotice("");
-  }
-  function card(a: Activity) {
-    const log = data.logs[a.id];
-    return (
-      <Pressable
-        key={a.id}
-        accessibilityRole="button"
-        onPress={() => setRoute({ type: "activity", id: a.id, day: a.day })}
-        style={s.card}
-      >
-        <View style={s.between}>
-          <Text style={s.icon}>{kinds[a.kind].icon}</Text>
-          <Text style={s.small}>{log ? "✓ HOTOVO" : "NAPLÁNOVÁNO"}</Text>
-        </View>
-        <Text style={s.h2}>{a.title}</Text>
-        <Text style={s.muted}>
-          {log
-            ? `${log.minutes} min${log.km !== undefined ? ` · ${log.km} km` : ""}`
-            : `${a.targetMinutes} min${a.targetKm ? ` · ${a.targetKm} km` : ""}`}
-          {a.exercises.length ? ` · ${a.exercises.length} cviky` : ""}
-        </Text>
-        <Text style={s.link}>
-          {log ? "Prohlédnout výkon →" : "Otevřít trénink →"}
-        </Text>
-      </Pressable>
-    );
   }
   if (!loaded)
     return (
@@ -178,6 +188,7 @@ export function BuildScreen() {
   return (
     <Screen>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={s.page}
         keyboardShouldPersistTaps="handled"
       >
@@ -188,6 +199,41 @@ export function BuildScreen() {
           </View>
           <Text style={[s.icon, { fontSize: 42 }]}>→</Text>
         </View>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setRoute({ type: "ranks" })}
+          style={s.card}
+        >
+          <View style={s.between}>
+            <View style={s.row}>
+              <RankEmblem value={rank} size={44} />
+              <View style={{ gap: 4 }}>
+                <Text style={s.label}>CURRENT / BUILD</Text>
+                <Text style={[s.h2, { color: blue }]}>{ranks[rank]}</Text>
+              </View>
+            </View>
+            <View style={{ gap: 4, alignItems: "flex-end" }}>
+              <Text style={s.small}>PRIME</Text>
+              <Text style={s.link}>
+                {ranks[Math.max(rank, data.prime ?? 0)]} →
+              </Text>
+            </View>
+          </View>
+          <Progress
+            value={
+              rank === 11
+                ? 1
+                : (points - buildMilestones[rank]) /
+                  (buildMilestones[rank + 1] - buildMilestones[rank])
+            }
+          />
+          <Text style={s.small}>
+            {points.toLocaleString("cs-CZ")} bodů pohybu
+            {rank < 11
+              ? ` · další ${ranks[rank + 1]} za ${(buildMilestones[rank + 1] - points).toLocaleString("cs-CZ")} bodů`
+              : ""}
+          </Text>
+        </Pressable>
         {status}
         {notice !== "" && (
           <Text accessibilityLiveRegion="polite" style={s.link}>
@@ -197,7 +243,7 @@ export function BuildScreen() {
         <View
           style={[
             s.card,
-            { backgroundColor: "#111f31", borderColor: "#47668b", gap: 22 },
+            { backgroundColor: blue + "18", borderColor: blue + "88", gap: 22 },
           ]}
         >
           <View style={s.between}>
@@ -267,7 +313,12 @@ export function BuildScreen() {
             </Text>
           )}
         </View>
-        <View style={{ gap: 16 }}>
+        <View
+          style={{ gap: 16 }}
+          onLayout={(e) => {
+            weekY.current = e.nativeEvent.layout.y;
+          }}
+        >
           <View style={s.between}>
             <Text style={s.h2}>Tvůj týden</Text>
             <Pressable
@@ -275,9 +326,14 @@ export function BuildScreen() {
               onPress={plan}
               style={{ padding: 8 }}
             >
-              <Text style={s.link}>Navrhnout plán →</Text>
+              <Text style={s.link}>Sestavit týden →</Text>
             </Pressable>
           </View>
+          <Button
+            secondary
+            title="Měsíční kalendář →"
+            onPress={() => setRoute({ type: "calendar" })}
+          />
           <View style={s.between}>
             <Pressable
               accessibilityRole="button"
@@ -317,7 +373,7 @@ export function BuildScreen() {
                     done && s.done,
                     selected === day && {
                       borderColor: blue,
-                      backgroundColor: "#1b314b",
+                      backgroundColor: blue + "26",
                     },
                   ]}
                 >
@@ -356,23 +412,76 @@ export function BuildScreen() {
                 : 0
             }
           />
-          <Text style={s.label}>
-            {selected === today ? "DNES" : nice(selected)} / AKTIVITY
-          </Text>
-          {selectedActivities.length ? (
-            selectedActivities.map(card)
-          ) : (
-            <View style={s.empty}>
-              <Text style={s.text}>Volný den</Text>
-              <Text style={s.muted}>
-                Zatím tu není naplánovaný pohyb. Přidej vlastní aktivitu nebo
-                nech prostor na odpočinek.
-              </Text>
-            </View>
-          )}
+          <View style={s.card}>
+            <Text style={s.label}>CELÝ TÝDEN / CO TĚ ČEKÁ</Text>
+            {weekdays.map((day, i) => {
+              const items = weekActivities.filter((a) => a.day === day);
+              return (
+                <View
+                  key={day}
+                  style={{
+                    gap: 9,
+                    paddingVertical: 10,
+                    borderBottomWidth: i < 6 ? 1 : 0,
+                    borderBottomColor: blue + "25",
+                  }}
+                >
+                  <View style={s.between}>
+                    <Text
+                      style={[
+                        s.text,
+                        day === selected && { color: blue, fontWeight: "700" },
+                      ]}
+                    >
+                      {dayNames[i]} · {nice(day)}
+                      {day === today ? " · dnes" : ""}
+                    </Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Přidat aktivitu ${day}`}
+                      onPress={() => setRoute({ type: "activity", day })}
+                      style={{ padding: 10 }}
+                    >
+                      <Text style={s.link}>+ Přidat</Text>
+                    </Pressable>
+                  </View>
+                  {items.length ? (
+                    items.map((a) => (
+                      <Pressable
+                        key={a.id}
+                        accessibilityRole="button"
+                        onPress={() =>
+                          setRoute({ type: "activity", id: a.id, day })
+                        }
+                        style={{
+                          backgroundColor: blue + "10",
+                          borderRadius: 12,
+                          padding: 12,
+                          gap: 4,
+                        }}
+                      >
+                        <Text style={s.text}>
+                          {data.logs[a.id] ? "✓ " : ""}
+                          {a.title} →
+                        </Text>
+                        <Text style={s.small}>
+                          {kinds[a.kind].name} ·{" "}
+                          {data.logs[a.id]
+                            ? `${data.logs[a.id].minutes} min dokončeno`
+                            : `${a.targetMinutes} min${a.targetKm ? ` · ${a.targetKm} km` : ""}`}
+                        </Text>
+                      </Pressable>
+                    ))
+                  ) : (
+                    <Text style={s.small}>Volno / regenerace</Text>
+                  )}
+                </View>
+              );
+            })}
+          </View>
           <Button
             secondary
-            title="+ Přidat aktivitu na tento den"
+            title="+ Přidat aktivitu na vybraný den"
             onPress={() => setRoute({ type: "activity", day: selected })}
           />
         </View>
@@ -487,15 +596,21 @@ export function BuildScreen() {
               </Pressable>
               <Text style={s.label}>
                 BUILD /{" "}
-                {route?.type === "plan"
-                  ? "PLÁN"
-                  : route?.type === "activity"
-                    ? "TRÉNINK"
-                    : route?.type === "library"
-                      ? "CVIKY"
-                      : route?.type === "badges"
-                        ? "ODZNAKY"
-                        : "PÉČE"}
+                {route?.type === "calendar"
+                  ? "KALENDÁŘ"
+                  : route?.type === "ranks"
+                    ? "RANKY"
+                    : route?.type === "planner"
+                      ? "TVŮJ TÝDEN"
+                      : route?.type === "plan"
+                        ? "PLÁN"
+                        : route?.type === "activity"
+                          ? "TRÉNINK"
+                          : route?.type === "library"
+                            ? "CVIKY"
+                            : route?.type === "badges"
+                              ? "ODZNAKY"
+                              : "PÉČE"}
               </Text>
             </View>
             {route?.type === "activity" &&
@@ -516,6 +631,90 @@ export function BuildScreen() {
               keyboardShouldPersistTaps="handled"
             >
               {status}
+              {route?.type === "planner" && (
+                <View style={{ gap: 20 }}>
+                  <Text style={s.title}>Jak sestavíš svůj týden?</Text>
+                  <Text style={s.muted}>
+                    {nice(week)} – {nice(shiftDay(week, 6))}. Existující
+                    tréninky najdeš v přehledu; každému dni můžeš přidat další
+                    aktivitu.
+                  </Text>
+                  <Button
+                    title="Navrhnout s Quitterem"
+                    onPress={() => setRoute({ type: "plan" })}
+                  />
+                  <Button
+                    secondary
+                    title="Sestavit si plán"
+                    onPress={() => {
+                      setRoute(null);
+                      setNotice("Vyber den v rozvrhu a klepni na + Přidat.");
+                      scrollRef.current?.scrollTo({
+                        y: weekY.current,
+                        animated: true,
+                      });
+                    }}
+                  />
+                  <Text style={s.small}>
+                    Quitter připraví návrh podle tvého nastavení. Po použití
+                    otevři aktivitu a uprav název, datum, délku nebo cviky.
+                  </Text>
+                </View>
+              )}
+              {route?.type === "calendar" && (
+                <Calendar
+                  data={data}
+                  day={selected}
+                  onSelect={(day) => {
+                    setSelected(day);
+                    setWeek(monday(day));
+                  }}
+                  onOpen={(id, day) => setRoute({ type: "activity", id, day })}
+                  onAdd={(day) => setRoute({ type: "activity", day })}
+                />
+              )}
+              {route?.type === "ranks" && (
+                <View style={{ gap: 20 }}>
+                  <Text style={s.title}>Síla vzniká postupně.</Text>
+                  <View style={s.card}>
+                    <RankEmblem value={rank} size={76} />
+                    <Text style={[s.title, { color: blue }]}>
+                      {ranks[rank]}
+                    </Text>
+                    <Text style={s.text}>
+                      {points.toLocaleString("cs-CZ")} bodů pohybu
+                    </Text>
+                    <Text style={s.muted}>
+                      1 bod = 30 skutečně zapsaných minut pohybu. Všechny
+                      aktivity jednoho dne mají společný strop 3 body (90
+                      minut). Započítávají se i kratší aktivity.
+                    </Text>
+                    <Text style={s.muted}>
+                      Odpočinek ani vynechaný den nic neresetují. Plánování a
+                      péče o pleť body nedávají. Oprava výkonu přepočítá
+                      Current; PRIME uchová nejvyšší dosažený rank.
+                    </Text>
+                  </View>
+                  {ranks.map((name, i) => (
+                    <View
+                      key={name}
+                      style={[s.card, { borderColor: rankColors[i] + "55" }]}
+                    >
+                      <View style={s.row}>
+                        <RankEmblem value={i} size={40} />
+                        <Text style={[s.h2, { color: rankColors[i] }]}>
+                          {name}
+                        </Text>
+                      </View>
+                      <Text style={s.muted}>
+                        Od {buildMilestones[i]} bodů
+                        {rank === i ? " · CURRENT" : ""}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
               {route?.type === "plan" && (
                 <PlanEditor
                   profile={data.profile}

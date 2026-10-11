@@ -1,4 +1,4 @@
-import React from "react";
+import React, { createContext, useContext, useMemo } from "react";
 import { View, Text, Pressable, TextInput, StyleSheet } from "react-native";
 import Svg, { Path, Circle, Line, Text as SvgText } from "react-native-svg";
 import { type Exercise, type Muscle, muscleNames } from "./catalog";
@@ -120,6 +120,38 @@ export const s = StyleSheet.create({
   empty: { padding: 18, backgroundColor: "#0b1017", borderRadius: 15, gap: 8 },
   flex: { flex: 1 },
 });
+export const BuildTheme = createContext(blue);
+export function useBuildStyles() {
+  const color = useContext(BuildTheme);
+  return useMemo(
+    () => ({
+      ...s,
+      label: { ...s.label, color },
+      link: { ...s.link, color },
+      icon: { ...s.icon, color },
+      button: { ...s.button, backgroundColor: color },
+      chipOn: {
+        ...s.chipOn,
+        backgroundColor: color + "26",
+        borderColor: color,
+      },
+      card: {
+        ...s.card,
+        backgroundColor: color + "0d",
+        borderColor: color + "33",
+      },
+      secondary: {
+        ...s.secondary,
+        backgroundColor: color + "18",
+        borderColor: color + "55",
+      },
+      secondaryText: { ...s.secondaryText, color },
+      pill: { ...s.pill, backgroundColor: color + "20" },
+      badge: { ...s.badge, backgroundColor: color + "20", borderColor: color },
+    }),
+    [color],
+  );
+}
 export function Button({
   title,
   onPress,
@@ -131,6 +163,7 @@ export function Button({
   secondary?: boolean;
   disabled?: boolean;
 }) {
+  const s = useBuildStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -151,6 +184,7 @@ export function Chip({
   onPress: () => void;
   active?: boolean;
 }) {
+  const s = useBuildStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -177,6 +211,7 @@ export function Field({
   multiline?: boolean;
   placeholder?: string;
 }) {
+  const s = useBuildStyles();
   return (
     <View style={s.field}>
       <Text style={s.muted}>{label}</Text>
@@ -194,6 +229,8 @@ export function Field({
   );
 }
 export function Progress({ value }: { value: number }) {
+  const s = useBuildStyles();
+  const blue = useContext(BuildTheme);
   return (
     <View
       style={{
@@ -224,6 +261,8 @@ export function MissionArtwork({
   done: number;
   total: number;
 }) {
+  const s = useBuildStyles();
+  const blue = useContext(BuildTheme);
   return (
     <Svg
       width={size}
@@ -235,8 +274,8 @@ export function MissionArtwork({
         cx="64"
         cy="64"
         r="58"
-        fill="#101e30"
-        stroke="#30455e"
+        fill={blue + "12"}
+        stroke={blue + "44"}
         strokeWidth="1"
       />
       <Circle
@@ -244,7 +283,7 @@ export function MissionArtwork({
         cy="64"
         r="50"
         fill="none"
-        stroke="#24364e"
+        stroke={blue + "30"}
         strokeWidth="4"
       />
       <Circle
@@ -279,6 +318,7 @@ const shapes: Record<Muscle, string> = {
   calves: "M35 143L45 143L43 170L36 170Z M65 143L55 143L57 170L64 170Z",
 };
 function Body({ back, exercise }: { back: boolean; exercise: Exercise }) {
+  const blue = useContext(BuildTheme);
   const visible: Muscle[] = back
     ? ["shoulders", "triceps", "back", "glutes", "hamstrings", "calves"]
     : ["shoulders", "chest", "core", "biceps", "quads", "calves"];
@@ -299,7 +339,7 @@ function Body({ back, exercise }: { back: boolean; exercise: Exercise }) {
               exercise.main.includes(m)
                 ? blue
                 : exercise.secondary.includes(m)
-                  ? "#4778a7"
+                  ? blue + "88"
                   : "#2e3d51"
             }
             opacity={0.95}
@@ -314,6 +354,7 @@ function Body({ back, exercise }: { back: boolean; exercise: Exercise }) {
   );
 }
 export function ExerciseDetail({ exercise }: { exercise: Exercise }) {
+  const s = useBuildStyles();
   return (
     <View style={s.card}>
       <Text style={s.label}>TECHNIKA / {exercise.equipment.toUpperCase()}</Text>
@@ -331,7 +372,7 @@ export function ExerciseDetail({ exercise }: { exercise: Exercise }) {
         </Text>
       )}
       <Text style={s.small}>
-        Modrá = hlavní svaly · tmavší modrá = pomocné. Schematická mapa.
+        Výrazná barva = hlavní svaly · tlumená = pomocné. Schematická mapa.
       </Text>
       {exercise.steps.map((step, i) => (
         <View key={i} style={s.step}>
