@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo } from "react";
 import { View, Text, Pressable, TextInput, StyleSheet } from "react-native";
 import Svg, { Path, Circle, Line, Text as SvgText } from "react-native-svg";
-import { type Exercise, type Muscle, muscleNames } from "./catalog";
+import { type Exercise, muscleNames } from "./catalog";
 export const blue = "#8cbfff";
 export const s = StyleSheet.create({
   page: { padding: 20, paddingBottom: 32, gap: 20 },
@@ -303,88 +303,5 @@ export function MissionArtwork({
         {icon}
       </SvgText>
     </Svg>
-  );
-}
-const shapes: Record<Muscle, string> = {
-  shoulders: "M36 37Q23 36 22 55L33 57L39 43Z M64 37Q77 36 78 55L67 57L61 43Z",
-  chest: "M37 41L48 42L48 60L34 57Z M63 41L52 42L52 60L66 57Z",
-  core: "M36 62L48 64L48 91L39 85Z M64 62L52 64L52 91L61 85Z",
-  biceps: "M22 57L32 59L29 78L20 76Z M78 57L68 59L71 78L80 76Z",
-  triceps: "M22 57L32 59L29 79L20 76Z M78 57L68 59L71 79L80 76Z",
-  back: "M36 43L49 46L49 89L39 84L33 58Z M64 43L51 46L51 89L61 84L67 58Z",
-  glutes: "M38 87L49 90L48 110L35 107Z M62 87L51 90L52 110L65 107Z",
-  quads: "M36 96L48 100L46 137L34 136Z M64 96L52 100L54 137L66 136Z",
-  hamstrings: "M36 112L48 114L46 137L34 136Z M64 112L52 114L54 137L66 136Z",
-  calves: "M35 143L45 143L43 170L36 170Z M65 143L55 143L57 170L64 170Z",
-};
-function Body({ back, exercise }: { back: boolean; exercise: Exercise }) {
-  const blue = useContext(BuildTheme);
-  const visible: Muscle[] = back
-    ? ["shoulders", "triceps", "back", "glutes", "hamstrings", "calves"]
-    : ["shoulders", "chest", "core", "biceps", "quads", "calves"];
-  return (
-    <View style={{ flex: 1, maxWidth: 120 }}>
-      <Svg width="100%" height={205} viewBox="0 0 100 190">
-        <Circle cx="50" cy="18" r="12" fill="#243040" stroke="#40506a" />
-        <Path
-          d="M42 30L58 30L62 36Q75 34 79 48L83 83L86 100L78 103L68 71L67 92L70 123L66 177L54 177L50 122L46 177L34 177L30 123L33 92L32 71L22 103L14 100L17 83L21 48Q25 34 38 36Z"
-          fill="#202b3a"
-          stroke="#40506a"
-        />
-        {visible.map((m) => (
-          <Path
-            key={m}
-            d={shapes[m]}
-            fill={
-              exercise.main.includes(m)
-                ? blue
-                : exercise.secondary.includes(m)
-                  ? blue + "88"
-                  : "#2e3d51"
-            }
-            opacity={0.95}
-          />
-        ))}
-        <Line x1="50" x2="50" y1="43" y2="115" stroke="#17202d" />
-        <SvgText x="50" y="189" textAnchor="middle" fontSize="8" fill="#95a3b7">
-          {back ? "ZÁDA" : "ZEPŘEDU"}
-        </SvgText>
-      </Svg>
-    </View>
-  );
-}
-export function ExerciseDetail({ exercise }: { exercise: Exercise }) {
-  const s = useBuildStyles();
-  return (
-    <View style={s.card}>
-      <Text style={s.label}>TECHNIKA / {exercise.equipment.toUpperCase()}</Text>
-      <Text style={s.h2}>{exercise.name}</Text>
-      <View style={{ flexDirection: "row", justifyContent: "center", gap: 12 }}>
-        <Body exercise={exercise} back={false} />
-        <Body exercise={exercise} back />
-      </View>
-      <Text style={s.text}>
-        Hlavní: {exercise.main.map((m) => muscleNames[m]).join(", ")}
-      </Text>
-      {exercise.secondary.length > 0 && (
-        <Text style={s.muted}>
-          Pomocné: {exercise.secondary.map((m) => muscleNames[m]).join(", ")}
-        </Text>
-      )}
-      <Text style={s.small}>
-        Výrazná barva = hlavní svaly · tlumená = pomocné. Schematická mapa.
-      </Text>
-      {exercise.steps.map((step, i) => (
-        <View key={i} style={s.step}>
-          <Text style={s.label}>{i + 1}.</Text>
-          <Text style={[s.text, s.flex]}>{step}</Text>
-        </View>
-      ))}
-      <Text style={s.muted}>{exercise.error}</Text>
-      <Text style={s.small}>
-        Zvol rozsah a zátěž bez bolesti. U nového cviku si nech zkontrolovat
-        techniku.
-      </Text>
-    </View>
   );
 }

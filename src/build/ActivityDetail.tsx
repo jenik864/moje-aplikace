@@ -1,13 +1,7 @@
+import { ExerciseDetail } from "./ExerciseDetail";
 import React, { useState } from "react";
 import { View, Text, Pressable } from "react-native";
-import {
-  Button,
-  Chip,
-  Field,
-  ExerciseDetail,
-  s,
-  useBuildStyles,
-} from "./components";
+import { Button, Chip, Field, s, useBuildStyles } from "./components";
 import { exercises, exerciseById } from "./catalog";
 import {
   activityError,
