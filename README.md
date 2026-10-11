@@ -37,8 +37,16 @@ Porn Reboot má samostatný detailní dashboard s časovačem, Current/PRIME a p
 
 Doomscrolling má vlastní ukazatel zapsaných minut vůči dennímu limitu; Junk Food zvýrazňuje konkrétní pravidlo a dnešní stav. Oba programy mají barvy podle Current ranku, rozklikávací ranky, kalendář s detaily, grafy skutečných zápisů, manifest s původním podpisem a záznamy SOS. Statistiky oddělují dnešní koncept od potvrzených dní. SOS používá kruhový odpočet pěti minut pro Doomscrolling a dvou minut pro Junk Food.
 
-Me ukazuje ranky disciplín. Celkový rank zatím zůstává Copper: férové bodování Build a Mind není dohodnuté. Build, Mind a Business jsou zatím úvodní obrazovky.
+Me ukazuje ranky disciplín. Celkový rank zatím zůstává Copper: férové bodování Build a Mind není dohodnuté. Mind a Business jsou zatím úvodní obrazovky. Build má vlastní plánování a odznaky (viz níže).
 
 Data se ukládají pouze lokálně přes AsyncStorage (bez šifrování), nikam se neodesílají. Nejde zatím o produkční zabezpečení citlivých dat. Bez systémových blokací, selfie kamery, účtů, žebříčků a předplatného.
 
 Dohodnutá pravidla a další směr jsou v [docs/PRODUCT.md](docs/PRODUCT.md).
+
+## Build
+
+Build má modrý akcent, dnešní misi a týdenní kalendář. Návrh plánu vzniká lokálně z tréninkových šablon podle cíle, zkušeností, volných dnů, času, vybavení a sportu. Před použitím se zobrazí náhled. Přepisuje jen nezahájené aktivity vybraného týdne od dneška; minulost, dokončené aktivity a rozepsané série zachová. Každou nedokončenou aktivitu lze upravit nebo přesunout.
+
+Běh, kolo a plavání vyžadují vlastní zápis skutečných kilometrů a minut. Posilování ukládá série, opakování a váhy; pauza používá skutečný čas a pokračuje i při zavřené aplikaci. Mobilita ukládá minuty. Knihovna obsahuje 51 cviků se schematickou mapou hlavních a pomocných svalů, technikou a alternativou. Ranní a večerní rutiny péče jsou upravitelné a splnění je ruční.
+
+Build nepoužívá ranky. Osm odznaků se odemyká z uložených dokončených výkonů a rutin; jednu výzvu lze připnout na hlavní obrazovku. Kilometry v plánu nic neodemknou, oprava záznamu se nezapočítá dvakrát. Plavecký odznak vyžaduje tři různé dny v jednom týdnu od pondělí do neděle. Získané odznaky zůstávají odemčené i po opravě záznamu. Data Build jsou oddělená v lokálním klíči `quitter.build.v1`. Při chybě načítání se nepřepíšou; neúspěšné uložení nabízí opakování. Není připojené GPS ani externí AI.

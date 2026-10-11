@@ -1,3 +1,4 @@
+import { BuildScreen } from "./src/build/BuildScreen";
 import React, { useEffect, useRef, useState } from "react";
 import {
   View,
@@ -764,45 +765,48 @@ export default function App() {
           screenOptions={({ route }) => ({
             headerShown: false,
             tabBarActiveTintColor:
-              route.name === "Quit" ? quitAccent : "#c5fa67",
+              route.name === "Quit"
+                ? quitAccent
+                : route.name === "Build"
+                  ? "#8cbfff"
+                  : "#c5fa67",
             tabBarInactiveTintColor: "#777",
             tabBarStyle: {
               backgroundColor: "#111",
               borderTopColor: "#242424",
               paddingTop: 8,
             },
-            tabBarIcon: ({ color }) => (
-              <Text style={{ color, fontSize: 22 }}>
-                {
-                  (
-                    {
-                      Quit: "◎",
-                      Build: "↗",
-                      Mind: "◉",
-                      Business: "▤",
-                      Me: "◇",
-                    } as Record<string, string>
-                  )[route.name]
-                }
-              </Text>
-            ),
+            tabBarIcon: ({ color }) =>
+              route.name === "Build" ? (
+                <Svg width={23} height={23} viewBox="0 0 24 24">
+                  <Path
+                    d="M5 19L19 5M7 5H19V17"
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={1.7}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </Svg>
+              ) : (
+                <Text style={{ color, fontSize: 22 }}>
+                  {
+                    (
+                      {
+                        Quit: "◎",
+                        Build: "↗",
+                        Mind: "◉",
+                        Business: "▤",
+                        Me: "◇",
+                      } as Record<string, string>
+                    )[route.name]
+                  }
+                </Text>
+              ),
           })}
         >
           <Tab.Screen name="Quit">{Quit}</Tab.Screen>
-          <Tab.Screen name="Build">
-            {() => (
-              <Placeholder
-                title="Build"
-                label="POSTAV SILNÝ ZÁKLAD"
-                text="Pohyb, regenerace a péče o tělo. Tvůj plán, tvoje pravidelnost."
-                items={[
-                  "Trénink a pohyb",
-                  "Spánek a regenerace",
-                  "Péče o tělo",
-                ]}
-              />
-            )}
-          </Tab.Screen>
+          <Tab.Screen name="Build" component={BuildScreen} />
           <Tab.Screen name="Mind">
             {() => (
               <Placeholder
