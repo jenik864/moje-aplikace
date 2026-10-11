@@ -13,6 +13,7 @@ import {
   initialWindowMetrics,
 } from "react-native-safe-area-context";
 import { ranks } from "../model";
+import { RankStage, AppIcon } from "../design";
 import { buildRank, buildPoints, buildMilestones } from "./ranking";
 import { rankColors, RankEmblem } from "../ui";
 import { Calendar } from "./Calendar";
@@ -186,7 +187,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
     </>
   );
   return (
-    <Screen>
+    <Screen accent={blue}>
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={s.page}
@@ -197,43 +198,29 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
             <Text style={s.label}>QUITTER / TVOJE FYZICKÁ STRÁNKA</Text>
             <Text style={[s.title, { fontSize: 40 }]}>Build.</Text>
           </View>
-          <Text style={[s.icon, { fontSize: 42 }]}>→</Text>
+          <AppIcon name="Build" color={blue} size={32} />
         </View>
-        <Pressable
-          accessibilityRole="button"
+        <RankStage
+          rank={rank}
+          prime={Math.max(rank, data.prime ?? 0)}
+          color={blue}
+          label="BUILD / TVŮJ POSTUP"
+          value={points.toLocaleString("cs-CZ")}
+          unit="BODŮ POHYBU"
+          progress={
+            rank === 11
+              ? 1
+              : (points - buildMilestones[rank]) /
+                (buildMilestones[rank + 1] - buildMilestones[rank])
+          }
+          nextLabel={
+            rank === 11
+              ? "Nejvyšší rank"
+              : `Další ${ranks[rank + 1]} za ${(buildMilestones[rank + 1] - points).toLocaleString("cs-CZ")} bodů`
+          }
           onPress={() => setRoute({ type: "ranks" })}
-          style={s.card}
-        >
-          <View style={s.between}>
-            <View style={s.row}>
-              <RankEmblem value={rank} size={44} />
-              <View style={{ gap: 4 }}>
-                <Text style={s.label}>CURRENT / BUILD</Text>
-                <Text style={[s.h2, { color: blue }]}>{ranks[rank]}</Text>
-              </View>
-            </View>
-            <View style={{ gap: 4, alignItems: "flex-end" }}>
-              <Text style={s.small}>PRIME</Text>
-              <Text style={s.link}>
-                {ranks[Math.max(rank, data.prime ?? 0)]} →
-              </Text>
-            </View>
-          </View>
-          <Progress
-            value={
-              rank === 11
-                ? 1
-                : (points - buildMilestones[rank]) /
-                  (buildMilestones[rank + 1] - buildMilestones[rank])
-            }
-          />
-          <Text style={s.small}>
-            {points.toLocaleString("cs-CZ")} bodů pohybu
-            {rank < 11
-              ? ` · další ${ranks[rank + 1]} za ${(buildMilestones[rank + 1] - points).toLocaleString("cs-CZ")} bodů`
-              : ""}
-          </Text>
-        </Pressable>
+          accessibilityLabel="Otevřít ranky Build"
+        />
         {status}
         {notice !== "" && (
           <Text accessibilityLiveRegion="polite" style={s.link}>
@@ -243,7 +230,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
         <View
           style={[
             s.card,
-            { backgroundColor: blue + "18", borderColor: blue + "88", gap: 22 },
+            { backgroundColor: blue + "0a", borderColor: blue + "25", gap: 20 },
           ]}
         >
           <View style={s.between}>
@@ -252,7 +239,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
           </View>
           <View style={[s.row, { flexWrap: "nowrap" }]}>
             <MissionArtwork
-              size={width < 360 ? 88 : 128}
+              size={width < 360 ? 80 : 96}
               icon={
                 next ? kinds[next.kind].icon : todayDone.length ? "✓" : "↔"
               }
@@ -585,7 +572,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
         onRequestClose={() => setRoute(null)}
       >
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          <Screen modal>
+          <Screen modal accent={blue}>
             <View style={[s.header, s.between]}>
               <Pressable
                 accessibilityRole="button"

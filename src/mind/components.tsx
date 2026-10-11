@@ -7,6 +7,7 @@ import Svg, {
   LinearGradient,
   Stop,
 } from "react-native-svg";
+import { surface, border } from "../design";
 export const violet = "#b8a0ff",
   mint = "#8ae7d1";
 export const MindTheme = createContext("#cf956e");
@@ -16,21 +17,21 @@ export function useMindStyles() {
     ...s,
     label: { ...s.label, color },
     link: { ...s.link, color },
-    card: { ...s.card, backgroundColor: "#101114", borderColor: `${color}30` },
+    card: { ...s.card, backgroundColor: surface, borderColor: border },
     hero: {
       ...s.hero,
-      backgroundColor: `${color}12`,
-      borderColor: `${color}60`,
+      backgroundColor: `${color}0c`,
+      borderColor: `${color}25`,
     },
     button: { ...s.button, backgroundColor: color },
     quiet: {
       ...s.quiet,
-      backgroundColor: `${color}12`,
-      borderColor: `${color}40`,
+      backgroundColor: "#ffffff05",
+      borderColor: "#ffffff14",
     },
-    chip: { ...s.chip, backgroundColor: "#101114", borderColor: `${color}30` },
+    chip: { ...s.chip, backgroundColor: "#ffffff03", borderColor: "#ffffff16" },
     track: { ...s.track, backgroundColor: `${color}22` },
-    input: { ...s.input, borderColor: `${color}40` },
+    input: { ...s.input, borderColor: "#ffffff18" },
   };
 }
 export function Button({
@@ -51,7 +52,12 @@ export function Button({
       accessibilityRole="button"
       disabled={disabled}
       onPress={onPress}
-      style={[s.button, quiet && s.quiet, disabled && { opacity: 0.4 }]}
+      style={({ pressed }) => [
+        s.button,
+        quiet && s.quiet,
+        disabled && { opacity: 0.4 },
+        pressed && { opacity: 0.75, transform: [{ scale: 0.985 }] },
+      ]}
     >
       <Text style={[s.buttonText, quiet && { color }]}>{children}</Text>
     </Pressable>
@@ -186,7 +192,7 @@ export function Orbit({ small = false }: { small?: boolean }) {
   );
 }
 export const s = StyleSheet.create({
-  body: { padding: 20, gap: 20, paddingBottom: 32 },
+  body: { padding: 20, gap: 22, paddingBottom: 28 },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   between: {
     flexDirection: "row",
@@ -196,21 +202,21 @@ export const s = StyleSheet.create({
   },
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   title: {
-    color: "#f6f3ff",
-    fontSize: 44,
-    fontWeight: "800",
-    letterSpacing: -2,
+    color: "#f4f6fa",
+    fontSize: 40,
+    fontWeight: "700",
+    letterSpacing: -1.7,
   },
   h2: {
     color: "#f6f3ff",
-    fontSize: 25,
-    fontWeight: "700",
+    fontSize: 23,
+    fontWeight: "600",
     letterSpacing: -0.5,
   },
   h3: { color: "#f6f3ff", fontSize: 19, fontWeight: "700" },
-  text: { color: "#ece7f5", fontSize: 16, lineHeight: 24 },
-  muted: { color: "#aaa2b9", fontSize: 14, lineHeight: 22 },
-  label: { color: violet, fontSize: 11, fontWeight: "800", letterSpacing: 2 },
+  text: { color: "#dce3ee", fontSize: 15, lineHeight: 24 },
+  muted: { color: "#94a1b4", fontSize: 13, lineHeight: 21 },
+  label: { color: violet, fontSize: 9, fontWeight: "700", letterSpacing: 1.8 },
   link: { color: violet, fontSize: 15, fontWeight: "700" },
   card: {
     backgroundColor: "#131019",
@@ -224,7 +230,7 @@ export const s = StyleSheet.create({
     backgroundColor: "#20172f",
     borderColor: "#655085",
     borderWidth: 1,
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 22,
     gap: 18,
   },
@@ -237,9 +243,9 @@ export const s = StyleSheet.create({
     minHeight: 52,
   },
   buttonText: {
-    color: "#170f24",
-    fontSize: 16,
-    fontWeight: "800",
+    color: "#10131a",
+    fontSize: 14,
+    fontWeight: "700",
     textAlign: "center",
   },
   quiet: { backgroundColor: "#211b2c", borderColor: "#4c3b65", borderWidth: 1 },
@@ -253,12 +259,12 @@ export const s = StyleSheet.create({
   },
   input: {
     color: "#fff",
-    backgroundColor: "#0c0a10",
+    backgroundColor: "#090e17",
     borderWidth: 1,
     borderColor: "#43364f",
     borderRadius: 13,
     padding: 14,
-    fontSize: 17,
+    fontSize: 16,
     minHeight: 52,
   },
   track: {
@@ -275,9 +281,10 @@ export const s = StyleSheet.create({
     borderRadius: 13,
     gap: 8,
     borderWidth: 1,
-    borderColor: "#30283a",
+    borderColor: "#ffffff12",
+    backgroundColor: "#ffffff03",
   },
-  divider: { height: 1, backgroundColor: "#30283a" },
+  divider: { height: 1, backgroundColor: "#ffffff0e" },
   stat: {
     color: mint,
     fontSize: 30,

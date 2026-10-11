@@ -198,8 +198,8 @@ export function ScrollDashboard({
         style={[
           s.card,
           {
-            backgroundColor: "#111116",
-            borderColor: tint(accent, 0.3),
+            backgroundColor: "#111620",
+            borderColor: tint(accent, 0.18),
             padding: 22,
             gap: 22,
           },
@@ -246,14 +246,14 @@ export function ScrollDashboard({
                 key={i}
                 style={{
                   flex: 1,
-                  height: 42 + (i % 4) * 7,
+                  height: 42,
                   borderRadius: 4,
                   backgroundColor:
                     current && i / 24 < Math.min(1, current.minutes / p.limit)
                       ? over
                         ? "#ee8a9b"
                         : accent
-                      : "#29252e",
+                      : "#ffffff09",
                 }}
               />
             ))}
@@ -287,7 +287,7 @@ export function ScrollDashboard({
         {...button("ranks", "Otevřít ranky Doomscrolling")}
         style={[s.card, s.row]}
       >
-        <RankMark rank={rank} size={56} />
+        <RankMark rank={rank} size={70} />
         <View style={{ flex: 1, gap: 5 }}>
           <Text style={s.label}>
             {stats.average === null
@@ -379,7 +379,7 @@ export function ScrollDashboard({
         onRequestClose={() => setPanel(null)}
       >
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          <Screen modal>
+          <Screen modal accent={accent}>
             <View style={s.header}>
               <Pressable
                 accessibilityRole="button"

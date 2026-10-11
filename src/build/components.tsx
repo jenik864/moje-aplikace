@@ -2,9 +2,10 @@ import React, { createContext, useContext, useMemo } from "react";
 import { View, Text, Pressable, TextInput, StyleSheet } from "react-native";
 import Svg, { Path, Circle, Line, Text as SvgText } from "react-native-svg";
 import { type Exercise, muscleNames } from "./catalog";
+import { surface, border } from "../design";
 export const blue = "#8cbfff";
 export const s = StyleSheet.create({
-  page: { padding: 20, paddingBottom: 32, gap: 20 },
+  page: { padding: 20, paddingBottom: 28, gap: 22 },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -18,14 +19,14 @@ export const s = StyleSheet.create({
     gap: 12,
   },
   card: {
-    backgroundColor: "#10151d",
-    borderColor: "#263345",
+    backgroundColor: surface,
+    borderColor: border,
     borderWidth: 1,
-    borderRadius: 24,
+    borderRadius: 22,
     padding: 20,
     gap: 16,
   },
-  label: { color: blue, fontSize: 11, fontWeight: "700", letterSpacing: 1.8 },
+  label: { color: blue, fontSize: 9, fontWeight: "700", letterSpacing: 1.8 },
   title: {
     color: "#f2f6fc",
     fontSize: 30,
@@ -34,16 +35,16 @@ export const s = StyleSheet.create({
   },
   h2: {
     color: "#edf3fc",
-    fontSize: 22,
+    fontSize: 23,
     fontWeight: "600",
     letterSpacing: -0.4,
   },
-  text: { color: "#e1e8f3", fontSize: 16, lineHeight: 24 },
-  muted: { color: "#95a3b7", fontSize: 14, lineHeight: 22 },
+  text: { color: "#dce3ee", fontSize: 15, lineHeight: 24 },
+  muted: { color: "#94a1b4", fontSize: 13, lineHeight: 21 },
   small: { color: "#95a3b7", fontSize: 12, lineHeight: 18 },
   button: {
     backgroundColor: blue,
-    borderRadius: 15,
+    borderRadius: 16,
     paddingHorizontal: 18,
     paddingVertical: 16,
     alignItems: "center",
@@ -52,14 +53,14 @@ export const s = StyleSheet.create({
   },
   buttonText: { color: "#0b1728", fontSize: 14, fontWeight: "700" },
   secondary: {
-    backgroundColor: "#192333",
+    backgroundColor: "#ffffff05",
     borderWidth: 1,
-    borderColor: "#354862",
+    borderColor: "#ffffff12",
   },
   secondaryText: { color: "#c2d9f7" },
   chip: {
     borderWidth: 1,
-    borderColor: "#354156",
+    borderColor: "#ffffff16",
     paddingHorizontal: 14,
     paddingVertical: 11,
     borderRadius: 12,
@@ -68,16 +69,16 @@ export const s = StyleSheet.create({
   },
   chipOn: { backgroundColor: "#254468", borderColor: blue },
   input: {
-    backgroundColor: "#0a1018",
+    backgroundColor: "#090e17",
     color: "#edf3fc",
     borderWidth: 1,
-    borderColor: "#354156",
+    borderColor: "#ffffff18",
     borderRadius: 13,
     padding: 14,
     fontSize: 16,
     minHeight: 50,
   },
-  divider: { height: 1, backgroundColor: "#283344" },
+  divider: { height: 1, backgroundColor: "#ffffff0e" },
   error: { color: "#ffb5a7", fontSize: 14, lineHeight: 21 },
   icon: { color: blue, fontSize: 30, fontWeight: "600" },
   pill: {
@@ -90,7 +91,8 @@ export const s = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 17,
     borderBottomWidth: 1,
-    borderBottomColor: "#253043",
+    borderBottomColor: "#ffffff10",
+    backgroundColor: "#0d121bee",
   },
   link: { color: blue, fontSize: 14, fontWeight: "600" },
   field: { gap: 7 },
@@ -101,7 +103,8 @@ export const s = StyleSheet.create({
     paddingVertical: 13,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#2c3747",
+    borderColor: "#ffffff12",
+    backgroundColor: "#ffffff03",
     gap: 8,
     minHeight: 78,
   },
@@ -137,13 +140,13 @@ export function useBuildStyles() {
       },
       card: {
         ...s.card,
-        backgroundColor: color + "0d",
-        borderColor: color + "33",
+        backgroundColor: surface,
+        borderColor: border,
       },
       secondary: {
         ...s.secondary,
-        backgroundColor: color + "18",
-        borderColor: color + "55",
+        backgroundColor: "#ffffff05",
+        borderColor: "#ffffff14",
       },
       secondaryText: { ...s.secondaryText, color },
       pill: { ...s.pill, backgroundColor: color + "20" },
@@ -169,7 +172,12 @@ export function Button({
       accessibilityRole="button"
       disabled={disabled}
       onPress={onPress}
-      style={[s.button, secondary && s.secondary, disabled && { opacity: 0.4 }]}
+      style={({ pressed }) => [
+        s.button,
+        secondary && s.secondary,
+        disabled && { opacity: 0.4 },
+        pressed && { opacity: 0.75, transform: [{ scale: 0.985 }] },
+      ]}
     >
       <Text style={[s.buttonText, secondary && s.secondaryText]}>{title}</Text>
     </Pressable>

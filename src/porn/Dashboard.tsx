@@ -14,6 +14,7 @@ import { PornDetails, DetailKind } from "./Details";
 import { rankColors } from "../ui";
 import { RankThemeProvider, useRankTheme, tint } from "./theme";
 import { SeriesChart } from "./Charts";
+import { AmbientBackdrop, RankStageArt } from "../design";
 type DashboardProps = {
   p: Program;
   now: number;
@@ -127,6 +128,7 @@ function DashboardBody({
           </Text>
         )}
         <View style={s.clockStage}>
+          <AmbientBackdrop color={accent} />
           <TimerDial seconds={seconds} progress={progress} />
         </View>
         <Pressable
@@ -356,7 +358,7 @@ export function PornWelcome({ activate }: { activate: () => void }) {
       <SectionLabel>DETOX / 01</SectionLabel>
       <Text style={s.title}>Porn Reboot</Text>
       <View style={s.welcome}>
-        <RankMark rank={0} size={86} />
+        <RankStageArt rank={0} color={accent} />
         <Text style={s.welcomeTitle}>
           {"Tvoje pozornost.\nTvoje rozhodnutí."}
         </Text>
@@ -365,6 +367,14 @@ export function PornWelcome({ activate }: { activate: () => void }) {
           pomoc, když přijde impulz.
         </Text>
       </View>
+      <Pressable
+        accessibilityRole="button"
+        onPress={activate}
+        style={s.activate}
+      >
+        <Text style={s.activateText}>AKTIVOVAT PROGRAM</Text>
+        <ArrowIcon color="#1a110d" />
+      </Pressable>
       <View style={s.card}>
         {[
           "Napiš svůj osobní manifest",
@@ -377,14 +387,6 @@ export function PornWelcome({ activate }: { activate: () => void }) {
           </View>
         ))}
       </View>
-      <Pressable
-        accessibilityRole="button"
-        onPress={activate}
-        style={s.activate}
-      >
-        <Text style={s.activateText}>AKTIVOVAT PROGRAM</Text>
-        <ArrowIcon color="#1a110d" />
-      </Pressable>
       <Text style={s.foot}>
         Série sleduje vědomé sledování porna. Masturbace bez porna ani náhodné
         zobrazení ji nepřeruší.
@@ -424,7 +426,7 @@ const makeStyles = (accent: string) =>
       borderRadius: 20,
       borderWidth: 1,
       borderColor: tint(accent, 0.21),
-      backgroundColor: "#131214",
+      backgroundColor: "#111620",
     },
     rankCurrent: { flexDirection: "row", alignItems: "center", gap: 14 },
     rankName: {
@@ -442,21 +444,26 @@ const makeStyles = (accent: string) =>
     },
     primeName: { fontSize: 16, color: "#d0bff2", fontWeight: "500" },
     hero: {
-      backgroundColor: "#0a0a0c",
-      borderRadius: 24,
+      backgroundColor: "#0d121b",
+      borderRadius: 28,
       borderWidth: 1,
-      borderColor: "#262324",
+      borderColor: tint(accent, 0.18),
       overflow: "hidden",
     },
-    clockStage: { paddingTop: 20, paddingBottom: 20, alignItems: "center" },
+    clockStage: {
+      paddingTop: 24,
+      paddingBottom: 24,
+      alignItems: "center",
+      overflow: "hidden",
+    },
     next: {
       gap: 11,
       paddingHorizontal: 20,
       paddingTop: 17,
       paddingBottom: 19,
       borderTopWidth: 1,
-      borderTopColor: "#252323",
-      backgroundColor: "#121111",
+      borderTopColor: "#ffffff0c",
+      backgroundColor: "#ffffff02",
     },
     spread: {
       flexDirection: "row",
@@ -515,11 +522,11 @@ const makeStyles = (accent: string) =>
       fontWeight: "500",
       letterSpacing: -0.4,
     },
-    sosCaption: { color: "#b7ada3", fontSize: 12, lineHeight: 18 },
+    sosCaption: { color: "#94a1b4", fontSize: 12, lineHeight: 18 },
     sosAction: {
       backgroundColor: accent,
       minHeight: 50,
-      borderRadius: 14,
+      borderRadius: 16,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
@@ -533,7 +540,7 @@ const makeStyles = (accent: string) =>
       borderColor: palette.border,
       borderWidth: 1,
       padding: 16,
-      borderRadius: 14,
+      borderRadius: 18,
       gap: 14,
     },
     metricValue: {
@@ -583,7 +590,7 @@ const makeStyles = (accent: string) =>
       lineHeight: 28,
       fontWeight: "400",
     },
-    manifestFoot: { color: "#b4a399", fontSize: 12, lineHeight: 19 },
+    manifestFoot: { color: "#94a1b4", fontSize: 12, lineHeight: 19 },
     reset: {
       position: "relative",
       overflow: "hidden",
@@ -610,9 +617,9 @@ const makeStyles = (accent: string) =>
     welcome: {
       alignItems: "center",
       padding: 24,
-      gap: 24,
-      borderRadius: 22,
-      borderColor: "#2c3125",
+      gap: 16,
+      borderRadius: 28,
+      borderColor: tint(accent, 0.18),
       borderWidth: 1,
       backgroundColor: palette.panel,
     },
@@ -625,7 +632,7 @@ const makeStyles = (accent: string) =>
       letterSpacing: -0.8,
     },
     welcomeBody: {
-      color: "#a8b09f",
+      color: "#a6b1c2",
       fontSize: 14,
       lineHeight: 23,
       flexShrink: 1,

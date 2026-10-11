@@ -1,3 +1,4 @@
+import { RankStageArt, surface } from "../design";
 import React from "react";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import {
@@ -148,13 +149,13 @@ export function FoodDashboard({
                           ? value
                             ? accent
                             : "#df909e"
-                          : "#393332",
+                          : "#ffffff18",
                       backgroundColor:
                         answer === value
                           ? value
                             ? tint(accent, 0.18)
                             : "#382129"
-                          : "#171514",
+                          : "#ffffff04",
                     }}
                   >
                     <Text
@@ -196,13 +197,15 @@ export function FoodDashboard({
             alignItems: "center",
             paddingVertical: 28,
             gap: 14,
-            borderColor: tint(accent, 0.4),
-            backgroundColor: "#151312",
+            borderColor: tint(accent, 0.18),
+            backgroundColor: surface,
           },
         ]}
       >
         <Text style={s.label}>TVŮJ JUNK FOOD RANK</Text>
-        <RankMark rank={rank} size={158} />
+        <View style={{ width: "100%" }}>
+          <RankStageArt rank={rank} color={accent} />
+        </View>
         <Text style={{ color: accent, fontSize: 34, fontWeight: "600" }}>
           {ranks[rank]}
         </Text>
@@ -226,7 +229,7 @@ export function FoodDashboard({
             style={{
               height: 5,
               borderRadius: 3,
-              backgroundColor: "#302823",
+              backgroundColor: "#ffffff0c",
               overflow: "hidden",
             }}
           >
@@ -260,7 +263,7 @@ export function FoodDashboard({
         </Text>
         <Pressable
           {...button("pillars", "Prohlédnout vybrané pilíře")}
-          style={[s.button, { backgroundColor: "#28231f" }]}
+          style={[s.button, { backgroundColor: "#ffffff08" }]}
         >
           <Text style={[s.buttonText, { color: accent }]}>
             MOJE VYBRANÉ PILÍŘE
@@ -428,7 +431,7 @@ export function FoodDashboard({
         onRequestClose={() => setPanel(null)}
       >
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          <Screen modal>
+          <Screen modal accent={accent}>
             <View style={s.header}>
               <Pressable
                 accessibilityRole="button"

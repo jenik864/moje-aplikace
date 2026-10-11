@@ -114,7 +114,7 @@ export function SosProtocol({
         borderRadius: 13,
         borderWidth: 1,
         borderColor: checked ? accent : "#39332c",
-        backgroundColor: checked ? tint(accent, 0.16) : "#151412",
+        backgroundColor: checked ? tint(accent, 0.16) : "#111620",
         justifyContent: "center",
       }}
     >
@@ -149,7 +149,7 @@ export function SosProtocol({
             ? "Pravidelné jídlo je součást tvého plánu."
             : "Zvyk nemusí rozhodnout za tebe.";
   return (
-    <Screen modal>
+    <Screen modal accent={accent}>
       <View style={[s.header, { paddingVertical: 5 }]}>
         <Pressable
           accessibilityRole="button"
@@ -235,7 +235,7 @@ export function SosProtocol({
               <View
                 style={[
                   s.row,
-                  { borderRadius: 14, backgroundColor: "#1b1814", padding: 12 },
+                  { borderRadius: 14, backgroundColor: "#111620", padding: 12 },
                 ]}
               >
                 <Text style={s.label}>TVOJE PAUZA</Text>
@@ -330,7 +330,7 @@ export function SosProtocol({
           gap: 2,
           borderTopWidth: 1,
           borderTopColor: "#292526",
-          backgroundColor: "#050505",
+          backgroundColor: "#080b12",
         }}
       >
         {!choosing && (started === null || hunger) && (

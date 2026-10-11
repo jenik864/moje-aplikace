@@ -12,8 +12,9 @@ import {
   SafeAreaProvider,
   initialWindowMetrics,
 } from "react-native-safe-area-context";
-import { Screen, RankEmblem, rankColors } from "../ui";
+import { Screen, rankColors } from "../ui";
 import { ranks } from "../model";
+import { RankStage, AppIcon } from "../design";
 import { useMind } from "./useMind";
 import {
   useMindStyles,
@@ -244,7 +245,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
     </>
   );
   return (
-    <Screen>
+    <Screen accent={color}>
       <ScrollView
         contentContainerStyle={s.body}
         keyboardShouldPersistTaps="handled"
@@ -260,46 +261,29 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
             accessibilityLabel="Otevřít ranky Mind"
             onPress={() => setRoute("ranks")}
           >
-            <RankEmblem value={rank} size={60} />
+            <AppIcon name="Mind" color={color} size={32} />
           </Pressable>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Detail ranku Mind"
+        <RankStage
+          rank={rank}
+          prime={prime}
+          color={color}
+          label="MIND / TVŮJ POSTUP"
+          value={xp.toLocaleString("cs-CZ")}
+          unit="XP"
+          progress={
+            rank === 11
+              ? 1
+              : (xp - mindMilestones[rank]) / (nextXP - mindMilestones[rank])
+          }
+          nextLabel={
+            rank === 11
+              ? "Nejvyšší rank"
+              : `${nextXP - xp} XP do ${ranks[rank + 1]}`
+          }
           onPress={() => setRoute("ranks")}
-          style={[s.card, { gap: 12, padding: 17 }]}
-        >
-          <View style={s.between}>
-            <View style={s.row}>
-              <RankEmblem value={rank} size={42} />
-              <View>
-                <Text style={s.label}>CURRENT</Text>
-                <Text style={[s.h2, { color }]}>{ranks[rank]}</Text>
-              </View>
-            </View>
-            <View style={{ alignItems: "flex-end", gap: 4 }}>
-              <Text style={s.label}>PRIME</Text>
-              <Text style={[s.h3, { color: rankColors[prime] }]}>
-                {ranks[prime]}
-              </Text>
-            </View>
-          </View>
-          <Progress
-            value={
-              rank === 11
-                ? 1
-                : (xp - mindMilestones[rank]) / (nextXP - mindMilestones[rank])
-            }
-          />
-          <View style={s.between}>
-            <Text style={s.muted}>{xp} XP</Text>
-            <Text style={[s.muted, { color }]}>
-              {rank === 11
-                ? "Nejvyšší rank"
-                : `${nextXP - xp} XP do ${ranks[rank + 1]} →`}
-            </Text>
-          </View>
-        </Pressable>
+          accessibilityLabel="Detail ranku Mind"
+        />
         <View style={[s.hero, { padding: 18, gap: 12 }]}>
           <View style={s.between}>
             <Text style={s.label}>DNES / {pretty(today)}</Text>
@@ -349,7 +333,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
             onPress={() => setRoute("arena")}
             style={[s.card, { flex: 1, padding: 16, gap: 9 }]}
           >
-            <Text style={[s.h2, { fontSize: 30, color }]}>{"× ÷"}</Text>
+            <AppIcon name="math" color={color} size={32} />
             <Text style={s.h3}>Aréna</Text>
             <Text style={s.muted}>Rychlost a přesnost</Text>
             <Text style={s.link}>Hrát →</Text>
@@ -360,7 +344,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
             onPress={() => setRoute("learn")}
             style={[s.card, { flex: 1, padding: 16, gap: 9 }]}
           >
-            <Text style={[s.h2, { fontSize: 30, color }]}>{"</>"}</Text>
+            <AppIcon name="learn" color={color} size={32} />
             <Text style={s.h3}>Objevuj</Text>
             <Text style={s.muted}>Učení v praxi</Text>
             <Text style={s.link}>Prozkoumat →</Text>
@@ -532,7 +516,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
         onRequestClose={close}
       >
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          <Screen modal>
+          <Screen modal accent={color}>
             <View
               style={[
                 s.between,

@@ -1,11 +1,12 @@
 import { StyleSheet } from "react-native";
 import { tint } from "../porn/theme";
+import { surface, border } from "../design";
 export const dailyStyles = (accent: string) =>
   StyleSheet.create({
     card: {
-      backgroundColor: "#131214",
+      backgroundColor: surface,
       borderWidth: 1,
-      borderColor: "#2b2728",
+      borderColor: border,
       borderRadius: 22,
       padding: 20,
       gap: 16,
@@ -18,9 +19,9 @@ export const dailyStyles = (accent: string) =>
     },
     label: {
       color: accent,
-      fontSize: 10,
-      fontWeight: "600",
-      letterSpacing: 1.2,
+      fontSize: 9,
+      fontWeight: "700",
+      letterSpacing: 1.8,
     },
     heading: {
       color: "#f3f3ed",
@@ -32,19 +33,19 @@ export const dailyStyles = (accent: string) =>
     title: {
       color: "#f3f3ed",
       fontSize: 21,
-      fontWeight: "500",
+      fontWeight: "600",
       lineHeight: 28,
       flexShrink: 1,
     },
-    body: { color: "#c4bab3", fontSize: 14, lineHeight: 23 },
-    muted: { color: "#aca39f", fontSize: 12, lineHeight: 19, flexShrink: 1 },
+    body: { color: "#c0c9d7", fontSize: 14, lineHeight: 23 },
+    muted: { color: "#94a1b4", fontSize: 12, lineHeight: 19, flexShrink: 1 },
     link: { color: accent, fontSize: 10, letterSpacing: 0.8 },
     metric: {
       flex: 1,
       gap: 12,
-      backgroundColor: "#131214",
+      backgroundColor: surface,
       borderWidth: 1,
-      borderColor: "#2b2728",
+      borderColor: border,
       borderRadius: 18,
       padding: 16,
     },
@@ -59,7 +60,7 @@ export const dailyStyles = (accent: string) =>
       backgroundColor: accent,
       minHeight: 50,
       padding: 16,
-      borderRadius: 14,
+      borderRadius: 16,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -82,7 +83,8 @@ export const dailyStyles = (accent: string) =>
       paddingHorizontal: 22,
       paddingVertical: 14,
       borderBottomWidth: 1,
-      borderBottomColor: "#292526",
+      borderBottomColor: "#ffffff10",
+      backgroundColor: "#0d121bee",
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
@@ -94,8 +96,8 @@ export const dailyStyles = (accent: string) =>
       padding: 18,
       borderRadius: 18,
       borderWidth: 1,
-      borderColor: tint(accent, 0.35),
-      backgroundColor: "#131214",
+      borderColor: "#ffffff18",
+      backgroundColor: "#090e17",
       color: "#f3f3ed",
       fontSize: 18,
       lineHeight: 28,

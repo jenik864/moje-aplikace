@@ -17,6 +17,10 @@ Na telefonu použijte Expo Go kompatibilní s Expo SDK 57, pokud je pro váš te
 npm run web
 ```
 
+## Vizuální systém
+
+Quit, Build, Mind, Business a Me používají společné tmavé plochy, jemné světlo, typografii a SVG ikony. `src/design.tsx` obsahuje prostředí, materiálový vizuál ranku a spodní navigaci; ta zabírá vlastní místo a respektuje spodní bezpečný okraj telefonu. Dvanáct emblémů má vlastní siluetu, kovový povrch nebo krystalové fasety. Barva aktivních disciplín dál vychází z jejich Current ranku. Redesign nemění pravidla bodování ani formát uložených dat.
+
 ## Kontroly
 
 ```sh

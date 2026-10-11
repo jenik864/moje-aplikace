@@ -11,6 +11,7 @@ import Svg, {
   Path,
   Defs,
   LinearGradient,
+  RadialGradient,
   Stop,
   Line,
   Polygon,
@@ -22,10 +23,10 @@ import { ranks } from "../model";
 import { useRankTheme, tint } from "./theme";
 export const palette = {
   violet: "#b79afa",
-  text: "#f3f3ed",
-  muted: "#ada9a5",
-  border: "#2b2928",
-  panel: "#141313",
+  text: "#f4f6fa",
+  muted: "#94a1b4",
+  border: "#ffffff10",
+  panel: "#111620",
   red: "#ff777e",
 };
 export function RankMark({ rank, size = 42 }: { rank: number; size?: number }) {
@@ -90,16 +91,23 @@ export function TimerDial({
       <Svg width={size} height={size} viewBox="0 0 300 300">
         <Defs>
           <LinearGradient id={`${id}metal`} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={accent} />
-            <Stop offset={0.5} stopColor="#383332" />
+            <Stop offset="0" stopColor="#f1e6da" />
+            <Stop offset={0.22} stopColor={accent} />
+            <Stop offset={0.5} stopColor="#28313e" />
             <Stop offset="1" stopColor={accent} />
           </LinearGradient>
           <LinearGradient id={`${id}bezel`} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset={0} stopColor={tint(accent, 0.45)} />
-            <Stop offset={0.35} stopColor="#191719" />
-            <Stop offset={0.7} stopColor="#141315" />
-            <Stop offset={1} stopColor={tint(accent, 0.3)} />
+            <Stop offset={0} stopColor={tint(accent, 0.7)} />
+            <Stop offset={0.2} stopColor="#27303d" />
+            <Stop offset={0.5} stopColor="#101722" />
+            <Stop offset={0.8} stopColor={tint(accent, 0.5)} />
+            <Stop offset={1} stopColor="#161d29" />
           </LinearGradient>
+          <RadialGradient id={`${id}face`} cx="40%" cy="24%" rx="75%" ry="75%">
+            <Stop offset="0" stopColor="#1c2636" />
+            <Stop offset="0.6" stopColor="#0d1420" />
+            <Stop offset="1" stopColor="#080c14" />
+          </RadialGradient>
         </Defs>
         <Circle
           cx="150"
@@ -109,7 +117,16 @@ export function TimerDial({
           stroke={tint(accent, 0.22)}
           strokeWidth={frame === 0 ? 0.7 : 1}
         />
-        <Circle cx={150} cy={150} r={128} fill="#0b0b0d" />
+        <Circle
+          cx={150}
+          cy={150}
+          r={139}
+          fill="none"
+          stroke="#ffffff"
+          strokeOpacity={0.12}
+          strokeWidth={0.6}
+        />
+        <Circle cx={150} cy={150} r={128} fill={`url(#${id}face)`} />
         {frame >= 3 && (
           <Circle
             cx="150"

@@ -12,15 +12,18 @@ import {
 } from "react-native-safe-area-context";
 import { RankArtwork } from "./RankArtwork";
 import { ranks } from "./model";
+import { AmbientBackdrop, ink } from "./design";
 
 // Native tab screens and modal roots can initially report zero insets.
 // Window metrics preserve the status-bar clearance while their measurement settles.
 export function Screen({
   children,
   modal = false,
+  accent,
 }: {
   children: React.ReactNode;
   modal?: boolean;
+  accent?: string;
 }) {
   const insets = useSafeAreaInsets();
   const top = Math.max(insets.top, initialWindowMetrics?.insets.top ?? 0);
@@ -28,13 +31,14 @@ export function Screen({
     <View
       style={{
         flex: 1,
-        backgroundColor: "#050505",
+        backgroundColor: ink,
         paddingTop: top,
         paddingBottom: modal
           ? Math.max(insets.bottom, initialWindowMetrics?.insets.bottom ?? 0)
           : 0,
       }}
     >
+      <AmbientBackdrop color={accent} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -91,10 +95,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingVertical: 8,
     paddingHorizontal: 12,
     alignSelf: "flex-start",
-    backgroundColor: "#131313",
+    backgroundColor: "#151b25",
   },
 });

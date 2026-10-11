@@ -72,7 +72,7 @@ export function PornDetails({
     <Modal visible={kind !== null} animationType="slide" onRequestClose={back}>
       {kind && (
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          <Screen modal>
+          <Screen modal accent={accent}>
             <View style={s.header}>
               <Pressable accessibilityRole="button" onPress={back} hitSlop={12}>
                 <Text style={s.back}>← ZPĚT</Text>
@@ -673,7 +673,7 @@ const makeStyles = (accent: string) =>
       borderRadius: 20,
     },
     row: { flexDirection: "row", gap: 16, alignItems: "center" },
-    body: { color: "#bcb5af", fontSize: 14, lineHeight: 23 },
+    body: { color: "#c0c9d7", fontSize: 14, lineHeight: 23 },
     small: { color: palette.muted, fontSize: 12, lineHeight: 19 },
     title: {
       color: palette.text,

@@ -1,8 +1,18 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import Svg, { Circle, Path, Rect, Line } from "react-native-svg";
+import Svg, {
+  Circle,
+  Path,
+  Rect,
+  Line,
+  Defs,
+  LinearGradient,
+  RadialGradient,
+  Stop,
+} from "react-native-svg";
 import { definitions, ProgramId } from "./model";
 import { programContent } from "./programContent";
+import { surface } from "./design";
 export function ProgramIntro({
   id,
   accent,
@@ -12,8 +22,9 @@ export function ProgramIntro({
 }) {
   const d = { ...definitions[id], color: accent ?? definitions[id].color };
   const c = programContent[id];
+  const gradient = `intro${React.useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   return (
-    <View style={[styles.hero, { borderColor: `${d.color}40` }]}>
+    <View style={[styles.hero, { borderColor: `${d.color}25` }]}>
       <Text style={[styles.label, { color: d.color }]}>{c.focus}</Text>
       <View style={styles.art}>
         <Svg
@@ -22,6 +33,18 @@ export function ProgramIntro({
           viewBox="0 0 180 130"
           accessibilityLabel={`${d.title} ilustrace`}
         >
+          <Defs>
+            <RadialGradient id={`${gradient}halo`}>
+              <Stop offset="0" stopColor={d.color} stopOpacity={0.16} />
+              <Stop offset="1" stopColor={d.color} stopOpacity={0} />
+            </RadialGradient>
+            <LinearGradient id={gradient} x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={d.color} stopOpacity={0.28} />
+              <Stop offset="0.5" stopColor="#131e2e" />
+              <Stop offset="1" stopColor="#0b111c" />
+            </LinearGradient>
+          </Defs>
+          <Circle cx={90} cy={65} r={64} fill={`url(#${gradient}halo)`} />
           {id === "porn" ? (
             <>
               <Circle
@@ -30,7 +53,7 @@ export function ProgramIntro({
                 r="50"
                 stroke={`${d.color}35`}
                 strokeWidth="2"
-                fill="none"
+                fill={`url(#${gradient})`}
               />
               <Circle
                 cx="90"
@@ -61,7 +84,7 @@ export function ProgramIntro({
                 rx="13"
                 stroke={d.color}
                 strokeWidth="2"
-                fill={`${d.color}08`}
+                fill={`url(#${gradient})`}
               />
               <Line
                 x1="73"
@@ -106,7 +129,7 @@ export function ProgramIntro({
                 r="34"
                 stroke={d.color}
                 strokeWidth="2"
-                fill={`${d.color}08`}
+                fill={`url(#${gradient})`}
               />
               <Path
                 d="M74 64 L85 76 L108 51"
@@ -133,18 +156,18 @@ const styles = StyleSheet.create({
   hero: {
     padding: 22,
     gap: 16,
-    borderRadius: 22,
+    borderRadius: 28,
     borderWidth: 1,
-    backgroundColor: "#111",
+    backgroundColor: surface,
   },
-  label: { fontSize: 10, letterSpacing: 2, fontWeight: "800" },
+  label: { fontSize: 9, letterSpacing: 1.8, fontWeight: "700" },
   art: { alignItems: "center" },
   headline: {
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: 27,
+    lineHeight: 33,
     letterSpacing: -0.8,
     fontWeight: "600",
     color: "#fff",
   },
-  body: { fontSize: 14, lineHeight: 23, color: "#aaa" },
+  body: { fontSize: 14, lineHeight: 23, color: "#a6b1c2" },
 });

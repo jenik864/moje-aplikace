@@ -131,8 +131,8 @@ export function Library() {
             s.between,
             {
               padding: 12,
-              backgroundColor: "#10151c",
-              borderColor: "#28313d",
+              backgroundColor: "#111620",
+              borderColor: "#ffffff10",
               borderWidth: 1,
               borderRadius: 18,
               gap: 12,

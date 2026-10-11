@@ -359,7 +359,7 @@ export function Arena({
               maxWidth: 240,
               fontSize: compact ? 30 : 36,
               textAlign: "center",
-              borderColor: bad ? "#ff8995" : color,
+              borderColor: bad ? "#ff8995" : `${color}45`,
               padding: compact ? 8 : 12,
               minHeight: compact ? 46 : 58,
             },
@@ -409,14 +409,14 @@ export function Arena({
                   height: compact ? 48 : 60,
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: 13,
+                  borderRadius: 17,
                   backgroundColor: pressed
                     ? `${color}45`
                     : key === "↷"
                       ? `${color}20`
-                      : "#16181c",
+                      : "#151d2a",
                   borderWidth: 1,
-                  borderColor: key === "↷" ? `${color}55` : "#2c2e33",
+                  borderColor: key === "↷" ? `${color}40` : "#ffffff12",
                 })}
               >
                 <Text

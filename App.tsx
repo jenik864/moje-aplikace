@@ -34,7 +34,16 @@ import {
   dayKey,
 } from "./src/model";
 
-import { Screen, RankBadge, RankEmblem, rankColors } from "./src/ui";
+import { Screen, RankBadge, rankColors } from "./src/ui";
+
+import {
+  PremiumTabs,
+  RankStageArt,
+  ProjectArtwork,
+  surface,
+  ink,
+  border,
+} from "./src/design";
 
 import { programContent } from "./src/programContent";
 import { SosProtocol } from "./src/SosProtocol";
@@ -64,7 +73,15 @@ function Button({
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={[s.button, { backgroundColor: secondary ? "#202020" : color }]}
+      style={({ pressed }) => [
+        s.button,
+        {
+          backgroundColor: secondary ? "#ffffff08" : color,
+          borderWidth: secondary ? 1 : 0,
+          borderColor: "#ffffff14",
+        },
+        pressed && { opacity: 0.75 },
+      ]}
     >
       <Text style={[s.buttonText, { color: secondary ? "#fff" : "#050505" }]}>
         {title}
@@ -178,7 +195,7 @@ function Setup({
     (id === "food" ? foodSelection.length > 0 : target.trim().length > 0) &&
     (id !== "scroll" || (Number(limit) >= 1 && Number(limit) <= 1440));
   return (
-    <Screen modal>
+    <Screen modal accent={d.color}>
       <ScrollView
         contentInsetAdjustmentBehavior="never"
         automaticallyAdjustContentInsets={false}
@@ -484,6 +501,9 @@ const Placeholder = ({
     >
       <Text style={[s.eyebrow, { color: purple }]}>{label}</Text>
       <Text style={s.heading}>{title}.</Text>
+      <View style={[s.panel, { padding: 12, borderColor: "#c5d3ec20" }]}>
+        <ProjectArtwork />
+      </View>
       <Text style={s.body}>{text}</Text>
       {items.map((item, i) => (
         <View key={item} style={s.panel}>
@@ -569,7 +589,7 @@ export default function App() {
   const quitAccent =
     rankColors[activeData ? rankOf(activeProgram, activeData, now) : 0];
   const Quit = () => (
-    <Screen>
+    <Screen accent={quitAccent}>
       <View style={[s.header, { paddingTop: 8, paddingBottom: 8 }]}>
         <View>
           <Text style={s.brand}>QUITTER</Text>
@@ -577,7 +597,17 @@ export default function App() {
             Quit.
           </Text>
         </View>
-        <Text style={s.headerNote}>OSOBNÍ ROZVOJ</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+          <View
+            style={{
+              width: 4,
+              height: 4,
+              borderRadius: 4,
+              backgroundColor: quitAccent,
+            }}
+          />
+          <Text style={s.headerNote}>TVŮJ PROSTOR</Text>
+        </View>
       </View>
       <View style={s.tabs}>
         {ids.map((id, i) => (
@@ -590,7 +620,9 @@ export default function App() {
               s.programTab,
               {
                 borderBottomColor:
-                  activeProgram === id ? quitAccent : "transparent",
+                  activeProgram === id ? quitAccent + "70" : "transparent",
+                backgroundColor:
+                  activeProgram === id ? quitAccent + "12" : "transparent",
               },
             ]}
             onPress={() => {
@@ -682,7 +714,7 @@ export default function App() {
     </Screen>
   );
   const Me = () => (
-    <Screen>
+    <Screen accent={rankColors[0]}>
       <ScrollView
         contentInsetAdjustmentBehavior="never"
         automaticallyAdjustContentInsets={false}
@@ -690,11 +722,15 @@ export default function App() {
       >
         <Text style={[s.eyebrow, { color: purple }]}>TVŮJ OSOBNÍ PROFIL</Text>
         <Text style={s.heading}>Me.</Text>
-        <View style={[s.profile, { borderColor: purple }]}>
-          <RankEmblem value={0} size={110} />
+        <View style={[s.profile, { borderColor: rankColors[0] + "25" }]}>
+          <RankStageArt rank={0} color={rankColors[0]} />
           <Text style={s.eyebrow}>CURRENT RANK</Text>
           <Text style={s.big}>Copper</Text>
-          <Text style={{ color: purple }}>PRIME · COPPER</Text>
+          <Text
+            style={{ color: rankColors[0], fontSize: 11, letterSpacing: 1 }}
+          >
+            PRIME · COPPER
+          </Text>
         </View>
         <Text style={s.body}>
           Celkový rank čeká na společná pravidla pro Quit, Build a Mind. Zatím
@@ -757,58 +793,27 @@ export default function App() {
           ...DarkTheme,
           colors: {
             ...DarkTheme.colors,
-            background: "#050505",
-            card: "#111111",
+            background: ink,
+            card: surface,
             primary: purple,
-            border: "#242424",
+            border,
           },
         }}
       >
         <Tab.Navigator
-          screenOptions={({ route }) => ({
-            headerShown: false,
-            tabBarActiveTintColor:
-              route.name === "Quit"
-                ? quitAccent
-                : route.name === "Build"
-                  ? buildAccent
-                  : route.name === "Mind"
-                    ? mindAccent
-                    : "#c5fa67",
-            tabBarInactiveTintColor: "#777",
-            tabBarStyle: {
-              backgroundColor: "#111",
-              borderTopColor: "#242424",
-              paddingTop: 8,
-            },
-            tabBarIcon: ({ color }) =>
-              route.name === "Build" ? (
-                <Svg width={23} height={23} viewBox="0 0 24 24">
-                  <Path
-                    d="M5 19L19 5M7 5H19V17"
-                    fill="none"
-                    stroke={color}
-                    strokeWidth={1.7}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
-              ) : (
-                <Text style={{ color, fontSize: 22 }}>
-                  {
-                    (
-                      {
-                        Quit: "◎",
-                        Build: "↗",
-                        Mind: "◉",
-                        Business: "▤",
-                        Me: "◇",
-                      } as Record<string, string>
-                    )[route.name]
-                  }
-                </Text>
-              ),
-          })}
+          tabBar={(props) => (
+            <PremiumTabs
+              {...props}
+              accents={{
+                Quit: quitAccent,
+                Build: buildAccent,
+                Mind: mindAccent,
+                Business: "#c5d3ec",
+                Me: rankColors[0],
+              }}
+            />
+          )}
+          screenOptions={{ headerShown: false }}
         >
           <Tab.Screen name="Quit">{Quit}</Tab.Screen>
           <Tab.Screen name="Build">
@@ -903,9 +908,11 @@ export default function App() {
 const s = StyleSheet.create({
   programTab: {
     flex: 1,
+    minHeight: 44,
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 13,
     borderBottomWidth: 2,
+    borderRadius: 13,
   },
   stepTrack: { flexDirection: "row", gap: 6 },
   stepSegment: { flex: 1, height: 3, borderRadius: 2 },
@@ -913,14 +920,14 @@ const s = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#333",
-    backgroundColor: "#141414",
+    borderColor: "#ffffff16",
+    backgroundColor: surface,
   },
   progressPanel: {
     gap: 12,
     padding: 18,
     borderRadius: 14,
-    backgroundColor: "#111",
+    backgroundColor: surface,
   },
   track: {
     height: 4,
@@ -929,7 +936,7 @@ const s = StyleSheet.create({
     overflow: "hidden",
   },
   progress: { height: 4, borderRadius: 2 },
-  screen: { flex: 1, backgroundColor: "#050505" },
+  screen: { flex: 1, backgroundColor: ink },
   center: { justifyContent: "center", alignItems: "center", padding: 24 },
   content: { padding: 22, gap: 18, paddingBottom: 40 },
   modalContent: { padding: 24, gap: 24, paddingBottom: 50 },
@@ -941,20 +948,33 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  brand: { color: "#ccc", fontSize: 11, letterSpacing: 4, fontWeight: "900" },
+  brand: { color: "#b7c3d5", fontSize: 9, letterSpacing: 3, fontWeight: "700" },
   heading: {
     color: "#fff",
     fontSize: 42,
     fontWeight: "800",
     letterSpacing: -1.5,
   },
-  headerNote: { color: "#777", fontSize: 10, letterSpacing: 2, lineHeight: 17 },
+  headerNote: {
+    color: "#94a1b4",
+    fontSize: 8,
+    letterSpacing: 1.3,
+    lineHeight: 16,
+  },
   tabs: {
     flexDirection: "row",
     justifyContent: "space-around",
     borderBottomWidth: 1,
-    borderBottomColor: "#242424",
-    paddingVertical: 0,
+    borderBottomColor: "transparent",
+    padding: 4,
+    marginHorizontal: 20,
+    marginTop: 6,
+    marginBottom: 8,
+    borderRadius: 16,
+    gap: 3,
+    backgroundColor: "#ffffff04",
+    borderWidth: 1,
+    borderColor: "#ffffff0c",
   },
   smallTab: { fontSize: 12, fontWeight: "700" },
   eyebrow: { color: "#aaa", fontSize: 10, letterSpacing: 2, fontWeight: "700" },
@@ -964,30 +984,31 @@ const s = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.5,
   },
-  body: { color: "#bbb", fontSize: 15, lineHeight: 24 },
-  muted: { color: "#888", fontSize: 12, lineHeight: 19 },
+  body: { color: "#c0c9d7", fontSize: 15, lineHeight: 24 },
+  muted: { color: "#94a1b4", fontSize: 12, lineHeight: 19 },
   panel: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 18,
+    backgroundColor: surface,
+    borderRadius: 22,
     padding: 20,
     gap: 12,
     borderWidth: 1,
-    borderColor: "#292929",
+    borderColor: border,
   },
   cardTitle: { color: "#eee", fontSize: 14, fontWeight: "700" },
   button: {
-    borderRadius: 12,
+    borderRadius: 16,
+    minHeight: 50,
     paddingVertical: 17,
     paddingHorizontal: 18,
     alignItems: "center",
   },
   buttonText: { fontSize: 12, fontWeight: "800", letterSpacing: 0.8 },
   input: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: surface,
     color: "#fff",
     padding: 16,
     borderRadius: 12,
-    borderColor: "#444",
+    borderColor: "#ffffff18",
     borderWidth: 1,
     fontSize: 16,
     textAlignVertical: "top",
@@ -1032,7 +1053,7 @@ const s = StyleSheet.create({
     fontVariant: ["tabular-nums"],
     letterSpacing: 3,
   },
-  big: { color: "#fff", fontSize: 34, fontWeight: "800" },
+  big: { color: "#f4f6fa", fontSize: 32, fontWeight: "600", letterSpacing: -1 },
   sos: {
     backgroundColor: "#321216",
     borderColor: "#ff5964",
@@ -1050,7 +1071,12 @@ const s = StyleSheet.create({
   cell: { width: 22, height: 22, borderRadius: 4 },
   reset: { alignItems: "center", paddingVertical: 18 },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  chip: { padding: 12, borderColor: "#444", borderWidth: 1, borderRadius: 10 },
+  chip: {
+    padding: 12,
+    borderColor: "#ffffff18",
+    borderWidth: 1,
+    borderRadius: 10,
+  },
   emptySymbol: {
     width: 155,
     height: 155,
@@ -1067,7 +1093,7 @@ const s = StyleSheet.create({
     gap: 14,
     borderWidth: 1,
     borderRadius: 24,
-    backgroundColor: "#16111e",
+    backgroundColor: surface,
   },
   error: { backgroundColor: "#681b23", padding: 12, gap: 8 },
 });

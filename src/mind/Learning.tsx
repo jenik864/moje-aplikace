@@ -95,10 +95,14 @@ export function Learning({
           accessibilityRole="button"
           accessibilityLabel={`Otevřít téma ${l.title}`}
           onPress={() => setLesson(l)}
-          style={[s.card, { gap: 18, padding: 18 }]}
+          style={({ pressed }) => [
+            s.card,
+            { gap: 16, padding: 18 },
+            pressed && { opacity: 0.75 },
+          ]}
         >
           <View style={s.row}>
-            <LessonArt id={l.id} size={82} />
+            <LessonArt id={l.id} size={100} />
             <View style={{ flex: 1, gap: 6 }}>
               <Text style={s.label}>{l.category}</Text>
               <Text style={s.h2}>{l.title}</Text>
