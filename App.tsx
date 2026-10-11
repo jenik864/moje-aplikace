@@ -1,3 +1,4 @@
+import { MindScreen } from "./src/mind/MindScreen";
 import { BuildScreen } from "./src/build/BuildScreen";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -770,7 +771,9 @@ export default function App() {
                 ? quitAccent
                 : route.name === "Build"
                   ? buildAccent
-                  : "#c5fa67",
+                  : route.name === "Mind"
+                    ? "#b8a0ff"
+                    : "#c5fa67",
             tabBarInactiveTintColor: "#777",
             tabBarStyle: {
               backgroundColor: "#111",
@@ -810,16 +813,7 @@ export default function App() {
           <Tab.Screen name="Build">
             {() => <BuildScreen onAccent={setBuildAccent} />}
           </Tab.Screen>
-          <Tab.Screen name="Mind">
-            {() => (
-              <Placeholder
-                title="Mind"
-                label="PROSTOR PRO TVOU HLAVU"
-                text="Učení, soustředění a sebereflexe. Malé kroky, dlouhodobý rozvoj."
-                items={["Čtení a vzdělávání", "Soustředění", "Sebereflexe"]}
-              />
-            )}
-          </Tab.Screen>
+          <Tab.Screen name="Mind">{() => <MindScreen />}</Tab.Screen>
           <Tab.Screen name="Business">
             {() => (
               <Placeholder
