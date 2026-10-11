@@ -160,7 +160,8 @@ export const lessons: Lesson[] = [
         text: "Další úrok se počítá i z předchozího úroku. Z 1 050 Kč při 5 % získáš 52,50 Kč. To je princip složeného úročení. Kdybys úrok vždy vybral, jistina by zůstala stejná.",
         example:
           "1 050 × 1,05 = 1 102,50 Kč\nRozdíl oproti prostému úročení: 2,50 Kč",
-        question: "Z jaké částky se počítá druhý rok?",
+        question:
+          "Z 1 000 Kč při 5 % ročně: z čeho se počítá úrok ve druhém roce, když první úrok ponecháš na účtu?",
         options: [
           "Jen z původních 1 000 Kč",
           "Jen z 50 Kč",

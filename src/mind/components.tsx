@@ -1,4 +1,4 @@
-import React from "react";
+import React, { createContext, useContext, useId } from "react";
 import { View, Text, Pressable, TextInput, StyleSheet } from "react-native";
 import Svg, {
   Circle,
@@ -9,6 +9,30 @@ import Svg, {
 } from "react-native-svg";
 export const violet = "#b8a0ff",
   mint = "#8ae7d1";
+export const MindTheme = createContext("#cf956e");
+export function useMindStyles() {
+  const color = useContext(MindTheme);
+  return {
+    ...s,
+    label: { ...s.label, color },
+    link: { ...s.link, color },
+    card: { ...s.card, backgroundColor: "#101114", borderColor: `${color}30` },
+    hero: {
+      ...s.hero,
+      backgroundColor: `${color}12`,
+      borderColor: `${color}60`,
+    },
+    button: { ...s.button, backgroundColor: color },
+    quiet: {
+      ...s.quiet,
+      backgroundColor: `${color}12`,
+      borderColor: `${color}40`,
+    },
+    chip: { ...s.chip, backgroundColor: "#101114", borderColor: `${color}30` },
+    track: { ...s.track, backgroundColor: `${color}22` },
+    input: { ...s.input, borderColor: `${color}40` },
+  };
+}
 export function Button({
   children,
   onPress,
@@ -20,6 +44,8 @@ export function Button({
   quiet?: boolean;
   disabled?: boolean;
 }) {
+  const s = useMindStyles();
+  const color = useContext(MindTheme);
   return (
     <Pressable
       accessibilityRole="button"
@@ -27,7 +53,7 @@ export function Button({
       onPress={onPress}
       style={[s.button, quiet && s.quiet, disabled && { opacity: 0.4 }]}
     >
-      <Text style={[s.buttonText, quiet && { color: violet }]}>{children}</Text>
+      <Text style={[s.buttonText, quiet && { color }]}>{children}</Text>
     </Pressable>
   );
 }
@@ -40,6 +66,8 @@ export function Chip({
   selected?: boolean;
   onPress: () => void;
 }) {
+  const s = useMindStyles();
+  const color = useContext(MindTheme);
   return (
     <Pressable
       accessibilityRole="button"
@@ -47,12 +75,12 @@ export function Chip({
       onPress={onPress}
       style={[
         s.chip,
-        selected && { backgroundColor: "#302542", borderColor: violet },
+        selected && { backgroundColor: `${color}25`, borderColor: color },
       ]}
     >
       <Text
         style={{
-          color: selected ? violet : "#b1aabc",
+          color: selected ? color : "#b8b5ae",
           fontSize: 15,
           fontWeight: "600",
         }}
@@ -77,6 +105,8 @@ export function Field({
   multiline?: boolean;
   placeholder?: string;
 }) {
+  const s = useMindStyles();
+  const color = useContext(MindTheme);
   return (
     <View style={{ gap: 8 }}>
       <Text style={s.muted}>{label}</Text>
@@ -97,20 +127,16 @@ export function Field({
     </View>
   );
 }
-export function Progress({
-  value,
-  color = violet,
-}: {
-  value: number;
-  color?: string;
-}) {
+export function Progress({ value, color }: { value: number; color?: string }) {
+  const s = useMindStyles();
+  const useColor = useContext(MindTheme);
   return (
     <View style={s.track}>
       <View
         style={{
           width: `${Math.min(100, Math.max(0, value * 100))}%`,
           height: 5,
-          backgroundColor: color,
+          backgroundColor: color ?? useColor,
           borderRadius: 5,
         }}
       />
@@ -118,6 +144,8 @@ export function Progress({
   );
 }
 export function Orbit({ small = false }: { small?: boolean }) {
+  const id = `orb${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  const color = useContext(MindTheme);
   return (
     <Svg
       width={small ? 75 : 140}
@@ -125,8 +153,8 @@ export function Orbit({ small = false }: { small?: boolean }) {
       viewBox="0 0 160 160"
     >
       <Defs>
-        <LinearGradient id="mindOrb" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={violet} />
+        <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={color} />
           <Stop offset="1" stopColor={mint} />
         </LinearGradient>
       </Defs>
@@ -134,31 +162,31 @@ export function Orbit({ small = false }: { small?: boolean }) {
         cx="80"
         cy="80"
         r="65"
-        stroke="#45365f"
+        stroke={`${color}40`}
         strokeWidth="1"
-        fill="#20182f"
+        fill={`${color}12`}
       />
       <Path
         d="M24 108C-5 67 109 16 137 53C166 91 43 145 24 108Z"
         fill="none"
-        stroke="url(#mindOrb)"
+        stroke={`url(#${id})`}
         strokeWidth="2"
       />
       <Path
         d="M53 103V57L80 85L107 57V103"
-        stroke="url(#mindOrb)"
+        stroke={`url(#${id})`}
         strokeWidth="7"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
       />
       <Circle cx="136" cy="59" r="5" fill={mint} />
-      <Circle cx="29" cy="112" r="4" fill={violet} />
+      <Circle cx="29" cy="112" r="4" fill={color} />
     </Svg>
   );
 }
 export const s = StyleSheet.create({
-  body: { padding: 20, gap: 24, paddingBottom: 36 },
+  body: { padding: 20, gap: 20, paddingBottom: 32 },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   between: {
     flexDirection: "row",
@@ -180,7 +208,7 @@ export const s = StyleSheet.create({
     letterSpacing: -0.5,
   },
   h3: { color: "#f6f3ff", fontSize: 19, fontWeight: "700" },
-  text: { color: "#ece7f5", fontSize: 17, lineHeight: 26 },
+  text: { color: "#ece7f5", fontSize: 16, lineHeight: 24 },
   muted: { color: "#aaa2b9", fontSize: 14, lineHeight: 22 },
   label: { color: violet, fontSize: 11, fontWeight: "800", letterSpacing: 2 },
   link: { color: violet, fontSize: 15, fontWeight: "700" },
@@ -188,7 +216,7 @@ export const s = StyleSheet.create({
     backgroundColor: "#131019",
     borderColor: "#32293f",
     borderWidth: 1,
-    borderRadius: 24,
+    borderRadius: 20,
     padding: 20,
     gap: 16,
   },
@@ -196,7 +224,7 @@ export const s = StyleSheet.create({
     backgroundColor: "#20172f",
     borderColor: "#655085",
     borderWidth: 1,
-    borderRadius: 28,
+    borderRadius: 22,
     padding: 22,
     gap: 18,
   },

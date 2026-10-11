@@ -1,13 +1,16 @@
+import { mindRank } from "./ranking.ts";
 export type HabitKind =
   | "reading"
   | "learning"
   | "focus"
+  | "meditation"
   | "reflection"
   | "custom";
 export const habitKinds: Record<HabitKind, string> = {
   reading: "Četba",
   learning: "Učení",
   focus: "Soustředění",
+  meditation: "Meditace",
   reflection: "Reflexe",
   custom: "Vlastní aktivita",
 };
@@ -41,13 +44,15 @@ export type Focus = {
 };
 export type MindData = {
   version: 1;
+  prime?: number;
+  lessonProgress?: Record<string, number>;
   plans: Plan[];
   checks: Record<string, Record<string, Check>>;
   games: GameResult[];
   lessons: Record<string, number>;
   earned: Record<string, number>;
   focus?: Focus;
-  sessions: Record<string, { at: number; minutes: number }>;
+  sessions: Record<string, { at: number; minutes: number; day?: string }>;
 };
 export const initialMind = (): MindData => ({
   version: 1,
@@ -145,7 +150,14 @@ export function toggleHabit(
   const checks = { ...data.checks[day] };
   if (checks[id]) delete checks[id];
   else checks[id] = { habit: h, at: now, note: note.trim().slice(0, 1000) };
-  return award({ ...data, checks: { ...data.checks, [day]: checks } }, now);
+  return award(
+    {
+      ...data,
+      prime: Math.max(data.prime ?? 0, mindRank(data)),
+      checks: { ...data.checks, [day]: checks },
+    },
+    now,
+  );
 }
 export function recordGame(data: MindData, game: GameResult): MindData {
   if (!validGame(game)) throw new Error("Neplatný výsledek hry.");
@@ -209,7 +221,10 @@ export function finishFocus(data: MindData, now = Date.now()): MindData {
   let next: MindData = {
     ...data,
     focus: undefined,
-    sessions: { ...data.sessions, [f.id]: { at: now, minutes: f.minutes } },
+    sessions: {
+      ...data.sessions,
+      [f.id]: { at: now, minutes: f.minutes, day: f.day },
+    },
   };
   if (
     f.habitId &&
@@ -300,7 +315,7 @@ export function award(data: MindData, now = Date.now()): MindData {
   badges.forEach((b) => {
     if (badgeValue(data, b.id) >= b.target && !earned[b.id]) earned[b.id] = now;
   });
-  return { ...data, earned };
+  return { ...data, earned, prime: Math.max(data.prime ?? 0, mindRank(data)) };
 }
 export function parseMind(raw: string): MindData {
   const d = JSON.parse(raw);
@@ -308,6 +323,17 @@ export function parseMind(raw: string): MindData {
   const time = (v: any) => Number.isFinite(v) && v >= 0;
   if (
     d?.version !== 1 ||
+    (d.prime !== undefined &&
+      (!Number.isInteger(d.prime) || d.prime < 0 || d.prime > 11)) ||
+    (d.lessonProgress !== undefined &&
+      (!object(d.lessonProgress) ||
+        !Object.entries(d.lessonProgress).every(
+          ([id, step]) =>
+            ["python-start", "oil-to-fuel", "compound-interest"].includes(id) &&
+            Number.isInteger(step) &&
+            Number(step) >= 0 &&
+            Number(step) <= 3,
+        ))) ||
     !Array.isArray(d.plans) ||
     !d.plans.every(
       (p: any) =>
@@ -347,7 +373,8 @@ export function parseMind(raw: string): MindData {
         time(s.at) &&
         Number.isInteger(s.minutes) &&
         s.minutes >= 1 &&
-        s.minutes <= 180,
+        s.minutes <= 180 &&
+        (s.day === undefined || validDay(s.day)),
     ) ||
     (d.focus &&
       (!time(d.focus.start) ||
@@ -361,5 +388,24 @@ export function parseMind(raw: string): MindData {
         (d.focus.habitId !== undefined && typeof d.focus.habitId !== "string")))
   )
     throw new Error("Mind data jsou poškozená.");
-  return d;
+  const fix = (h: Habit): Habit =>
+    h.kind === "reading" &&
+    h.title.trim().toLocaleLowerCase("cs-CZ") === "meditace"
+      ? { ...h, kind: "meditation" }
+      : h;
+  return {
+    ...d,
+    plans: d.plans.map((p: Plan) => ({ ...p, habits: p.habits.map(fix) })),
+    checks: Object.fromEntries(
+      Object.entries(d.checks).map(([day, checks]: [string, any]) => [
+        day,
+        Object.fromEntries(
+          Object.entries(checks).map(([id, c]: [string, any]) => [
+            id,
+            { ...c, habit: fix(c.habit) },
+          ]),
+        ),
+      ]),
+    ),
+  };
 }

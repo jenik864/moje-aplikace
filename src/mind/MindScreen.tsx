@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -12,29 +12,33 @@ import {
   SafeAreaProvider,
   initialWindowMetrics,
 } from "react-native-safe-area-context";
-import { Screen } from "../ui";
+import { Screen, RankEmblem, rankColors } from "../ui";
+import { ranks } from "../model";
 import { useMind } from "./useMind";
 import {
-  s,
+  useMindStyles,
   Button,
   Chip,
   Field,
   Orbit,
   Progress,
   mint,
-  violet,
+  MindTheme,
 } from "./components";
 import { Arena } from "./Arena";
 import { Learning } from "./Learning";
+import { LessonArt } from "./LessonLab";
+import { MindRanks } from "./Ranks";
 import { PlanEditor, weekdays } from "./PlanEditor";
+import { mindRank, mindXP, mindMilestones, dailyMindXP } from "./ranking";
 import {
-  award,
   badges,
   badgeValue,
   dayKey,
   shift,
   weekStart,
   habitsFor,
+  habitKinds,
   setPlan,
   toggleHabit,
   recordGame,
@@ -50,6 +54,7 @@ type Route =
   | "learn"
   | "badges"
   | "focus"
+  | "ranks"
   | { habit: Habit; day: string };
 const pretty = (day: string) =>
   new Date(`${day}T12:00:00`).toLocaleDateString("cs-CZ", {
@@ -58,9 +63,26 @@ const pretty = (day: string) =>
   });
 const clock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
-export function MindScreen() {
-  const store = useMind();
-  const { data, update, loaded, loadError, saveError } = store;
+export function MindScreen({
+  onAccent,
+}: {
+  onAccent?: (color: string) => void;
+}) {
+  const store = useMind(),
+    color = rankColors[mindRank(store.data)];
+  useEffect(() => {
+    if (store.loaded) onAccent?.(color);
+  }, [color, store.loaded, onAccent]);
+  return (
+    <MindTheme.Provider value={color}>
+      <MindContent store={store} />
+    </MindTheme.Provider>
+  );
+}
+function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
+  const s = useMindStyles(),
+    color = useContext(MindTheme),
+    { data, update, loaded, loadError, saveError } = store;
   const [today, setToday] = useState(dayKey()),
     [selected, setSelected] = useState(dayKey()),
     [week, setWeek] = useState(weekStart(dayKey())),
@@ -70,26 +92,33 @@ export function MindScreen() {
     [exitArena, setExitArena] = useState(false);
   const modalScroll = useRef<ScrollView>(null);
   const tasks = habitsFor(data, selected),
-    days = Array.from({ length: 7 }, (_, i) => shift(week, i));
-  const todayTasks = habitsFor(data, today),
-    done = todayTasks.filter((h) => data.checks[today]?.[h.id]).length;
+    days = Array.from({ length: 7 }, (_, i) => shift(week, i)),
+    todayTasks = habitsFor(data, today),
+    done = todayTasks.filter((h) => data.checks[today]?.[h.id]).length,
+    nextTask = todayTasks.find((h) => !data.checks[today]?.[h.id]);
   const currentPlan =
     [...data.plans]
       .filter((p) => p.from <= today)
       .sort((a, b) => a.from.localeCompare(b.from))
       .at(-1)?.habits ?? [];
+  const rank = mindRank(data),
+    xp = mindXP(data),
+    prime = Math.max(rank, data.prime ?? 0),
+    nextXP = mindMilestones[rank + 1],
+    earnedCount = Object.keys(data.earned).length;
   useEffect(() => {
     const tick = () => setToday(dayKey());
-    const timer = setInterval(tick, 15000);
+    const t = setInterval(tick, 15000);
     const app = AppState.addEventListener("change", tick);
     return () => {
-      clearInterval(timer);
+      clearInterval(t);
       app.remove();
     };
   }, []);
   useEffect(() => {
     setNotice("");
     setExitArena(false);
+    modalScroll.current?.scrollTo({ y: 0, animated: false });
   }, [route]);
   function change(fn: (d: MindData) => MindData) {
     try {
@@ -117,20 +146,100 @@ export function MindScreen() {
               <Button onPress={store.retryLoad}>Zkusit načtení znovu</Button>
             </>
           ) : (
-            <ActivityIndicator color={violet} />
+            <ActivityIndicator color={color} />
           )}
         </View>
       </Screen>
     );
-  const storageNotice = (
+  const storageNotice = saveError ? (
+    <View style={s.card}>
+      <Text style={s.error}>{saveError}</Text>
+      <Button quiet onPress={store.retrySave}>
+        Zkusit uložení znovu
+      </Button>
+    </View>
+  ) : null;
+  const weekly = days.reduce(
+    (n, d) =>
+      n + habitsFor(data, d).filter((h) => data.checks[d]?.[h.id]).length,
+    0,
+  );
+  const routeLabel =
+    typeof route === "object"
+      ? "AKTIVITA"
+      : ((
+          {
+            plan: "PLÁN",
+            arena: "ARÉNA",
+            learn: "OBJEVUJ",
+            badges: "ODZNAKY",
+            focus: "ČASOVÝ BLOK",
+            ranks: "RANKY",
+          } as Record<string, string>
+        )[route ?? ""] ?? "");
+  const content = (
     <>
-      {saveError && (
-        <View style={s.card}>
-          <Text style={s.error}>{saveError}</Text>
-          <Button quiet onPress={store.retrySave}>
-            Zkusit uložení znovu
-          </Button>
+      {notice && <Text style={s.error}>{notice}</Text>}
+      {route === "plan" && (
+        <PlanEditor
+          onNavigate={() =>
+            modalScroll.current?.scrollTo({ y: 0, animated: false })
+          }
+          initial={currentPlan}
+          onSave={(habits) => {
+            change((d) => setPlan(d, habits));
+            setRoute(null);
+            setWeek(weekStart(today));
+            setSelected(today);
+          }}
+        />
+      )}
+      {route === "ranks" && <MindRanks data={data} />}
+      {route === "badges" && (
+        <View style={{ gap: 18 }}>
+          <Text style={s.h2}>Tvoje milníky.</Text>
+          <Text style={s.muted}>
+            {earnedCount}/{badges.length} odemčeno. Odznak po získání zůstává.
+          </Text>
+          {badges.map((b, i) => (
+            <View
+              key={b.id}
+              style={[s.card, !!data.earned[b.id] && { borderColor: color }]}
+            >
+              <View style={s.between}>
+                <Text style={s.label}>
+                  {data.earned[b.id] ? "ODEMČENO" : "VÝZVA"} /{" "}
+                  {String(i + 1).padStart(2, "0")}
+                </Text>
+                <Text style={[s.h2, { color }]}>
+                  {data.earned[b.id] ? "✓" : ""}
+                </Text>
+              </View>
+              <Text style={s.h2}>{b.name}</Text>
+              <Text style={s.muted}>{b.description}</Text>
+              <Progress value={badgeValue(data, b.id) / b.target} />
+              <Text style={s.muted}>
+                {Math.min(b.target, badgeValue(data, b.id))}/{b.target}
+              </Text>
+            </View>
+          ))}
         </View>
+      )}
+      {route === "focus" && <FocusPanel data={data} change={change} />}
+      {route && typeof route === "object" && (
+        <HabitDetail
+          key={`${route.day}-${route.habit.id}`}
+          habit={route.habit}
+          day={route.day}
+          data={data}
+          onToggle={(note) =>
+            change((d) => toggleHabit(d, route.day, route.habit.id, note))
+          }
+          onFocus={() => {
+            change((d) => startFocus(d, route.habit.minutes, route.habit.id));
+            setRoute("focus");
+          }}
+        />
       )}
     </>
   );
@@ -142,58 +251,150 @@ export function MindScreen() {
       >
         {storageNotice}
         <View style={s.between}>
-          <View style={{ gap: 8, flex: 1 }}>
-            <Text style={s.label}>QUITTER / PROSTOR PRO TVOU HLAVU</Text>
+          <View>
+            <Text style={s.label}>QUITTER / ROZVÍJEJ SVOU HLAVU</Text>
             <Text style={s.title}>Mind.</Text>
           </View>
-          <Orbit small />
-        </View>
-        <View style={s.hero}>
-          <View style={s.between}>
-            <Text style={s.label}>MALÝ KROK KAŽDÝ DEN</Text>
-            <Text style={[s.link, { color: mint }]}>
-              {done}/{todayTasks.length}
-            </Text>
-          </View>
-          <Text style={[s.h2, { fontSize: 30 }]}>
-            {todayTasks.length
-              ? done === todayTasks.length
-                ? "Dnes máš splněno."
-                : "Dej své hlavě prostor."
-              : "Tvoje hlava. Tvůj plán."}
-          </Text>
-          <Text style={s.text}>
-            {todayTasks.length
-              ? "Čti, uč se nebo se soustřeď. Ty rozhoduješ, co chceš dodržovat."
-              : "Vyber si aktivity, které chceš pravidelně dělat. Začni klidně jednou."}
-          </Text>
-          {todayTasks.length > 0 && (
-            <Progress value={done / todayTasks.length} />
-          )}
-          <Button
-            onPress={() => setRoute(currentPlan.length ? "focus" : "plan")}
-          >
-            {currentPlan.length ? "Otevřít časový blok" : "Sestavit můj plán"}
-          </Button>
-        </View>
-        {data.focus && (
           <Pressable
             accessibilityRole="button"
-            onPress={() => setRoute("focus")}
-            style={[s.card, { borderColor: mint }]}
+            accessibilityLabel="Otevřít ranky Mind"
+            onPress={() => setRoute("ranks")}
           >
-            <Text style={[s.label, { color: mint }]}>TVŮJ ČASOVÝ BLOK</Text>
+            <RankEmblem value={rank} size={60} />
+          </Pressable>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Detail ranku Mind"
+          onPress={() => setRoute("ranks")}
+          style={[s.card, { gap: 12, padding: 17 }]}
+        >
+          <View style={s.between}>
+            <View style={s.row}>
+              <RankEmblem value={rank} size={42} />
+              <View>
+                <Text style={s.label}>CURRENT</Text>
+                <Text style={[s.h2, { color }]}>{ranks[rank]}</Text>
+              </View>
+            </View>
+            <View style={{ alignItems: "flex-end", gap: 4 }}>
+              <Text style={s.label}>PRIME</Text>
+              <Text style={[s.h3, { color: rankColors[prime] }]}>
+                {ranks[prime]}
+              </Text>
+            </View>
+          </View>
+          <Progress
+            value={
+              rank === 11
+                ? 1
+                : (xp - mindMilestones[rank]) / (nextXP - mindMilestones[rank])
+            }
+          />
+          <View style={s.between}>
+            <Text style={s.muted}>{xp} XP</Text>
+            <Text style={[s.muted, { color }]}>
+              {rank === 11
+                ? "Nejvyšší rank"
+                : `${nextXP - xp} XP do ${ranks[rank + 1]} →`}
+            </Text>
+          </View>
+        </Pressable>
+        <View style={[s.hero, { padding: 18, gap: 12 }]}>
+          <View style={s.between}>
+            <Text style={s.label}>DNES / {pretty(today)}</Text>
+            <Text style={[s.link, { color }]}>
+              {todayTasks.length
+                ? `${done}/${todayTasks.length} splněno`
+                : "Tvůj start"}
+            </Text>
+          </View>
+          <Text style={s.h2}>
+            {nextTask
+              ? nextTask.title
+              : todayTasks.length
+                ? "Dnešní plán splněn."
+                : "Začni jedním návykem."}
+          </Text>
+          <View style={s.between}>
+            <Text style={s.muted}>
+              {nextTask
+                ? `${nextTask.minutes} min · ${habitKinds[nextTask.kind]}`
+                : todayTasks.length
+                  ? "Ještě máš prostor něco objevit."
+                  : "Četba, učení, meditace…"}
+            </Text>
+            <Text style={[s.muted, { color }]}>
+              {dailyMindXP(data)[today] ?? 0}/60 XP
+            </Text>
+          </View>
+          <Button
+            onPress={() =>
+              nextTask
+                ? setRoute({ habit: nextTask, day: today })
+                : setRoute(todayTasks.length ? "learn" : "plan")
+            }
+          >
+            {nextTask
+              ? "Otevřít dnešní aktivitu →"
+              : todayTasks.length
+                ? "Objevit něco nového →"
+                : "Sestavit můj plán"}
+          </Button>
+        </View>
+        <View style={[s.row, { alignItems: "stretch", gap: 10 }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Vstoupit do arény"
+            onPress={() => setRoute("arena")}
+            style={[s.card, { flex: 1, padding: 16, gap: 9 }]}
+          >
+            <Text style={[s.h2, { fontSize: 30, color }]}>{"× ÷"}</Text>
+            <Text style={s.h3}>Aréna</Text>
+            <Text style={s.muted}>Rychlost a přesnost</Text>
+            <Text style={s.link}>Hrát →</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Vybrat téma"
+            onPress={() => setRoute("learn")}
+            style={[s.card, { flex: 1, padding: 16, gap: 9 }]}
+          >
+            <Text style={[s.h2, { fontSize: 30, color }]}>{"</>"}</Text>
+            <Text style={s.h3}>Objevuj</Text>
+            <Text style={s.muted}>Učení v praxi</Text>
+            <Text style={s.link}>Prozkoumat →</Text>
+          </Pressable>
+        </View>
+        {data.focus ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Pokračovat v časovém bloku"
+            onPress={() => setRoute("focus")}
+            style={[s.card, { borderColor: color }]}
+          >
+            <Text style={s.label}>ČASOVÝ BLOK</Text>
             <FocusSummary end={data.focus.end} />
             <Text style={s.link}>Pokračovat →</Text>
           </Pressable>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Otevřít časový blok"
+            onPress={() => setRoute("focus")}
+            style={[s.between, { paddingVertical: 4 }]}
+          >
+            <Text style={s.muted}>Potřebuješ klid na jednu věc?</Text>
+            <Text style={s.link}>Časový blok →</Text>
+          </Pressable>
         )}
         <View style={s.between}>
-          <Text style={s.h2}>Můj plán</Text>
+          <Text style={s.h2}>Můj týden</Text>
           <Pressable
             accessibilityRole="button"
             onPress={() => setRoute("plan")}
           >
-            <Text style={s.link}>Upravit →</Text>
+            <Text style={s.link}>Upravit plán →</Text>
           </Pressable>
         </View>
         <View style={s.between}>
@@ -219,8 +420,8 @@ export function MindScreen() {
         </View>
         <View style={[s.row, { gap: 5 }]}>
           {days.map((day, i) => {
-            const dayTasks = habitsFor(data, day);
-            const n = dayTasks.filter((h) => data.checks[day]?.[h.id]).length;
+            const ds = habitsFor(data, day),
+              n = ds.filter((h) => data.checks[day]?.[h.id]).length;
             return (
               <Pressable
                 key={day}
@@ -230,22 +431,18 @@ export function MindScreen() {
                 onPress={() => setSelected(day)}
                 style={[
                   s.day,
-                  selected === day && {
-                    backgroundColor: "#302542",
-                    borderColor: violet,
+                  day === selected && {
+                    backgroundColor: `${color}22`,
+                    borderColor: color,
                   },
-                  day === today && { borderColor: mint },
+                  day === today &&
+                    day !== selected && { borderColor: `${color}80` },
                 ]}
               >
                 <Text style={[s.muted, { fontSize: 12 }]}>{weekdays[i]}</Text>
                 <Text style={s.h3}>{Number(day.slice(-2))}</Text>
-                <Text
-                  style={{
-                    color: n && n === dayTasks.length ? mint : violet,
-                    fontSize: 11,
-                  }}
-                >
-                  {dayTasks.length ? `${n}/${dayTasks.length}` : "—"}
+                <Text style={{ color, fontSize: 11 }}>
+                  {ds.length ? `${n}/${ds.length}` : "—"}
                 </Text>
               </Pressable>
             );
@@ -271,19 +468,19 @@ export function MindScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Aktivita ${h.title}`}
                 onPress={() => setRoute({ habit: h, day: selected })}
-                style={[s.card, { padding: 16 }]}
+                style={[s.card, { padding: 16, gap: 8 }]}
               >
                 <View style={s.between}>
                   <View style={{ flex: 1, gap: 4 }}>
                     <Text style={s.h3}>{h.title}</Text>
                     <Text style={s.muted}>
-                      {h.minutes} min · {habitKindsLabel(h)}
+                      {h.minutes} min · {habitKinds[h.kind]}
                     </Text>
                   </View>
                   <Text
                     style={[
                       s.h2,
-                      { color: data.checks[selected]?.[h.id] ? mint : violet },
+                      { color: data.checks[selected]?.[h.id] ? mint : color },
                     ]}
                   >
                     {data.checks[selected]?.[h.id] ? "✓" : "→"}
@@ -298,78 +495,36 @@ export function MindScreen() {
             ))
           ) : (
             <View style={s.card}>
-              <Text style={s.text}>Na tento den nemáš žádnou aktivitu.</Text>
+              <Text style={s.muted}>
+                Na tento den nemáš naplánovanou aktivitu.
+              </Text>
               <Button quiet onPress={() => setRoute("plan")}>
                 Nastavit aktivity a dny
               </Button>
             </View>
           )}
         </View>
-        <View
-          style={[
-            s.hero,
-            { backgroundColor: "#102421", borderColor: "#315c53" },
-          ]}
-        >
-          <Text style={[s.label, { color: mint }]}>MENTÁLNÍ ARÉNA</Text>
-          <Text style={s.h2}>Dvě minuty. Ostrá hlava.</Text>
-          <Text style={s.muted}>
-            Počítání na čas, osobní rekordy a výzvy. Stačí se pustit do prvního
-            kola.
-          </Text>
-          <Button onPress={() => setRoute("arena")}>Vstoupit do arény</Button>
-        </View>
-        <View style={s.card}>
-          <Text style={s.label}>NAUČ SE NĚCO NOVÉHO</Text>
-          <Text style={s.h2}>Dnes kód. Zítra nový obzor.</Text>
-          <Text style={s.muted}>
-            Programování, cesta od ropy k benzínu nebo úrok z úroku. Krátké
-            vysvětlení a vlastní pokus.
-          </Text>
-          <Progress value={Object.keys(data.lessons).length / 3} />
-          <Text style={s.muted}>
-            {Object.keys(data.lessons).length}/3 úvodních lekcí dokončeno
-          </Text>
-          <Button quiet onPress={() => setRoute("learn")}>
-            Vybrat téma →
-          </Button>
-        </View>
         <View style={s.between}>
-          <Text style={s.h2}>Tvoje odznaky</Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setRoute("badges")}
-          >
-            <Text style={s.link}>Všechny →</Text>
-          </Pressable>
+          <Text style={s.muted}>{weekly} splnění v tomto týdnu</Text>
+          <Text style={s.muted}>
+            {Object.keys(data.lessons).length}/3 lekcí
+          </Text>
         </View>
-        <View style={s.wrap}>
-          {badges.map((b, i) => (
-            <Pressable
-              key={b.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Odznak ${b.name}`}
-              onPress={() => setRoute("badges")}
-              style={[
-                s.chip,
-                {
-                  flexBasis: "46%",
-                  flexGrow: 1,
-                  padding: 16,
-                  opacity: data.earned[b.id] ? 1 : 0.6,
-                  borderColor: data.earned[b.id] ? mint : "#39303f",
-                },
-              ]}
-            >
-              <Text
-                style={[s.h2, { color: data.earned[b.id] ? mint : violet }]}
-              >
-                {["✓", "7", "10", "100", "◎", "↗", "3", "∞"][i]}
-              </Text>
-              <Text style={[s.text, { fontSize: 14 }]}>{b.name}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Otevřít odznaky Mind"
+          onPress={() => setRoute("badges")}
+          style={[s.card, s.between, { padding: 16 }]}
+        >
+          <View style={{ flex: 1, gap: 5 }}>
+            <Text style={s.label}>TVOJE MILNÍKY</Text>
+            <Text style={s.h3}>Odznaky</Text>
+            <Text style={s.muted}>
+              {earnedCount}/{badges.length} odemčeno
+            </Text>
+          </View>
+          <Text style={[s.h2, { color }]}>→</Text>
+        </Pressable>
       </ScrollView>
       <Modal
         visible={route !== null}
@@ -381,43 +536,76 @@ export function MindScreen() {
             <View
               style={[
                 s.between,
-                { padding: 20, borderBottomWidth: 1, borderColor: "#30283a" },
+                {
+                  paddingHorizontal: 20,
+                  paddingVertical: 16,
+                  borderBottomWidth: 1,
+                  borderColor: "#282b30",
+                },
               ]}
             >
               <Pressable accessibilityRole="button" onPress={close}>
                 <Text style={s.link}>× Zavřít</Text>
               </Pressable>
-              <Text style={s.label}>
-                MIND /{" "}
-                {typeof route === "object"
-                  ? "AKTIVITA"
-                  : route === "arena"
-                    ? "ARÉNA"
-                    : route === "learn"
-                      ? "UČENÍ"
-                      : route === "plan"
-                        ? "MŮJ PLÁN"
-                        : route === "focus"
-                          ? "SOUSTŘEDĚNÍ"
-                          : "ODZNAKY"}
-              </Text>
+              <Text style={s.label}>MIND / {routeLabel}</Text>
             </View>
-            <ScrollView
-              ref={modalScroll}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={s.body}
-            >
-              {storageNotice}
-              {notice && <Text style={s.error}>{notice}</Text>}
-              {exitArena && (
+            {storageNotice}
+            {notice && <Text style={[s.error, { padding: 12 }]}>{notice}</Text>}
+            {route === "arena" ? (
+              <Arena
+                games={data.games}
+                onActive={setArenaActive}
+                onResult={(g) => change((d) => recordGame(d, g))}
+              />
+            ) : route === "learn" ? (
+              <Learning
+                completed={data.lessons}
+                progress={data.lessonProgress ?? {}}
+                onProgress={(id, step) =>
+                  change((d) => ({
+                    ...d,
+                    lessonProgress: { ...d.lessonProgress, [id]: step },
+                  }))
+                }
+                onComplete={(id) => {
+                  const gained =
+                    mindXP(completeLesson(data, id)) - mindXP(data);
+                  change((d) => completeLesson(d, id));
+                  return gained;
+                }}
+              />
+            ) : (
+              <ScrollView
+                ref={modalScroll}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={s.body}
+              >
+                {content}
+              </ScrollView>
+            )}
+            {exitArena && (
+              <View
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: "#000d",
+                  justifyContent: "center",
+                  padding: 20,
+                }}
+              >
                 <View style={s.card}>
-                  <Text style={s.text}>
-                    Opustit rozehrané kolo? Výsledek se neuloží.
+                  <Text style={s.h2}>Opustit rozehrané kolo?</Text>
+                  <Text style={s.muted}>
+                    Čas zatím běží. Nedokončené kolo se nezapíše.
                   </Text>
-                  <Button quiet onPress={() => setExitArena(false)}>
+                  <Button onPress={() => setExitArena(false)}>
                     Pokračovat ve hře
                   </Button>
                   <Button
+                    quiet
                     onPress={() => {
                       setArenaActive(false);
                       setRoute(null);
@@ -426,109 +614,13 @@ export function MindScreen() {
                     Opustit kolo
                   </Button>
                 </View>
-              )}
-              {route === "plan" && (
-                <PlanEditor
-                  initial={currentPlan}
-                  onSave={(habits) => {
-                    change((d) => setPlan(d, habits));
-                    setRoute(null);
-                    setWeek(weekStart(today));
-                    setSelected(today);
-                  }}
-                />
-              )}
-              {route === "arena" && (
-                <Arena
-                  games={data.games}
-                  onActive={setArenaActive}
-                  onResult={(g) => change((d) => recordGame(d, g))}
-                />
-              )}
-              {route === "learn" && (
-                <Learning
-                  onNavigate={() =>
-                    modalScroll.current?.scrollTo({ y: 0, animated: false })
-                  }
-                  completed={data.lessons}
-                  onComplete={(id) => change((d) => completeLesson(d, id))}
-                />
-              )}
-              {route === "badges" && (
-                <View style={{ gap: 24 }}>
-                  <Text style={s.title}>Zvědavost má stopu.</Text>
-                  <Text style={s.muted}>
-                    Odznaky jsou za skutečně splněné aktivity a dokončená kola.
-                    Po získání ti zůstávají.
-                  </Text>
-                  {badges.map((b, i) => (
-                    <View
-                      key={b.id}
-                      style={[
-                        s.card,
-                        !!data.earned[b.id] && { borderColor: mint },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          s.label,
-                          { color: data.earned[b.id] ? mint : violet },
-                        ]}
-                      >
-                        {data.earned[b.id] ? "ODEMČENO" : "VÝZVA"} /{" "}
-                        {String(i + 1).padStart(2, "0")}
-                      </Text>
-                      <Text style={s.h2}>{b.name}</Text>
-                      <Text style={s.text}>{b.description}</Text>
-                      <Progress
-                        value={badgeValue(data, b.id) / b.target}
-                        color={data.earned[b.id] ? mint : violet}
-                      />
-                      <Text style={s.muted}>
-                        {Math.min(b.target, badgeValue(data, b.id))}/{b.target}
-                        {data.earned[b.id]
-                          ? ` · získáno ${new Date(data.earned[b.id]).toLocaleDateString("cs-CZ")}`
-                          : ""}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-              {route === "focus" && <FocusPanel data={data} change={change} />}
-              {route && typeof route === "object" && (
-                <HabitDetail
-                  key={`${route.day}-${route.habit.id}`}
-                  habit={route.habit}
-                  day={route.day}
-                  data={data}
-                  onToggle={(note) =>
-                    change((d) =>
-                      toggleHabit(d, route.day, route.habit.id, note),
-                    )
-                  }
-                  onFocus={() => {
-                    change((d) =>
-                      startFocus(d, route.habit.minutes, route.habit.id),
-                    );
-                    setRoute("focus");
-                  }}
-                />
-              )}
-            </ScrollView>
+              </View>
+            )}
           </Screen>
         </SafeAreaProvider>
       </Modal>
     </Screen>
   );
-}
-function habitKindsLabel(h: Habit) {
-  return {
-    reading: "Četba",
-    learning: "Učení",
-    focus: "Soustředění",
-    reflection: "Reflexe",
-    custom: "Vlastní aktivita",
-  }[h.kind];
 }
 function useNow() {
   const [now, setNow] = useState(Date.now());
@@ -544,6 +636,7 @@ function useNow() {
   return now;
 }
 function FocusSummary({ end }: { end: number }) {
+  const s = useMindStyles();
   const now = useNow();
   return (
     <Text style={s.h2}>
@@ -560,6 +653,7 @@ function FocusPanel({
   data: MindData;
   change: (fn: (d: MindData) => MindData) => void;
 }) {
+  const s = useMindStyles();
   const [minutes, setMinutes] = useState(20),
     [cancel, setCancel] = useState(false);
   const now = useNow(),
@@ -666,13 +760,14 @@ function HabitDetail({
   onToggle: (note: string) => void;
   onFocus: () => void;
 }) {
+  const s = useMindStyles();
   const checked = data.checks[day]?.[habit.id];
   const [note, setNote] = useState(checked?.note ?? "");
   const future = day > dayKey();
   return (
     <View style={{ gap: 24 }}>
       <Text style={s.label}>
-        {pretty(day)} / {habitKindsLabel(habit).toUpperCase()}
+        {pretty(day)} / {habitKinds[habit.kind].toUpperCase()}
       </Text>
       <Text style={s.title}>{habit.title}</Text>
       <View style={s.hero}>

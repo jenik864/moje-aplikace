@@ -1,7 +1,29 @@
-import React, { useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, Pressable } from "react-native";
-import { Button, Chip, Progress, s, mint } from "./components";
-import { acceptAnswer, problem, difficultyNames, sameMode } from "./math";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  ScrollView,
+  Animated,
+  AccessibilityInfo,
+  useWindowDimensions,
+} from "react-native";
+import {
+  Button,
+  Chip,
+  Progress,
+  useMindStyles,
+  MindTheme,
+  mint,
+} from "./components";
+import {
+  acceptAnswer,
+  problem,
+  difficultyNames,
+  sameMode,
+  type Problem,
+} from "./math";
 import { uid, type Difficulty, type GameResult, type Operation } from "./model";
 export function Arena({
   games,
@@ -12,6 +34,10 @@ export function Arena({
   onResult: (g: GameResult) => void;
   onActive: (active: boolean) => void;
 }) {
+  const s = useMindStyles(),
+    color = useContext(MindTheme),
+    { height } = useWindowDimensions();
+  const compact = height < 760;
   const [difficulty, setDifficulty] = useState<Difficulty>("normal"),
     [duration, setDuration] = useState(120),
     [operations, setOperations] = useState<Operation[]>(["+", "−"]);
@@ -21,24 +47,42 @@ export function Arena({
     [left, setLeft] = useState(120),
     [counts, setCounts] = useState({ correct: 0, mistakes: 0 }),
     [result, setResult] = useState<GameResult | null>(null),
-    [feedback, setFeedback] = useState(""),
-    [confirm, setConfirm] = useState(false);
-  const previousBest = useRef(0);
-  const score = useRef(counts),
+    [bad, setBad] = useState(false),
+    [combo, setCombo] = useState(0);
+  const previousBest = useRef(0),
+    score = useRef(counts),
     ended = useRef(false),
+    question = useRef(current),
+    answerRef = useRef(""),
+    mistake = useRef(false),
+    run = useRef(round),
     input = useRef<TextInput>(null),
-    resultCallback = useRef(onResult);
-  resultCallback.current = onResult;
-  const previous = games.filter((g) =>
-    sameMode(g, { difficulty, duration, operations }),
+    callback = useRef(onResult),
+    reduced = useRef(true),
+    flash = useRef(new Animated.Value(1)).current;
+  callback.current = onResult;
+  const best = Math.max(
+    0,
+    ...games
+      .filter((g) => sameMode(g, { difficulty, duration, operations }))
+      .map((g) => g.correct),
   );
-  const best = Math.max(0, ...previous.map((g) => g.correct));
+  useEffect(() => {
+    void AccessibilityInfo.isReduceMotionEnabled().then(
+      (v) => (reduced.current = v),
+    );
+    const sub = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      (v) => (reduced.current = v),
+    );
+    return () => sub.remove();
+  }, []);
   useEffect(() => {
     if (!round) return;
     const tick = () => {
       const remain = Math.max(0, Math.ceil((round.end - Date.now()) / 1000));
       setLeft(remain);
-      if (remain === 0 && !ended.current) {
+      if (!remain && !ended.current) {
         ended.current = true;
         const g: GameResult = {
           id: round.id,
@@ -48,101 +92,152 @@ export function Arena({
           operations,
           ...score.current,
         };
-        resultCallback.current(g);
+        callback.current(g);
         setResult(g);
         setRound(null);
+        run.current = null;
         onActive(false);
       }
     };
     tick();
-    const t = setInterval(tick, 200);
+    const t = setInterval(tick, 100);
     return () => clearInterval(t);
   }, [round]);
   useEffect(() => () => onActive(false), []);
+  function next() {
+    let p: Problem = problem(difficulty, operations);
+    for (let i = 0; i < 5 && p.text === question.current.text; i++)
+      p = problem(difficulty, operations);
+    question.current = p;
+    setCurrent(p);
+    answerRef.current = "";
+    setAnswer("");
+    mistake.current = false;
+    setBad(false);
+    if (!reduced.current) {
+      flash.stopAnimation();
+      flash.setValue(0.55);
+      Animated.timing(flash, {
+        toValue: 1,
+        duration: 140,
+        useNativeDriver: true,
+      }).start();
+    }
+  }
   function start() {
     previousBest.current = best;
     ended.current = false;
     score.current = { correct: 0, mistakes: 0 };
     setCounts(score.current);
-    setAnswer("");
-    setFeedback("");
     setResult(null);
-    setConfirm(false);
-    setCurrent(problem(difficulty, operations));
+    setCombo(0);
     setLeft(duration);
-    setRound({ id: uid(), end: Date.now() + duration * 1000 });
+    next();
+    const r = { id: uid(), end: Date.now() + duration * 1000 };
+    run.current = r;
+    setRound(r);
     onActive(true);
+    input.current?.focus();
   }
-  function submit() {
-    if (
-      !round ||
-      ended.current ||
-      Date.now() >= round.end ||
-      !/^\d+$/.test(answer.trim())
-    )
-      return;
-    if (acceptAnswer(answer, current, Date.now(), round.end)) {
+  function enter(raw: string) {
+    const r = run.current;
+    if (!r || ended.current || Date.now() >= r.end) return;
+    const v = raw.replace(/\D/g, "").slice(0, 6);
+    answerRef.current = v;
+    setAnswer(v);
+    if (acceptAnswer(v, question.current, Date.now(), r.end)) {
       score.current = { ...score.current, correct: score.current.correct + 1 };
-      setCurrent(problem(difficulty, operations));
-      setFeedback("Správně. Další!");
-    } else {
+      setCounts(score.current);
+      const hadMistake = mistake.current;
+      setCombo((n) => (hadMistake ? 1 : n + 1));
+      next();
+      return;
+    }
+    const wrong =
+      v.length >= String(question.current.answer).length && v !== "";
+    setBad(wrong);
+    if (wrong && !mistake.current) {
+      mistake.current = true;
       score.current = {
         ...score.current,
         mistakes: score.current.mistakes + 1,
       };
-      setFeedback("Zkus to znovu.");
+      setCounts(score.current);
+      setCombo(0);
     }
-    setCounts(score.current);
-    setAnswer("");
-    input.current?.focus();
+  }
+  function skip() {
+    if (!run.current || Date.now() >= run.current.end) return;
+    if (!mistake.current) {
+      score.current = {
+        ...score.current,
+        mistakes: score.current.mistakes + 1,
+      };
+      setCounts(score.current);
+    }
+    setCombo(0);
+    next();
   }
   if (result)
     return (
-      <View style={{ gap: 22 }}>
+      <ScrollView contentContainerStyle={s.body}>
         <Text style={s.label}>KOLO DOKONČENO</Text>
-        <Text style={s.title}>{result.correct}</Text>
-        <Text style={s.h2}>správných odpovědí</Text>
-        <View style={s.card}>
-          <Text style={s.text}>
-            {result.mistakes} chyb · {difficultyNames[result.difficulty]} ·{" "}
-            {result.duration} s
+        <View style={[s.hero, { alignItems: "center", paddingVertical: 32 }]}>
+          <Text style={[s.title, { fontSize: 80, color }]}>
+            {result.correct}
           </Text>
-          <Text style={s.text}>
+          <Text style={s.h2}>správných odpovědí</Text>
+          <Text style={[s.link, { color: mint }]}>
             {result.correct > previousBest.current
               ? "Nový osobní rekord!"
-              : `Nejlepší výsledek v tomto režimu: ${Math.max(best, result.correct)}`}
-          </Text>
-          <Text style={s.muted}>
-            Rekordy porovnáváme jen při stejné obtížnosti, délce a operacích.
+              : `Rekord režimu: ${Math.max(best, result.correct)}`}
           </Text>
         </View>
-        <Button onPress={start}>Hrát znovu</Button>
+        <View style={s.between}>
+          <Text style={s.muted}>{result.mistakes} chyb / přeskočení</Text>
+          <Text style={s.muted}>
+            {Math.round(
+              (result.correct / Math.max(1, result.correct + result.mistakes)) *
+                100,
+            )}{" "}
+            % přesnost
+          </Text>
+        </View>
+        <Button onPress={start}>Znovu do arény</Button>
         <Button quiet onPress={() => setResult(null)}>
           Změnit režim
         </Button>
-      </View>
+        <Text style={s.muted}>
+          XP se přičítá jen za dokončené kolo. Rekordy porovnáváme při shodné
+          obtížnosti, délce a operacích.
+        </Text>
+      </ScrollView>
     );
   if (!round)
     return (
-      <View style={{ gap: 24 }}>
+      <ScrollView contentContainerStyle={s.body}>
         <Text style={s.label}>MENTÁLNÍ ARÉNA</Text>
-        <Text style={s.title}>Rozhýbej hlavu.</Text>
-        <Text style={s.text}>
-          Počítej, potvrď a pokračuj. Kolik příkladů zvládneš?
-        </Text>
-        <View style={s.card}>
-          <Text style={s.label}>OBTÍŽNOST</Text>
-          <View style={s.wrap}>
-            {(Object.keys(difficultyNames) as Difficulty[]).map((d) => (
-              <Chip
-                key={d}
-                label={difficultyNames[d]}
-                selected={difficulty === d}
-                onPress={() => setDifficulty(d)}
-              />
-            ))}
-          </View>
-          <Text style={s.label}>DÉLKA KOLA</Text>
+        <Text style={[s.title, { fontSize: 38 }]}>Mysli rychle.</Text>
+        <View style={[s.hero, { paddingVertical: 26 }]}>
+          <Text style={[s.title, { fontSize: 48, textAlign: "center", color }]}>
+            {"12 × 8"}
+          </Text>
+          <Text style={[s.muted, { textAlign: "center" }]}>
+            Napiš správný výsledek. Další příklad přijde okamžitě.
+          </Text>
+        </View>
+        <Text style={s.label}>OBTÍŽNOST</Text>
+        <View style={s.wrap}>
+          {(Object.keys(difficultyNames) as Difficulty[]).map((d) => (
+            <Chip
+              key={d}
+              label={difficultyNames[d]}
+              selected={difficulty === d}
+              onPress={() => setDifficulty(d)}
+            />
+          ))}
+        </View>
+        <View style={s.between}>
           <View style={s.wrap}>
             {[60, 120].map((n) => (
               <Chip
@@ -153,46 +248,45 @@ export function Arena({
               />
             ))}
           </View>
-          <Text style={s.label}>OPERACE</Text>
-          <View style={s.wrap}>
-            {(["+", "−", "×", "÷"] as Operation[]).map((o) => (
-              <Chip
-                key={o}
-                label={o}
-                selected={operations.includes(o)}
-                onPress={() =>
-                  setOperations(
-                    operations.includes(o)
-                      ? operations.length === 1
-                        ? operations
-                        : operations.filter((v) => v !== o)
-                      : [...operations, o],
-                  )
-                }
-              />
-            ))}
+          <View>
+            <Text style={s.muted}>Rekord</Text>
+            <Text style={[s.h2, { color }]}>{best}</Text>
           </View>
         </View>
-        <View style={s.between}>
-          <Text style={s.muted}>Rekord tohoto režimu</Text>
-          <Text style={s.stat}>{best}</Text>
+        <View style={s.wrap}>
+          {(["+", "−", "×", "÷"] as Operation[]).map((o) => (
+            <Chip
+              key={o}
+              label={o}
+              selected={operations.includes(o)}
+              onPress={() =>
+                setOperations(
+                  operations.includes(o)
+                    ? operations.length === 1
+                      ? operations
+                      : operations.filter((v) => v !== o)
+                    : [...operations, o],
+                )
+              }
+            />
+          ))}
         </View>
         <Button onPress={start}>Spustit kolo</Button>
         {games.length > 0 && (
           <View style={s.card}>
-            <Text style={s.label}>POSLEDNÍ KOLA</Text>
+            <Text style={s.label}>POSLEDNÍ VÝKONY</Text>
             {games
               .slice(-5)
               .reverse()
               .map((g) => (
                 <View key={g.id} style={s.between}>
+                  <Text style={[s.h2, { color }]}>{g.correct}</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={s.text}>
-                      {g.correct} správně · {g.mistakes} chyb
+                      {difficultyNames[g.difficulty]} · {g.duration} s
                     </Text>
                     <Text style={s.muted}>
-                      {difficultyNames[g.difficulty]} · {g.duration} s ·{" "}
-                      {g.operations.join(" ")} ·{" "}
+                      {g.operations.join(" ")} · {g.mistakes} chyb ·{" "}
                       {new Date(g.at).toLocaleDateString("cs-CZ")}
                     </Text>
                   </View>
@@ -200,63 +294,96 @@ export function Arena({
               ))}
           </View>
         )}
-      </View>
+      </ScrollView>
     );
   return (
-    <View style={{ gap: 20 }}>
-      <View style={s.between}>
-        <Text style={s.label}>
-          ARÉNA / {difficultyNames[difficulty].toUpperCase()}
-        </Text>
-        <Text style={s.stat}>
-          {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
-        </Text>
+    <View
+      style={{
+        flex: 1,
+        padding: compact ? 16 : 20,
+        gap: compact ? 10 : 16,
+        justifyContent: "space-between",
+      }}
+    >
+      <View style={{ gap: 10 }}>
+        <View style={s.between}>
+          <View>
+            <Text style={s.label}>
+              {difficultyNames[difficulty].toUpperCase()}
+            </Text>
+            <Text style={[s.h2, { color, fontVariant: ["tabular-nums"] }]}>
+              {counts.correct} správně
+            </Text>
+          </View>
+          <Text
+            style={[
+              s.title,
+              { fontSize: compact ? 32 : 40, fontVariant: ["tabular-nums"] },
+            ]}
+          >
+            {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
+          </Text>
+        </View>
+        <Progress value={left / duration} />
       </View>
-      <Progress value={left / duration} color={mint} />
-      <View style={[s.hero, { alignItems: "center", paddingVertical: 32 }]}>
-        <Text style={[s.title, { fontSize: 42, letterSpacing: -1 }]}>
+      <Animated.View
+        style={{
+          opacity: flash,
+          gap: 12,
+          alignItems: "center",
+          paddingVertical: compact ? 6 : 18,
+        }}
+      >
+        <Text
+          testID="mind-problem"
+          accessibilityLiveRegion="polite"
+          style={[s.title, { fontSize: compact ? 44 : 56, letterSpacing: -1 }]}
+        >
           {current.text}
         </Text>
         <TextInput
           ref={input}
+          autoFocus
           accessibilityLabel="Odpověď"
           value={answer}
-          onChangeText={(v) => setAnswer(v.replace(/\D/g, "").slice(0, 6))}
-          onSubmitEditing={submit}
+          onChangeText={enter}
           keyboardType="number-pad"
           showSoftInputOnFocus={false}
+          autoComplete="off"
           placeholder="?"
-          placeholderTextColor="#796789"
+          placeholderTextColor="#696b70"
           style={[
             s.input,
-            { fontSize: 36, width: "100%", maxWidth: 220, textAlign: "center" },
+            {
+              width: "100%",
+              maxWidth: 240,
+              fontSize: compact ? 30 : 36,
+              textAlign: "center",
+              borderColor: bad ? "#ff8995" : color,
+              padding: compact ? 8 : 12,
+              minHeight: compact ? 46 : 58,
+            },
           ]}
         />
         <Text
-          style={[
-            s.muted,
-            {
-              color: feedback === "Zkus to znovu." ? "#ffb0ba" : mint,
-              minHeight: 22,
-            },
-          ]}
           accessibilityLiveRegion="polite"
+          style={[s.muted, { color: bad ? "#ff8995" : mint, minHeight: 22 }]}
         >
-          {feedback || "Tvoje další správná odpověď."}
+          {bad
+            ? "Oprav odpověď nebo smaž číslici."
+            : combo > 1
+              ? `${combo} správně v řadě`
+              : "Správná odpověď = další příklad"}
         </Text>
-      </View>
-      <View style={s.between}>
-        <Text style={s.text}>Správně: {counts.correct}</Text>
-        <Text style={s.muted}>Chyby: {counts.mistakes}</Text>
-      </View>
-      <View style={{ gap: 8 }}>
+      </Animated.View>
+      <View style={{ gap: compact ? 7 : 10 }}>
         {[
           ["1", "2", "3"],
           ["4", "5", "6"],
           ["7", "8", "9"],
-          ["⌫", "0", "OK"],
+          ["⌫", "0", "↷"],
         ].map((row, i) => (
-          <View key={i} style={s.row}>
+          <View key={i} style={[s.row, { gap: compact ? 7 : 10 }]}>
             {row.map((key) => (
               <Pressable
                 key={key}
@@ -264,32 +391,41 @@ export function Arena({
                 accessibilityLabel={
                   key === "⌫"
                     ? "Smazat číslici"
-                    : key === "OK"
-                      ? "Potvrdit odpověď"
+                    : key === "↷"
+                      ? "Přeskočit příklad"
                       : key
                 }
                 onPress={() =>
-                  key === "OK"
-                    ? submit()
-                    : setAnswer((v) =>
-                        key === "⌫" ? v.slice(0, -1) : `${v}${key}`.slice(0, 6),
+                  key === "↷"
+                    ? skip()
+                    : enter(
+                        key === "⌫"
+                          ? answerRef.current.slice(0, -1)
+                          : answerRef.current + key,
                       )
                 }
-                style={[
-                  s.quiet,
-                  {
-                    flex: 1,
-                    padding: 16,
-                    borderRadius: 14,
-                    alignItems: "center",
-                    backgroundColor: key === "OK" ? mint : "#211b2c",
-                  },
-                ]}
+                style={({ pressed }) => ({
+                  flex: 1,
+                  height: compact ? 48 : 60,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 13,
+                  backgroundColor: pressed
+                    ? `${color}45`
+                    : key === "↷"
+                      ? `${color}20`
+                      : "#16181c",
+                  borderWidth: 1,
+                  borderColor: key === "↷" ? `${color}55` : "#2c2e33",
+                })}
               >
                 <Text
                   style={[
                     s.h2,
-                    { color: key === "OK" ? "#10251f" : "#f6f3ff" },
+                    {
+                      fontSize: compact ? 23 : 27,
+                      color: key === "↷" ? color : "#f7f6f2",
+                    },
                   ]}
                 >
                   {key}
@@ -298,31 +434,11 @@ export function Arena({
             ))}
           </View>
         ))}
-      </View>
-      {confirm ? (
-        <View style={s.card}>
-          <Text style={s.text}>
-            Ukončit rozehrané kolo? Výsledek se neuloží.
-          </Text>
-          <Button quiet onPress={() => setConfirm(false)}>
-            Pokračovat
-          </Button>
-          <Button
-            onPress={() => {
-              ended.current = true;
-              setRound(null);
-              onActive(false);
-              setConfirm(false);
-            }}
-          >
-            Ukončit bez výsledku
-          </Button>
+        <View style={s.between}>
+          <Text style={s.muted}>{counts.mistakes} chyb / přeskočení</Text>
+          <Text style={s.muted}>↷ přeskočit</Text>
         </View>
-      ) : (
-        <Button quiet onPress={() => setConfirm(true)}>
-          Ukončit kolo
-        </Button>
-      )}
+      </View>
     </View>
   );
 }

@@ -498,6 +498,7 @@ const Placeholder = ({
 
 export default function App() {
   const [buildAccent, setBuildAccent] = useState(rankColors[0]);
+  const [mindAccent, setMindAccent] = useState(rankColors[0]);
   const [data, setData] = useState<Data>({});
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -772,7 +773,7 @@ export default function App() {
                 : route.name === "Build"
                   ? buildAccent
                   : route.name === "Mind"
-                    ? "#b8a0ff"
+                    ? mindAccent
                     : "#c5fa67",
             tabBarInactiveTintColor: "#777",
             tabBarStyle: {
@@ -813,7 +814,9 @@ export default function App() {
           <Tab.Screen name="Build">
             {() => <BuildScreen onAccent={setBuildAccent} />}
           </Tab.Screen>
-          <Tab.Screen name="Mind">{() => <MindScreen />}</Tab.Screen>
+          <Tab.Screen name="Mind">
+            {() => <MindScreen onAccent={setMindAccent} />}
+          </Tab.Screen>
           <Tab.Screen name="Business">
             {() => (
               <Placeholder

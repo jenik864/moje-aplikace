@@ -1,23 +1,26 @@
 import React, { useState } from "react";
-import { View, Text } from "react-native";
-import { Button, Chip, Field, s } from "./components";
+import { View, Text, Pressable } from "react-native";
+import { Button, Chip, Field, useMindStyles } from "./components";
 import { habitKinds, uid, type Habit, type HabitKind } from "./model";
 export const weekdays = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 export function PlanEditor({
   initial,
   onSave,
+  onNavigate,
 }: {
   initial: Habit[];
   onSave: (habits: Habit[]) => void;
+  onNavigate: () => void;
 }) {
-  const [habits, setHabits] = useState<Habit[]>(initial),
+  const s = useMindStyles();
+  const [habits, setHabits] = useState(initial),
+    [open, setOpen] = useState(initial.length === 0),
     [kind, setKind] = useState<HabitKind>("reading"),
     [title, setTitle] = useState("Četba"),
     [minutes, setMinutes] = useState("20"),
-    [days, setDays] = useState([0, 1, 2, 3, 4]),
+    [days, setDays] = useState([0, 1, 2, 3, 4, 5, 6]),
     [editing, setEditing] = useState<string | null>(null),
     [error, setError] = useState("");
-  const [pending, setPending] = useState(false);
   function add() {
     const n = Number(minutes);
     if (
@@ -33,65 +36,43 @@ export function PlanEditor({
     const h: Habit = {
       id: editing ?? uid(),
       kind,
-      title: title.trim().slice(0, 80),
+      title: title.trim(),
       minutes: n,
-      days: [...days],
+      days: [...days].sort(),
     };
     setHabits(
       editing ? habits.map((v) => (v.id === editing ? h : v)) : [...habits, h],
     );
     setEditing(null);
-    setPending(false);
-    setTitle(habitKinds[kind]);
+    setOpen(false);
+    onNavigate();
     setError("");
   }
-  return (
-    <View style={{ gap: 24 }}>
-      <Text style={s.label}>TVŮJ PLÁN / TVOJE TEMPO</Text>
-      <Text style={s.title}>Čemu dáš prostor?</Text>
-      <Text style={s.text}>
-        Vyber aktivity, čas a dny. Četba je jeden z návyků — stejně jako učení
-        nebo vlastní projekt.
-      </Text>
-      {habits.length > 0 && (
-        <View style={{ gap: 12 }}>
-          {habits.map((h) => (
-            <View key={h.id} style={s.card}>
-              <Text style={s.h3}>{h.title}</Text>
-              <Text style={s.muted}>
-                {h.minutes} min · {h.days.map((d) => weekdays[d]).join(" / ")}
-              </Text>
-              <View style={s.wrap}>
-                <Chip
-                  label="Upravit"
-                  onPress={() => {
-                    setPending(true);
-                    setEditing(h.id);
-                    setKind(h.kind);
-                    setTitle(h.title);
-                    setMinutes(String(h.minutes));
-                    setDays(h.days);
-                  }}
-                />
-                <Chip
-                  label="Odebrat"
-                  onPress={() => {
-                    setHabits(habits.filter((v) => v.id !== h.id));
-                    if (editing === h.id) {
-                      setPending(false);
-                      setEditing(null);
-                      setTitle(habitKinds[kind]);
-                    }
-                  }}
-                />
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-      <View style={s.card}>
-        <Text style={s.label}>
-          {editing ? "UPRAVIT AKTIVITU" : "PŘIDAT DO PLÁNU"}
+  function create() {
+    setEditing(null);
+    setKind("reading");
+    setTitle("Četba");
+    setMinutes("20");
+    setDays([0, 1, 2, 3, 4, 5, 6]);
+    setError("");
+    setOpen(true);
+    onNavigate();
+  }
+  if (open)
+    return (
+      <View style={{ gap: 20 }}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            setOpen(false);
+            setEditing(null);
+            setError("");
+          }}
+        >
+          <Text style={s.link}>← Přehled plánu</Text>
+        </Pressable>
+        <Text style={s.h2}>
+          {editing ? "Upravit aktivitu" : "Nová aktivita"}
         </Text>
         <View style={s.wrap}>
           {(Object.keys(habitKinds) as HabitKind[]).map((k) => (
@@ -100,9 +81,9 @@ export function PlanEditor({
               label={habitKinds[k]}
               selected={kind === k}
               onPress={() => {
-                setPending(true);
                 setKind(k);
-                setTitle(habitKinds[k]);
+                if (Object.values(habitKinds).includes(title) || !title.trim())
+                  setTitle(habitKinds[k]);
               }}
             />
           ))}
@@ -110,68 +91,100 @@ export function PlanEditor({
         <Field
           label="Název aktivity"
           value={title}
-          onChangeText={(v) => {
-            setTitle(v);
-            setPending(true);
-          }}
+          onChangeText={setTitle}
           placeholder="Např. Číst Dunu nebo učit se Python"
         />
         <Field
           label="Cíl v minutách"
           value={minutes}
-          onChangeText={(v) => {
-            setMinutes(v);
-            setPending(true);
-          }}
+          onChangeText={setMinutes}
           number
         />
-        <Text style={s.label}>DNY V TÝDNU</Text>
+        <View style={s.between}>
+          <Text style={s.label}>OPAKOVÁNÍ</Text>
+          <View style={s.wrap}>
+            <Chip
+              label="Denně"
+              onPress={() => setDays([0, 1, 2, 3, 4, 5, 6])}
+            />
+            <Chip label="Po–Pá" onPress={() => setDays([0, 1, 2, 3, 4])} />
+          </View>
+        </View>
         <View style={s.wrap}>
           {weekdays.map((d, i) => (
             <Chip
               key={d}
               label={d}
               selected={days.includes(i)}
-              onPress={() => {
-                setPending(true);
+              onPress={() =>
                 setDays(
-                  days.includes(i)
-                    ? days.filter((n) => n !== i)
-                    : [...days, i].sort(),
-                );
-              }}
+                  days.includes(i) ? days.filter((v) => v !== i) : [...days, i],
+                )
+              }
             />
           ))}
         </View>
         {error && <Text style={s.error}>{error}</Text>}
-        <Button quiet onPress={add}>
-          {editing ? "Potvrdit úpravu aktivity" : "+ Přidat aktivitu"}
+        <Button onPress={add}>
+          {editing ? "Potvrdit úpravu" : "Přidat do plánu"}
         </Button>
-        {(editing || pending) && (
-          <Button
-            quiet
-            onPress={() => {
-              setPending(false);
-              setEditing(null);
-              setTitle(habitKinds[kind]);
-            }}
-          >
-            {editing ? "Zrušit úpravu" : "Zrušit rozepsanou aktivitu"}
-          </Button>
-        )}
+        <Text style={s.muted}>
+          Potom v přehledu ulož celý plán. Každý den můžeš splnění potvrdit i
+          přidat poznámku.
+        </Text>
       </View>
+    );
+  return (
+    <View style={{ gap: 20 }}>
+      <Text style={s.label}>OSOBNÍ NÁVYKY</Text>
+      <Text style={s.h2}>Můj plán.</Text>
       <Text style={s.muted}>
-        Nejprve přidej nebo potvrď aktivitu, potom ulož celý plán. Změna platí
-        od dneška; starší plán a splnění zůstanou zachované.
+        Aktivity se opakují ve zvolené dny. Změny platí od dneška, historie
+        zůstává.
       </Text>
-      <Button
-        disabled={
-          !!editing || pending || (initial.length === 0 && habits.length === 0)
-        }
-        onPress={() => onSave(habits)}
-      >
-        Uložit plán ({habits.length})
+      {habits.length ? (
+        habits.map((h) => (
+          <View key={h.id} style={[s.card, { gap: 12 }]}>
+            <Text style={s.h3}>{h.title}</Text>
+            <Text style={s.muted}>
+              {habitKinds[h.kind]} · {h.minutes} min
+            </Text>
+            <Text style={s.link}>
+              {h.days.length === 7
+                ? "Každý den"
+                : h.days.map((d) => weekdays[d]).join(" · ")}
+            </Text>
+            <View style={s.wrap}>
+              <Chip
+                label="Upravit"
+                onPress={() => {
+                  setEditing(h.id);
+                  setKind(h.kind);
+                  setTitle(h.title);
+                  setMinutes(String(h.minutes));
+                  setDays(h.days);
+                  setOpen(true);
+                }}
+              />
+              <Chip
+                label="Odebrat"
+                onPress={() => setHabits(habits.filter((v) => v.id !== h.id))}
+              />
+            </View>
+          </View>
+        ))
+      ) : (
+        <Text style={s.text}>Přidej první aktivitu. Stačí začít jednou.</Text>
+      )}
+      <Button quiet onPress={create}>
+        + Další aktivita
       </Button>
+      <Button onPress={() => onSave(habits)}>
+        Uložit celý plán ({habits.length})
+      </Button>
+      <Text style={s.muted}>
+        Odebrání a úpravy se uloží až tímto tlačítkem.
+      </Text>
     </View>
   );
 }
