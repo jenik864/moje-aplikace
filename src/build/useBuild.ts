@@ -4,6 +4,7 @@ import { initialBuild, parseBuild, type BuildData } from "./model";
 const key = "quitter.build.v1";
 export function useBuild() {
   const [data, setData] = useState<BuildData>(initialBuild);
+  const [persisted, setPersisted] = useState<BuildData | null>(null);
   const current = useRef(data);
   const queue = useRef(Promise.resolve());
   const serial = useRef(0);
@@ -16,9 +17,10 @@ export function useBuild() {
     setLoaded(false);
     try {
       const raw = await AsyncStorage.getItem(key);
-      const next = raw ? parseBuild(raw) : initialBuild();
+      const next = raw === null ? initialBuild() : parseBuild(raw);
       current.current = next;
       setData(next);
+      setPersisted(next);
       setLoaded(true);
     } catch {
       setLoadError(
@@ -38,6 +40,7 @@ export function useBuild() {
       .then(
         () => {
           if (revision === serial.current) {
+            setPersisted(next);
             setSaveError("");
             setSaving(false);
           }
@@ -59,12 +62,15 @@ export function useBuild() {
   }
   return {
     data,
+    persisted,
     update,
     loaded,
     loadError,
     saveError,
     saving,
     retryLoad: hydrate,
-    retrySave: () => save(current.current),
+    retrySave: () => {
+      if (loaded) save(current.current);
+    },
   };
 }

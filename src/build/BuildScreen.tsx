@@ -88,11 +88,12 @@ function RestBanner({ end, onStop }: { end: number; onStop: () => void }) {
   );
 }
 export function BuildScreen({
+  store,
   onAccent,
 }: {
   onAccent?: (color: string) => void;
+  store: ReturnType<typeof useBuild>;
 }) {
-  const store = useBuild();
   const color = rankColors[buildRank(store.data)];
   useEffect(() => {
     if (store.loaded) onAccent?.(color);

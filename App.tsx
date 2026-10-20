@@ -1,7 +1,12 @@
+import { MeScreen } from "./src/profile/MeScreen";
+import { profileSummary } from "./src/profile/model";
+import { useProfile } from "./src/profile/useProfile";
+import { useBuild } from "./src/build/useBuild";
+import { useMind } from "./src/mind/useMind";
 import { BusinessScreen } from "./src/business/BusinessScreen";
 import { MindScreen } from "./src/mind/MindScreen";
 import { BuildScreen } from "./src/build/BuildScreen";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -35,9 +40,9 @@ import {
   dayKey,
 } from "./src/model";
 
-import { Screen, RankBadge, rankColors } from "./src/ui";
+import { Screen, rankColors } from "./src/ui";
 
-import { PremiumTabs, RankStageArt, surface, ink, border } from "./src/design";
+import { PremiumTabs, surface, ink, border } from "./src/design";
 
 import { programContent } from "./src/programContent";
 import { SosProtocol } from "./src/SosProtocol";
@@ -477,6 +482,9 @@ function Setup({
   );
 }
 export default function App() {
+  const buildStore = useBuild();
+  const mindStore = useMind();
+  const [persistedQuit, setPersistedQuit] = useState<Data | null>(null);
   const [buildAccent, setBuildAccent] = useState(rankColors[0]);
   const [mindAccent, setMindAccent] = useState(rankColors[0]);
   const [data, setData] = useState<Data>({});
@@ -522,7 +530,10 @@ export default function App() {
     queue.current = queue.current
       .catch(() => {})
       .then(() => AsyncStorage.setItem(STORAGE, raw))
-      .then(() => setSaveError(false))
+      .then(() => {
+        setPersistedQuit(data);
+        setSaveError(false);
+      })
       .catch(() => setSaveError(true));
   }, [data, ready]);
   useEffect(() => {
@@ -607,6 +618,12 @@ export default function App() {
         contentInsetAdjustmentBehavior="never"
         automaticallyAdjustContentInsets={false}
         ref={pager}
+        onLayout={() =>
+          pager.current?.scrollTo({
+            x: ids.indexOf(activeProgram) * width,
+            animated: false,
+          })
+        }
         horizontal
         pagingEnabled
         onMomentumScrollEnd={(e) =>
@@ -673,59 +690,31 @@ export default function App() {
       </ScrollView>
     </Screen>
   );
-  const Me = () => (
-    <Screen accent={rankColors[0]}>
-      <ScrollView
-        contentInsetAdjustmentBehavior="never"
-        automaticallyAdjustContentInsets={false}
-        contentContainerStyle={s.content}
-      >
-        <Text style={[s.eyebrow, { color: purple }]}>TVŮJ OSOBNÍ PROFIL</Text>
-        <Text style={s.heading}>Me.</Text>
-        <View style={[s.profile, { borderColor: rankColors[0] + "25" }]}>
-          <RankStageArt rank={0} color={rankColors[0]} />
-          <Text style={s.eyebrow}>CURRENT RANK</Text>
-          <Text style={s.big}>Copper</Text>
-          <Text
-            style={{ color: rankColors[0], fontSize: 11, letterSpacing: 1 }}
-          >
-            PRIME · COPPER
-          </Text>
-        </View>
-        <Text style={s.body}>
-          Celkový rank čeká na společná pravidla pro Quit, Build a Mind. Zatím
-          zobrazujeme startovní Copper, ne vypočtené skóre.
-        </Text>
-        <Text style={s.sectionTitle}>Tvoje disciplíny</Text>
-        {ids.map((id) => (
-          <View key={id} style={s.panel}>
-            <Text style={s.cardTitle}>{definitions[id].title}</Text>
-            {data[id] ? (
-              <>
-                <RankBadge value={rankOf(id, data[id]!, now)} />
-                <Text style={s.muted}>
-                  {id === "food" ? "CELKOVÝ RANK" : "PRIME"} ·{" "}
-                  {
-                    ranks[
-                      id === "food"
-                        ? rankOf(id, data[id]!, now)
-                        : Math.max(data[id]!.prime, rankOf(id, data[id]!, now))
-                    ]
-                  }
-                </Text>
-              </>
-            ) : (
-              <Text style={s.muted}>Program zatím není aktivní</Text>
-            )}
-          </View>
-        ))}
-        <Text style={s.muted}>
-          Data jsou uložená pouze na tomto zařízení. Odinstalování nebo vymazání
-          dat je může odstranit.
-        </Text>
-      </ScrollView>
-    </Screen>
+  const combined = useMemo(
+    () =>
+      profileSummary(
+        data,
+        buildStore.loaded ? buildStore.data : null,
+        mindStore.loaded ? mindStore.data : null,
+        now,
+      ),
+    [
+      data,
+      buildStore.data,
+      buildStore.loaded,
+      mindStore.data,
+      mindStore.loaded,
+      now,
+    ],
   );
+  const settled =
+    ready &&
+    data === persistedQuit &&
+    buildStore.loaded &&
+    buildStore.persisted === buildStore.data &&
+    mindStore.loaded &&
+    mindStore.persisted === mindStore.data;
+  const profile = useProfile(ready ? combined.score : null, settled);
   if (!ready)
     return (
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
@@ -769,7 +758,10 @@ export default function App() {
                 Build: buildAccent,
                 Mind: mindAccent,
                 Business: "#c5d3ec",
-                Me: rankColors[0],
+                Me:
+                  combined.rank === null
+                    ? "#c5d3ec"
+                    : rankColors[combined.rank],
               }}
             />
           )}
@@ -777,13 +769,35 @@ export default function App() {
         >
           <Tab.Screen name="Quit">{Quit}</Tab.Screen>
           <Tab.Screen name="Build">
-            {() => <BuildScreen onAccent={setBuildAccent} />}
+            {() => <BuildScreen store={buildStore} onAccent={setBuildAccent} />}
           </Tab.Screen>
           <Tab.Screen name="Mind">
-            {() => <MindScreen onAccent={setMindAccent} />}
+            {() => <MindScreen store={mindStore} onAccent={setMindAccent} />}
           </Tab.Screen>
           <Tab.Screen name="Business">{() => <BusinessScreen />}</Tab.Screen>
-          <Tab.Screen name="Me">{Me}</Tab.Screen>
+          <Tab.Screen name="Me">
+            {({ navigation }) => (
+              <MeScreen
+                summary={combined}
+                profile={profile}
+                build={buildStore}
+                mind={mindStore}
+                quitPending={data !== persistedQuit || saveError}
+                open={(section, program) => {
+                  if (section === "Quit" && program) {
+                    setActiveProgram(program);
+                    navigation.navigate("Quit");
+                    requestAnimationFrame(() =>
+                      pager.current?.scrollTo({
+                        x: ids.indexOf(program) * width,
+                        animated: false,
+                      }),
+                    );
+                  } else navigation.navigate(section);
+                }}
+              />
+            )}
+          </Tab.Screen>
         </Tab.Navigator>
       </NavigationContainer>
       {saveError && (

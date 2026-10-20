@@ -134,7 +134,7 @@ export function RankStage({
   label = "TVŮJ POSTUP",
 }: {
   rank: number;
-  prime: number;
+  prime: number | null;
   color: string;
   value: string;
   unit: string;
@@ -161,7 +161,9 @@ export function RankStage({
       <View style={d.between}>
         <Text style={[d.overline, { color }]}>{label}</Text>
         <View style={[d.prime, { borderColor: `${color}25` }]}>
-          <Text style={d.primeText}>PRIME · {ranks[prime]}</Text>
+          <Text style={d.primeText}>
+            PRIME · {prime === null ? "—" : ranks[prime]}
+          </Text>
         </View>
       </View>
       <RankStageArt rank={rank} color={color} />

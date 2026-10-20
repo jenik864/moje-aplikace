@@ -41,7 +41,7 @@ Porn Reboot má samostatný detailní dashboard s časovačem, Current/PRIME a p
 
 Doomscrolling má vlastní ukazatel zapsaných minut vůči dennímu limitu; Junk Food zvýrazňuje konkrétní pravidlo a dnešní stav. Oba programy mají barvy podle Current ranku, rozklikávací ranky, kalendář s detaily, grafy skutečných zápisů, manifest s původním podpisem a záznamy SOS. Statistiky oddělují dnešní koncept od potvrzených dní. SOS používá kruhový odpočet pěti minut pro Doomscrolling a dvou minut pro Junk Food.
 
-Me ukazuje ranky disciplín. Celkový rank zatím zůstává Copper: společný výpočet přes Quit, Build a Mind zatím není zavedený. Business má vlastní projekty a kroky (viz níže). Mind má vlastní plán, arénu a lekce (viz níže). Build má vlastní plánování a odznaky (viz níže).
+Me zobrazuje vypočtený celkový rank a skutečný postup Quit, Build a Mind, umožňuje úpravu jména a osobního záměru a přímé otevření disciplín (viz níže). Business má vlastní projekty a kroky. Mind má vlastní plán, arénu a lekce. Build má vlastní plánování a odznaky.
 
 Data se ukládají pouze lokálně přes AsyncStorage (bez šifrování), nikam se neodesílají. Nejde zatím o produkční zabezpečení citlivých dat. Bez systémových blokací, selfie kamery, účtů, žebříčků a předplatného.
 
@@ -76,3 +76,13 @@ Kroky mají vlastní název, volitelný odhad 5–240 minut, datum a prioritu. D
 Projekt se dokončí výslovně a až po splnění všech kroků. Znovuotevření umožní další změny; pozastavení vyřadí nehotové kroky z denního přehledu. Archiv projekt i kroky zachová a dovoluje obnovení. Smazání jednotlivého kroku vyžaduje potvrzení. Formulář při opuštění chrání neuložené změny.
 
 Business se ukládá samostatně do `quitter.business.v1`. Poškozená či nenačtená data se nepřepíšou, chyba zápisu nabízí opakování. Pravidla ani data Quit, Build a Mind se nemění; Business nepřidává XP do jejich ranků. Spolupráce, sdílení projektů, účty a AI nejsou připojené.
+
+## Me a celkový rank
+
+Celkový rank má tři stejně vážené oblasti: Quit, Build a Mind. Každý existující systém se převádí na škálu 0–11 podle svých dvanácti ranků včetně lineárního postupu mezi sousedními hranicemi. Quit je průměr aktivních programů s dostupnými údaji; Doomscrolling čekající na sedm skutečně měřených dokončených dnů se nezapočítá. Bez započitatelného programu má Quit výchozí skóre 0. Build a Mind mají vždy vlastní třetinu. Průměr oblastí krát 100 tvoří body profilu: Copper 0, Bronze 100, Iron 200 až Obsidian 1100. Business je samostatný.
+
+Neaktivní program není neúspěšný den. Neúplná měření nejsou nula; chybějící či poškozená data Build/Mind blokují celkový výsledek, dokud se je nepodaří načíst. Plány, péče o pleť, náhledy a úprava jména body nepřidávají. Pravidla a historické PRIME jednotlivých disciplín se nemění. Nová aktivace programu může změnit průměr Quit a tedy Current.
+
+Celkový PRIME je nejvyšší skutečně zaznamenaný společný rank od zavedení profilu. Neskládá se z nezávislých historických PRIME disciplín, které nemusely nastat zároveň. Sleduje se i mimo obrazovku Me a postup zaznamenává až po úspěšném uložení všech zdrojových dat. Opravy a resety jej nesnižují. Jméno, osobní záměr a PRIME se ukládají odděleně do `quitter.profile.v1`; chyba načtení původní data nepřepíše a chybu zápisu lze zopakovat.
+
+Build a Mind nyní používají jednu společnou instanci dat pro svou sekci i profil. Me ukazuje aktuální ranky, zdrojové body/XP, odznaky, počty potvrzených tréninků a aktivit. Z profilu lze otevřít konkrétní program Quit i ostatní sekce. Jméno a záměr jsou volitelné, formulář chrání rozepsané změny. Přehled ukládání vysvětluje lokální data; účet, přenos dat a cloudová synchronizace nejsou připojené.

@@ -4,6 +4,7 @@ import { initialMind, parseMind, type MindData } from "./model";
 const key = "quitter.mind.v1";
 export function useMind() {
   const [data, setData] = useState<MindData>(initialMind);
+  const [persisted, setPersisted] = useState<MindData | null>(null);
   const current = useRef(data);
   const queue = useRef(Promise.resolve());
   const serial = useRef(0);
@@ -16,9 +17,10 @@ export function useMind() {
     setLoaded(false);
     try {
       const raw = await AsyncStorage.getItem(key);
-      const next = raw ? parseMind(raw) : initialMind();
+      const next = raw === null ? initialMind() : parseMind(raw);
       current.current = next;
       setData(next);
+      setPersisted(next);
       setLoaded(true);
     } catch {
       setLoadError(
@@ -38,6 +40,7 @@ export function useMind() {
       .then(
         () => {
           if (revision === serial.current) {
+            setPersisted(next);
             setSaveError("");
             setSaving(false);
           }
@@ -59,12 +62,15 @@ export function useMind() {
   }
   return {
     data,
+    persisted,
     update,
     loaded,
     loadError,
     saveError,
     saving,
     retryLoad: hydrate,
-    retrySave: () => save(current.current),
+    retrySave: () => {
+      if (loaded) save(current.current);
+    },
   };
 }

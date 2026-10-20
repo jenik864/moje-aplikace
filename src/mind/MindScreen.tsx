@@ -65,12 +65,13 @@ const pretty = (day: string) =>
 const clock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 export function MindScreen({
+  store,
   onAccent,
 }: {
   onAccent?: (color: string) => void;
+  store: ReturnType<typeof useMind>;
 }) {
-  const store = useMind(),
-    color = rankColors[mindRank(store.data)];
+  const color = rankColors[mindRank(store.data)];
   useEffect(() => {
     if (store.loaded) onAccent?.(color);
   }, [color, store.loaded, onAccent]);
