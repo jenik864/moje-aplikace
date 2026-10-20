@@ -1,3 +1,4 @@
+import { BusinessScreen } from "./src/business/BusinessScreen";
 import { MindScreen } from "./src/mind/MindScreen";
 import { BuildScreen } from "./src/build/BuildScreen";
 import React, { useEffect, useRef, useState } from "react";
@@ -36,14 +37,7 @@ import {
 
 import { Screen, RankBadge, rankColors } from "./src/ui";
 
-import {
-  PremiumTabs,
-  RankStageArt,
-  ProjectArtwork,
-  surface,
-  ink,
-  border,
-} from "./src/design";
+import { PremiumTabs, RankStageArt, surface, ink, border } from "./src/design";
 
 import { programContent } from "./src/programContent";
 import { SosProtocol } from "./src/SosProtocol";
@@ -482,40 +476,6 @@ function Setup({
     </Screen>
   );
 }
-const Placeholder = ({
-  title,
-  label,
-  text,
-  items,
-}: {
-  title: string;
-  label: string;
-  text: string;
-  items: string[];
-}) => (
-  <Screen>
-    <ScrollView
-      contentInsetAdjustmentBehavior="never"
-      automaticallyAdjustContentInsets={false}
-      contentContainerStyle={s.content}
-    >
-      <Text style={[s.eyebrow, { color: purple }]}>{label}</Text>
-      <Text style={s.heading}>{title}.</Text>
-      <View style={[s.panel, { padding: 12, borderColor: "#c5d3ec20" }]}>
-        <ProjectArtwork />
-      </View>
-      <Text style={s.body}>{text}</Text>
-      {items.map((item, i) => (
-        <View key={item} style={s.panel}>
-          <Text style={s.muted}>0{i + 1} / PŘIPRAVUJEME</Text>
-          <Text style={s.sectionTitle}>{item}</Text>
-        </View>
-      ))}
-      <Text style={s.muted}>Tato sekce zatím nepřidává body ani ranky.</Text>
-    </ScrollView>
-  </Screen>
-);
-
 export default function App() {
   const [buildAccent, setBuildAccent] = useState(rankColors[0]);
   const [mindAccent, setMindAccent] = useState(rankColors[0]);
@@ -822,16 +782,7 @@ export default function App() {
           <Tab.Screen name="Mind">
             {() => <MindScreen onAccent={setMindAccent} />}
           </Tab.Screen>
-          <Tab.Screen name="Business">
-            {() => (
-              <Placeholder
-                title="Business"
-                label="OD NÁPADU K AKCI"
-                text="Prostor pro vlastní projekty a budoucí spolupracovníky. Samostatně od hlavního ranku."
-                items={["Moje projekty", "Síť spolupracovníků", "AI pomocník"]}
-              />
-            )}
-          </Tab.Screen>
+          <Tab.Screen name="Business">{() => <BusinessScreen />}</Tab.Screen>
           <Tab.Screen name="Me">{Me}</Tab.Screen>
         </Tab.Navigator>
       </NavigationContainer>

@@ -41,7 +41,7 @@ Porn Reboot má samostatný detailní dashboard s časovačem, Current/PRIME a p
 
 Doomscrolling má vlastní ukazatel zapsaných minut vůči dennímu limitu; Junk Food zvýrazňuje konkrétní pravidlo a dnešní stav. Oba programy mají barvy podle Current ranku, rozklikávací ranky, kalendář s detaily, grafy skutečných zápisů, manifest s původním podpisem a záznamy SOS. Statistiky oddělují dnešní koncept od potvrzených dní. SOS používá kruhový odpočet pěti minut pro Doomscrolling a dvou minut pro Junk Food.
 
-Me ukazuje ranky disciplín. Celkový rank zatím zůstává Copper: společný výpočet přes Quit, Build a Mind zatím není zavedený. Business je zatím úvodní obrazovka. Mind má vlastní plán, arénu a lekce (viz níže). Build má vlastní plánování a odznaky (viz níže).
+Me ukazuje ranky disciplín. Celkový rank zatím zůstává Copper: společný výpočet přes Quit, Build a Mind zatím není zavedený. Business má vlastní projekty a kroky (viz níže). Mind má vlastní plán, arénu a lekce (viz níže). Build má vlastní plánování a odznaky (viz níže).
 
 Data se ukládají pouze lokálně přes AsyncStorage (bez šifrování), nikam se neodesílají. Nejde zatím o produkční zabezpečení citlivých dat. Bez systémových blokací, selfie kamery, účtů, žebříčků a předplatného.
 
@@ -66,3 +66,13 @@ Mentální aréna má 60/120sekundová kola, tři obtížnosti a volbu sčítán
 Objevování odděluje dovednosti a témata o fungování světa. Tři úvodní lekce pokrývají Python, výrobu benzínu a složené úročení. Každý krok má krátké vysvětlení, interaktivní ukázku a otázku; delší vysvětlení lze rozbalit. Python ukázka simuluje konkrétní kód s měnitelnými vstupy, nejde o obecný interpreter. Rafinerie má volitelné frakce a schéma zpracování. Úročení umožňuje měnit čas a sazbu a okamžitě přepočítává modelový výsledek. Tlačítko pokračování je stále dostupné dole, odpovědi po správné volbě neztrácejí kontrast. Po potvrzení kroku se uloží postup; lze pokračovat po zavření aplikace. Závěrečný úkol vyžaduje správnou odpověď. Jde o připravené lekce, nikoli celý adaptivní kurz; generování vlastních témat a AI tutor zatím nejsou připojené.
 
 Časový blok ukládá deadline a funguje i po návratu do aplikace. Po doběhnutí je nutné skutečné dokončení potvrdit; zrušení XP ani splnění nedává. Blok spuštěný z dnešní aktivity ji při potvrzení označí jako splněnou. Časovač neověřuje vykonávání činnosti a nenahrazuje systémové blokování rozptýlení. Osm odznaků se odemyká ze splněných návyků, dokončených her, lekcí a bloků; po získání zůstávají. Data zůstávají v `quitter.mind.v1`; nové volitelné položky jsou kompatibilní se staršími zápisy. Načítání chrání poškozená data před přepsáním a uložení nabízí opakování při chybě.
+
+## Business
+
+Business má dvě jasně oddělené obrazovky: dnešní práci a moje projekty. Projekt obsahuje konkrétní očekávaný výsledek, poznámky, barvu a stav. Lze začít vlastním postupem nebo si nechat vložit čtyři upravitelné kroky pro ověření nápadu či zveřejnění výstupu. Šablona nepřidává termíny ani splnění.
+
+Kroky mají vlastní název, volitelný odhad 5–240 minut, datum a prioritu. Detail kroku dovoluje naplánování na dnešek, splnění, opravu a úpravu. Dnešní přehled zahrnuje nehotové starší kroky a upřednostní důležité. Budoucí a nenaplánované kroky nevydává za dnešní plán. Splněné kroky se zobrazují jen v den skutečného splnění, i pokud byl krok dokončen před plánovaným datem. Odhady nejsou měřený čas.
+
+Projekt se dokončí výslovně a až po splnění všech kroků. Znovuotevření umožní další změny; pozastavení vyřadí nehotové kroky z denního přehledu. Archiv projekt i kroky zachová a dovoluje obnovení. Smazání jednotlivého kroku vyžaduje potvrzení. Formulář při opuštění chrání neuložené změny.
+
+Business se ukládá samostatně do `quitter.business.v1`. Poškozená či nenačtená data se nepřepíšou, chyba zápisu nabízí opakování. Pravidla ani data Quit, Build a Mind se nemění; Business nepřidává XP do jejich ranků. Spolupráce, sdílení projektů, účty a AI nejsou připojené.
