@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Animated,
   AccessibilityInfo,
   useWindowDimensions,
+  AppState,
 } from "react-native";
 import {
   Button,
@@ -24,23 +25,45 @@ import {
   sameMode,
   type Problem,
 } from "./math";
-import { uid, type Difficulty, type GameResult, type Operation } from "./model";
+import {
+  uid,
+  type ArenaPreferences,
+  type Difficulty,
+  type GameResult,
+  type Operation,
+} from "./model";
 export function Arena({
   games,
   onResult,
   onActive,
+  preferences,
+  onPreferences,
 }: {
   games: GameResult[];
-  onResult: (g: GameResult) => void;
+  onResult: (g: GameResult) => number;
   onActive: (active: boolean) => void;
+  preferences?: ArenaPreferences;
+  onPreferences: (preferences: ArenaPreferences) => void;
 }) {
   const s = useMindStyles(),
     color = useContext(MindTheme),
     { height } = useWindowDimensions();
-  const compact = height < 760;
-  const [difficulty, setDifficulty] = useState<Difficulty>("normal"),
-    [duration, setDuration] = useState(120),
-    [operations, setOperations] = useState<Operation[]>(["+", "−"]);
+  const compact = height < 800;
+  const [availableHeight, setAvailableHeight] = useState(height - 100);
+  const tight = availableHeight < 560;
+  const [difficulty, setDifficulty] = useState<Difficulty>(
+      preferences?.difficulty ?? "normal",
+    ),
+    [duration, setDuration] = useState(preferences?.duration ?? 120),
+    [operations, setOperations] = useState<Operation[]>(
+      preferences?.operations ?? ["+", "−"],
+    ),
+    [modeOnly, setModeOnly] = useState(true),
+    [gainedXP, setGainedXP] = useState(0);
+  const preview = useMemo(
+    () => problem(difficulty, operations),
+    [difficulty, operations],
+  );
   const [round, setRound] = useState<{ id: string; end: number } | null>(null),
     [current, setCurrent] = useState(() => problem("normal", ["+", "−"])),
     [answer, setAnswer] = useState(""),
@@ -50,6 +73,8 @@ export function Arena({
     [bad, setBad] = useState(false),
     [combo, setCombo] = useState(0);
   const previousBest = useRef(0),
+    comboRef = useRef(0),
+    maxCombo = useRef(0),
     score = useRef(counts),
     ended = useRef(false),
     question = useRef(current),
@@ -90,9 +115,10 @@ export function Arena({
           difficulty,
           duration,
           operations,
+          maxCombo: maxCombo.current,
           ...score.current,
         };
-        callback.current(g);
+        setGainedXP(callback.current(g));
         setResult(g);
         setRound(null);
         run.current = null;
@@ -101,7 +127,11 @@ export function Arena({
     };
     tick();
     const t = setInterval(tick, 100);
-    return () => clearInterval(t);
+    const app = AppState.addEventListener("change", tick);
+    return () => {
+      clearInterval(t);
+      app.remove();
+    };
   }, [round]);
   useEffect(() => () => onActive(false), []);
   function next() {
@@ -131,12 +161,15 @@ export function Arena({
     setCounts(score.current);
     setResult(null);
     setCombo(0);
+    comboRef.current = 0;
+    maxCombo.current = 0;
     setLeft(duration);
     next();
     const r = { id: uid(), end: Date.now() + duration * 1000 };
     run.current = r;
     setRound(r);
     onActive(true);
+    onPreferences({ difficulty, duration, operations });
     input.current?.focus();
   }
   function enter(raw: string) {
@@ -149,7 +182,9 @@ export function Arena({
       score.current = { ...score.current, correct: score.current.correct + 1 };
       setCounts(score.current);
       const hadMistake = mistake.current;
-      setCombo((n) => (hadMistake ? 1 : n + 1));
+      comboRef.current = hadMistake ? 1 : comboRef.current + 1;
+      maxCombo.current = Math.max(maxCombo.current, comboRef.current);
+      setCombo(comboRef.current);
       next();
       return;
     }
@@ -164,6 +199,7 @@ export function Arena({
       };
       setCounts(score.current);
       setCombo(0);
+      comboRef.current = 0;
     }
   }
   function skip() {
@@ -176,12 +212,17 @@ export function Arena({
       setCounts(score.current);
     }
     setCombo(0);
+    comboRef.current = 0;
     next();
   }
   if (result)
     return (
       <ScrollView contentContainerStyle={s.body}>
         <Text style={s.label}>KOLO DOKONČENO</Text>
+        <Text style={s.muted}>
+          {difficultyNames[result.difficulty]} · {result.duration / 60} min ·{" "}
+          {result.operations.join(" ")}
+        </Text>
         <View style={[s.hero, { alignItems: "center", paddingVertical: 32 }]}>
           <Text style={[s.title, { fontSize: 80, color }]}>
             {result.correct}
@@ -192,6 +233,26 @@ export function Arena({
               ? "Nový osobní rekord!"
               : `Rekord režimu: ${Math.max(best, result.correct)}`}
           </Text>
+        </View>
+        <View style={[s.row, { alignItems: "stretch", gap: 8 }]}>
+          {[
+            [
+              `${Math.round((result.correct / (result.duration / 60)) * 10) / 10}`,
+              "správně / min",
+            ],
+            [`${result.maxCombo ?? 0}`, "nejlepší série"],
+            [`+${gainedXP}`, "získaná XP"],
+          ].map(([value, label]) => (
+            <View
+              key={label}
+              style={[s.card, { flex: 1, padding: 12, gap: 6 }]}
+            >
+              <Text style={[s.h2, { color }]}>{value}</Text>
+              <Text style={[s.muted, { fontSize: 11, lineHeight: 16 }]}>
+                {label}
+              </Text>
+            </View>
+          ))}
         </View>
         <View style={s.between}>
           <Text style={s.muted}>{result.mistakes} chyb / přeskočení</Text>
@@ -208,6 +269,9 @@ export function Arena({
           Změnit režim
         </Button>
         <Text style={s.muted}>
+          {gainedXP === 0
+            ? "Denní příspěvek arény nebo celkový limit XP už může být vyčerpaný. "
+            : ""}
           XP se přičítá jen za dokončené kolo. Rekordy porovnáváme při shodné
           obtížnosti, délce a operacích.
         </Text>
@@ -217,15 +281,23 @@ export function Arena({
     return (
       <ScrollView contentContainerStyle={s.body}>
         <Text style={s.label}>MENTÁLNÍ ARÉNA</Text>
-        <Text style={[s.title, { fontSize: 38 }]}>Mysli rychle.</Text>
+        <Text style={[s.title, { fontSize: 38 }]}>Najdi svůj rytmus.</Text>
         <View style={[s.hero, { paddingVertical: 26 }]}>
           <Text style={[s.title, { fontSize: 48, textAlign: "center", color }]}>
-            {"12 × 8"}
+            {preview.text}
           </Text>
           <Text style={[s.muted, { textAlign: "center" }]}>
             Napiš správný výsledek. Další příklad přijde okamžitě.
           </Text>
         </View>
+        <Text style={s.muted}>
+          {difficulty === "easy"
+            ? "Rozjezd: sčítání a odčítání do 10, lehčí násobilka."
+            : difficulty === "normal"
+              ? "Výzva: čísla do 30, násobení až 12 × 12."
+              : "Expert: čísla do 99, násobení až 20 × 20."}{" "}
+          Dělení má vždy celočíselný výsledek.
+        </Text>
         <Text style={s.label}>OBTÍŽNOST</Text>
         <View style={s.wrap}>
           {(Object.keys(difficultyNames) as Difficulty[]).map((d) => (
@@ -274,8 +346,28 @@ export function Arena({
         <Button onPress={start}>Spustit kolo</Button>
         {games.length > 0 && (
           <View style={s.card}>
-            <Text style={s.label}>POSLEDNÍ VÝKONY</Text>
+            <View style={[s.between, { flexWrap: "wrap" }]}>
+              <Text style={s.label}>POSLEDNÍ VÝKONY</Text>
+              <Chip
+                label={modeOnly ? "Tento režim" : "Všechny režimy"}
+                selected={modeOnly}
+                onPress={() => setModeOnly(!modeOnly)}
+              />
+            </View>
+            {!games.some(
+              (g) =>
+                !modeOnly || sameMode(g, { difficulty, duration, operations }),
+            ) && (
+              <Text style={s.muted}>
+                V tomto režimu ještě nemáš dokončené kolo.
+              </Text>
+            )}
             {games
+              .filter(
+                (g) =>
+                  !modeOnly ||
+                  sameMode(g, { difficulty, duration, operations }),
+              )
               .slice(-5)
               .reverse()
               .map((g) => (
@@ -297,9 +389,11 @@ export function Arena({
       </ScrollView>
     );
   return (
-    <View
-      style={{
-        flex: 1,
+    <ScrollView
+      onLayout={(e) => setAvailableHeight(e.nativeEvent.layout.height)}
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{
+        flexGrow: 1,
         padding: compact ? 16 : 20,
         gap: compact ? 10 : 16,
         justifyContent: "space-between",
@@ -332,12 +426,20 @@ export function Arena({
           gap: 12,
           alignItems: "center",
           paddingVertical: compact ? 6 : 18,
+          paddingHorizontal: 12,
+          borderRadius: 24,
+          backgroundColor: `${color}08`,
+          borderWidth: 1,
+          borderColor: `${color}20`,
         }}
       >
         <Text
           testID="mind-problem"
           accessibilityLiveRegion="polite"
-          style={[s.title, { fontSize: compact ? 44 : 56, letterSpacing: -1 }]}
+          style={[
+            s.title,
+            { fontSize: tight ? 36 : compact ? 44 : 56, letterSpacing: -1 },
+          ]}
         >
           {current.text}
         </Text>
@@ -406,7 +508,7 @@ export function Arena({
                 }
                 style={({ pressed }) => ({
                   flex: 1,
-                  height: compact ? 48 : 60,
+                  height: tight ? 44 : compact ? 48 : 60,
                   alignItems: "center",
                   justifyContent: "center",
                   borderRadius: 17,
@@ -435,10 +537,14 @@ export function Arena({
           </View>
         ))}
         <View style={s.between}>
-          <Text style={s.muted}>{counts.mistakes} chyb / přeskočení</Text>
-          <Text style={s.muted}>↷ přeskočit</Text>
+          <Text style={[s.muted, { fontSize: 12 }]}>
+            {counts.mistakes} chyb / přeskočení
+          </Text>
+          <Text style={[s.muted, { fontSize: 12 }]}>
+            Rekord {best} · série {combo}
+          </Text>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }

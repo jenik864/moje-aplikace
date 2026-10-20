@@ -1,3 +1,11 @@
+import { extraLessons } from "./topics.ts";
+export type LessonGroup = "skills" | "world" | "mind" | "finance";
+export const lessonGroups: Record<LessonGroup, string> = {
+  skills: "Dovednosti",
+  world: "Jak svět funguje",
+  mind: "Myšlení a paměť",
+  finance: "Peníze a čísla",
+};
 export type Step = {
   title: string;
   text: string;
@@ -9,6 +17,7 @@ export type Step = {
 };
 export type Lesson = {
   id: string;
+  group: LessonGroup;
   title: string;
   category: string;
   subtitle: string;
@@ -25,6 +34,7 @@ export type Lesson = {
 export const lessons: Lesson[] = [
   {
     id: "python-start",
+    group: "skills",
     title: "Tvůj první kód",
     category: "PROGRAMOVÁNÍ",
     subtitle: "Proměnné, podmínky a malý program v Pythonu.",
@@ -78,6 +88,7 @@ export const lessons: Lesson[] = [
   },
   {
     id: "oil-to-fuel",
+    group: "world",
     title: "Od ropy k benzínu",
     category: "JAK VĚCI FUNGUJÍ",
     subtitle: "Co se děje v rafinerii a proč nestačí ropu převařit.",
@@ -141,6 +152,7 @@ export const lessons: Lesson[] = [
   },
   {
     id: "compound-interest",
+    group: "finance",
     title: "Úrok z úroku",
     category: "FINANČNÍ GRAMOTNOST",
     subtitle: "Pochop složené úročení na jednoduchém příkladu.",
@@ -192,4 +204,21 @@ export const lessons: Lesson[] = [
     takeaway:
       "Umíš spočítat jednoduchý příklad složeného úročení a rozlišit zůstatek od kupní síly.",
   },
+  ...extraLessons,
 ];
+export const lessonById = (id: string) => lessons.find((l) => l.id === id);
+export function findLessons(query: string, group = "all") {
+  const normalize = (text: string) =>
+    text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLocaleLowerCase("cs-CZ");
+  const words = normalize(query.trim()).split(/\s+/).filter(Boolean);
+  return lessons.filter(
+    (l) =>
+      (group === "all" || l.group === group) &&
+      words.every((word) =>
+        normalize(`${l.title} ${l.subtitle} ${l.category}`).includes(word),
+      ),
+  );
+}

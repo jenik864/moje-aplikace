@@ -164,7 +164,7 @@ test("Late answers never count and records require exactly the same game mode", 
   assert.equal(sameMode(game(), { ...game(), operations: ["+"] }), false);
 });
 test("Every learning route has valid quizzes and an actionable final task", () => {
-  assert.equal(new Set(lessons.map((l) => l.id)).size, 3);
+  assert.equal(new Set(lessons.map((l) => l.id)).size, 9);
   for (const l of lessons) {
     assert.equal(l.steps.length, 3);
     for (const q of [...l.steps, l.practice])

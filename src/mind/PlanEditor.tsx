@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Button, Chip, Field, useMindStyles } from "./components";
 import { habitKinds, uid, type Habit, type HabitKind } from "./model";
@@ -7,10 +7,12 @@ export function PlanEditor({
   initial,
   onSave,
   onNavigate,
+  onDirty,
 }: {
   initial: Habit[];
   onSave: (habits: Habit[]) => void;
   onNavigate: () => void;
+  onDirty: (dirty: boolean) => void;
 }) {
   const s = useMindStyles();
   const [habits, setHabits] = useState(initial),
@@ -21,16 +23,30 @@ export function PlanEditor({
     [days, setDays] = useState([0, 1, 2, 3, 4, 5, 6]),
     [editing, setEditing] = useState<string | null>(null),
     [error, setError] = useState("");
+  const baseline = useRef(JSON.stringify(initial)).current;
+  const dirty =
+    JSON.stringify(habits) !== baseline ||
+    (open &&
+      (title !== "Četba" ||
+        minutes !== "20" ||
+        kind !== "reading" ||
+        days.join(",") !== "0,1,2,3,4,5,6" ||
+        editing !== null));
+  useEffect(() => {
+    onDirty(dirty);
+  }, [dirty, onDirty]);
+  useEffect(() => () => onDirty(false), [onDirty]);
   function add() {
     const n = Number(minutes);
     if (
       !title.trim() ||
+      title.trim().length > 80 ||
       !Number.isInteger(n) ||
       n < 1 ||
       n > 180 ||
       !days.length
     ) {
-      setError("Vyplň název, 1–180 minut a alespoň jeden den.");
+      setError("Vyplň název do 80 znaků, 1–180 minut a alespoň jeden den.");
       return;
     }
     const h: Habit = {

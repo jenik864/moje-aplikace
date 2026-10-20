@@ -29,6 +29,10 @@ import {
 import { Arena } from "./Arena";
 import { Learning } from "./Learning";
 import { LessonArt } from "./LessonLab";
+import { lessons } from "./lessons";
+import { learningNext, weekOverview } from "./insights";
+import { WeeklyInsights } from "./WeeklyInsights";
+import { DayActivity } from "./DayActivity";
 import { MindRanks } from "./Ranks";
 import { PlanEditor, weekdays } from "./PlanEditor";
 import { mindRank, mindXP, mindMilestones, dailyMindXP } from "./ranking";
@@ -46,6 +50,12 @@ import {
   completeLesson,
   startFocus,
   finishFocus,
+  addDayHabit,
+  removeDayHabit,
+  editHabitNote,
+  advanceLesson,
+  toggleSavedLesson,
+  saveLearningNote,
   type Habit,
   type MindData,
 } from "./model";
@@ -56,6 +66,8 @@ type Route =
   | "badges"
   | "focus"
   | "ranks"
+  | "add"
+  | "insights"
   | { habit: Habit; day: string };
 const pretty = (day: string) =>
   new Date(`${day}T12:00:00`).toLocaleDateString("cs-CZ", {
@@ -91,7 +103,10 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
     [route, setRoute] = useState<Route | null>(null),
     [notice, setNotice] = useState(""),
     [arenaActive, setArenaActive] = useState(false),
-    [exitArena, setExitArena] = useState(false);
+    [exitArena, setExitArena] = useState(false),
+    [planDirty, setPlanDirty] = useState(false),
+    [discardPlan, setDiscardPlan] = useState(false),
+    [learningId, setLearningId] = useState<string | undefined>();
   const modalScroll = useRef<ScrollView>(null);
   const tasks = habitsFor(data, selected),
     days = Array.from({ length: 7 }, (_, i) => shift(week, i)),
@@ -108,6 +123,8 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
     prime = Math.max(rank, data.prime ?? 0),
     nextXP = mindMilestones[rank + 1],
     earnedCount = Object.keys(data.earned).length;
+  const overview = weekOverview(data, week, today),
+    discovery = learningNext(data);
   useEffect(() => {
     const tick = () => setToday(dayKey());
     const t = setInterval(tick, 15000);
@@ -120,8 +137,12 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
   useEffect(() => {
     setNotice("");
     setExitArena(false);
+    setDiscardPlan(false);
     modalScroll.current?.scrollTo({ y: 0, animated: false });
   }, [route]);
+  useEffect(() => {
+    if (!arenaActive) setExitArena(false);
+  }, [arenaActive]);
   function change(fn: (d: MindData) => MindData) {
     try {
       update(fn);
@@ -136,7 +157,16 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
       setExitArena(true);
       return;
     }
+    if ((route === "plan" || route === "add") && planDirty) {
+      setDiscardPlan(true);
+      return;
+    }
+    setLearningId(undefined);
     setRoute(null);
+  }
+  function openLearning(id?: string) {
+    setLearningId(id);
+    setRoute("learn");
   }
   if (!loaded)
     return (
@@ -177,6 +207,8 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
             badges: "ODZNAKY",
             focus: "ČASOVÝ BLOK",
             ranks: "RANKY",
+            add: "JEDNORÁZOVĚ",
+            insights: "PŘEHLED",
           } as Record<string, string>
         )[route ?? ""] ?? "");
   const content = (
@@ -188,6 +220,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
             modalScroll.current?.scrollTo({ y: 0, animated: false })
           }
           initial={currentPlan}
+          onDirty={setPlanDirty}
           onSave={(habits) => {
             change((d) => setPlan(d, habits));
             setRoute(null);
@@ -197,6 +230,27 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
         />
       )}
       {route === "ranks" && <MindRanks data={data} />}
+      {route === "insights" && (
+        <WeeklyInsights
+          data={data}
+          week={week}
+          onWeek={(w) => {
+            setWeek(w);
+            setSelected(w);
+          }}
+          onPlan={() => setRoute("plan")}
+        />
+      )}
+      {route === "add" && (
+        <DayActivity
+          day={selected}
+          onDirty={setPlanDirty}
+          onSave={(habit) => {
+            change((d) => addDayHabit(d, selected, habit));
+            setRoute({ habit, day: selected });
+          }}
+        />
+      )}
       {route === "badges" && (
         <View style={{ gap: 18 }}>
           <Text style={s.h2}>Tvoje milníky.</Text>
@@ -237,6 +291,17 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
           onToggle={(note) =>
             change((d) => toggleHabit(d, route.day, route.habit.id, note))
           }
+          onNote={(note) =>
+            change((d) => editHabitNote(d, route.day, route.habit.id, note))
+          }
+          onRemove={
+            data.additions?.[route.day]?.some((h) => h.id === route.habit.id)
+              ? () => {
+                  change((d) => removeDayHabit(d, route.day, route.habit.id));
+                  setRoute(null);
+                }
+              : undefined
+          }
           onFocus={() => {
             change((d) => startFocus(d, route.habit.minutes, route.habit.id));
             setRoute("focus");
@@ -253,7 +318,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
       >
         {storageNotice}
         <View style={s.between}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={s.label}>QUITTER / ROZVÍJEJ SVOU HLAVU</Text>
             <Text style={s.title}>Mind.</Text>
           </View>
@@ -317,7 +382,9 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
             onPress={() =>
               nextTask
                 ? setRoute({ habit: nextTask, day: today })
-                : setRoute(todayTasks.length ? "learn" : "plan")
+                : todayTasks.length
+                  ? openLearning()
+                  : setRoute("plan")
             }
           >
             {nextTask
@@ -336,21 +403,58 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
           >
             <AppIcon name="math" color={color} size={32} />
             <Text style={s.h3}>Aréna</Text>
-            <Text style={s.muted}>Rychlost a přesnost</Text>
+            <Text style={s.muted}>
+              {data.games.length
+                ? `${data.games.length} dokončených kol`
+                : "Rychlost a přesnost"}
+            </Text>
             <Text style={s.link}>Hrát →</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Vybrat téma"
-            onPress={() => setRoute("learn")}
+            onPress={() => openLearning()}
             style={[s.card, { flex: 1, padding: 16, gap: 9 }]}
           >
             <AppIcon name="learn" color={color} size={32} />
             <Text style={s.h3}>Objevuj</Text>
-            <Text style={s.muted}>Učení v praxi</Text>
+            <Text style={s.muted}>
+              {Object.keys(data.lessons).length}/{lessons.length} témat
+            </Text>
             <Text style={s.link}>Prozkoumat →</Text>
           </Pressable>
         </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Doporučené téma ${discovery.suggested.title}`}
+          onPress={() => openLearning(discovery.suggested.id)}
+          style={[
+            s.card,
+            {
+              padding: 16,
+              gap: 12,
+              backgroundColor: `${color}08`,
+              borderColor: `${color}25`,
+            },
+          ]}
+        >
+          <Text style={s.label}>
+            {discovery.resume
+              ? "POKRAČUJ V OBJEVOVÁNÍ"
+              : "DNEŠNÍ TIP / ZKUS NĚCO NOVÉHO"}
+          </Text>
+          <View style={s.row}>
+            <LessonArt id={discovery.suggested.id} size={60} />
+            <View style={{ flex: 1, gap: 5 }}>
+              <Text style={s.h3}>{discovery.suggested.title}</Text>
+              <Text style={s.muted}>
+                {discovery.suggested.minutes} min ·{" "}
+                {discovery.suggested.category.toLocaleLowerCase("cs-CZ")}
+              </Text>
+            </View>
+            <Text style={s.link}>→</Text>
+          </View>
+        </Pressable>
         {data.focus ? (
           <Pressable
             accessibilityRole="button"
@@ -369,7 +473,9 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
             onPress={() => setRoute("focus")}
             style={[s.between, { paddingVertical: 4 }]}
           >
-            <Text style={s.muted}>Potřebuješ klid na jednu věc?</Text>
+            <Text style={[s.muted, { flex: 1 }]}>
+              Potřebuješ klid na jednu věc?
+            </Text>
             <Text style={s.link}>Časový blok →</Text>
           </Pressable>
         )}
@@ -445,6 +551,11 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
             <Text style={s.link}>Dnes</Text>
           </Pressable>
         </View>
+        <Text style={s.muted}>
+          {habitsFor(data, selected).reduce((n, h) => n + h.minutes, 0)} min v
+          plánu · {tasks.filter((h) => data.checks[selected]?.[h.id]).length}/
+          {tasks.length} splněno
+        </Text>
         <View style={{ gap: 10 }}>
           {tasks.length ? (
             tasks.map((h) => (
@@ -489,11 +600,34 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
             </View>
           )}
         </View>
+        <Button quiet onPress={() => setRoute("add")}>
+          + Přidat jen na {pretty(selected)}
+        </Button>
         <View style={s.between}>
           <Text style={s.muted}>{weekly} splnění v tomto týdnu</Text>
-          <Text style={s.muted}>
-            {Object.keys(data.lessons).length}/3 lekcí
-          </Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setRoute("insights")}
+          >
+            <Text style={[s.link, { fontSize: 13 }]}>Týdenní přehled →</Text>
+          </Pressable>
+        </View>
+        <View style={[s.row, { alignItems: "stretch", gap: 8 }]}>
+          {[
+            [String(overview.minutes), "minut aktivit"],
+            [String(overview.xp), "XP tento týden"],
+            [`${overview.activeDays}/7`, "aktivních dnů"],
+          ].map(([value, label]) => (
+            <View
+              key={label}
+              style={[s.card, { flex: 1, padding: 12, gap: 6 }]}
+            >
+              <Text style={[s.h2, { color }]}>{value}</Text>
+              <Text style={[s.muted, { fontSize: 11, lineHeight: 17 }]}>
+                {label}
+              </Text>
+            </View>
+          ))}
         </View>
         <Pressable
           accessibilityRole="button"
@@ -539,23 +673,39 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
             {route === "arena" ? (
               <Arena
                 games={data.games}
+                preferences={data.arenaPreferences}
+                onPreferences={(preferences) =>
+                  change((d) => ({ ...d, arenaPreferences: preferences }))
+                }
                 onActive={setArenaActive}
-                onResult={(g) => change((d) => recordGame(d, g))}
+                onResult={(g) => {
+                  let gain = 0;
+                  change((d) => {
+                    const next = recordGame(d, g);
+                    gain = mindXP(next) - mindXP(d);
+                    return next;
+                  });
+                  return gain;
+                }}
               />
             ) : route === "learn" ? (
               <Learning
-                completed={data.lessons}
-                progress={data.lessonProgress ?? {}}
+                data={data}
+                initialLessonId={learningId}
+                onSaved={(id) => change((d) => toggleSavedLesson(d, id))}
+                onNote={(id, note) =>
+                  change((d) => saveLearningNote(d, id, note))
+                }
                 onProgress={(id, step) =>
-                  change((d) => ({
-                    ...d,
-                    lessonProgress: { ...d.lessonProgress, [id]: step },
-                  }))
+                  change((d) => advanceLesson(d, id, step))
                 }
                 onComplete={(id) => {
-                  const gained =
-                    mindXP(completeLesson(data, id)) - mindXP(data);
-                  change((d) => completeLesson(d, id));
+                  let gained = 0;
+                  change((d) => {
+                    const next = completeLesson(d, id);
+                    gained = mindXP(next) - mindXP(d);
+                    return next;
+                  });
                   return gained;
                 }}
               />
@@ -597,6 +747,40 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
                     }}
                   >
                     Opustit kolo
+                  </Button>
+                </View>
+              </View>
+            )}
+            {discardPlan && (
+              <View
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: "#000d",
+                  justifyContent: "center",
+                  padding: 20,
+                }}
+              >
+                <View style={s.card}>
+                  <Text style={s.h2}>Máš neuložené úpravy.</Text>
+                  <Text style={s.muted}>
+                    Chceš se vrátit k úpravám, nebo je zahodit?
+                  </Text>
+                  <Button onPress={() => setDiscardPlan(false)}>
+                    Pokračovat v úpravách
+                  </Button>
+                  <Button
+                    quiet
+                    onPress={() => {
+                      setPlanDirty(false);
+                      setDiscardPlan(false);
+                      setRoute(null);
+                    }}
+                  >
+                    Zahodit úpravy
                   </Button>
                 </View>
               </View>
@@ -738,16 +922,21 @@ function HabitDetail({
   data,
   onToggle,
   onFocus,
+  onNote,
+  onRemove,
 }: {
   habit: Habit;
   day: string;
   data: MindData;
   onToggle: (note: string) => void;
   onFocus: () => void;
+  onNote: (note: string) => void;
+  onRemove?: () => void;
 }) {
   const s = useMindStyles();
   const checked = data.checks[day]?.[habit.id];
-  const [note, setNote] = useState(checked?.note ?? "");
+  const [note, setNote] = useState(checked?.note ?? ""),
+    [remove, setRemove] = useState(false);
   const future = day > dayKey();
   return (
     <View style={{ gap: 24 }}>
@@ -776,6 +965,15 @@ function HabitDetail({
       <Button disabled={future} onPress={() => onToggle(note)}>
         {checked ? "Zrušit označení splnění" : "✓ Označit jako splněné"}
       </Button>
+      {checked && (
+        <Button
+          quiet
+          disabled={note.trim() === checked.note}
+          onPress={() => onNote(note)}
+        >
+          Uložit poznámku
+        </Button>
+      )}
       {future && (
         <Text style={s.muted}>Budoucí aktivitu zatím nelze potvrdit.</Text>
       )}
@@ -788,9 +986,35 @@ function HabitDetail({
       )}
       {checked && (
         <Text style={s.muted}>
-          Poznámka byla uložená při potvrzení. Pro její změnu zruš označení a
-          potvrď aktivitu znovu.
+          Poznámku můžeš upravit bez rušení splnění. Změna poznámky nepřidává
+          XP.
         </Text>
+      )}
+      {onRemove && !checked && (
+        <View style={{ gap: 12 }}>
+          {remove ? (
+            <>
+              <Text style={s.muted}>
+                Odebrat tuto jednorázovou aktivitu z vybraného dne?
+              </Text>
+              <Button quiet onPress={() => setRemove(false)}>
+                Ponechat aktivitu
+              </Button>
+              <Button
+                disabled={
+                  data.focus?.day === day && data.focus.habitId === habit.id
+                }
+                onPress={onRemove}
+              >
+                Odebrat jednorázovou aktivitu
+              </Button>
+            </>
+          ) : (
+            <Button quiet onPress={() => setRemove(true)}>
+              Odebrat z tohoto dne
+            </Button>
+          )}
+        </View>
       )}
     </View>
   );

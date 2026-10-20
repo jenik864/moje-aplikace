@@ -2,6 +2,7 @@ import React, { useContext, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import Svg, { Rect, Path, Circle, Text as SvgText } from "react-native-svg";
 import { Chip, MindTheme, useMindStyles, mint } from "./components";
+import { ExtraLabs } from "./ExtraLabs";
 export function LessonArt({ id, size = 90 }: { id: string; size?: number }) {
   const color = useContext(MindTheme);
   return (
@@ -45,7 +46,7 @@ export function LessonArt({ id, size = 90 }: { id: string; size?: number }) {
           />
           <Circle cx="60" cy="35" r="4" fill={mint} />
         </>
-      ) : (
+      ) : id === "compound-interest" ? (
         <>
           <Path
             d="M24 88H96M26 78V69M44 78V55M62 78V40M80 78V24"
@@ -60,6 +61,30 @@ export function LessonArt({ id, size = 90 }: { id: string; size?: number }) {
             fill="none"
           />
         </>
+      ) : (
+        <>
+          <Path
+            d={
+              id === "internet"
+                ? "M25 60H95M60 25V95M29 37H91M29 83H91M60 25C28 40 28 80 60 95M60 25C92 40 92 80 60 95"
+                : id === "percentages"
+                  ? "M37 85L83 35M42 39A8 8 0 1 0 42 55A8 8 0 1 0 42 39M78 65A8 8 0 1 0 78 81A8 8 0 1 0 78 65"
+                  : id === "electricity"
+                    ? "M67 24L37 65H57L51 96L84 52H64Z"
+                    : id === "algorithms"
+                      ? "M29 34H91M43 60H77M54 86H66M60 34V86"
+                      : id === "memory"
+                        ? "M41 85C20 80 23 57 33 53C20 36 49 20 60 37C75 20 99 37 87 53C101 65 91 85 77 85M60 37V94M38 55L50 62M80 56L70 67"
+                        : "M60 24L89 35V59C89 79 60 97 60 97C60 97 31 79 31 59V35ZM46 59L56 69L76 47"
+            }
+            fill="none"
+            stroke={color}
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Circle cx="91" cy="27" r="4" fill={mint} />
+        </>
       )}
     </Svg>
   );
@@ -72,6 +97,8 @@ export function LessonLab({ id, step }: { id: string; step: number }) {
     [years, setYears] = useState(3),
     [rate, setRate] = useState(5),
     [fraction, setFraction] = useState(1);
+  if (!["python-start", "oil-to-fuel", "compound-interest"].includes(id))
+    return <ExtraLabs id={id} step={step} />;
   if (id === "python-start") {
     const code =
       step === 0

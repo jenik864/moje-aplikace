@@ -1,4 +1,5 @@
 import { mindRank } from "./ranking.ts";
+import { lessonById, lessons } from "./lessons.ts";
 export type HabitKind =
   | "reading"
   | "learning"
@@ -33,6 +34,16 @@ export type GameResult = {
   operations: Operation[];
   correct: number;
   mistakes: number;
+  maxCombo?: number;
+};
+export type ArenaPreferences = Pick<
+  GameResult,
+  "difficulty" | "duration" | "operations"
+>;
+export type LearningNotes = {
+  saved: string[];
+  notes: Record<string, string>;
+  reviewed: Record<string, number>;
 };
 export type Focus = {
   id: string;
@@ -46,6 +57,9 @@ export type MindData = {
   version: 1;
   prime?: number;
   lessonProgress?: Record<string, number>;
+  learning?: LearningNotes;
+  additions?: Record<string, Habit[]>;
+  arenaPreferences?: ArenaPreferences;
   plans: Plan[];
   checks: Record<string, Record<string, Check>>;
   games: GameResult[];
@@ -110,12 +124,123 @@ export function habitsFor(data: MindData, day: string): Habit[] {
     .filter((p) => p.from <= day)
     .at(-1);
   const weekday = (new Date(`${day}T12:00:00`).getDay() + 6) % 7;
-  const tasks = (p?.habits ?? []).filter((h) => h.days.includes(weekday));
+  const tasks = [
+    ...(p?.habits ?? []).filter((h) => h.days.includes(weekday)),
+    ...(data.additions?.[day] ?? []),
+  ];
   const checked = Object.values(data.checks[day] ?? {}).map((c) => c.habit);
   return [
     ...tasks.map((h) => checked.find((c) => c.id === h.id) ?? h),
     ...checked.filter((c) => !tasks.some((h) => h.id === c.id)),
   ];
+}
+export function addDayHabit(
+  data: MindData,
+  day: string,
+  habit: Habit,
+): MindData {
+  if (
+    !validDay(day) ||
+    !validHabit(habit) ||
+    habitsFor(data, day).some((h) => h.id === habit.id)
+  )
+    throw new Error("Zkontroluj název, den a délku aktivity.");
+  return {
+    ...data,
+    additions: {
+      ...data.additions,
+      [day]: [...(data.additions?.[day] ?? []), habit],
+    },
+  };
+}
+export function removeDayHabit(
+  data: MindData,
+  day: string,
+  id: string,
+): MindData {
+  if (
+    !data.additions?.[day]?.some((h) => h.id === id) ||
+    data.checks[day]?.[id] ||
+    (data.focus?.day === day && data.focus.habitId === id)
+  )
+    throw new Error("Dokončenou nebo právě běžící aktivitu nejprve ukonči.");
+  return {
+    ...data,
+    additions: {
+      ...data.additions,
+      [day]: data.additions[day].filter((h) => h.id !== id),
+    },
+  };
+}
+export function editHabitNote(
+  data: MindData,
+  day: string,
+  id: string,
+  note: string,
+): MindData {
+  const check = data.checks[day]?.[id];
+  if (!check) throw new Error("Aktivita ještě není splněná.");
+  return {
+    ...data,
+    checks: {
+      ...data.checks,
+      [day]: {
+        ...data.checks[day],
+        [id]: { ...check, note: note.trim().slice(0, 1000) },
+      },
+    },
+  };
+}
+const learningNotes = (data: MindData): LearningNotes =>
+  data.learning ?? { saved: [], notes: {}, reviewed: {} };
+export function saveLearningNote(
+  data: MindData,
+  id: string,
+  note: string,
+): MindData {
+  if (!lessonById(id)) throw new Error("Neznámá lekce.");
+  const current = learningNotes(data);
+  return {
+    ...data,
+    learning: {
+      ...current,
+      notes: { ...current.notes, [id]: note.slice(0, 1000) },
+    },
+  };
+}
+export function toggleSavedLesson(data: MindData, id: string): MindData {
+  if (!lessonById(id)) throw new Error("Neznámá lekce.");
+  const current = learningNotes(data);
+  return {
+    ...data,
+    learning: {
+      ...current,
+      saved: current.saved.includes(id)
+        ? current.saved.filter((v) => v !== id)
+        : [...current.saved, id],
+    },
+  };
+}
+export function advanceLesson(
+  data: MindData,
+  id: string,
+  step: number,
+): MindData {
+  const lesson = lessonById(id);
+  if (
+    !lesson ||
+    !Number.isInteger(step) ||
+    step < 0 ||
+    step > lesson.steps.length
+  )
+    throw new Error("Neplatný krok lekce.");
+  return {
+    ...data,
+    lessonProgress: {
+      ...data.lessonProgress,
+      [id]: Math.max(data.lessonProgress?.[id] ?? 0, step),
+    },
+  };
 }
 export function setPlan(
   data: MindData,
@@ -169,17 +294,23 @@ function validGame(g: any): g is GameResult {
     g &&
     typeof g.id === "string" &&
     Number.isFinite(g.at) &&
+    g.at >= 0 &&
     ["easy", "normal", "hard"].includes(g.difficulty) &&
     [60, 120].includes(g.duration) &&
     Array.isArray(g.operations) &&
     g.operations.length > 0 &&
+    new Set(g.operations).size === g.operations.length &&
     g.operations.every((o: unknown) =>
       ["+", "−", "×", "÷"].includes(String(o)),
     ) &&
     Number.isInteger(g.correct) &&
     g.correct >= 0 &&
     Number.isInteger(g.mistakes) &&
-    g.mistakes >= 0
+    g.mistakes >= 0 &&
+    (g.maxCombo === undefined ||
+      (Number.isInteger(g.maxCombo) &&
+        g.maxCombo >= 0 &&
+        g.maxCombo <= g.correct))
   );
 }
 export function completeLesson(
@@ -187,8 +318,25 @@ export function completeLesson(
   id: string,
   now = Date.now(),
 ): MindData {
-  if (!["python-start", "oil-to-fuel", "compound-interest"].includes(id))
-    throw new Error("Neznámá lekce.");
+  if (!lessonById(id)) throw new Error("Neznámá lekce.");
+  if (!Number.isFinite(now) || now < 0)
+    throw new Error("Neplatný čas dokončení.");
+  if (Object.hasOwn(data.lessons, id)) {
+    const current = learningNotes(data);
+    return award(
+      {
+        ...data,
+        learning: {
+          ...current,
+          reviewed: {
+            ...current.reviewed,
+            [id]: Math.max(data.lessons[id], current.reviewed[id] ?? 0, now),
+          },
+        },
+      },
+      now,
+    );
+  }
   return award(
     { ...data, lessons: { ...data.lessons, [id]: data.lessons[id] ?? now } },
     now,
@@ -274,7 +422,20 @@ export const badges = [
   {
     id: "all-lessons",
     name: "Zvídavá hlava",
-    description: "Dokonči všechny 3 úvodní lekce.",
+    description:
+      "Dokonči lekce Tvůj první kód, Od ropy k benzínu a Úrok z úroku.",
+    target: 3,
+  },
+  {
+    id: "explorer",
+    name: "Devět nových obzorů",
+    description: "Dokonči všech 9 témat knihovny.",
+    target: 9,
+  },
+  {
+    id: "reviewer",
+    name: "Zpátky k poznání",
+    description: "Projdi znovu 3 různá dokončená témata včetně jejich otázek.",
     target: 3,
   },
   {
@@ -302,8 +463,15 @@ export function badgeValue(data: MindData, id: string) {
         ? 1
         : 0;
     case "lesson":
-    case "all-lessons":
       return Object.keys(data.lessons).length;
+    case "all-lessons":
+      return ["python-start", "oil-to-fuel", "compound-interest"].filter((id) =>
+        Object.hasOwn(data.lessons, id),
+      ).length;
+    case "explorer":
+      return lessons.filter((l) => Object.hasOwn(data.lessons, l.id)).length;
+    case "reviewer":
+      return Object.keys(data.learning?.reviewed ?? {}).length;
     case "focus":
       return Object.values(data.sessions).reduce((n, s) => n + s.minutes, 0);
     default:
@@ -329,11 +497,48 @@ export function parseMind(raw: string): MindData {
       (!object(d.lessonProgress) ||
         !Object.entries(d.lessonProgress).every(
           ([id, step]) =>
-            ["python-start", "oil-to-fuel", "compound-interest"].includes(id) &&
+            !!lessonById(id) &&
             Number.isInteger(step) &&
             Number(step) >= 0 &&
-            Number(step) <= 3,
+            Number(step) <= lessonById(id)!.steps.length,
         ))) ||
+    (d.additions !== undefined &&
+      (!object(d.additions) ||
+        !Object.entries(d.additions).every(
+          ([day, items]: [string, any]) =>
+            validDay(day) &&
+            Array.isArray(items) &&
+            items.every(validHabit) &&
+            new Set(items.map((h: Habit) => h.id)).size === items.length,
+        ))) ||
+    (d.learning !== undefined &&
+      (!object(d.learning) ||
+        !Array.isArray(d.learning.saved) ||
+        !d.learning.saved.every(
+          (id: unknown) => typeof id === "string" && !!lessonById(id),
+        ) ||
+        new Set(d.learning.saved).size !== d.learning.saved.length ||
+        !object(d.learning.notes) ||
+        !Object.entries(d.learning.notes).every(
+          ([id, n]) =>
+            !!lessonById(id) && typeof n === "string" && n.length <= 1000,
+        ) ||
+        !object(d.learning.reviewed) ||
+        !Object.entries(d.learning.reviewed).every(
+          ([id, t]) =>
+            !!lessonById(id) &&
+            time(t) &&
+            time(d.lessons?.[id]) &&
+            Number(t) >= d.lessons[id],
+        ))) ||
+    (d.arenaPreferences !== undefined &&
+      !validGame({
+        ...d.arenaPreferences,
+        id: "preferences",
+        at: 0,
+        correct: 0,
+        mistakes: 0,
+      })) ||
     !Array.isArray(d.plans) ||
     !d.plans.every(
       (p: any) =>
@@ -359,9 +564,7 @@ export function parseMind(raw: string): MindData {
     !d.games.every(validGame) ||
     !object(d.lessons) ||
     !Object.entries(d.lessons).every(
-      ([id, t]) =>
-        ["python-start", "oil-to-fuel", "compound-interest"].includes(id) &&
-        time(t),
+      ([id, t]) => !!lessonById(id) && time(t),
     ) ||
     !object(d.earned) ||
     !Object.entries(d.earned).every(
