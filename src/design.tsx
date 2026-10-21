@@ -1,5 +1,14 @@
-import React, { useId } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import React, { useEffect, useId, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  Animated,
+  AccessibilityInfo,
+  Easing,
+  type ViewStyle,
+} from "react-native";
 import Svg, {
   Circle,
   Ellipse,
@@ -19,31 +28,153 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ranks } from "./model";
 import { RankArtwork } from "./RankArtwork";
 
-export const ink = "#080b12";
-export const surface = "#111620";
-export const border = "#ffffff10";
+export const ink = "#070A12";
+export const surface = "#101724";
+export const border = "#ffffff14";
+export const palette = {
+  Quit: "#E8F18B",
+  Build: "#62EDBC",
+  Mind: "#B7A0FF",
+  Business: "#79BDFF",
+  Me: "#F5BBA0",
+};
+
+export function useReducedMotion() {
+  const [reduced, setReduced] = useState(true);
+  useEffect(() => {
+    let live = true;
+    void AccessibilityInfo.isReduceMotionEnabled().then((v) => {
+      if (live) setReduced(v);
+    });
+    const sub = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      setReduced,
+    );
+    return () => {
+      live = false;
+      sub.remove();
+    };
+  }, []);
+  return reduced;
+}
+// One quiet entrance, never an endless animation behind reading or training.
+export function Reveal({
+  children,
+  style,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  style?: ViewStyle;
+  delay?: number;
+}) {
+  const reduced = useReducedMotion(),
+    appear = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (reduced) {
+      appear.setValue(1);
+      return;
+    }
+    appear.setValue(0.94);
+    const animation = Animated.timing(appear, {
+      toValue: 1,
+      duration: 440,
+      delay,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [reduced, delay, appear]);
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          opacity: appear,
+          transform: [
+            {
+              translateY: appear.interpolate({
+                inputRange: [0.94, 1],
+                outputRange: [8, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
 const uid = (value: string) => value.replace(/[^a-zA-Z0-9]/g, "");
 
-export function AmbientBackdrop({ color = "#8eabdf" }: { color?: string }) {
+export function AmbientBackdrop({ color = palette.Mind }: { color?: string }) {
   const id = `ambient${uid(useId())}`;
+  const glow = useRef(new Animated.Value(1)).current,
+    reduced = useReducedMotion();
+  useEffect(() => {
+    if (reduced) {
+      glow.setValue(1);
+      return;
+    }
+    glow.setValue(0.35);
+    const motion = Animated.timing(glow, {
+      toValue: 1,
+      duration: 900,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    motion.start();
+    return () => motion.stop();
+  }, [color, reduced, glow]);
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <Animated.View
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFill, { opacity: glow }]}
+    >
       <Svg
         width="100%"
-        height={620}
-        viewBox="0 0 400 620"
+        height="100%"
+        viewBox="0 0 400 900"
         preserveAspectRatio="xMidYMin slice"
+        accessible={false}
       >
         <Defs>
-          <RadialGradient id={id} cx="55%" cy="22%" rx="65%" ry="50%">
-            <Stop offset="0" stopColor={color} stopOpacity={0.12} />
-            <Stop offset="0.5" stopColor={color} stopOpacity={0.04} />
+          <RadialGradient id={`${id}a`} cx="100%" cy="0%" rx="95%" ry="53%">
+            <Stop offset="0" stopColor={color} stopOpacity={0.22} />
+            <Stop offset=".46" stopColor={color} stopOpacity={0.065} />
             <Stop offset="1" stopColor={ink} stopOpacity={0} />
           </RadialGradient>
+          <RadialGradient id={`${id}b`} cx="-15%" cy="65%" rx="88%" ry="45%">
+            <Stop offset="0" stopColor="#6577F2" stopOpacity={0.13} />
+            <Stop offset="1" stopColor={ink} stopOpacity={0} />
+          </RadialGradient>
+          <LinearGradient id={`${id}line`} x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor={color} stopOpacity={0} />
+            <Stop offset=".55" stopColor={color} stopOpacity={0.2} />
+            <Stop offset="1" stopColor={color} stopOpacity={0} />
+          </LinearGradient>
         </Defs>
-        <Rect width={400} height={620} fill={`url(#${id})`} />
+        <Rect width={400} height={900} fill={`url(#${id}a)`} />
+        <Rect width={400} height={900} fill={`url(#${id}b)`} />
+        <Path
+          d="M110 -75C420 40 485 155 348 312C250 426 286 546 477 623M138 -88C460 45 516 175 382 331"
+          stroke={`url(#${id}line)`}
+          strokeWidth={0.65}
+          fill="none"
+        />
+        {Array.from({ length: 24 }, (_, i) => (
+          <Circle
+            key={i}
+            cx={24 + (i % 6) * 64}
+            cy={44 + Math.floor(i / 6) * 94}
+            r={0.6}
+            fill="#fff"
+            opacity={0.08}
+          />
+        ))}
       </Svg>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -132,6 +263,7 @@ export function RankStage({
   onPress,
   accessibilityLabel,
   label = "TVŮJ POSTUP",
+  showPrime = true,
 }: {
   rank: number;
   prime: number | null;
@@ -143,6 +275,7 @@ export function RankStage({
   onPress: () => void;
   accessibilityLabel: string;
   label?: string;
+  showPrime?: boolean;
 }) {
   return (
     <Pressable
@@ -152,44 +285,57 @@ export function RankStage({
         text: `${ranks[rank]}, ${value} ${unit}. ${nextLabel}`,
       }}
       onPress={onPress}
-      style={({ pressed }) => [
-        d.stage,
-        { borderColor: `${color}25` },
-        pressed && { opacity: 0.85 },
-      ]}
+      style={({ pressed }) => [d.stage, pressed && { opacity: 0.72 }]}
     >
       <View style={d.between}>
         <Text style={[d.overline, { color }]}>{label}</Text>
-        <View style={[d.prime, { borderColor: `${color}25` }]}>
-          <Text style={d.primeText}>
-            PRIME · {prime === null ? "—" : ranks[prime]}
-          </Text>
-        </View>
+        <AppIcon name="Build" color={color} size={18} />
       </View>
-      <RankStageArt rank={rank} color={color} />
-      <View style={d.between}>
-        <View style={{ gap: 4 }}>
+      <View
+        style={{ flexDirection: "row", alignItems: "center", minHeight: 138 }}
+      >
+        <View style={{ flex: 1, gap: 8, zIndex: 1 }}>
           <Text style={d.micro}>CURRENT RANK</Text>
           <Text style={d.rank}>{ranks[rank]}</Text>
+          {showPrime && (
+            <Text style={[d.primeText, { color }]}>
+              PRIME · {prime === null ? "—" : ranks[prime]}
+            </Text>
+          )}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "baseline",
+              gap: 8,
+              flexWrap: "wrap",
+              marginTop: 6,
+            }}
+          >
+            <Text style={[d.score, { color }]}>{value}</Text>
+            <Text style={d.micro}>{unit}</Text>
+          </View>
         </View>
-        <View style={{ alignItems: "flex-end", gap: 4 }}>
-          <Text style={[d.score, { color }]}>{value}</Text>
-          <Text style={d.micro}>{unit}</Text>
+        <View
+          pointerEvents="none"
+          style={{ width: "49%", maxWidth: 180, marginRight: -10 }}
+        >
+          <RankStageArt rank={rank} color={color} />
         </View>
       </View>
-      <View style={d.track}>
+      <View style={[d.track, { backgroundColor: `${color}18` }]}>
         <View
           style={{
             width: `${Math.max(0, Math.min(1, progress)) * 100}%`,
-            height: 3,
+            height: 2,
             backgroundColor: color,
-            borderRadius: 3,
           }}
         />
       </View>
       <View style={d.between}>
         <Text style={[d.caption, { flex: 1 }]}>{nextLabel}</Text>
-        <AppIcon name="Build" color={color} size={16} />
+        <Text style={[d.micro, { color }]}>
+          {Math.round(Math.max(0, Math.min(1, progress)) * 100)} %
+        </Text>
       </View>
     </Pressable>
   );
@@ -251,74 +397,99 @@ export function AppIcon({
 export function ProjectArtwork() {
   const id = `project${uid(useId())}`;
   return (
-    <Svg width="100%" height={190} viewBox="0 0 340 210" accessible={false}>
+    <Svg width="100%" height={180} viewBox="0 0 340 200" accessible={false}>
       <Defs>
         <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor="#91acd6" stopOpacity={0.2} />
-          <Stop offset="1" stopColor="#101a2d" stopOpacity={0.5} />
+          <Stop offset="0" stopColor="#C1E7FF" />
+          <Stop offset=".5" stopColor={palette.Business} />
+          <Stop offset="1" stopColor="#5A58C6" />
         </LinearGradient>
+        <RadialGradient id={`${id}glow`}>
+          <Stop offset="0" stopColor={palette.Business} stopOpacity={0.22} />
+          <Stop offset="1" stopColor={palette.Business} stopOpacity={0} />
+        </RadialGradient>
       </Defs>
-      <Circle cx={170} cy={106} r={93} stroke="#91acd618" fill="none" />
-      <Circle
-        cx={170}
-        cy={106}
-        r={74}
-        stroke="#91acd614"
+      <Ellipse cx={180} cy={108} rx={155} ry={90} fill={`url(#${id}glow)`} />
+      <Path
+        d="M25 164H317M54 183L285 42M33 151L242 22"
+        stroke="#ffffff10"
+        strokeWidth={0.6}
+      />
+      {[
+        [70, 134, 42],
+        [128, 103, 54],
+        [186, 65, 68],
+      ].map(([x, y, h], i) => (
+        <G key={i}>
+          <Path d={`M${x} ${y}l38 -20l36 19l-38 21Z`} fill={`url(#${id})`} />
+          <Path
+            d={`M${x} ${y}v${h}l36 19v-${h}Z`}
+            fill="#4564A5"
+            opacity={0.8}
+          />
+          <Path d={`M${x + 36} ${y + 20}l38 -21v${h}l-38 21Z`} fill="#203962" />
+          <Path
+            d={`M${x} ${y}l36 20l38 -21`}
+            fill="none"
+            stroke="#BDE9FF"
+            strokeWidth={0.8}
+          />
+        </G>
+      ))}
+      <Path
+        d="M43 128C82 132 94 89 132 91S184 32 224 42L280 23"
         fill="none"
-        strokeDasharray="2 8"
-      />
-      <G rotation={-12} origin="170,105">
-        <Rect
-          x={78}
-          y={37}
-          width={174}
-          height={126}
-          rx={20}
-          fill="#0e1725"
-          stroke="#91acd626"
-        />
-      </G>
-      <G rotation={8} origin="170,105">
-        <Rect
-          x={87}
-          y={48}
-          width={174}
-          height={126}
-          rx={20}
-          fill={`url(#${id})`}
-          stroke="#91acd648"
-        />
-      </G>
-      <Rect
-        x={94}
-        y={43}
-        width={152}
-        height={127}
-        rx={19}
-        fill="#141f31"
-        stroke="#c5d3ec55"
-      />
-      <Path
-        d="M114 71H158M114 82H144"
-        stroke="#c5d3ec"
-        strokeOpacity={0.45}
-        strokeLinecap="round"
-      />
-      <Path
-        d="M115 144L137 119L162 131L192 96L224 109"
-        stroke="#c5d3ec"
+        stroke={palette.Build}
         strokeWidth={2}
-        fill="none"
         strokeLinecap="round"
-        strokeLinejoin="round"
       />
-      <Circle cx={192} cy={96} r={4} fill="#c5d3ec" />
-      <Path d="M280 60V70M275 65H285" stroke="#c5d3ec" strokeOpacity={0.6} />
-      <Circle cx={55} cy={134} r={2} fill="#91acd6" />
+      <Circle cx={280} cy={23} r={4} fill={palette.Build} />
+      <Circle
+        cx={280}
+        cy={23}
+        r={10}
+        fill="none"
+        stroke={palette.Build}
+        opacity={0.2}
+      />
+      <Path d="M279 158V169M274 163H285" stroke="#CAE8FF" opacity={0.55} />
     </Svg>
   );
 }
 
+function TabGlyph({
+  name,
+  color,
+  selected,
+}: {
+  name: string;
+  color: string;
+  selected: boolean;
+}) {
+  const reduced = useReducedMotion(),
+    scale = useRef(new Animated.Value(selected ? 1.1 : 1)).current;
+  useEffect(() => {
+    const target = selected ? 1.1 : 1;
+    if (reduced) {
+      scale.setValue(target);
+      return;
+    }
+    const motion = Animated.spring(scale, {
+      toValue: target,
+      damping: 20,
+      stiffness: 250,
+      mass: 0.7,
+      useNativeDriver: true,
+    });
+    motion.start();
+    return () => motion.stop();
+  }, [selected, reduced, scale]);
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <AppIcon name={name} color={color} size={23} />
+    </Animated.View>
+  );
+}
 export function PremiumTabs({
   state,
   descriptors,
@@ -362,11 +533,11 @@ export function PremiumTabs({
               }
               style={({ pressed }) => [
                 d.tab,
-                selected && { backgroundColor: `${color}12` },
+                selected && { backgroundColor: "transparent" },
                 pressed && { opacity: 0.6 },
               ]}
             >
-              <AppIcon name={route.name} color={color} size={22} />
+              <TabGlyph name={route.name} color={color} selected={selected} />
               <Text numberOfLines={1} style={[d.tabText, { color }]}>
                 {route.name}
               </Text>
@@ -383,12 +554,11 @@ export function PremiumTabs({
 
 const d = StyleSheet.create({
   stage: {
-    backgroundColor: "#10151ee8",
-    borderWidth: 1,
-    borderRadius: 28,
-    padding: 20,
-    gap: 10,
-    overflow: "hidden",
+    backgroundColor: "transparent",
+    borderBottomWidth: 1,
+    borderBottomColor: border,
+    paddingVertical: 16,
+    gap: 12,
   },
   between: {
     flexDirection: "row",
@@ -413,8 +583,8 @@ const d = StyleSheet.create({
   primeText: { color: "#c4cddb", fontSize: 9, fontWeight: "600" },
   rank: {
     color: "#f4f6fa",
-    fontSize: 30,
-    fontWeight: "600",
+    fontSize: 36,
+    fontWeight: "500",
     letterSpacing: -1,
   },
   score: {
@@ -430,30 +600,33 @@ const d = StyleSheet.create({
     overflow: "hidden",
     borderRadius: 3,
   },
-  dockSpace: { backgroundColor: ink, paddingTop: 8, paddingHorizontal: 12 },
+  dockSpace: {
+    backgroundColor: "#070A12F8",
+    paddingTop: 0,
+    paddingHorizontal: 14,
+    borderTopWidth: 1,
+    borderTopColor: border,
+  },
   dock: {
     flexDirection: "row",
-    borderWidth: 1,
-    borderColor: "#ffffff12",
-    backgroundColor: "#141a25",
-    borderRadius: 23,
-    padding: 5,
+    backgroundColor: "transparent",
+    paddingTop: 5,
     gap: 2,
   },
   tab: {
     flex: 1,
-    minHeight: 55,
-    borderRadius: 18,
+    minHeight: 56,
+    borderRadius: 0,
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
   },
-  tabText: { fontSize: 9, fontWeight: "600", letterSpacing: 0.2 },
+  tabText: { fontSize: 10, fontWeight: "600", letterSpacing: 0.2 },
   tabDot: {
     position: "absolute",
-    bottom: 3,
+    top: -6,
     height: 2,
-    width: 12,
+    width: 28,
     borderRadius: 2,
   },
 });

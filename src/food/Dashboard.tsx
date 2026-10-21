@@ -1,4 +1,4 @@
-import { RankStageArt, surface } from "../design";
+import { RankStage, palette } from "../design";
 import React from "react";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import {
@@ -35,7 +35,7 @@ export function FoodDashboard({
   sos: (pillarId?: string) => void;
 }) {
   const rank = rankOf("food", p, now),
-    accent = rankColors[rank],
+    accent = palette.Quit,
     s = dailyStyles(accent);
   const today = dayKey(new Date(now)),
     past = new Date(now);
@@ -75,7 +75,16 @@ export function FoodDashboard({
     rank === ranks.length - 1 ? 1 : (points - floor) / (nextThreshold - floor);
   const answerRows = (key: string) =>
     foodDay(p, key).pillars.map((pillar, index) => (
-      <View key={pillar.id} style={{ gap: 12, paddingTop: index ? 20 : 0 }}>
+      <View
+        key={pillar.id}
+        style={{
+          gap: 14,
+          paddingTop: 22,
+          paddingBottom: 10,
+          borderTopWidth: 1,
+          borderColor: "#ffffff16",
+        }}
+      >
         <Text style={s.label}>PILÍŘ {index + 1}</Text>
         <View style={s.row}>
           <Text style={[s.title, { flex: 1 }]}>{pillar.label}</Text>
@@ -89,8 +98,10 @@ export function FoodDashboard({
                 minWidth: 52,
                 alignItems: "center",
                 justifyContent: "center",
-                borderRadius: 12,
-                backgroundColor: tint(accent, 0.14),
+                borderRadius: 22,
+                borderBottomWidth: 1,
+                borderColor: "#F5BBA050",
+                backgroundColor: "transparent",
               }}
             >
               <Text style={{ color: accent, fontWeight: "600", fontSize: 12 }}>
@@ -138,11 +149,11 @@ export function FoodDashboard({
                     style={{
                       flex: 1,
                       minHeight: 48,
-                      borderRadius: 12,
+                      borderRadius: 0,
                       padding: 12,
                       alignItems: "center",
                       justifyContent: "center",
-                      borderWidth: 1,
+                      borderBottomWidth: 1,
                       opacity: locked ? 0.4 : 1,
                       borderColor:
                         answer === value
@@ -155,7 +166,7 @@ export function FoodDashboard({
                           ? value
                             ? tint(accent, 0.18)
                             : "#382129"
-                          : "#ffffff04",
+                          : "transparent",
                     }}
                   >
                     <Text
@@ -189,64 +200,23 @@ export function FoodDashboard({
         <Text style={s.label}>MALÉ VOLBY. VLASTNÍ TEMPO.</Text>
         <Text style={s.heading}>Junk Food</Text>
       </View>
-      <Pressable
-        {...button("ranks", "Otevřít společný rank Junk Food")}
-        style={[
-          s.card,
-          {
-            alignItems: "center",
-            paddingVertical: 28,
-            gap: 14,
-            borderColor: tint(accent, 0.18),
-            backgroundColor: surface,
-          },
-        ]}
-      >
-        <Text style={s.label}>TVŮJ JUNK FOOD RANK</Text>
-        <View style={{ width: "100%" }}>
-          <RankStageArt rank={rank} color={accent} />
-        </View>
-        <Text style={{ color: accent, fontSize: 34, fontWeight: "600" }}>
-          {ranks[rank]}
-        </Text>
-        <Text style={s.muted}>
-          {Math.round(points)} BODŮ · JEDEN SPOLEČNÝ POSTUP
-        </Text>
-        <View style={{ width: "100%", gap: 12, marginTop: 10 }}>
-          <View style={s.row}>
-            <Text style={s.body}>
-              {rank === ranks.length - 1
-                ? "Nejvyšší rank dosažen"
-                : `Další rank · ${ranks[rank + 1]}`}
-            </Text>
-            <Text style={s.link}>
-              {rank === ranks.length - 1
-                ? "✓"
-                : `${Math.round(points)} / ${nextThreshold}`}
-            </Text>
-          </View>
-          <View
-            style={{
-              height: 5,
-              borderRadius: 3,
-              backgroundColor: "#ffffff0c",
-              overflow: "hidden",
-            }}
-          >
-            <View
-              style={{
-                height: 5,
-                width: `${Math.min(100, Math.max(0, progress * 100))}%`,
-                backgroundColor: accent,
-              }}
-            />
-          </View>
-          <Text style={s.muted}>
-            Každý uzavřený den až 100 bodů. Všechny pilíře mají stejnou váhu.
-          </Text>
-        </View>
-        <Text style={s.link}>PROHLÉDNOUT RANKY ›</Text>
-      </Pressable>
+      <RankStage
+        rank={rank}
+        prime={null}
+        showPrime={false}
+        color={rankColors[rank]}
+        label="JUNK FOOD / SPOLEČNÝ POSTUP"
+        value={Math.round(points).toLocaleString("cs-CZ")}
+        unit="POTVRZENÝCH BODŮ"
+        progress={progress}
+        nextLabel={
+          rank === ranks.length - 1
+            ? "Nejvyšší rank dosažen"
+            : `${nextThreshold - Math.round(points)} bodů do ${ranks[rank + 1]}`
+        }
+        onPress={() => open("ranks")}
+        accessibilityLabel="Otevřít společný rank Junk Food"
+      />
       <View style={s.card}>
         <View style={s.row}>
           <Text style={s.label}>
@@ -263,9 +233,13 @@ export function FoodDashboard({
         </Text>
         <Pressable
           {...button("pillars", "Prohlédnout vybrané pilíře")}
-          style={[s.button, { backgroundColor: "#ffffff08" }]}
+          style={{
+            paddingVertical: 16,
+            borderBottomWidth: 1,
+            borderColor: "#ffffff24",
+          }}
         >
-          <Text style={[s.buttonText, { color: accent }]}>
+          <Text style={[s.body, { color: accent, fontWeight: "600" }]}>
             MOJE VYBRANÉ PILÍŘE
           </Text>
         </Pressable>
@@ -335,7 +309,7 @@ export function FoodDashboard({
                 style={{
                   width: "100%",
                   minHeight: 42,
-                  borderRadius: 12,
+                  borderRadius: 24,
                   alignItems: "center",
                   justifyContent: "center",
                   borderWidth: 1,
@@ -382,8 +356,10 @@ export function FoodDashboard({
         style={[
           s.card,
           {
-            backgroundColor: tint(accent, 0.07),
-            borderColor: tint(accent, 0.28),
+            backgroundColor: "transparent",
+            borderColor: "#F5BBA055",
+            borderLeftWidth: 2,
+            paddingLeft: 18,
             gap: 16,
           },
         ]}

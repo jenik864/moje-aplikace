@@ -14,7 +14,7 @@ import {
 } from "react-native-safe-area-context";
 import { Screen, rankColors } from "../ui";
 import { ranks } from "../model";
-import { RankStage, AppIcon } from "../design";
+import { RankStage, AppIcon, palette } from "../design";
 import { useMind } from "./useMind";
 import {
   useMindStyles,
@@ -22,6 +22,7 @@ import {
   Chip,
   Field,
   Orbit,
+  MindSignal,
   Progress,
   mint,
   MindTheme,
@@ -83,7 +84,7 @@ export function MindScreen({
   onAccent?: (color: string) => void;
   store: ReturnType<typeof useMind>;
 }) {
-  const color = rankColors[mindRank(store.data)];
+  const color = palette.Mind;
   useEffect(() => {
     if (store.loaded) onAccent?.(color);
   }, [color, store.loaded, onAccent]);
@@ -319,7 +320,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
         {storageNotice}
         <View style={s.between}>
           <View style={{ flex: 1 }}>
-            <Text style={s.label}>QUITTER / ROZVÍJEJ SVOU HLAVU</Text>
+            <Text style={s.label}>PROSTOR PRO TVOU HLAVU</Text>
             <Text style={s.title}>Mind.</Text>
           </View>
           <Pressable
@@ -333,7 +334,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
         <RankStage
           rank={rank}
           prime={prime}
-          color={color}
+          color={rankColors[rank]}
           label="MIND / TVŮJ POSTUP"
           value={xp.toLocaleString("cs-CZ")}
           unit="XP"
@@ -350,33 +351,33 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
           onPress={() => setRoute("ranks")}
           accessibilityLabel="Detail ranku Mind"
         />
-        <View style={[s.hero, { padding: 18, gap: 12 }]}>
+        <View style={{ gap: 18, paddingTop: 2, paddingBottom: 8 }}>
           <View style={s.between}>
             <Text style={s.label}>DNES / {pretty(today)}</Text>
-            <Text style={[s.link, { color }]}>
+            <Text style={[s.muted, { color: mint }]}>
               {todayTasks.length
                 ? `${done}/${todayTasks.length} splněno`
                 : "Tvůj start"}
             </Text>
           </View>
-          <Text style={s.h2}>
-            {nextTask
-              ? nextTask.title
-              : todayTasks.length
-                ? "Dnešní plán splněn."
-                : "Začni jedním návykem."}
-          </Text>
-          <View style={s.between}>
-            <Text style={s.muted}>
-              {nextTask
-                ? `${nextTask.minutes} min · ${habitKinds[nextTask.kind]}`
-                : todayTasks.length
-                  ? "Ještě máš prostor něco objevit."
-                  : "Četba, učení, meditace…"}
-            </Text>
-            <Text style={[s.muted, { color }]}>
-              {dailyMindXP(data)[today] ?? 0}/60 XP
-            </Text>
+          <View style={[s.row, { gap: 8, alignItems: "center" }]}>
+            <View style={{ flex: 1, gap: 12 }}>
+              <Text style={[s.h2, { fontSize: 32, letterSpacing: -1.2 }]}>
+                {nextTask
+                  ? nextTask.title
+                  : todayTasks.length
+                    ? "Dnes už máš náskok."
+                    : "Dej hlavě prostor."}
+              </Text>
+              <Text style={s.muted}>
+                {nextTask
+                  ? `${nextTask.minutes} min · ${habitKinds[nextTask.kind]}`
+                  : todayTasks.length
+                    ? "Dnešní plán splněn. Co objevíš dál?"
+                    : "Začni četbou, učením nebo chvílí klidu."}
+              </Text>
+            </View>
+            <MindSignal width={125} height={120} />
           </View>
           <Button
             onPress={() =>
@@ -393,60 +394,98 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
                 ? "Objevit něco nového →"
                 : "Sestavit můj plán"}
           </Button>
+          <View style={[s.between, { gap: 16 }]}>
+            <Text style={[s.muted, { fontSize: 11 }]}>
+              MALÝ KROK. KAŽDÝ DEN.
+            </Text>
+            <Text style={[s.link, { fontSize: 12 }]}>
+              {dailyMindXP(data)[today] ?? 0}/60 XP dnes
+            </Text>
+          </View>
         </View>
-        <View style={[s.row, { alignItems: "stretch", gap: 10 }]}>
+        <View
+          style={[
+            s.row,
+            {
+              alignItems: "stretch",
+              gap: 0,
+              borderTopWidth: 1,
+              borderBottomWidth: 1,
+              borderColor: "#ffffff13",
+            },
+          ]}
+        >
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Vstoupit do arény"
             onPress={() => setRoute("arena")}
-            style={[s.card, { flex: 1, padding: 16, gap: 9 }]}
+            style={({ pressed }) => [
+              { flex: 1, paddingVertical: 20, paddingRight: 15, gap: 8 },
+              pressed && { opacity: 0.65 },
+            ]}
           >
-            <AppIcon name="math" color={color} size={32} />
-            <Text style={s.h3}>Aréna</Text>
-            <Text style={s.muted}>
+            <View style={s.between}>
+              <AppIcon name="math" color={mint} size={26} />
+              <AppIcon name="Build" color={mint} size={18} />
+            </View>
+            <Text style={[s.h3, { fontSize: 23, fontWeight: "500" }]}>
+              Aréna
+            </Text>
+            <Text style={[s.muted, { fontSize: 12 }]}>
               {data.games.length
                 ? `${data.games.length} dokončených kol`
-                : "Rychlost a přesnost"}
+                : "Rychlost. Přesnost. Rytmus."}
             </Text>
-            <Text style={s.link}>Hrát →</Text>
           </Pressable>
+          <View
+            style={{
+              width: 1,
+              backgroundColor: "#ffffff13",
+              marginVertical: 20,
+            }}
+          />
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Vybrat téma"
             onPress={() => openLearning()}
-            style={[s.card, { flex: 1, padding: 16, gap: 9 }]}
+            style={({ pressed }) => [
+              { flex: 1, paddingVertical: 20, paddingLeft: 20, gap: 8 },
+              pressed && { opacity: 0.65 },
+            ]}
           >
-            <AppIcon name="learn" color={color} size={32} />
-            <Text style={s.h3}>Objevuj</Text>
-            <Text style={s.muted}>
-              {Object.keys(data.lessons).length}/{lessons.length} témat
+            <View style={s.between}>
+              <AppIcon name="learn" color={color} size={26} />
+              <AppIcon name="Build" color={color} size={18} />
+            </View>
+            <Text style={[s.h3, { fontSize: 23, fontWeight: "500" }]}>
+              Objevuj
             </Text>
-            <Text style={s.link}>Prozkoumat →</Text>
+            <Text style={[s.muted, { fontSize: 12 }]}>
+              {Object.keys(data.lessons).length}/{lessons.length} témat · Nový
+              obzor
+            </Text>
           </Pressable>
         </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Doporučené téma ${discovery.suggested.title}`}
           onPress={() => openLearning(discovery.suggested.id)}
-          style={[
-            s.card,
-            {
-              padding: 16,
-              gap: 12,
-              backgroundColor: `${color}08`,
-              borderColor: `${color}25`,
-            },
+          style={({ pressed }) => [
+            { gap: 13, paddingVertical: 8 },
+            pressed && { opacity: 0.7 },
           ]}
         >
           <Text style={s.label}>
             {discovery.resume
               ? "POKRAČUJ V OBJEVOVÁNÍ"
-              : "DNEŠNÍ TIP / ZKUS NĚCO NOVÉHO"}
+              : "DNEŠNÍ TIP / MALÝ NOVÝ OBZOR"}
           </Text>
           <View style={s.row}>
-            <LessonArt id={discovery.suggested.id} size={60} />
+            <LessonArt id={discovery.suggested.id} size={54} />
             <View style={{ flex: 1, gap: 5 }}>
-              <Text style={s.h3}>{discovery.suggested.title}</Text>
+              <Text style={[s.h3, { fontWeight: "500" }]}>
+                {discovery.suggested.title}
+              </Text>
               <Text style={s.muted}>
                 {discovery.suggested.minutes} min ·{" "}
                 {discovery.suggested.category.toLocaleLowerCase("cs-CZ")}
@@ -460,7 +499,10 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
             accessibilityRole="button"
             accessibilityLabel="Pokračovat v časovém bloku"
             onPress={() => setRoute("focus")}
-            style={[s.card, { borderColor: color }]}
+            style={[
+              s.card,
+              { borderColor: color, borderLeftWidth: 2, paddingLeft: 18 },
+            ]}
           >
             <Text style={s.label}>ČASOVÝ BLOK</Text>
             <FocusSummary end={data.focus.end} />
@@ -523,7 +565,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
                 style={[
                   s.day,
                   day === selected && {
-                    backgroundColor: `${color}22`,
+                    backgroundColor: `${color}24`,
                     borderColor: color,
                   },
                   day === today &&
@@ -564,7 +606,10 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
                 accessibilityRole="button"
                 accessibilityLabel={`Aktivita ${h.title}`}
                 onPress={() => setRoute({ habit: h, day: selected })}
-                style={[s.card, { padding: 16, gap: 8 }]}
+                style={[
+                  s.card,
+                  { paddingVertical: 20, paddingHorizontal: 0, gap: 8 },
+                ]}
               >
                 <View style={s.between}>
                   <View style={{ flex: 1, gap: 4 }}>
@@ -620,7 +665,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
           ].map(([value, label]) => (
             <View
               key={label}
-              style={[s.card, { flex: 1, padding: 12, gap: 6 }]}
+              style={{ flex: 1, paddingVertical: 12, paddingRight: 8, gap: 6 }}
             >
               <Text style={[s.h2, { color }]}>{value}</Text>
               <Text style={[s.muted, { fontSize: 11, lineHeight: 17 }]}>
@@ -633,7 +678,11 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
           accessibilityRole="button"
           accessibilityLabel="Otevřít odznaky Mind"
           onPress={() => setRoute("badges")}
-          style={[s.card, s.between, { padding: 16 }]}
+          style={[
+            s.card,
+            s.between,
+            { paddingVertical: 20, paddingHorizontal: 0 },
+          ]}
         >
           <View style={{ flex: 1, gap: 5 }}>
             <Text style={s.label}>TVOJE MILNÍKY</Text>
@@ -656,7 +705,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
               style={[
                 s.between,
                 {
-                  paddingHorizontal: 20,
+                  paddingHorizontal: 24,
                   paddingVertical: 16,
                   borderBottomWidth: 1,
                   borderColor: "#282b30",
@@ -731,7 +780,16 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
                   padding: 20,
                 }}
               >
-                <View style={s.card}>
+                <View
+                  style={[
+                    s.card,
+                    {
+                      backgroundColor: "#151326",
+                      padding: 24,
+                      borderRadius: 24,
+                    },
+                  ]}
+                >
                   <Text style={s.h2}>Opustit rozehrané kolo?</Text>
                   <Text style={s.muted}>
                     Čas zatím běží. Nedokončené kolo se nezapíše.
@@ -764,7 +822,16 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
                   padding: 20,
                 }}
               >
-                <View style={s.card}>
+                <View
+                  style={[
+                    s.card,
+                    {
+                      backgroundColor: "#151326",
+                      padding: 24,
+                      borderRadius: 24,
+                    },
+                  ]}
+                >
                   <Text style={s.h2}>Máš neuložené úpravy.</Text>
                   <Text style={s.muted}>
                     Chceš se vrátit k úpravám, nebo je zahodit?

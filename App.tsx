@@ -42,7 +42,7 @@ import {
 
 import { Screen, rankColors } from "./src/ui";
 
-import { PremiumTabs, surface, ink, border } from "./src/design";
+import { PremiumTabs, surface, ink, border, palette } from "./src/design";
 
 import { programContent } from "./src/programContent";
 import { SosProtocol } from "./src/SosProtocol";
@@ -556,15 +556,13 @@ export default function App() {
   }, [now, ready]);
   const update = (id: ProgramId, p: Program) =>
     setData((prev) => ({ ...prev, [id]: p }));
-  const activeData = data[activeProgram];
-  const quitAccent =
-    rankColors[activeData ? rankOf(activeProgram, activeData, now) : 0];
+  const quitAccent = palette.Quit;
   const Quit = () => (
     <Screen accent={quitAccent}>
       <View style={[s.header, { paddingTop: 8, paddingBottom: 8 }]}>
         <View>
-          <Text style={s.brand}>QUITTER</Text>
-          <Text style={[s.heading, { fontSize: 27, letterSpacing: -0.8 }]}>
+          <Text style={[s.brand, { color: palette.Quit }]}>Q U I T T E R</Text>
+          <Text style={[s.heading, { fontSize: 42, letterSpacing: -1.8 }]}>
             Quit.
           </Text>
         </View>
@@ -591,9 +589,8 @@ export default function App() {
               s.programTab,
               {
                 borderBottomColor:
-                  activeProgram === id ? quitAccent + "70" : "transparent",
-                backgroundColor:
-                  activeProgram === id ? quitAccent + "12" : "transparent",
+                  activeProgram === id ? quitAccent : "transparent",
+                backgroundColor: "transparent",
               },
             ]}
             onPress={() => {
@@ -757,11 +754,8 @@ export default function App() {
                 Quit: quitAccent,
                 Build: buildAccent,
                 Mind: mindAccent,
-                Business: "#c5d3ec",
-                Me:
-                  combined.rank === null
-                    ? "#c5d3ec"
-                    : rankColors[combined.rank],
+                Business: palette.Business,
+                Me: palette.Me,
               }}
             />
           )}
@@ -877,7 +871,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 13,
     borderBottomWidth: 2,
-    borderRadius: 13,
+    borderRadius: 0,
   },
   stepTrack: { flexDirection: "row", gap: 6 },
   stepSegment: { flex: 1, height: 3, borderRadius: 2 },
@@ -929,17 +923,15 @@ const s = StyleSheet.create({
   tabs: {
     flexDirection: "row",
     justifyContent: "space-around",
-    borderBottomWidth: 1,
-    borderBottomColor: "transparent",
-    padding: 4,
-    marginHorizontal: 20,
+    padding: 0,
+    marginHorizontal: 22,
     marginTop: 6,
     marginBottom: 8,
-    borderRadius: 16,
-    gap: 3,
-    backgroundColor: "#ffffff04",
-    borderWidth: 1,
-    borderColor: "#ffffff0c",
+    borderRadius: 0,
+    gap: 8,
+    backgroundColor: "transparent",
+    borderBottomWidth: 1,
+    borderBottomColor: border,
   },
   smallTab: { fontSize: 12, fontWeight: "700" },
   eyebrow: { color: "#aaa", fontSize: 10, letterSpacing: 2, fontWeight: "700" },
@@ -952,29 +944,29 @@ const s = StyleSheet.create({
   body: { color: "#c0c9d7", fontSize: 15, lineHeight: 24 },
   muted: { color: "#94a1b4", fontSize: 12, lineHeight: 19 },
   panel: {
-    backgroundColor: surface,
-    borderRadius: 22,
-    padding: 20,
+    backgroundColor: "transparent",
+    borderRadius: 0,
+    paddingVertical: 20,
     gap: 12,
-    borderWidth: 1,
+    borderBottomWidth: 1,
     borderColor: border,
   },
   cardTitle: { color: "#eee", fontSize: 14, fontWeight: "700" },
   button: {
-    borderRadius: 16,
-    minHeight: 50,
+    borderRadius: 28,
+    minHeight: 52,
     paddingVertical: 17,
     paddingHorizontal: 18,
     alignItems: "center",
   },
   buttonText: { fontSize: 12, fontWeight: "800", letterSpacing: 0.8 },
   input: {
-    backgroundColor: surface,
+    backgroundColor: "#ffffff04",
     color: "#fff",
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 10,
     borderColor: "#ffffff18",
-    borderWidth: 1,
+    borderBottomWidth: 1,
     fontSize: 16,
     textAlignVertical: "top",
   },

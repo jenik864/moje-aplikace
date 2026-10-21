@@ -20,6 +20,7 @@ import { tint } from "../porn/theme";
 import { ConsistencyMatrix } from "../ConsistencyMatrix";
 import { dailySummary, type DailyId } from "./analytics";
 import { dailyStyles } from "./styles";
+import { palette } from "../design";
 import { DailyChart } from "./Charts";
 export type DailyDetail = "ranks" | "matrix" | "analytics" | "manifest" | "sos";
 const titles = {
@@ -46,7 +47,7 @@ export function DailyDetails({
 }) {
   const rank = rankOf(id, p, now),
     prime = id === "food" ? rank : Math.max(rank, p.prime),
-    accent = rankColors[rank];
+    accent = palette.Quit;
   const s = dailyStyles(accent),
     stats = dailySummary(p, now);
   const [editing, setEditing] = React.useState(false),
@@ -66,7 +67,7 @@ export function DailyDetails({
     >
       {kind && (
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          <Screen modal>
+          <Screen modal accent={accent}>
             <View style={s.header}>
               <Pressable
                 accessibilityRole="button"
@@ -201,11 +202,11 @@ export function DailyDetails({
                         s.card,
                         s.row,
                         {
-                          padding: 16,
+                          paddingVertical: 18,
+                          paddingHorizontal: 0,
                           borderColor:
                             i === rank ? tint(rankColors[i], 0.6) : "#2b2728",
-                          backgroundColor:
-                            i === rank ? tint(rankColors[i], 0.08) : "#101012",
+                          backgroundColor: "transparent",
                         },
                       ]}
                     >
@@ -330,8 +331,8 @@ export function DailyDetails({
                     style={[
                       s.card,
                       {
-                        backgroundColor: tint(accent, 0.05),
-                        borderColor: tint(accent, 0.22),
+                        backgroundColor: "transparent",
+                        borderColor: tint(accent, 0.4),
                       },
                     ]}
                   >

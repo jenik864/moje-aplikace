@@ -37,7 +37,10 @@ export function Library() {
   }
   return (
     <View style={{ gap: 16 }}>
-      <Text style={s.title}>Poznej svůj pohyb.</Text>
+      <Text style={s.label}>KNIHOVNA POHYBU / ANATOMIE</Text>
+      <Text style={[s.title, { fontSize: 38, lineHeight: 42 }]}>
+        Poznej svůj pohyb.
+      </Text>
       <Text style={s.muted}>
         {exercises.length} cviků. Anatomie, technika a alternativa.
       </Text>
@@ -130,18 +133,19 @@ export function Library() {
           style={[
             s.between,
             {
-              padding: 12,
-              backgroundColor: "#111620",
-              borderColor: "#ffffff10",
-              borderWidth: 1,
-              borderRadius: 18,
-              gap: 12,
+              paddingVertical: 18,
+              paddingHorizontal: 0,
+              backgroundColor: "transparent",
+              borderColor: "#ffffff16",
+              borderTopWidth: 1,
+              borderRadius: 0,
+              gap: 16,
             },
           ]}
         >
           <MuscleThumbnail exercise={e} />
           <View style={{ flex: 1, gap: 6 }}>
-            <Text style={[s.h2, { fontSize: 17, lineHeight: 22 }]}>
+            <Text style={[s.h2, { fontSize: 20, lineHeight: 25 }]}>
               {e.name}
             </Text>
             <Text style={s.small}>{e.equipment}</Text>

@@ -49,7 +49,7 @@ export function DailyChart({
               x2={310}
               y1={y}
               y2={y}
-              stroke="#312b2b"
+              stroke="#ffffff13"
               strokeDasharray="3 5"
             />
             {id === "scroll" && (
@@ -88,7 +88,7 @@ export function DailyChart({
               y={115 - height}
               width={12}
               height={height}
-              rx={3}
+              rx={1.5}
               fill={d.pending ? tint(color, 0.12) : tint(color, 0.75)}
               stroke={d.pending ? color : "none"}
               strokeWidth={1}
@@ -102,7 +102,7 @@ export function DailyChart({
               width={12}
               height={3}
               rx={1}
-              fill="#393131"
+              fill="#ffffff25"
             />
           );
         })}
@@ -142,9 +142,9 @@ export function DailyChart({
                     minHeight: 44,
                     paddingHorizontal: 12,
                     justifyContent: "center",
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: selected === d.key ? accent : "#3b3131",
+                    borderRadius: 0,
+                    borderBottomWidth: 1,
+                    borderColor: selected === d.key ? accent : "#ffffff22",
                     backgroundColor:
                       selected === d.key ? tint(accent, 0.12) : "transparent",
                   }}

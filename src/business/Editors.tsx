@@ -39,7 +39,7 @@ export function ProjectEditor({
   }, [title, outcome, notes, color, template, project, onDirty]);
   return (
     <>
-      <Text style={s.h2}>
+      <Text style={[s.h2, { fontSize: 32, lineHeight: 37, letterSpacing: -1 }]}>
         {project ? "Dolaď svůj projekt." : "Co chceš dostat do světa?"}
       </Text>
       <Text style={s.muted}>
@@ -63,7 +63,7 @@ export function ProjectEditor({
       {!project && (
         <>
           <Text style={s.label}>JAK CHCEŠ ZAČÍT</Text>
-          {templates.map((t) => (
+          {templates.map((t, index) => (
             <Pressable
               key={t.id}
               accessibilityRole="radio"
@@ -71,15 +71,24 @@ export function ProjectEditor({
               aria-checked={template === t.id}
               onPress={() => setTemplate(t.id)}
               style={[
-                s.card,
-                { padding: 16 },
+                s.template,
                 template === t.id && {
-                  borderColor: `${colors[color]}70`,
-                  backgroundColor: `${colors[color]}0d`,
+                  borderLeftColor: colors[color],
+                  backgroundColor: `${colors[color]}06`,
                 },
               ]}
             >
-              <Text style={s.h3}>{t.name}</Text>
+              <View style={s.between}>
+                <Text style={[s.h3, { flex: 1 }]}>{t.name}</Text>
+                <Text
+                  style={[
+                    s.number,
+                    { color: template === t.id ? colors[color] : "#536078" },
+                  ]}
+                >
+                  {template === t.id ? "✓" : `0${index + 1}`}
+                </Text>
+              </View>
               <Text style={s.muted}>{t.description}</Text>
               {t.tasks.length > 0 && (
                 <Text style={s.small}>
@@ -101,20 +110,22 @@ export function ProjectEditor({
             aria-pressed={color === i}
             onPress={() => setColor(i)}
             style={[
-              s.chip,
               {
                 width: 48,
+                height: 48,
+                justifyContent: "center",
                 alignItems: "center",
-                paddingHorizontal: 0,
-                borderColor: color === i ? c : "#ffffff12",
+                borderWidth: 1,
+                borderRadius: 24,
+                borderColor: color === i ? c : "transparent",
               },
             ]}
           >
             <View
               style={{
-                width: 17,
-                height: 17,
-                borderRadius: 9,
+                width: 28,
+                height: 28,
+                borderRadius: 14,
                 backgroundColor: c,
               }}
             />
@@ -199,7 +210,7 @@ export function TaskEditor({
   return (
     <>
       <Text style={s.label}>{project.title.toUpperCase()}</Text>
-      <Text style={s.h2}>
+      <Text style={[s.h2, { fontSize: 32, lineHeight: 37, letterSpacing: -1 }]}>
         {task ? "Dolaď další krok." : "Malý krok. Jasný výsledek."}
       </Text>
       <Field

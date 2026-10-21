@@ -28,7 +28,10 @@ export function SeriesChart({
   const [selected, setSelected] = React.useState<string | null>("current");
   const maximum = Math.max(60000, ...data.map((d) => d.duration));
   const points = data.map((item, i) => ({
-    x: data.length === 1 ? 178 : 78 + (i * 198) / (data.length - 1),
+    x:
+      data.length === 1
+        ? 150
+        : (compact ? 12 : 62) + (i * (compact ? 276 : 222)) / (data.length - 1),
     y: 140 - (item.duration / maximum) * 105,
   }));
   const path = points
@@ -40,8 +43,9 @@ export function SeriesChart({
     <View>
       <Svg
         width="100%"
-        height={compact ? 112 : 190}
+        height={compact ? 165 : 210}
         viewBox="0 0 300 190"
+        preserveAspectRatio="none"
         accessibilityLabel="Délky posledních sérií"
       >
         <Defs>
@@ -53,11 +57,11 @@ export function SeriesChart({
         {[35, 87, 140].map((y, i) => (
           <React.Fragment key={y}>
             <Line
-              x1="78"
-              x2="282"
+              x1={compact ? 12 : 62}
+              x2="288"
               y1={y}
               y2={y}
-              stroke="#34302d"
+              stroke="#ffffff12"
               strokeDasharray="3 5"
             />
             {!compact && (
@@ -99,7 +103,7 @@ export function SeriesChart({
               cx={point.x}
               cy={point.y}
               r={data[i].current ? 5 : 3}
-              fill={data[i].current ? "#111111" : accent}
+              fill={data[i].current ? "#070a12" : accent}
               stroke={accent}
               strokeWidth={data[i].current ? 2 : 0}
               onPress={() => setSelected(data[i].id)}
@@ -184,7 +188,7 @@ export function ActivityChart({ p, now }: { p: Program; now: number }) {
               x2="288"
               y1={y}
               y2={y}
-              stroke="#34302d"
+              stroke="#ffffff12"
               strokeDasharray="3 5"
             />
             <SvgText x="8" y={y + 3} fontSize="10" fill="#beb7b1">
@@ -271,11 +275,11 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   chip: {
-    borderWidth: 1,
-    borderColor: "#34302d",
-    paddingVertical: 11,
+    borderBottomWidth: 1,
+    borderColor: "#ffffff14",
+    paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 12,
+    borderRadius: 0,
   },
 });
 

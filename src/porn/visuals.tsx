@@ -23,10 +23,10 @@ import { ranks } from "../model";
 import { useRankTheme, tint } from "./theme";
 export const palette = {
   violet: "#b79afa",
-  text: "#f4f6fa",
-  muted: "#94a1b4",
+  text: "#f3f4ef",
+  muted: "#929eae",
   border: "#ffffff10",
-  panel: "#111620",
+  panel: "#10151f",
   red: "#ff777e",
 };
 export function RankMark({ rank, size = 42 }: { rank: number; size?: number }) {
@@ -61,7 +61,7 @@ export function TimerDial({
   const frame = design.frame;
   const { width } = useWindowDimensions();
   const size = Math.min(
-    preview ? 236 : 292,
+    preview ? 236 : 260,
     Math.max(160, width - (preview ? 128 : 84)),
   );
   const font =
@@ -113,9 +113,9 @@ export function TimerDial({
           cx="150"
           cy="150"
           r="146"
-          fill={`url(#${id}bezel)`}
+          fill="none"
           stroke={tint(accent, 0.22)}
-          strokeWidth={frame === 0 ? 0.7 : 1}
+          strokeWidth={frame === 0 ? 0.7 : 1.2}
         />
         <Circle
           cx={150}
@@ -441,9 +441,9 @@ export function TimerDial({
           y={172}
           textAnchor="middle"
           fontFamily={font}
-          fontSize={days > 999 ? 54 : 76}
+          fontSize={days > 999 ? 54 : 78}
           fontWeight="300"
-          fill={accent}
+          fill="#f3f4ef"
         >
           {days}
         </SvgText>

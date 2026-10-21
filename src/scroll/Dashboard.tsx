@@ -20,6 +20,14 @@ import { dailyStyles } from "../daily/styles";
 import { DailyDetails } from "../daily/Details";
 import { usageSummary, timeThresholds } from "./scoring";
 import { usageNative } from "./native";
+import { palette } from "../design";
+import Svg, {
+  Circle,
+  Path,
+  Defs,
+  LinearGradient,
+  Stop,
+} from "react-native-svg";
 const minutesLabel = (minutes: number | null) =>
   minutes === null ? "—" : `${Math.round(minutes)} min`;
 const monitored =
@@ -37,7 +45,7 @@ export function ScrollDashboard({
 }) {
   const stats = usageSummary(p, now),
     rank = rankOf("scroll", p, now),
-    accent = rankColors[rank];
+    accent = palette.Quit;
   const s = dailyStyles(accent);
   const [panel, setPanel] = React.useState<
     "connect" | "ranks" | "data" | "manifest" | "sos" | null
@@ -152,7 +160,7 @@ export function ScrollDashboard({
                         3,
                         (day.minutes / max) * (expanded ? 145 : 80),
                       ),
-                      borderRadius: 5,
+                      borderRadius: 2,
                       backgroundColor:
                         day.minutes > p.limit ? "#ee8a9b" : accent,
                     }}
@@ -198,9 +206,10 @@ export function ScrollDashboard({
         style={[
           s.card,
           {
-            backgroundColor: "#111620",
-            borderColor: tint(accent, 0.18),
-            padding: 22,
+            backgroundColor: "transparent",
+            borderColor: "#ffffff16",
+            paddingVertical: 24,
+            paddingHorizontal: 0,
             gap: 22,
           },
         ]}
@@ -216,19 +225,34 @@ export function ScrollDashboard({
             {status === "connected" ? "● MĚŘENO" : "○ NEPŘIPOJENO"}
           </Text>
         </View>
-        <View style={{ flexDirection: "row", alignItems: "baseline", gap: 10 }}>
-          <Text
-            style={{
-              color: over ? "#ffb0bd" : "#f5eee8",
-              fontSize: 62,
-              fontWeight: "500",
-              letterSpacing: -3,
-              fontVariant: ["tabular-nums"],
-            }}
-          >
-            {current ? Math.round(current.minutes) : "—"}
-          </Text>
-          <Text style={s.body}>minut</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text
+              style={{
+                color: over ? "#ffb0bd" : "#f3f5f2",
+                fontSize:
+                  current && String(Math.round(current.minutes)).length > 3
+                    ? 58
+                    : current && String(Math.round(current.minutes)).length > 2
+                      ? 72
+                      : 92,
+                fontWeight: "400",
+                letterSpacing: -5,
+                fontVariant: ["tabular-nums"],
+              }}
+            >
+              {current ? Math.round(current.minutes) : "—"}
+            </Text>
+            <Text style={[s.body, { fontSize: 18, color: "#79BDFF" }]}>
+              minut pozornosti
+            </Text>
+          </View>
+          <AttentionOrbit
+            minutes={current?.minutes ?? null}
+            limit={p.limit}
+            accent={accent}
+            over={over}
+          />
         </View>
         <Text style={s.muted}>{description}</Text>
         <View
@@ -238,30 +262,25 @@ export function ScrollDashboard({
               ? `Dnes ${Math.round(current.minutes)} minut z cíle ${p.limit} minut`
               : "Bez systémového měření; denní cíl nelze vyhodnotit"
           }
-          style={{ gap: 8 }}
+          style={{ gap: 12 }}
         >
-          <View style={{ flexDirection: "row", gap: 4 }}>
-            {Array.from({ length: 24 }, (_, i) => (
+          <View style={{ height: 2, backgroundColor: "#ffffff14" }}>
+            {current ? (
               <View
-                key={i}
                 style={{
-                  flex: 1,
-                  height: 42,
-                  borderRadius: 4,
-                  backgroundColor:
-                    current && i / 24 < Math.min(1, current.minutes / p.limit)
-                      ? over
-                        ? "#ee8a9b"
-                        : accent
-                      : "#ffffff09",
+                  height: 2,
+                  width: `${Math.min(1, current.minutes / Math.max(1, p.limit)) * 100}%`,
+                  backgroundColor: over ? "#ee8a9b" : accent,
                 }}
               />
-            ))}
+            ) : null}
           </View>
           <View style={s.row}>
-            <Text style={s.muted}>0 min</Text>
+            <Text style={s.muted}>
+              {current ? "Dnešní naměřený čas" : "Čeká na měření"}
+            </Text>
             <Text style={[s.muted, { color: accent }]}>
-              Tvůj denní cíl · {p.limit} min
+              Denní cíl · {p.limit} min
             </Text>
           </View>
         </View>
@@ -287,14 +306,16 @@ export function ScrollDashboard({
         {...button("ranks", "Otevřít ranky Doomscrolling")}
         style={[s.card, s.row]}
       >
-        <RankMark rank={rank} size={70} />
+        <RankMark rank={rank} size={52} />
         <View style={{ flex: 1, gap: 5 }}>
           <Text style={s.label}>
             {stats.average === null
               ? "VÝCHOZÍ RANK"
               : "RANK PODLE SKUTEČNÉHO ČASU"}
           </Text>
-          <Text style={s.value}>{ranks[rank]}</Text>
+          <Text style={[s.value, { color: rankColors[rank] }]}>
+            {ranks[rank]}
+          </Text>
           <Text style={s.muted}>
             {stats.average === null
               ? `${stats.days.length} / 7 dnů systémového měření`
@@ -318,8 +339,10 @@ export function ScrollDashboard({
         style={[
           s.card,
           {
-            backgroundColor: tint(accent, 0.07),
-            borderColor: tint(accent, 0.28),
+            backgroundColor: "transparent",
+            borderColor: "#79BDFF55",
+            borderLeftWidth: 2,
+            paddingLeft: 18,
             gap: 18,
           },
         ]}
@@ -333,7 +356,7 @@ export function ScrollDashboard({
           accessibilityRole="button"
           accessibilityLabel="SOS: Doomscrolling"
           onPress={() => sos()}
-          style={[s.button, { backgroundColor: accent }]}
+          style={[s.button, { backgroundColor: "#79BDFF" }]}
         >
           <Text style={s.buttonText}>ODLOŽIT TELEFON · 5 MIN</Text>
         </Pressable>
@@ -607,5 +630,85 @@ export function ScrollDashboard({
         </SafeAreaProvider>
       </Modal>
     </>
+  );
+}
+
+function AttentionOrbit({
+  minutes,
+  limit,
+  accent,
+  over,
+}: {
+  minutes: number | null;
+  limit: number;
+  accent: string;
+  over: boolean;
+}) {
+  const id = `attention${React.useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  const ratio =
+    minutes === null
+      ? null
+      : Math.max(0, Math.min(1, minutes / Math.max(1, limit)));
+  return (
+    <Svg width={124} height={136} viewBox="0 0 140 150" accessible={false}>
+      <Defs>
+        <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={over ? "#ffb0bd" : accent} />
+          <Stop offset="1" stopColor="#79BDFF" />
+        </LinearGradient>
+      </Defs>
+      <Circle
+        cx="70"
+        cy="70"
+        r="55"
+        stroke="#ffffff12"
+        strokeWidth="1"
+        fill="none"
+      />
+      <Circle
+        cx="70"
+        cy="70"
+        r="45"
+        stroke="#79BDFF30"
+        strokeWidth="1"
+        fill="none"
+        strokeDasharray={ratio === null ? "2 8" : undefined}
+      />
+      {ratio !== null ? (
+        <Circle
+          cx="70"
+          cy="70"
+          r="55"
+          stroke={`url(#${id})`}
+          strokeWidth="4"
+          fill="none"
+          strokeDasharray={`${ratio * 345.6} 345.6`}
+          strokeLinecap="round"
+          rotation="-90"
+          origin="70,70"
+        />
+      ) : null}
+      <Path
+        d="M46 70H94M70 46V94M55 55L85 85M85 55L55 85"
+        stroke="#79BDFF"
+        strokeWidth="1"
+        strokeOpacity=".45"
+      />
+      <Circle
+        cx="70"
+        cy="70"
+        r="13"
+        stroke={`url(#${id})`}
+        strokeWidth="2"
+        fill="#070A12"
+      />
+      <Circle
+        cx="70"
+        cy="70"
+        r="3"
+        fill={ratio === null ? "#79BDFF" : accent}
+      />
+      <Path d="M58 137H82" stroke={accent} strokeWidth="2" />
+    </Svg>
   );
 }

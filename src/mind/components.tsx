@@ -6,30 +6,39 @@ import Svg, {
   Defs,
   LinearGradient,
   Stop,
+  RadialGradient,
+  Ellipse,
 } from "react-native-svg";
-import { surface, border } from "../design";
-export const violet = "#b8a0ff",
+export const violet = "#B7A0FF",
   mint = "#8ae7d1";
-export const MindTheme = createContext("#cf956e");
+export const MindTheme = createContext("#B7A0FF");
 export function useMindStyles() {
   const color = useContext(MindTheme);
   return {
     ...s,
     label: { ...s.label, color },
     link: { ...s.link, color },
-    card: { ...s.card, backgroundColor: surface, borderColor: border },
+    card: {
+      ...s.card,
+      backgroundColor: "transparent",
+      borderColor: "#ffffff12",
+    },
     hero: {
       ...s.hero,
-      backgroundColor: `${color}0c`,
+      backgroundColor: "transparent",
       borderColor: `${color}25`,
     },
     button: { ...s.button, backgroundColor: color },
     quiet: {
       ...s.quiet,
-      backgroundColor: "#ffffff05",
-      borderColor: "#ffffff14",
+      backgroundColor: "transparent",
+      borderColor: "#ffffff1a",
     },
-    chip: { ...s.chip, backgroundColor: "#ffffff03", borderColor: "#ffffff16" },
+    chip: {
+      ...s.chip,
+      backgroundColor: "#ffffff05",
+      borderColor: "transparent",
+    },
     track: { ...s.track, backgroundColor: `${color}22` },
     input: { ...s.input, borderColor: "#ffffff18" },
   };
@@ -82,13 +91,16 @@ export function Chip({
       onPress={onPress}
       style={[
         s.chip,
-        selected && { backgroundColor: `${color}25`, borderColor: color },
+        selected && {
+          backgroundColor: `${color}22`,
+          borderColor: `${color}55`,
+        },
       ]}
     >
       <Text
         style={{
           color: selected ? color : "#b8b5ae",
-          fontSize: 15,
+          fontSize: 13,
           fontWeight: "600",
         }}
       >
@@ -192,8 +204,73 @@ export function Orbit({ small = false }: { small?: boolean }) {
     </Svg>
   );
 }
+export function MindSignal({
+  width = 160,
+  height = 140,
+}: {
+  width?: number;
+  height?: number;
+}) {
+  const color = useContext(MindTheme),
+    id = `signal${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  return (
+    <Svg width={width} height={height} viewBox="0 0 260 220" accessible={false}>
+      <Defs>
+        <RadialGradient id={`${id}glow`}>
+          <Stop offset="0" stopColor={color} stopOpacity=".36" />
+          <Stop offset="1" stopColor={color} stopOpacity="0" />
+        </RadialGradient>
+        <LinearGradient id={`${id}line`} x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={mint} />
+          <Stop offset=".5" stopColor={color} />
+          <Stop offset="1" stopColor="#7658EF" stopOpacity=".15" />
+        </LinearGradient>
+      </Defs>
+      <Ellipse cx="132" cy="106" rx="114" ry="108" fill={`url(#${id}glow)`} />
+      {Array.from({ length: 9 }, (_, i) => (
+        <Path
+          key={i}
+          d={`M${25 + i * 3} ${145 + i * 4}C${11 + i * 2} ${40 - i * 2} ${169 + i * 4} ${21 + i * 5} ${211 - i * 2} ${82 + i * 5}C${250 - i * 3} ${146 + i * 3} ${94 - i * 2} ${211 - i * 2} ${43 + i * 3} ${142 - i * 2}`}
+          fill="none"
+          stroke={`url(#${id}line)`}
+          strokeWidth={i === 4 ? 2.5 : 1}
+          opacity={i === 4 ? 1 : 0.35 + i * 0.05}
+        />
+      ))}
+      <Path
+        d="M52 126L93 77L132 133L180 70L209 103"
+        fill="none"
+        stroke={mint}
+        strokeWidth="1.5"
+        opacity=".65"
+      />
+      {[
+        [52, 126],
+        [93, 77],
+        [132, 133],
+        [180, 70],
+        [209, 103],
+      ].map(([cx, cy], i) => (
+        <React.Fragment key={i}>
+          <Circle
+            cx={cx}
+            cy={cy}
+            r={i === 2 ? 13 : 8}
+            fill={i === 2 ? `${mint}15` : `${color}20`}
+          />
+          <Circle
+            cx={cx}
+            cy={cy}
+            r={i === 2 ? 4 : 2.5}
+            fill={i === 2 ? mint : color}
+          />
+        </React.Fragment>
+      ))}
+    </Svg>
+  );
+}
 export const s = StyleSheet.create({
-  body: { padding: 20, gap: 22, paddingBottom: 28 },
+  body: { padding: 24, gap: 26, paddingBottom: 34 },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   between: {
     flexDirection: "row",
@@ -204,15 +281,15 @@ export const s = StyleSheet.create({
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   title: {
     color: "#f4f6fa",
-    fontSize: 40,
-    fontWeight: "700",
-    letterSpacing: -1.7,
+    fontSize: 46,
+    fontWeight: "600",
+    letterSpacing: -2.2,
   },
   h2: {
     color: "#f6f3ff",
-    fontSize: 23,
+    fontSize: 27,
     fontWeight: "600",
-    letterSpacing: -0.5,
+    letterSpacing: -0.9,
   },
   h3: { color: "#f6f3ff", fontSize: 19, fontWeight: "700" },
   text: { color: "#dce3ee", fontSize: 15, lineHeight: 24 },
@@ -220,24 +297,27 @@ export const s = StyleSheet.create({
   label: { color: violet, fontSize: 9, fontWeight: "700", letterSpacing: 1.8 },
   link: { color: violet, fontSize: 15, fontWeight: "700" },
   card: {
-    backgroundColor: "#131019",
-    borderColor: "#32293f",
-    borderWidth: 1,
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: "transparent",
+    borderColor: "#ffffff12",
+    borderTopWidth: 1,
+    borderWidth: 0,
+    borderRadius: 0,
+    paddingVertical: 22,
+    paddingHorizontal: 0,
     gap: 16,
   },
   hero: {
-    backgroundColor: "#20172f",
-    borderColor: "#655085",
-    borderWidth: 1,
-    borderRadius: 24,
-    padding: 22,
+    backgroundColor: "transparent",
+    borderColor: "#B7A0FF25",
+    borderWidth: 0,
+    borderRadius: 0,
+    paddingVertical: 10,
+    paddingHorizontal: 0,
     gap: 18,
   },
   button: {
     backgroundColor: violet,
-    borderRadius: 15,
+    borderRadius: 28,
     padding: 17,
     alignItems: "center",
     justifyContent: "center",
@@ -249,21 +329,29 @@ export const s = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
   },
-  quiet: { backgroundColor: "#211b2c", borderColor: "#4c3b65", borderWidth: 1 },
+  quiet: {
+    backgroundColor: "transparent",
+    borderColor: "#ffffff20",
+    borderBottomWidth: 1,
+    borderRadius: 0,
+  },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: 15,
+    paddingVertical: 11,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "#39303f",
     backgroundColor: "#121016",
   },
   input: {
     color: "#fff",
-    backgroundColor: "#090e17",
-    borderWidth: 1,
-    borderColor: "#43364f",
-    borderRadius: 13,
+    backgroundColor: "#ffffff04",
+    borderWidth: 0,
+    borderBottomWidth: 1,
+    borderColor: "#ffffff20",
+    borderRadius: 3,
     padding: 14,
     fontSize: 16,
     minHeight: 52,
@@ -279,17 +367,17 @@ export const s = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingVertical: 12,
-    borderRadius: 13,
+    borderRadius: 24,
     gap: 8,
-    borderWidth: 1,
-    borderColor: "#ffffff12",
-    backgroundColor: "#ffffff03",
+    borderWidth: 0,
+    borderColor: "transparent",
+    backgroundColor: "transparent",
   },
   divider: { height: 1, backgroundColor: "#ffffff0e" },
   stat: {
     color: mint,
     fontSize: 30,
-    fontWeight: "800",
+    fontWeight: "500",
     fontVariant: ["tabular-nums"],
   },
 });

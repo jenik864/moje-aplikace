@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
   AppState,
 } from "react-native";
+import Svg, { Path, Circle } from "react-native-svg";
 import {
   Button,
   Chip,
@@ -215,6 +216,26 @@ export function Arena({
     comboRef.current = 0;
     next();
   }
+  const precisionLine = (
+    <View pointerEvents="none" style={{ height: 46, overflow: "hidden" }}>
+      <Svg
+        width="100%"
+        height={46}
+        viewBox="0 0 360 46"
+        preserveAspectRatio="none"
+      >
+        <Path
+          d="M0 24H68L82 16L96 32L111 7L128 39L144 18L158 24H245L266 9L288 36L310 24H360"
+          fill="none"
+          stroke={color}
+          strokeWidth={1.5}
+          opacity={0.6}
+        />
+        <Circle cx="158" cy="24" r="3" fill={mint} />
+        <Circle cx="310" cy="24" r="3" fill={mint} />
+      </Svg>
+    </View>
+  );
   if (result)
     return (
       <ScrollView contentContainerStyle={s.body}>
@@ -223,11 +244,25 @@ export function Arena({
           {difficultyNames[result.difficulty]} · {result.duration / 60} min ·{" "}
           {result.operations.join(" ")}
         </Text>
-        <View style={[s.hero, { alignItems: "center", paddingVertical: 32 }]}>
-          <Text style={[s.title, { fontSize: 80, color }]}>
+        <View style={{ gap: 8, paddingVertical: 12 }}>
+          <Text
+            style={[
+              s.title,
+              {
+                fontSize: 116,
+                lineHeight: 124,
+                fontWeight: "300",
+                letterSpacing: -7,
+                color,
+              },
+            ]}
+          >
             {result.correct}
           </Text>
-          <Text style={s.h2}>správných odpovědí</Text>
+          <Text style={[s.h2, { fontSize: 24, fontWeight: "400" }]}>
+            správných odpovědí
+          </Text>
+          {precisionLine}
           <Text style={[s.link, { color: mint }]}>
             {result.correct > previousBest.current
               ? "Nový osobní rekord!"
@@ -245,9 +280,26 @@ export function Arena({
           ].map(([value, label]) => (
             <View
               key={label}
-              style={[s.card, { flex: 1, padding: 12, gap: 6 }]}
+              style={{
+                flex: 1,
+                paddingVertical: 16,
+                gap: 8,
+                borderTopWidth: 1,
+                borderColor: "#ffffff18",
+              }}
             >
-              <Text style={[s.h2, { color }]}>{value}</Text>
+              <Text
+                style={[
+                  s.h2,
+                  {
+                    color: label === "získaná XP" ? mint : color,
+                    fontWeight: "400",
+                    fontSize: 30,
+                  },
+                ]}
+              >
+                {value}
+              </Text>
               <Text style={[s.muted, { fontSize: 11, lineHeight: 16 }]}>
                 {label}
               </Text>
@@ -282,11 +334,24 @@ export function Arena({
       <ScrollView contentContainerStyle={s.body}>
         <Text style={s.label}>MENTÁLNÍ ARÉNA</Text>
         <Text style={[s.title, { fontSize: 38 }]}>Najdi svůj rytmus.</Text>
-        <View style={[s.hero, { paddingVertical: 26 }]}>
-          <Text style={[s.title, { fontSize: 48, textAlign: "center", color }]}>
+        <View
+          style={{
+            paddingVertical: 12,
+            gap: 12,
+            borderBottomWidth: 1,
+            borderColor: "#ffffff15",
+          }}
+        >
+          <Text
+            style={[
+              s.title,
+              { fontSize: 54, fontWeight: "400", letterSpacing: -2.5, color },
+            ]}
+          >
             {preview.text}
           </Text>
-          <Text style={[s.muted, { textAlign: "center" }]}>
+          {precisionLine}
+          <Text style={[s.muted, { maxWidth: 270 }]}>
             Napiš správný výsledek. Další příklad přijde okamžitě.
           </Text>
         </View>
@@ -345,7 +410,14 @@ export function Arena({
         </View>
         <Button onPress={start}>Spustit kolo</Button>
         {games.length > 0 && (
-          <View style={s.card}>
+          <View
+            style={{
+              gap: 18,
+              paddingTop: 20,
+              borderTopWidth: 1,
+              borderColor: "#ffffff18",
+            }}
+          >
             <View style={[s.between, { flexWrap: "wrap" }]}>
               <Text style={s.label}>POSLEDNÍ VÝKONY</Text>
               <Chip
@@ -371,8 +443,25 @@ export function Arena({
               .slice(-5)
               .reverse()
               .map((g) => (
-                <View key={g.id} style={s.between}>
-                  <Text style={[s.h2, { color }]}>{g.correct}</Text>
+                <View
+                  key={g.id}
+                  style={[
+                    s.between,
+                    {
+                      paddingBottom: 14,
+                      borderBottomWidth: 1,
+                      borderColor: "#ffffff0c",
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      s.h2,
+                      { color, minWidth: 48, fontSize: 36, fontWeight: "400" },
+                    ]}
+                  >
+                    {g.correct}
+                  </Text>
                   <View style={{ flex: 1 }}>
                     <Text style={s.text}>
                       {difficultyNames[g.difficulty]} · {g.duration} s
@@ -394,7 +483,7 @@ export function Arena({
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={{
         flexGrow: 1,
-        padding: compact ? 16 : 20,
+        padding: compact ? 16 : 24,
         gap: compact ? 10 : 16,
         justifyContent: "space-between",
       }}
@@ -405,14 +494,29 @@ export function Arena({
             <Text style={s.label}>
               {difficultyNames[difficulty].toUpperCase()}
             </Text>
-            <Text style={[s.h2, { color, fontVariant: ["tabular-nums"] }]}>
+            <Text
+              style={[
+                s.h2,
+                {
+                  color: mint,
+                  fontSize: compact ? 22 : 26,
+                  fontVariant: ["tabular-nums"],
+                },
+              ]}
+            >
               {counts.correct} správně
             </Text>
           </View>
           <Text
             style={[
               s.title,
-              { fontSize: compact ? 32 : 40, fontVariant: ["tabular-nums"] },
+              {
+                fontSize: compact ? 34 : 44,
+                fontWeight: "400",
+                letterSpacing: -1.8,
+                fontVariant: ["tabular-nums"],
+                color: left <= 10 ? "#FFB3BE" : "#F4F4FF",
+              },
             ]}
           >
             {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
@@ -423,14 +527,10 @@ export function Arena({
       <Animated.View
         style={{
           opacity: flash,
-          gap: 12,
+          gap: tight ? 8 : 12,
           alignItems: "center",
-          paddingVertical: compact ? 6 : 18,
-          paddingHorizontal: 12,
-          borderRadius: 24,
-          backgroundColor: `${color}08`,
-          borderWidth: 1,
-          borderColor: `${color}20`,
+          paddingVertical: compact ? 4 : 24,
+          paddingHorizontal: 8,
         }}
       >
         <Text
@@ -438,7 +538,11 @@ export function Arena({
           accessibilityLiveRegion="polite"
           style={[
             s.title,
-            { fontSize: tight ? 36 : compact ? 44 : 56, letterSpacing: -1 },
+            {
+              fontSize: tight ? 42 : compact ? 54 : 68,
+              fontWeight: "400",
+              letterSpacing: -2,
+            },
           ]}
         >
           {current.text}
@@ -457,11 +561,15 @@ export function Arena({
           style={[
             s.input,
             {
-              width: "100%",
-              maxWidth: 240,
-              fontSize: compact ? 30 : 36,
+              width: "62%",
+              maxWidth: 220,
+              borderRadius: 0,
+              backgroundColor: "transparent",
+              borderWidth: 0,
+              borderBottomWidth: 2,
+              fontSize: compact ? 34 : 42,
               textAlign: "center",
-              borderColor: bad ? "#ff8995" : `${color}45`,
+              borderBottomColor: bad ? "#ff8995" : `${color}80`,
               padding: compact ? 8 : 12,
               minHeight: compact ? 46 : 58,
             },
@@ -511,21 +619,23 @@ export function Arena({
                   height: tight ? 44 : compact ? 48 : 60,
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: 17,
+                  borderRadius: 14,
                   backgroundColor: pressed
-                    ? `${color}45`
+                    ? `${color}40`
                     : key === "↷"
-                      ? `${color}20`
-                      : "#151d2a",
-                  borderWidth: 1,
-                  borderColor: key === "↷" ? `${color}40` : "#ffffff12",
+                      ? `${color}16`
+                      : "#FFFFFF07",
+                  borderWidth: 0,
+                  borderBottomWidth: 1,
+                  borderColor: key === "↷" ? `${color}40` : "#ffffff18",
                 })}
               >
                 <Text
                   style={[
                     s.h2,
                     {
-                      fontSize: compact ? 23 : 27,
+                      fontSize: compact ? 25 : 30,
+                      fontWeight: "400",
                       color: key === "↷" ? color : "#f7f6f2",
                     },
                   ]}

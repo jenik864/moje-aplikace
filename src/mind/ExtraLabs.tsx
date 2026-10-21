@@ -363,8 +363,11 @@ export function ExtraLabs({ id, step }: { id: string; step: number }) {
         {
           padding: 18,
           gap: 16,
-          backgroundColor: "#0d171c",
-          borderColor: `${mint}25`,
+          backgroundColor: "#0c161c",
+          borderColor: `${mint}35`,
+          borderTopWidth: 0,
+          borderLeftWidth: 2,
+          borderRadius: 0,
         },
       ]}
     >

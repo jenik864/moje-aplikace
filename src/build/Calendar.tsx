@@ -65,8 +65,9 @@ export function Calendar({
                 style={[
                   s.day,
                   {
-                    minHeight: 60,
+                    minHeight: 56,
                     paddingVertical: 8,
+                    borderRadius: 30,
                     opacity: d.slice(0, 7) === month.slice(0, 7) ? 1 : 0.4,
                   },
                   d === selected && s.chipOn,

@@ -14,7 +14,7 @@ import {
   initialWindowMetrics,
 } from "react-native-safe-area-context";
 import { Screen, rankColors, RankEmblem } from "../ui";
-import { RankStage, RankStageArt, AppIcon, surface, border } from "../design";
+import { RankStage, RankStageArt, AppIcon, palette } from "../design";
 import { definitions, ranks, type ProgramId } from "../model";
 import { buildPoints } from "../build/ranking";
 import { mindXP } from "../mind/ranking";
@@ -56,8 +56,11 @@ function Button({
       style={({ pressed }) => [
         s.button,
         {
-          backgroundColor: quiet ? "#ffffff05" : color,
-          borderColor: quiet ? "#ffffff14" : "transparent",
+          backgroundColor: quiet ? "transparent" : color,
+          borderColor: "transparent",
+          paddingHorizontal: quiet ? 0 : 20,
+          alignItems: quiet ? "flex-start" : "center",
+          borderRadius: quiet ? 0 : 100,
         },
         disabled && { opacity: 0.4 },
         pressed && { opacity: 0.7 },
@@ -91,7 +94,8 @@ export function MeScreen({
     [dirty, setDirty] = useState(false),
     [confirm, setConfirm] = useState(false);
   const rank = summary.rank,
-    color = rank === null ? "#c5d3ec" : rankColors[rank];
+    color = palette.Me,
+    rankColor = rank === null ? "#c5d3ec" : rankColors[rank];
   const stats = useMemo(
     () => ({
       workouts: build.loaded
@@ -175,24 +179,28 @@ export function MeScreen({
       <ScrollView contentContainerStyle={s.body}>
         <View style={s.between}>
           <View style={{ gap: 5, flex: 1 }}>
-            <Text style={[s.label, { color }]}>TVŮJ OSOBNÍ PROFIL</Text>
-            <Text style={s.title}>Me.</Text>
+            <Text style={[s.label, { color }]}>QUITTER / OSOBNÍ PROSTOR</Text>
+            <Text style={s.title}>
+              Me<Text style={{ color }}> /</Text>
+            </Text>
           </View>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Upravit můj profil"
             disabled={!profile.loaded}
             onPress={() => show("edit")}
-            style={[s.iconButton, { borderColor: `${color}30` }]}
+            style={[s.iconButton, { borderColor: `${color}45` }]}
           >
-            <AppIcon name="Me" color={color} size={26} />
+            <AppIcon name="Me" color={color} size={22} />
           </Pressable>
         </View>
         {profile.loaded &&
           (!!profile.data.name || !!profile.data.intention) && (
-            <View style={{ gap: 8 }}>
+            <View style={s.identity}>
               {!!profile.data.name && (
-                <Text style={s.h2}>{profile.data.name}</Text>
+                <Text style={[s.h2, { fontSize: 30, letterSpacing: -1 }]}>
+                  {profile.data.name}
+                </Text>
               )}
               {!!profile.data.intention && (
                 <Text style={s.text}>{profile.data.intention}</Text>
@@ -205,7 +213,7 @@ export function MeScreen({
             label="TVŮJ CELKOVÝ POSTUP"
             rank={rank}
             prime={profile.loaded ? profile.data.prime : null}
-            color={color}
+            color={rankColor}
             value={number(Math.floor(summary.score * 1000) / 10)}
             unit="BODŮ PROFILU"
             progress={rank === 11 ? 1 : Math.max(0, summary.score - rank)}
@@ -236,8 +244,8 @@ export function MeScreen({
           onPress={() => show("ranks")}
           style={[s.between, { minHeight: 44 }]}
         >
-          <Text style={[s.muted, { flex: 1 }]}>
-            Quit, Build a Mind mají stejnou váhu.
+          <Text style={[s.small, { flex: 1 }]}>
+            Tři směry. Jeden společný postup.
           </Text>
           <Text style={[s.link, { color }]}>Jak to funguje →</Text>
         </Pressable>
@@ -246,31 +254,32 @@ export function MeScreen({
             Ukládáme změny a aktualizujeme tvůj postup…
           </Text>
         )}
-        <View style={s.row}>
+        <View style={s.statsStrip}>
           {(
             [
-              [stats.workouts, "Tréninky"],
-              [stats.habits, "Aktivity Mind"],
-              [stats.badges, "Odznaky"],
+              [stats.workouts, "Tréninky", palette.Build],
+              [stats.habits, "Aktivity Mind", palette.Mind],
+              [stats.badges, "Odznaky", palette.Me],
             ] as const
-          ).map(([value, label]) => (
-            <View
-              key={label}
-              style={[s.card, { flex: 1, padding: 12, gap: 7 }]}
-            >
-              <Text style={[s.metric, { color }]}>
+          ).map(([value, label, accent], i) => (
+            <View key={label} style={[s.statItem, i > 0 && s.statDivider]}>
+              <Text style={[s.metric, { color: accent }]}>
                 {value === null ? "—" : value}
               </Text>
               <Text style={s.small}>{label}</Text>
             </View>
           ))}
         </View>
-        <Text style={s.h2}>Tvoje disciplíny</Text>
-        <View style={s.card}>
+        <View style={s.sectionHeading}>
+          <Text style={s.label}>TVŮJ EKOSYSTÉM</Text>
+          <Text style={s.h2}>Tvoje disciplíny</Text>
+        </View>
+        <View style={s.disciplineSection}>
           <GroupHeader
             title="Quit"
+            number="01"
             score={summary.quitScore}
-            color={color}
+            color={palette.Quit}
             onPress={() => open("Quit")}
           />
           <Text style={s.small}>
@@ -302,15 +311,16 @@ export function MeScreen({
                   <Text style={s.small}>Do průměru se zatím nezapočítává.</Text>
                 )}
               </View>
-              <Text style={[s.link, { color }]}>→</Text>
+              <Text style={[s.link, { color: palette.Quit }]}>→</Text>
             </Pressable>
           ))}
         </View>
-        <View style={s.card}>
+        <View style={s.disciplineSection}>
           <GroupHeader
             title="Build"
+            number="02"
             score={summary.buildScore}
-            color={color}
+            color={palette.Build}
             onPress={() => open("Build")}
           />
           <Text style={s.muted}>
@@ -331,15 +341,16 @@ export function MeScreen({
               }
             </Text>
           )}
-          <Button quiet color={color} onPress={() => open("Build")}>
+          <Button quiet color={palette.Build} onPress={() => open("Build")}>
             Otevřít Build →
           </Button>
         </View>
-        <View style={s.card}>
+        <View style={s.disciplineSection}>
           <GroupHeader
             title="Mind"
+            number="03"
             score={summary.mindScore}
-            color={color}
+            color={palette.Mind}
             onPress={() => open("Mind")}
           />
           <Text style={s.muted}>
@@ -360,35 +371,41 @@ export function MeScreen({
               }
             </Text>
           )}
-          <Button quiet color={color} onPress={() => open("Mind")}>
+          <Button quiet color={palette.Mind} onPress={() => open("Mind")}>
             Otevřít Mind →
           </Button>
         </View>
         <Pressable
           accessibilityRole="button"
           onPress={() => open("Business")}
-          style={[s.card, s.between]}
+          style={[s.disciplineSection, s.between]}
         >
-          <AppIcon name="Business" color="#c5d3ec" />
+          <AppIcon name="Business" color={palette.Business} size={28} />
           <View style={{ flex: 1, gap: 5 }}>
+            <Text style={[s.label, { color: palette.Business }]}>
+              04 / BUSINESS
+            </Text>
             <Text style={s.h3}>Tvoje vlastní projekty</Text>
             <Text style={s.small}>
               Business má vlastní přehled a neovlivňuje celkový rank.
             </Text>
           </View>
-          <Text style={s.link}>→</Text>
+          <Text style={[s.link, { color: palette.Business }]}>→</Text>
         </Pressable>
-        <Button
-          quiet
-          color={color}
-          disabled={!profile.loaded}
-          onPress={() => show("edit")}
-        >
-          Upravit jméno a osobní záměr
-        </Button>
-        <Button quiet color={color} onPress={() => show("data")}>
-          Moje data a ukládání
-        </Button>
+        <View style={s.settings}>
+          <Text style={s.label}>OSOBNÍ NASTAVENÍ</Text>
+          <Button
+            quiet
+            color={color}
+            disabled={!profile.loaded}
+            onPress={() => show("edit")}
+          >
+            Upravit jméno a osobní záměr
+          </Button>
+          <Button quiet color={color} onPress={() => show("data")}>
+            Moje data a ukládání
+          </Button>
+        </View>
       </ScrollView>
       <Modal
         visible={route !== null}
@@ -494,7 +511,7 @@ export function MeScreen({
                     onLayout={(event) => {
                       previewY.current = event.nativeEvent.layout.y;
                     }}
-                    style={[s.card, { alignItems: "center" }]}
+                    style={[s.previewStage, { alignItems: "center" }]}
                   >
                     <Text style={[s.label, { color: rankColors[preview] }]}>
                       NÁHLED / {ranks[preview].toUpperCase()}
@@ -505,40 +522,46 @@ export function MeScreen({
                       Náhled nemění tvůj rank ani uložená data.
                     </Text>
                   </View>
-                  {ranks.map((name, i) => (
-                    <Pressable
-                      key={name}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Náhled celkového ranku ${name}`}
-                      accessibilityState={{ selected: preview === i }}
-                      aria-pressed={preview === i}
-                      onPress={() => {
-                        setPreview(i);
-                        modalScroll.current?.scrollTo({
-                          y: Math.max(0, previewY.current - 12),
-                          animated: true,
-                        });
-                      }}
-                      style={[
-                        s.card,
-                        s.row,
-                        { padding: 14 },
-                        i === rank && { borderColor: `${color}60` },
-                      ]}
-                    >
-                      <RankEmblem value={i} size={42} />
-                      <View style={{ flex: 1, gap: 5 }}>
-                        <Text style={s.h3}>{name}</Text>
-                        <Text style={s.small}>
-                          {i * 100} bodů profilu{i === rank ? " · CURRENT" : ""}
-                          {profile.loaded && i === profile.data.prime
-                            ? " · PRIME"
-                            : ""}
-                        </Text>
-                      </View>
-                      <Text style={{ color: rankColors[i] }}>→</Text>
-                    </Pressable>
-                  ))}
+                  <View style={{ gap: 0 }}>
+                    {ranks.map((name, i) => (
+                      <Pressable
+                        key={name}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Náhled celkového ranku ${name}`}
+                        accessibilityState={{ selected: preview === i }}
+                        aria-pressed={preview === i}
+                        onPress={() => {
+                          setPreview(i);
+                          modalScroll.current?.scrollTo({
+                            y: Math.max(0, previewY.current - 12),
+                            animated: true,
+                          });
+                        }}
+                        style={[
+                          s.rankRow,
+                          s.row,
+                          i === rank && {
+                            borderLeftColor: rankColor,
+                            borderLeftWidth: 2,
+                            paddingLeft: 12,
+                          },
+                        ]}
+                      >
+                        <RankEmblem value={i} size={42} />
+                        <View style={{ flex: 1, gap: 5 }}>
+                          <Text style={s.h3}>{name}</Text>
+                          <Text style={s.small}>
+                            {i * 100} bodů profilu
+                            {i === rank ? " · CURRENT" : ""}
+                            {profile.loaded && i === profile.data.prime
+                              ? " · PRIME"
+                              : ""}
+                          </Text>
+                        </View>
+                        <Text style={{ color: rankColors[i] }}>→</Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 </>
               )}
               {route === "data" && (
@@ -549,27 +572,29 @@ export function MeScreen({
                     zařízení. Účet ani cloudová synchronizace zatím nejsou
                     připojené.
                   </Text>
-                  {[
-                    ["Quit", !quitPending],
-                    [
-                      "Build",
-                      build.loaded && !build.saving && !build.saveError,
-                    ],
-                    ["Mind", mind.loaded && !mind.saving && !mind.saveError],
-                    [
-                      "Profil",
-                      profile.loaded && !profile.saving && !profile.saveError,
-                    ],
-                  ].map(([label, saved]) => (
-                    <View key={String(label)} style={[s.card, s.between]}>
-                      <Text style={s.h3}>{label}</Text>
-                      <Text style={s.small}>
-                        {saved
-                          ? "Uloženo v zařízení"
-                          : "Čeká na načtení nebo uložení"}
-                      </Text>
-                    </View>
-                  ))}
+                  <View style={{ gap: 0 }}>
+                    {[
+                      ["Quit", !quitPending],
+                      [
+                        "Build",
+                        build.loaded && !build.saving && !build.saveError,
+                      ],
+                      ["Mind", mind.loaded && !mind.saving && !mind.saveError],
+                      [
+                        "Profil",
+                        profile.loaded && !profile.saving && !profile.saveError,
+                      ],
+                    ].map(([label, saved]) => (
+                      <View key={String(label)} style={[s.dataRow, s.between]}>
+                        <Text style={s.h3}>{label}</Text>
+                        <Text style={s.small}>
+                          {saved
+                            ? "Uloženo v zařízení"
+                            : "Čeká na načtení nebo uložení"}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                   {alerts}
                   <Text style={s.muted}>
                     Odinstalování aplikace nebo vymazání jejích dat může záznamy
@@ -617,11 +642,13 @@ export function MeScreen({
 }
 function GroupHeader({
   title,
+  number: index,
   score,
   onPress,
   color,
 }: {
   title: string;
+  number: string;
   score: number | null;
   onPress: () => void;
   color: string;
@@ -634,9 +661,9 @@ function GroupHeader({
       style={s.between}
     >
       <View style={[s.row, { flex: 1 }]}>
-        {score !== null && <RankEmblem value={rankForScore(score)} size={42} />}
+        <Text style={[s.sectionNumber, { color }]}>{index}</Text>
         <View style={{ gap: 5, flex: 1 }}>
-          <Text style={s.h2}>{title}</Text>
+          <Text style={[s.h2, { fontSize: 30 }]}>{title}</Text>
           <Text style={s.small}>
             {score === null
               ? "Postup není dostupný"
@@ -644,7 +671,8 @@ function GroupHeader({
           </Text>
         </View>
       </View>
-      <Text style={[s.link, { color }]}>→</Text>
+      {score !== null && <RankEmblem value={rankForScore(score)} size={36} />}
+      <Text style={[s.link, { color, fontSize: 23 }]}>→</Text>
     </Pressable>
   );
 }
@@ -658,7 +686,7 @@ function ErrorCard({
   color: string;
 }) {
   return (
-    <View style={s.card}>
+    <View style={s.errorNotice}>
       <Text accessibilityRole="alert" style={s.error}>
         {message}
       </Text>
@@ -718,8 +746,8 @@ function ProfileEditor({
   );
 }
 const s = StyleSheet.create({
-  body: { padding: 20, paddingBottom: 32, gap: 21 },
-  row: { flexDirection: "row", alignItems: "center", gap: 10 },
+  body: { paddingHorizontal: 24, paddingTop: 22, paddingBottom: 40, gap: 24 },
+  row: { flexDirection: "row", alignItems: "center", gap: 12 },
   between: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -728,73 +756,154 @@ const s = StyleSheet.create({
   },
   title: {
     color: "#f4f6fa",
-    fontSize: 40,
-    fontWeight: "700",
-    letterSpacing: -1.7,
+    fontSize: 54,
+    fontWeight: "600",
+    letterSpacing: -3.3,
+    lineHeight: 62,
   },
   h2: {
     color: "#f4f6fa",
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "600",
-    letterSpacing: -0.6,
+    letterSpacing: -0.9,
   },
-  h3: { color: "#f4f6fa", fontSize: 16, fontWeight: "600" },
-  text: { color: "#dce3ee", fontSize: 15, lineHeight: 24 },
-  muted: { color: "#94a1b4", fontSize: 13, lineHeight: 21 },
-  small: { color: "#94a1b4", fontSize: 11, lineHeight: 18 },
-  label: { fontSize: 9, fontWeight: "700", letterSpacing: 1.8 },
-  link: { fontSize: 12, fontWeight: "600" },
-  metric: { fontSize: 26, fontWeight: "600", fontVariant: ["tabular-nums"] },
+  h3: {
+    color: "#f4f6fa",
+    fontSize: 16,
+    fontWeight: "600",
+    letterSpacing: -0.2,
+  },
+  text: { color: "#d1d8e4", fontSize: 15, lineHeight: 25 },
+  muted: { color: "#9aabc0", fontSize: 13, lineHeight: 22 },
+  small: { color: "#90a0b5", fontSize: 11, lineHeight: 18 },
+  label: { color: "#9aabc0", fontSize: 9, fontWeight: "700", letterSpacing: 2 },
+  link: { fontSize: 13, fontWeight: "600" },
+  metric: {
+    fontSize: 37,
+    fontWeight: "500",
+    letterSpacing: -1.5,
+    fontVariant: ["tabular-nums"],
+  },
+  identity: {
+    gap: 7,
+    paddingLeft: 16,
+    borderLeftWidth: 2,
+    borderLeftColor: "#F5BBA050",
+    paddingVertical: 3,
+  },
+  statsStrip: {
+    flexDirection: "row",
+    paddingVertical: 18,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#ffffff14",
+    gap: 0,
+  },
+  statItem: { flex: 1, gap: 7, paddingHorizontal: 10 },
+  statDivider: {
+    borderLeftWidth: 1,
+    borderLeftColor: "#ffffff12",
+    paddingLeft: 17,
+  },
+  sectionHeading: { gap: 8, paddingTop: 8 },
+  sectionNumber: {
+    fontSize: 11,
+    letterSpacing: 1,
+    fontWeight: "600",
+    alignSelf: "flex-start",
+    paddingTop: 8,
+    width: 21,
+  },
+  disciplineSection: {
+    gap: 13,
+    paddingTop: 20,
+    paddingBottom: 6,
+    borderTopWidth: 1,
+    borderTopColor: "#ffffff16",
+  },
   card: {
-    backgroundColor: surface,
-    borderColor: border,
-    borderWidth: 1,
-    borderRadius: 23,
-    padding: 20,
-    gap: 15,
+    paddingVertical: 18,
+    gap: 14,
+    borderTopWidth: 1,
+    borderTopColor: "#ffffff14",
   },
   button: {
-    minHeight: 50,
-    borderRadius: 16,
-    padding: 15,
-    borderWidth: 1,
+    minHeight: 48,
+    borderRadius: 100,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderWidth: 0,
     alignItems: "center",
     justifyContent: "center",
   },
   iconButton: {
-    minHeight: 48,
-    minWidth: 48,
+    minHeight: 46,
+    minWidth: 46,
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 46,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#ffffff04",
+    backgroundColor: "#F5BBA00a",
   },
   discipline: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     borderTopWidth: 1,
-    borderTopColor: border,
-    paddingTop: 16,
-    minHeight: 70,
+    borderTopColor: "#ffffff0a",
+    paddingVertical: 15,
+    minHeight: 76,
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: border,
-    backgroundColor: "#0d121bee",
+    borderBottomColor: "#ffffff12",
+    backgroundColor: "#070A12f5",
   },
   input: {
-    backgroundColor: "#090e17",
+    backgroundColor: "#ffffff03",
     color: "#f4f6fa",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#ffffff18",
-    padding: 14,
-    minHeight: 50,
+    borderRadius: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ffffff30",
+    paddingHorizontal: 4,
+    paddingVertical: 15,
+    minHeight: 54,
     fontSize: 16,
+  },
+  previewStage: {
+    paddingTop: 28,
+    paddingBottom: 24,
+    gap: 12,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#ffffff16",
+  },
+  rankRow: {
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ffffff10",
+    gap: 14,
+    minHeight: 72,
+  },
+  dataRow: {
+    paddingVertical: 19,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ffffff12",
+  },
+  settings: {
+    gap: 2,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#ffffff16",
+  },
+  errorNotice: {
+    paddingVertical: 16,
+    paddingLeft: 16,
+    borderLeftWidth: 2,
+    borderLeftColor: "#ffb0ba",
+    gap: 10,
   },
   error: { color: "#ffb0ba", fontSize: 13, lineHeight: 21 },
 });

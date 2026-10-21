@@ -1,11 +1,21 @@
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext, useMemo, useId } from "react";
 import { View, Text, Pressable, TextInput, StyleSheet } from "react-native";
-import Svg, { Path, Circle, Line, Text as SvgText } from "react-native-svg";
+import Svg, {
+  Path,
+  Circle,
+  Line,
+  Text as SvgText,
+  Defs,
+  LinearGradient,
+  RadialGradient,
+  Stop,
+  Ellipse,
+} from "react-native-svg";
 import { type Exercise, muscleNames } from "./catalog";
-import { surface, border } from "../design";
-export const blue = "#8cbfff";
+import { palette } from "../design";
+export const blue = palette.Build;
 export const s = StyleSheet.create({
-  page: { padding: 20, paddingBottom: 28, gap: 22 },
+  page: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40, gap: 28 },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -19,33 +29,34 @@ export const s = StyleSheet.create({
     gap: 12,
   },
   card: {
-    backgroundColor: surface,
-    borderColor: border,
-    borderWidth: 1,
-    borderRadius: 22,
-    padding: 20,
+    backgroundColor: "transparent",
+    borderColor: "#ffffff16",
+    borderTopWidth: 1,
+    borderRadius: 0,
+    paddingVertical: 22,
+    paddingHorizontal: 0,
     gap: 16,
   },
   label: { color: blue, fontSize: 9, fontWeight: "700", letterSpacing: 1.8 },
   title: {
     color: "#f2f6fc",
-    fontSize: 30,
+    fontSize: 38,
     fontWeight: "700",
-    letterSpacing: -1,
+    letterSpacing: -1.8,
   },
   h2: {
     color: "#edf3fc",
-    fontSize: 23,
+    fontSize: 25,
     fontWeight: "600",
-    letterSpacing: -0.4,
+    letterSpacing: -0.8,
   },
   text: { color: "#dce3ee", fontSize: 15, lineHeight: 24 },
   muted: { color: "#94a1b4", fontSize: 13, lineHeight: 21 },
   small: { color: "#95a3b7", fontSize: 12, lineHeight: 18 },
   button: {
     backgroundColor: blue,
-    borderRadius: 16,
-    paddingHorizontal: 18,
+    borderRadius: 28,
+    paddingHorizontal: 20,
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
@@ -53,27 +64,27 @@ export const s = StyleSheet.create({
   },
   buttonText: { color: "#0b1728", fontSize: 14, fontWeight: "700" },
   secondary: {
-    backgroundColor: "#ffffff05",
-    borderWidth: 1,
-    borderColor: "#ffffff12",
+    backgroundColor: "transparent",
+    borderBottomWidth: 1,
+    borderColor: "#ffffff1b",
   },
   secondaryText: { color: "#c2d9f7" },
   chip: {
-    borderWidth: 1,
-    borderColor: "#ffffff16",
-    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderColor: "#ffffff18",
+    paddingHorizontal: 12,
     paddingVertical: 11,
-    borderRadius: 12,
+    borderRadius: 0,
     minHeight: 44,
     justifyContent: "center",
   },
-  chipOn: { backgroundColor: "#254468", borderColor: blue },
+  chipOn: { backgroundColor: "#62EDBC12", borderColor: blue },
   input: {
-    backgroundColor: "#090e17",
+    backgroundColor: "#ffffff04",
     color: "#edf3fc",
-    borderWidth: 1,
-    borderColor: "#ffffff18",
-    borderRadius: 13,
+    borderBottomWidth: 1,
+    borderColor: "#ffffff30",
+    borderRadius: 4,
     padding: 14,
     fontSize: 16,
     minHeight: 50,
@@ -101,26 +112,31 @@ export const s = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingVertical: 13,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#ffffff12",
-    backgroundColor: "#ffffff03",
-    gap: 8,
-    minHeight: 78,
+    borderRadius: 28,
+    borderWidth: 0,
+    borderColor: "transparent",
+    backgroundColor: "transparent",
+    gap: 9,
+    minHeight: 88,
   },
-  done: { backgroundColor: "#173b35", borderColor: "#71c9af" },
+  done: { backgroundColor: "#62EDBC12", borderColor: "#62EDBC" },
   badge: {
     width: 58,
     height: 64,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: blue,
-    backgroundColor: "#1b3553",
-    borderRadius: 17,
+    backgroundColor: "#62EDBC12",
+    borderRadius: 30,
   },
   step: { flexDirection: "row", gap: 12 },
-  empty: { padding: 18, backgroundColor: "#0b1017", borderRadius: 15, gap: 8 },
+  empty: {
+    paddingVertical: 22,
+    backgroundColor: "transparent",
+    borderRadius: 0,
+    gap: 8,
+  },
   flex: { flex: 1 },
 });
 export const BuildTheme = createContext(blue);
@@ -135,18 +151,18 @@ export function useBuildStyles() {
       button: { ...s.button, backgroundColor: color },
       chipOn: {
         ...s.chipOn,
-        backgroundColor: color + "26",
+        backgroundColor: color + "14",
         borderColor: color,
       },
       card: {
         ...s.card,
-        backgroundColor: surface,
-        borderColor: border,
+        backgroundColor: "transparent",
+        borderColor: "#ffffff16",
       },
       secondary: {
         ...s.secondary,
-        backgroundColor: "#ffffff05",
-        borderColor: "#ffffff14",
+        backgroundColor: "transparent",
+        borderColor: "#ffffff22",
       },
       secondaryText: { ...s.secondaryText, color },
       pill: { ...s.pill, backgroundColor: color + "20" },
@@ -225,7 +241,10 @@ export function Field({
       <Text style={s.muted}>{label}</Text>
       <TextInput
         accessibilityLabel={label}
-        style={s.input}
+        style={[
+          s.input,
+          multiline && { minHeight: 110, textAlignVertical: "top" },
+        ]}
         value={value}
         onChangeText={onChange}
         keyboardType={numeric ? "decimal-pad" : "default"}
@@ -242,15 +261,15 @@ export function Progress({ value }: { value: number }) {
   return (
     <View
       style={{
-        height: 5,
-        backgroundColor: "#293445",
-        borderRadius: 4,
+        height: 3,
+        backgroundColor: "#ffffff12",
+        borderRadius: 0,
         overflow: "hidden",
       }}
     >
       <View
         style={{
-          height: 5,
+          height: 3,
           width: `${Math.min(100, Math.max(0, value * 100))}%`,
           backgroundColor: blue,
         }}
@@ -269,46 +288,78 @@ export function MissionArtwork({
   done: number;
   total: number;
 }) {
-  const s = useBuildStyles();
   const blue = useContext(BuildTheme);
+  const progress = total ? Math.min(1, done / total) : 0;
+  const artId = `build${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   return (
     <Svg
       width={size}
       height={size}
-      viewBox="0 0 128 128"
+      viewBox="0 0 180 180"
       accessibilityLabel={`${done} z ${total} tréninků týdne dokončeno`}
     >
+      <Defs>
+        <LinearGradient id={`${artId}Track`} x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor="#b8ffe5" />
+          <Stop offset=".5" stopColor={blue} />
+          <Stop offset="1" stopColor="#408efd" />
+        </LinearGradient>
+        <RadialGradient id={`${artId}Glow`}>
+          <Stop offset="0" stopColor={blue} stopOpacity=".25" />
+          <Stop offset="1" stopColor={blue} stopOpacity="0" />
+        </RadialGradient>
+      </Defs>
+      <Circle cx="90" cy="90" r="88" fill={`url(#${artId}Glow)`} />
+      {[57, 67, 77].map((r, i) => (
+        <Circle
+          key={r}
+          cx="90"
+          cy="90"
+          r={r}
+          fill="none"
+          stroke={`url(#${artId}Track)`}
+          strokeOpacity={0.18 + i * 0.14}
+          strokeWidth={i === 2 ? 1 : 2}
+          strokeDasharray={`${r * 4.7} ${r * 1.58}`}
+          rotation={-115 + i * 13}
+          origin="90,90"
+        />
+      ))}
       <Circle
-        cx="64"
-        cy="64"
-        r="58"
-        fill={blue + "12"}
-        stroke={blue + "44"}
-        strokeWidth="1"
-      />
-      <Circle
-        cx="64"
-        cy="64"
-        r="50"
+        cx="90"
+        cy="90"
+        r="57"
         fill="none"
-        stroke={blue + "30"}
-        strokeWidth="4"
-      />
-      <Circle
-        cx="64"
-        cy="64"
-        r="50"
-        fill="none"
-        stroke={blue}
-        strokeWidth="4"
-        strokeDasharray={`${total ? Math.min(1, done / total) * 314 : 0} 314`}
-        rotation="-90"
-        origin="64,64"
+        stroke={`url(#${artId}Track)`}
+        strokeWidth="6"
+        strokeDasharray={`${progress * 358} 358`}
         strokeLinecap="round"
+        rotation="-90"
+        origin="90,90"
       />
-      <Path d="M64 18 L67 23 L64 28 L61 23 Z" fill={blue} />
-      <SvgText x="64" y="79" textAnchor="middle" fontSize="48" fill={blue}>
-        {icon}
+      <Path
+        d={
+          icon === "↔"
+            ? "M47 91C62 68 73 114 89 91S116 68 132 91"
+            : "M55 104L74 78L93 94L125 58M109 58H125V74"
+        }
+        fill="none"
+        stroke="#d7fff0"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle cx="90" cy="13" r="4" fill="#b8ffe5" />
+      <Circle cx="151" cy="138" r="2.5" fill="#79bdff" />
+      <SvgText
+        x="90"
+        y="134"
+        textAnchor="middle"
+        fontSize="10"
+        letterSpacing="2"
+        fill={blue}
+      >
+        {total ? `${done} / ${total}` : "RECHARGE"}
       </SvgText>
     </Svg>
   );

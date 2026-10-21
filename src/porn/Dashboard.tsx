@@ -7,14 +7,13 @@ import {
   TimerDial,
   SectionLabel,
   ArrowIcon,
-  SosSymbol,
 } from "./visuals";
 import { summary, trendDays, durationLabel } from "./analytics";
 import { PornDetails, DetailKind } from "./Details";
 import { rankColors } from "../ui";
 import { RankThemeProvider, useRankTheme, tint } from "./theme";
 import { SeriesChart } from "./Charts";
-import { AmbientBackdrop, RankStageArt } from "../design";
+import { RankStageArt, palette as sectionPalette } from "../design";
 type DashboardProps = {
   p: Program;
   now: number;
@@ -96,13 +95,10 @@ function DashboardBody({
         accessibilityRole="button"
         accessibilityLabel="Otevřít ranky Porn Reboot"
         onPress={() => setDetail("ranks")}
-        style={({ pressed }) => [
-          s.rankPanel,
-          pressed && { backgroundColor: "#201c19" },
-        ]}
+        style={({ pressed }) => [s.rankPanel, pressed && { opacity: 0.65 }]}
       >
         <View style={s.rankCurrent}>
-          <RankMark rank={rank} size={48} />
+          <RankMark rank={rank} size={36} />
           <View style={{ gap: 4 }}>
             <SectionLabel>CURRENT RANK</SectionLabel>
             <Text style={s.rankName}>{ranks[rank]}</Text>
@@ -128,7 +124,6 @@ function DashboardBody({
           </Text>
         )}
         <View style={s.clockStage}>
-          <AmbientBackdrop color={accent} />
           <TimerDial seconds={seconds} progress={progress} />
         </View>
         <Pressable
@@ -162,19 +157,12 @@ function DashboardBody({
         style={({ pressed }) => [s.sos, pressed && { opacity: 0.8 }]}
       >
         <View style={s.sosTop}>
-          <Text style={s.sosEyebrow}>SOS · CHVÍLE PRO TEBE</Text>
+          <Text style={s.sosEyebrow}>SOS / ZPÁTKY K SOBĚ</Text>
           <Text style={s.sosDuration}>5 MIN</Text>
         </View>
         <View style={s.sosBody}>
-          <View style={{ flex: 1, gap: 7 }}>
-            <Text style={s.sosTitle}>Získej zpět svůj prostor.</Text>
-            <Text style={s.sosCaption}>Změň místo. Zpomal. Rozhodni se.</Text>
-          </View>
-          <SosSymbol size={42} />
-        </View>
-        <View style={s.sosAction}>
-          <Text style={s.sosActionText}>Zastavit impulz</Text>
-          <ArrowIcon color="#17120f" size={20} />
+          <Text style={s.sosTitle}>Zastavit impulz.</Text>
+          <ArrowIcon color="#12160b" size={24} />
         </View>
       </Pressable>
       <View style={s.metrics}>
@@ -222,7 +210,7 @@ function DashboardBody({
                     s.miniCell,
                     {
                       backgroundColor: !day.active
-                        ? "#201e1c"
+                        ? "#ffffff08"
                         : day.resets.length
                           ? "#47262c"
                           : day.successful
@@ -401,97 +389,70 @@ const makeStyles = (accent: string) =>
       alignItems: "center",
       justifyContent: "space-between",
       gap: 12,
+      paddingTop: 12,
     },
     title: {
-      fontSize: 29,
+      fontSize: 30,
       fontWeight: "600",
-      letterSpacing: -1,
+      letterSpacing: -1.2,
       color: palette.text,
-      marginTop: 7,
+      marginTop: 6,
     },
     live: { flexDirection: "row", alignItems: "center", gap: 6 },
     liveDot: {
       width: 5,
       height: 5,
       borderRadius: 3,
-      backgroundColor: accent,
+      backgroundColor: sectionPalette.Quit,
     },
-    liveText: { fontSize: 9, color: accent, letterSpacing: 0.9 },
+    liveText: { fontSize: 8, color: sectionPalette.Quit, letterSpacing: 1 },
     rankPanel: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: 17,
-      paddingHorizontal: 18,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor: tint(accent, 0.21),
-      backgroundColor: "#111620",
+      paddingVertical: 13,
+      borderBottomWidth: 1,
+      borderBottomColor: "#ffffff12",
     },
-    rankCurrent: { flexDirection: "row", alignItems: "center", gap: 14 },
+    rankCurrent: { flexDirection: "row", alignItems: "center", gap: 12 },
     rankName: {
-      fontSize: 24,
-      color: palette.text,
+      fontSize: 21,
+      color: accent,
       letterSpacing: -0.5,
       fontWeight: "500",
     },
-    prime: { alignItems: "flex-end", gap: 4 },
+    prime: { flexDirection: "row", alignItems: "center", gap: 9 },
     primeLabel: {
       color: accent,
-      fontSize: 10,
+      fontSize: 9,
       fontWeight: "600",
-      letterSpacing: 1.2,
+      letterSpacing: 1.4,
     },
-    primeName: { fontSize: 16, color: "#d0bff2", fontWeight: "500" },
-    hero: {
-      backgroundColor: "#0d121b",
-      borderRadius: 28,
-      borderWidth: 1,
-      borderColor: tint(accent, 0.18),
-      overflow: "hidden",
-    },
-    clockStage: {
-      paddingTop: 24,
-      paddingBottom: 24,
-      alignItems: "center",
-      overflow: "hidden",
-    },
-    next: {
-      gap: 11,
-      paddingHorizontal: 20,
-      paddingTop: 17,
-      paddingBottom: 19,
-      borderTopWidth: 1,
-      borderTopColor: "#ffffff0c",
-      backgroundColor: "#ffffff02",
-    },
+    primeName: { fontSize: 13, color: accent, fontWeight: "500" },
+    hero: { gap: 0 },
+    clockStage: { paddingTop: 2, paddingBottom: 5, alignItems: "center" },
+    next: { gap: 10, paddingTop: 12, paddingBottom: 16 },
     spread: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       gap: 12,
     },
-    nextTitle: { fontSize: 12, color: "#ded5cf", fontWeight: "500" },
-    percent: {
-      color: accent,
-      fontSize: 11,
-      fontVariant: ["tabular-nums"],
+    nextTitle: { fontSize: 12, color: "#dce0e4", fontWeight: "500" },
+    percent: { color: accent, fontSize: 12, fontVariant: ["tabular-nums"] },
+    track: { height: 2, backgroundColor: "#ffffff12", overflow: "hidden" },
+    fill: { height: 2, backgroundColor: accent },
+    caption: {
+      fontSize: 12,
+      color: palette.muted,
+      lineHeight: 19,
+      flexShrink: 1,
     },
-    track: {
-      height: 3,
-      backgroundColor: tint(accent, 0.18),
-      borderRadius: 2,
-      overflow: "hidden",
-    },
-    fill: { height: 3, backgroundColor: accent },
-    caption: { fontSize: 12, color: palette.muted, lineHeight: 19 },
     sos: {
-      padding: 20,
-      backgroundColor: tint(accent, 0.07),
-      borderWidth: 1,
-      borderColor: tint(accent, 0.28),
-      borderRadius: 24,
-      gap: 18,
+      padding: 18,
+      backgroundColor: sectionPalette.Quit,
+      borderRadius: 4,
+      gap: 11,
       overflow: "hidden",
     },
     sosTop: {
@@ -500,71 +461,59 @@ const makeStyles = (accent: string) =>
       justifyContent: "space-between",
     },
     sosEyebrow: {
-      color: accent,
-      fontSize: 9,
-      letterSpacing: 1.2,
-      fontWeight: "600",
+      color: "#3a4021",
+      fontSize: 8,
+      letterSpacing: 1.7,
+      fontWeight: "700",
     },
     sosDuration: {
-      color: accent,
+      color: "#3a4021",
       fontSize: 9,
-      backgroundColor: tint(accent, 0.14),
-      paddingHorizontal: 9,
-      paddingVertical: 5,
-      borderRadius: 8,
+      fontWeight: "600",
       fontVariant: ["tabular-nums"],
     },
-    sosBody: { flexDirection: "row", alignItems: "center", gap: 12 },
-    sosTitle: {
-      color: "#f3f0eb",
-      fontSize: 20,
-      lineHeight: 26,
-      fontWeight: "500",
-      letterSpacing: -0.4,
-    },
-    sosCaption: { color: "#94a1b4", fontSize: 12, lineHeight: 18 },
-    sosAction: {
-      backgroundColor: accent,
-      minHeight: 50,
-      borderRadius: 16,
+    sosBody: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingHorizontal: 18,
+      gap: 12,
     },
-    sosActionText: { color: "#17120f", fontSize: 15, fontWeight: "600" },
-    metrics: { flexDirection: "row", gap: 10 },
-    metric: {
+    sosTitle: {
+      color: "#11160c",
+      fontSize: 25,
+      lineHeight: 31,
+      fontWeight: "600",
+      letterSpacing: -0.8,
       flex: 1,
-      backgroundColor: palette.panel,
-      borderColor: palette.border,
-      borderWidth: 1,
-      padding: 16,
-      borderRadius: 18,
-      gap: 14,
     },
+    metrics: {
+      flexDirection: "row",
+      gap: 24,
+      paddingVertical: 24,
+      borderBottomWidth: 1,
+      borderBottomColor: "#ffffff12",
+    },
+    metric: { flex: 1, gap: 12 },
     metricValue: {
       color: palette.text,
-      fontSize: 21,
+      fontSize: 26,
       fontWeight: "500",
-      letterSpacing: -0.5,
+      letterSpacing: -0.8,
       fontVariant: ["tabular-nums"],
     },
-    metricUnit: { fontSize: 10, color: palette.muted, fontWeight: "400" },
+    metricUnit: { fontSize: 11, color: palette.muted, fontWeight: "400" },
     card: {
-      padding: 20,
-      borderRadius: 22,
-      borderColor: palette.border,
-      borderWidth: 1,
-      backgroundColor: palette.panel,
-      gap: 16,
+      paddingVertical: 22,
+      borderBottomWidth: 1,
+      borderBottomColor: "#ffffff12",
+      gap: 18,
     },
     miniMatrix: { gap: 6 },
     matrixRow: { flexDirection: "row", gap: 6 },
     miniCell: {
       flex: 1,
-      height: 22,
-      borderRadius: 4,
+      height: 13,
+      borderRadius: 3,
       borderWidth: 1,
       alignItems: "center",
       justifyContent: "center",
@@ -575,29 +524,29 @@ const makeStyles = (accent: string) =>
       backgroundColor: palette.red,
       borderRadius: 2,
     },
-    link: { fontSize: 10, color: accent, letterSpacing: 0.8 },
+    link: { fontSize: 9, color: sectionPalette.Quit, letterSpacing: 1.1 },
     manifest: {
-      padding: 20,
-      borderRadius: 20,
-      backgroundColor: tint(accent, 0.05),
-      borderWidth: 1,
-      borderColor: tint(accent, 0.22),
-      gap: 16,
+      paddingLeft: 18,
+      paddingVertical: 10,
+      borderLeftWidth: 2,
+      borderColor: sectionPalette.Quit,
+      gap: 14,
+      marginVertical: 14,
     },
     manifestText: {
-      color: "#ede5df",
-      fontSize: 18,
-      lineHeight: 28,
+      color: "#e9edf1",
+      fontSize: 25,
+      lineHeight: 35,
       fontWeight: "400",
+      letterSpacing: -0.5,
     },
-    manifestFoot: { color: "#94a1b4", fontSize: 12, lineHeight: 19 },
+    manifestFoot: { color: palette.muted, fontSize: 11, lineHeight: 18 },
     reset: {
       position: "relative",
       overflow: "hidden",
-      padding: 16,
-      borderWidth: 1,
-      borderColor: "#272522",
-      borderRadius: 12,
+      paddingVertical: 19,
+      borderBottomWidth: 1,
+      borderColor: "#ffffff15",
       alignItems: "center",
       marginTop: 6,
     },
@@ -609,51 +558,43 @@ const makeStyles = (accent: string) =>
       backgroundColor: palette.red,
     },
     foot: {
-      fontSize: 11,
-      color: "#a39b96",
+      fontSize: 10,
+      color: palette.muted,
       lineHeight: 17,
       textAlign: "center",
     },
-    welcome: {
-      alignItems: "center",
-      padding: 24,
-      gap: 16,
-      borderRadius: 28,
-      borderColor: tint(accent, 0.18),
-      borderWidth: 1,
-      backgroundColor: palette.panel,
-    },
+    welcome: { paddingTop: 10, paddingBottom: 20, gap: 20 },
     welcomeTitle: {
       color: palette.text,
-      fontSize: 30,
-      lineHeight: 38,
+      fontSize: 40,
+      lineHeight: 44,
       fontWeight: "600",
-      textAlign: "center",
-      letterSpacing: -0.8,
+      letterSpacing: -1.8,
     },
     welcomeBody: {
-      color: "#a6b1c2",
+      color: "#a7b2c3",
       fontSize: 14,
       lineHeight: 23,
       flexShrink: 1,
     },
     number: {
-      color: accent,
+      color: sectionPalette.Quit,
       fontSize: 11,
-      fontWeight: "700",
+      fontWeight: "600",
       letterSpacing: 1,
     },
     activate: {
       flexDirection: "row",
       justifyContent: "space-between",
+      alignItems: "center",
       padding: 20,
-      borderRadius: 14,
-      backgroundColor: accent,
+      borderRadius: 28,
+      backgroundColor: sectionPalette.Quit,
     },
     activateText: {
       fontSize: 12,
       fontWeight: "700",
       letterSpacing: 1,
-      color: "#1a110d",
+      color: "#11160c",
     },
   });

@@ -45,7 +45,9 @@ export function WeeklyInsights({
       <Text style={s.muted}>
         {pretty(week)} – {pretty(shift(week, 6))}
       </Text>
-      <View style={[s.hero, { padding: 18, gap: 12 }]}>
+      <View
+        style={[s.hero, { paddingVertical: 4, paddingHorizontal: 0, gap: 12 }]}
+      >
         <View style={s.between}>
           <Text style={s.label}>SPLNĚNÝ PLÁN</Text>
           <Text style={[s.h2, { color }]}>
@@ -80,8 +82,8 @@ export function WeeklyInsights({
                   height: 100,
                   width: "100%",
                   justifyContent: "flex-end",
-                  backgroundColor: "#ffffff05",
-                  borderRadius: 6,
+                  backgroundColor: "transparent",
+                  borderRadius: 12,
                   overflow: "hidden",
                 }}
               >
@@ -89,7 +91,7 @@ export function WeeklyInsights({
                   style={{
                     height: d.future ? 0 : Math.max(2, (d.xp / 60) * 100),
                     backgroundColor: d.day === today ? mint : color,
-                    borderRadius: 6,
+                    borderRadius: 8,
                     opacity: d.xp ? 1 : 0.25,
                   }}
                 />
@@ -107,7 +109,10 @@ export function WeeklyInsights({
           [`${summary.activeDays}/7`, "aktivních dnů"],
           [String(summary.minutes), "minut cílů splněných aktivit"],
         ].map(([value, label]) => (
-          <View key={label} style={[s.card, { flex: 1, padding: 16, gap: 8 }]}>
+          <View
+            key={label}
+            style={{ flex: 1, paddingVertical: 16, paddingRight: 16, gap: 8 }}
+          >
             <Text style={[s.stat, { color }]}>{value}</Text>
             <Text style={s.muted}>{label}</Text>
           </View>

@@ -13,7 +13,7 @@ import {
   initialWindowMetrics,
 } from "react-native-safe-area-context";
 import { Screen } from "../ui";
-import { AppIcon, ProjectArtwork } from "../design";
+import { AppIcon, ProjectArtwork, palette } from "../design";
 import { useBusiness } from "./useBusiness";
 import {
   BusinessTheme,
@@ -100,7 +100,7 @@ export function BusinessScreen() {
       ? route.projectId
       : route?.id;
   const project = data.projects.find((p) => p.id === projectId);
-  const accent = project ? colors[project.color] : colors[0];
+  const accent = project ? colors[project.color] : palette.Business;
   const statusNotice = (
     <>
       {saveError && (
@@ -118,7 +118,7 @@ export function BusinessScreen() {
   );
   if (!loaded)
     return (
-      <Screen accent={colors[0]}>
+      <Screen accent={palette.Business}>
         <View style={[s.body, { flex: 1, justifyContent: "center" }]}>
           {loadError ? (
             <>
@@ -128,7 +128,7 @@ export function BusinessScreen() {
               </Button>
             </>
           ) : (
-            <ActivityIndicator color={colors[0]} />
+            <ActivityIndicator color={palette.Business} />
           )}
         </View>
       </Screen>
@@ -163,17 +163,25 @@ export function BusinessScreen() {
     setRoute({ type: "step", projectId: task.projectId, id: task.id });
   return (
     <BusinessTheme.Provider value={accent}>
-      <Screen accent={colors[0]}>
+      <Screen accent={palette.Business}>
         <ScrollView
           contentContainerStyle={s.body}
           keyboardShouldPersistTaps="handled"
         >
           <View style={s.between}>
             <View style={{ flex: 1, gap: 5 }}>
-              <Text style={s.label}>QUITTER / OD NÁPADU K AKCI</Text>
+              <Text style={s.label}>TVŮJ VLASTNÍ SMĚR</Text>
               <Text style={s.title}>Business.</Text>
             </View>
-            <AppIcon name="Business" color={colors[0]} size={30} />
+            <View
+              style={{
+                paddingLeft: 12,
+                borderLeftWidth: 1,
+                borderColor: "#ffffff20",
+              }}
+            >
+              <AppIcon name="Business" color={palette.Business} size={27} />
+            </View>
           </View>
           {statusNotice}
           {notice && !route && (
@@ -181,30 +189,70 @@ export function BusinessScreen() {
               {notice}
             </Text>
           )}
-          <View style={s.wrap}>
-            <Chip
-              selected={view === "overview"}
-              onPress={() => setView("overview")}
-            >
-              Dnešní práce
-            </Chip>
-            <Chip
-              selected={view === "projects"}
-              onPress={() => setView("projects")}
-            >
-              Moje projekty
-            </Chip>
+          <View style={s.workspaceTabs}>
+            {(
+              [
+                ["overview", "Dnešní práce"],
+                ["projects", "Moje projekty"],
+              ] as const
+            ).map(([id, label]) => (
+              <Pressable
+                key={id}
+                accessibilityRole="button"
+                accessibilityState={{ selected: view === id }}
+                aria-pressed={view === id}
+                onPress={() => setView(id)}
+                style={{
+                  paddingVertical: 15,
+                  borderBottomWidth: 2,
+                  borderBottomColor:
+                    view === id ? palette.Business : "transparent",
+                  minHeight: 48,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: "600",
+                    color: view === id ? "#edf5ff" : "#7f8da4",
+                  }}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            ))}
           </View>
           {view === "overview" ? (
             <>
               {!data.projects.length ? (
-                <View style={s.hero}>
-                  <Text style={s.label}>TVŮJ PRVNÍ VLASTNÍ PROJEKT</Text>
-                  <ProjectArtwork />
-                  <Text style={[s.h2, { fontSize: 28 }]}>
-                    Pusť svůj nápad ven.
-                  </Text>
-                  <Text style={s.muted}>
+                <View style={[s.hero, { paddingTop: 4 }]}>
+                  <View style={s.between}>
+                    <Text style={s.label}>ZAČNI NĚČÍM VLASTNÍM</Text>
+                    <Text style={s.number}>01 / ZAČÁTEK</Text>
+                  </View>
+                  <View
+                    style={{
+                      marginHorizontal: -12,
+                      marginVertical: -8,
+                      height: 150,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <View
+                      style={{
+                        transform: [{ scale: 0.88 }, { translateY: -15 }],
+                      }}
+                    >
+                      <ProjectArtwork />
+                    </View>
+                  </View>
+                  <Text style={s.emptyHeadline}>Pusť svůj{`\n`}nápad ven.</Text>
+                  <Text
+                    style={[
+                      s.muted,
+                      { fontSize: 15, lineHeight: 24, maxWidth: 330 },
+                    ]}
+                  >
                     Vyber výsledek, rozděl ho na malé kroky a jeden z nich
                     udělej dnes.
                   </Text>
@@ -220,7 +268,12 @@ export function BusinessScreen() {
                     </Text>
                     <Text style={s.small}>{displayDate(today)}</Text>
                   </View>
-                  <Text style={s.h2}>
+                  <Text
+                    style={[
+                      s.h2,
+                      { fontSize: 34, lineHeight: 39, letterSpacing: -1.1 },
+                    ]}
+                  >
                     {next
                       ? next.title
                       : done.length
@@ -250,9 +303,23 @@ export function BusinessScreen() {
                         ? "Vybrat krok na dnešek →"
                         : "Otevřít moje projekty →"}
                   </Button>
-                  <View style={s.between}>
-                    <Text style={s.small}>Rozpracované: {active.length}</Text>
-                    <Text style={s.small}>Hotovo dnes: {done.length}</Text>
+                  <View style={s.summary}>
+                    <View style={{ flex: 1, gap: 5 }}>
+                      <Text style={s.summaryNumber}>{active.length}</Text>
+                      <Text style={s.summaryLabel}>rozpracované projekty</Text>
+                    </View>
+                    <View style={{ flex: 1, gap: 5 }}>
+                      <Text
+                        style={[s.summaryNumber, { color: palette.Business }]}
+                      >
+                        {done.length}
+                      </Text>
+                      <Text style={s.summaryLabel}>kroky hotové dnes</Text>
+                    </View>
+                    <View style={{ flex: 1, gap: 5 }}>
+                      <Text style={s.summaryNumber}>{pending.length}</Text>
+                      <Text style={s.summaryLabel}>kroky před tebou</Text>
+                    </View>
                   </View>
                 </View>
               )}
@@ -270,19 +337,21 @@ export function BusinessScreen() {
                       </Text>
                     </View>
                   ) : (
-                    daily.map((task) => (
-                      <TaskRow
-                        key={task.id}
-                        task={task}
-                        project={
-                          data.projects.find((p) => p.id === task.projectId)!
-                        }
-                        today={today}
-                        showProject
-                        onToggle={() => change((d) => toggleTask(d, task.id))}
-                        onOpen={() => openTask(task)}
-                      />
-                    ))
+                    <View style={{ gap: 0 }}>
+                      {daily.map((task) => (
+                        <TaskRow
+                          key={task.id}
+                          task={task}
+                          project={
+                            data.projects.find((p) => p.id === task.projectId)!
+                          }
+                          today={today}
+                          showProject
+                          onToggle={() => change((d) => toggleTask(d, task.id))}
+                          onOpen={() => openTask(task)}
+                        />
+                      ))}
+                    </View>
                   )}
                   {pending.some((t) => t.plannedFor! < today) && (
                     <Text style={s.small}>
@@ -303,14 +372,16 @@ export function BusinessScreen() {
                       <Text style={s.link}>Všechny →</Text>
                     </Pressable>
                   </View>
-                  {active.slice(0, 3).map((p) => (
-                    <ProjectCard
-                      key={p.id}
-                      project={p}
-                      data={data}
-                      onPress={() => setRoute({ type: "project", id: p.id })}
-                    />
-                  ))}
+                  <View style={{ gap: 0 }}>
+                    {active.slice(0, 3).map((p) => (
+                      <ProjectCard
+                        key={p.id}
+                        project={p}
+                        data={data}
+                        onPress={() => setRoute({ type: "project", id: p.id })}
+                      />
+                    ))}
+                  </View>
                   <Button
                     quiet
                     onPress={() => setRoute({ type: "editProject" })}
@@ -326,8 +397,20 @@ export function BusinessScreen() {
                     "Rozděl ho na zvládnutelné kroky.",
                     "Vyber si jeden na dnešek.",
                   ].map((text, i) => (
-                    <View key={text} style={s.row}>
-                      <Text style={s.label}>0{i + 1}</Text>
+                    <View
+                      key={text}
+                      style={[
+                        s.row,
+                        {
+                          paddingVertical: 8,
+                          alignItems: "flex-start",
+                          gap: 17,
+                        },
+                      ]}
+                    >
+                      <Text style={[s.number, { paddingTop: 3 }]}>
+                        0{i + 1}
+                      </Text>
                       <Text style={[s.muted, { flex: 1 }]}>{text}</Text>
                     </View>
                   ))}
@@ -362,14 +445,16 @@ export function BusinessScreen() {
                 ))}
               </View>
               {visible.length ? (
-                visible.map((p) => (
-                  <ProjectCard
-                    key={p.id}
-                    project={p}
-                    data={data}
-                    onPress={() => setRoute({ type: "project", id: p.id })}
-                  />
-                ))
+                <View style={{ gap: 0 }}>
+                  {visible.map((p) => (
+                    <ProjectCard
+                      key={p.id}
+                      project={p}
+                      data={data}
+                      onPress={() => setRoute({ type: "project", id: p.id })}
+                    />
+                  ))}
+                </View>
               ) : (
                 <View style={s.card}>
                   <Text style={s.h3}>
@@ -386,7 +471,7 @@ export function BusinessScreen() {
               )}
             </>
           )}
-          <Text style={s.small}>
+          <Text style={[s.small, { paddingTop: 10, color: "#68778e" }]}>
             Projekty se ukládají na tomto zařízení. Spolupráce a AI zatím nejsou
             připojené.
           </Text>

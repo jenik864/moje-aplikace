@@ -1,7 +1,14 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useId } from "react";
 import { View, Text, Pressable, TextInput, StyleSheet } from "react-native";
-import Svg, { Path, Circle } from "react-native-svg";
-import { surface, border } from "../design";
+import Svg, {
+  Path,
+  Circle,
+  Defs,
+  LinearGradient,
+  Stop,
+  Rect,
+} from "react-native-svg";
+import { border, palette } from "../design";
 import {
   projectProgress,
   displayDate,
@@ -9,9 +16,9 @@ import {
   type Project,
   type Task,
 } from "./model";
-export const colors = ["#c5d3ec", "#8cbfff", "#c2a5fa", "#91d6b3", "#d4a181"];
+export const colors = ["#c7d6f4", "#79bdff", "#b7a0ff", "#62edbc", "#f5bba0"];
 export const colorNames = ["Perleťová", "Modrá", "Fialová", "Zelená", "Měděná"];
-export const BusinessTheme = createContext(colors[0]);
+export const BusinessTheme = createContext<string>(palette.Business);
 export const statusNames = {
   active: "V práci",
   paused: "Pozastaveno",
@@ -29,6 +36,7 @@ export function Button({
   disabled?: boolean;
 }) {
   const color = useContext(BusinessTheme);
+  const gradient = `action${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   return (
     <Pressable
       accessibilityRole="button"
@@ -38,14 +46,34 @@ export function Button({
       style={({ pressed }) => [
         s.button,
         {
-          backgroundColor: quiet ? "#ffffff05" : color,
-          borderColor: quiet ? "#ffffff14" : "transparent",
+          backgroundColor: quiet ? "transparent" : color,
+          borderBottomColor: quiet ? "#ffffff18" : "transparent",
+          borderBottomWidth: quiet ? 1 : 0,
         },
         disabled && { opacity: 0.4 },
-        pressed && { opacity: 0.7 },
+        pressed && { opacity: 0.8, transform: [{ scale: 0.985 }] },
       ]}
     >
-      <Text style={[s.buttonText, { color: quiet ? color : "#10151e" }]}>
+      {!quiet && (
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <Svg
+            width="100%"
+            height="100%"
+            preserveAspectRatio="none"
+            viewBox="0 0 300 60"
+          >
+            <Defs>
+              <LinearGradient id={gradient} x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor="#ffffff" stopOpacity=".18" />
+                <Stop offset=".55" stopColor={color} stopOpacity="0" />
+                <Stop offset="1" stopColor="#000000" stopOpacity=".09" />
+              </LinearGradient>
+            </Defs>
+            <Rect width="300" height="60" fill={`url(#${gradient})`} />
+          </Svg>
+        </View>
+      )}
+      <Text style={[s.buttonText, { color: quiet ? color : "#071322" }]}>
         {children}
       </Text>
     </Pressable>
@@ -70,8 +98,8 @@ export function Chip({
       style={[
         s.chip,
         selected && {
-          borderColor: `${color}65`,
-          backgroundColor: `${color}14`,
+          borderBottomColor: color,
+          backgroundColor: "transparent",
         },
       ]}
     >
@@ -164,34 +192,42 @@ export function ProjectCard({
       accessibilityRole="button"
       accessibilityLabel={`Projekt ${project.title}`}
       onPress={onPress}
-      style={({ pressed }) => [s.card, pressed && { opacity: 0.75 }]}
+      style={({ pressed }) => [s.projectRow, pressed && { opacity: 0.7 }]}
     >
-      <View style={s.between}>
-        <View style={[s.dot, { backgroundColor: color }]} />
-        <Text style={s.small}>
-          {project.archivedAt !== undefined
-            ? "V archivu"
-            : statusNames[project.status]}
-        </Text>
-      </View>
-      <Text style={s.h2}>{project.title}</Text>
-      <Text numberOfLines={2} style={s.muted}>
-        {project.outcome}
-      </Text>
-      <Progress value={progress.fraction} color={color} />
-      <View style={s.between}>
-        <Text style={s.small}>
-          {progress.done}/{progress.total} kroků hotovo
-        </Text>
-        <Text style={[s.link, { color }]}>Otevřít →</Text>
-      </View>
-      {next &&
-        project.status === "active" &&
-        project.archivedAt === undefined && (
-          <Text numberOfLines={1} style={s.small}>
-            Další: {next.title}
+      <View style={[s.projectAccent, { backgroundColor: color }]} />
+      <View style={{ gap: 11, flex: 1 }}>
+        <View style={s.between}>
+          <View style={[s.row, { gap: 7 }]}>
+            <View style={[s.dot, { backgroundColor: color }]} />
+            <Text style={[s.label, { color }]}>
+              {project.archivedAt !== undefined
+                ? "V ARCHIVU"
+                : statusNames[project.status].toUpperCase()}
+            </Text>
+          </View>
+          <Text style={[s.small, { fontVariant: ["tabular-nums"] }]}>
+            {progress.done} / {progress.total}
           </Text>
-        )}
+        </View>
+        <View style={s.between}>
+          <Text style={[s.h2, { flex: 1 }]}>{project.title}</Text>
+          <Text style={[s.projectArrow, { color }]}>→</Text>
+        </View>
+        <Text numberOfLines={2} style={s.muted}>
+          {project.outcome}
+        </Text>
+        <Progress value={progress.fraction} color={color} />
+        {next &&
+          project.status === "active" &&
+          project.archivedAt === undefined && (
+            <Text numberOfLines={1} style={s.small}>
+              Další: {next.title}
+            </Text>
+          )}
+        <Text style={[s.link, { color, alignSelf: "flex-start" }]}>
+          Otevřít →
+        </Text>
+      </View>
     </Pressable>
   );
 }
@@ -215,7 +251,7 @@ export function TaskRow({
   const color = colors[project.color],
     overdue = !done && task.plannedFor !== undefined && task.plannedFor < today;
   return (
-    <View style={[s.task, overdue && { borderColor: "#d4a18130" }]}>
+    <View style={[s.task, overdue && { borderBottomColor: "#f5bba040" }]}>
       <Pressable
         accessibilityRole="checkbox"
         accessibilityLabel={`${done ? "Splněný úkol" : "Dokončit úkol"} ${task.title}`}
@@ -284,7 +320,7 @@ export function TaskRow({
   );
 }
 export const s = StyleSheet.create({
-  body: { padding: 20, paddingBottom: 32, gap: 22 },
+  body: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 38, gap: 24 },
   row: { flexDirection: "row", alignItems: "center", gap: 10 },
   between: {
     flexDirection: "row",
@@ -295,9 +331,9 @@ export const s = StyleSheet.create({
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   title: {
     color: "#f4f6fa",
-    fontSize: 40,
+    fontSize: 44,
     fontWeight: "700",
-    letterSpacing: -1.7,
+    letterSpacing: -2.1,
   },
   h2: {
     color: "#f4f6fa",
@@ -315,54 +351,101 @@ export const s = StyleSheet.create({
   muted: { color: "#94a1b4", fontSize: 13, lineHeight: 21 },
   small: { color: "#94a1b4", fontSize: 11, lineHeight: 17 },
   label: {
-    color: colors[0],
+    color: palette.Business,
     fontSize: 9,
     fontWeight: "700",
     letterSpacing: 1.7,
   },
-  link: { color: colors[0], fontSize: 13, fontWeight: "600" },
+  link: { color: palette.Business, fontSize: 13, fontWeight: "600" },
   card: {
-    backgroundColor: surface,
-    borderColor: border,
-    borderWidth: 1,
-    borderRadius: 23,
-    padding: 20,
+    borderTopWidth: 1,
+    borderColor: "#ffffff12",
+    paddingVertical: 20,
     gap: 15,
   },
-  hero: {
-    backgroundColor: "#111924",
-    borderColor: "#c5d3ec25",
-    borderWidth: 1,
-    borderRadius: 27,
-    padding: 20,
+  hero: { paddingVertical: 16, gap: 20 },
+  projectRow: {
+    flexDirection: "row",
     gap: 18,
+    paddingVertical: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ffffff12",
+  },
+  projectAccent: { width: 2, borderRadius: 2, marginVertical: 4 },
+  projectArrow: { fontSize: 25, fontWeight: "400" },
+  section: {
+    paddingTop: 22,
+    gap: 18,
+    borderTopWidth: 1,
+    borderColor: "#ffffff12",
+  },
+  summary: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#ffffff14",
+    paddingVertical: 18,
+    gap: 12,
+  },
+  summaryNumber: {
+    fontSize: 32,
+    fontWeight: "500",
+    letterSpacing: -1.2,
+    color: "#edf5ff",
+    fontVariant: ["tabular-nums"],
+  },
+  summaryLabel: { fontSize: 11, color: "#91a2ba", lineHeight: 17 },
+  workspaceTabs: {
+    flexDirection: "row",
+    gap: 22,
+    borderBottomWidth: 1,
+    borderColor: "#ffffff14",
+  },
+  emptyHeadline: {
+    color: "#f6f7ff",
+    fontSize: 42,
+    fontWeight: "600",
+    letterSpacing: -1.8,
+    lineHeight: 46,
+  },
+  template: {
+    paddingVertical: 20,
+    paddingLeft: 17,
+    borderLeftWidth: 2,
+    borderLeftColor: "#ffffff16",
+    gap: 10,
+  },
+  number: {
+    color: palette.Business,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.2,
   },
   button: {
     minHeight: 50,
-    borderRadius: 16,
-    padding: 15,
-    borderWidth: 1,
+    borderRadius: 9,
+    paddingHorizontal: 18,
+    paddingVertical: 17,
+    overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
   },
   buttonText: { fontSize: 14, fontWeight: "700", textAlign: "center" },
   chip: {
     minHeight: 44,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#ffffff14",
-    backgroundColor: "#ffffff03",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+    paddingHorizontal: 2,
+    paddingVertical: 13,
     justifyContent: "center",
   },
   input: {
-    backgroundColor: "#090e17",
+    backgroundColor: "#ffffff03",
     color: "#f4f6fa",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#ffffff18",
-    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ffffff24",
+    paddingHorizontal: 12,
+    paddingVertical: 16,
     minHeight: 50,
     fontSize: 16,
   },
@@ -377,10 +460,8 @@ export const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 3,
-    backgroundColor: surface,
-    borderWidth: 1,
-    borderColor: border,
-    borderRadius: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ffffff12",
   },
   check: {
     width: 48,
@@ -394,7 +475,7 @@ export const s = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: border,
-    backgroundColor: "#0d121bee",
+    backgroundColor: "#070a12ee",
     gap: 12,
   },
   divider: { height: 1, backgroundColor: "#ffffff0d" },

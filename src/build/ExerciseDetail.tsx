@@ -38,8 +38,8 @@ export function ExerciseDetail({ exercise }: { exercise: Exercise }) {
                 style={{
                   width: 30,
                   height: 30,
-                  borderRadius: 15,
-                  backgroundColor: "#202832",
+                  borderRadius: 0,
+                  backgroundColor: "transparent",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
@@ -52,7 +52,12 @@ export function ExerciseDetail({ exercise }: { exercise: Exercise }) {
           <View
             style={[
               s.card,
-              { borderColor: "#9f253755", backgroundColor: "#29161a" },
+              {
+                borderColor: "#ed899255",
+                backgroundColor: "transparent",
+                borderLeftWidth: 2,
+                paddingLeft: 18,
+              },
             ]}
           >
             <Text

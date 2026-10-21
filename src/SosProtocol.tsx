@@ -1,6 +1,7 @@
 import React from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Screen, rankColors } from "./ui";
+import { palette, ink } from "./design";
 import {
   dayKey,
   definitions,
@@ -52,7 +53,12 @@ export function SosProtocol({
   const [outcome, setOutcome] = React.useState("");
   const scroll = React.useRef<ScrollView>(null);
   const food = id === "food";
-  const accent = rankColors[rank];
+  const accent =
+    id === "food"
+      ? palette.Me
+      : id === "scroll"
+        ? palette.Business
+        : palette.Quit;
   const s = dailyStyles(accent);
   const pillars =
     food && program ? activePillars(program, dayKey(new Date(clock))) : [];
@@ -111,10 +117,10 @@ export function SosProtocol({
       style={{
         minHeight: 48,
         padding: 13,
-        borderRadius: 13,
+        borderRadius: 24,
         borderWidth: 1,
         borderColor: checked ? accent : "#39332c",
-        backgroundColor: checked ? tint(accent, 0.16) : "#111620",
+        backgroundColor: checked ? tint(accent, 0.13) : "transparent",
         justifyContent: "center",
       }}
     >
@@ -235,7 +241,12 @@ export function SosProtocol({
               <View
                 style={[
                   s.row,
-                  { borderRadius: 14, backgroundColor: "#111620", padding: 12 },
+                  {
+                    borderTopWidth: 1,
+                    borderBottomWidth: 1,
+                    borderColor: `${accent}35`,
+                    paddingVertical: 16,
+                  },
                 ]}
               >
                 <Text style={s.label}>TVOJE PAUZA</Text>
@@ -330,7 +341,7 @@ export function SosProtocol({
           gap: 2,
           borderTopWidth: 1,
           borderTopColor: "#292526",
-          backgroundColor: "#080b12",
+          backgroundColor: ink,
         }}
       >
         {!choosing && (started === null || hunger) && (

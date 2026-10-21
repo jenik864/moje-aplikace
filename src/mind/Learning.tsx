@@ -95,37 +95,48 @@ export function Learning({
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={s.body}
+      contentContainerStyle={[s.body, { gap: 22 }]}
     >
-      <View style={{ gap: 8 }}>
+      <View style={{ gap: 14, paddingTop: 4 }}>
         <Text style={s.label}>OBJEVOVÁNÍ / MALÁ LABORATOŘ</Text>
-        <Text style={[s.title, { fontSize: 34 }]}>Každý den nový obzor.</Text>
+        <View style={[s.row, { alignItems: "flex-start" }]}>
+          <Text
+            style={[s.title, { fontSize: 36, flex: 1, letterSpacing: -1.5 }]}
+          >
+            Každý den nový obzor.
+          </Text>
+          <View style={{ paddingTop: 8 }}>
+            <LessonArt id="memory" size={70} />
+          </View>
+        </View>
         <Text style={s.muted}>
           Krátké vysvětlení. Vlastní pokus. Otázka, která ověří porozumění.
         </Text>
-      </View>
-      <View style={[s.hero, { padding: 18, gap: 12 }]}>
-        <View style={s.between}>
-          <Text style={s.label}>TVOJE KNIHOVNA</Text>
+        <View style={[s.between, { paddingTop: 10 }]}>
           <Text style={[s.link, { color: mint }]}>
             {count}/{lessons.length} dokončeno
           </Text>
+          <Text style={[s.muted, { fontSize: 12 }]}>
+            {saved.length} uložených · 4 oblasti
+          </Text>
         </View>
         <Progress value={count / lessons.length} />
-        <View style={s.between}>
-          <Text style={s.muted}>4 oblasti · 9 témat · 10–14 min</Text>
-          <Text style={s.muted}>{saved.length} uložených</Text>
-        </View>
       </View>
       {next.resume && (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Pokračovat v tématu ${next.resume.title}`}
           onPress={() => setLesson(next.resume!)}
-          style={[s.card, { borderColor: color, gap: 10 }]}
+          style={{
+            borderLeftWidth: 2,
+            borderColor: color,
+            paddingLeft: 16,
+            paddingVertical: 8,
+            gap: 8,
+          }}
         >
-          <Text style={s.label}>NAVÁZAT TAM, KDE JSI SKONČIL</Text>
-          <Text style={s.h2}>{next.resume.title}</Text>
+          <Text style={s.label}>NAVÁŽEME TAM, KDE JSI SKONČIL</Text>
+          <Text style={s.h3}>{next.resume.title}</Text>
           <Text style={s.link}>
             Krok {(progress[next.resume.id] ?? 0) + 1} ze 4 · Pokračovat →
           </Text>
@@ -136,15 +147,18 @@ export function Learning({
           accessibilityRole="button"
           accessibilityLabel={`Zopakovat téma ${next.review.title}`}
           onPress={() => setLesson(next.review!)}
-          style={[
-            s.card,
-            { backgroundColor: "#0e1b1b", borderColor: `${mint}30`, gap: 8 },
-          ]}
+          style={{
+            borderLeftWidth: 2,
+            borderColor: mint,
+            paddingLeft: 16,
+            paddingVertical: 8,
+            gap: 8,
+          }}
         >
           <Text style={[s.label, { color: mint }]}>VYBAV SI ZNOVU</Text>
           <Text style={s.h3}>{next.review.title}</Text>
           <Text style={s.muted}>
-            Zkus téma projít po odstupu bez nápovědy. Opakování nepřidává XP.
+            Osvěž znalost po odstupu. Opakování nepřidává XP.
           </Text>
           <Text style={[s.link, { color: mint }]}>Osvěžit znalost →</Text>
         </Pressable>
@@ -153,12 +167,12 @@ export function Learning({
         label="Hledat téma"
         value={query}
         onChangeText={setQuery}
-        placeholder="Např. paměť, energie, Python…"
+        placeholder="Paměť, energie, Python…"
       />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
+        contentContainerStyle={{ gap: 7, paddingVertical: 2 }}
       >
         <Chip
           label="Všechny oblasti"
@@ -174,44 +188,76 @@ export function Learning({
           />
         ))}
       </ScrollView>
-      <View style={s.wrap}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          gap: 20,
+          borderBottomWidth: 1,
+          borderColor: "#ffffff14",
+        }}
+      >
         {[
           ["all", "Všechna témata"],
           ["saved", "Uložená"],
           ["progress", "Rozpracovaná"],
           ["done", "Dokončená"],
         ].map(([id, label]) => (
-          <Chip
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: status === id }}
+            aria-selected={status === id}
             key={id}
-            label={label}
-            selected={status === id}
             onPress={() => setStatus(id)}
-          />
+            style={{
+              paddingVertical: 12,
+              borderBottomWidth: 2,
+              borderColor: status === id ? color : "transparent",
+            }}
+          >
+            <Text
+              style={{
+                color: status === id ? "#f8f6ff" : "#7f8ba3",
+                fontSize: 13,
+                fontWeight: status === id ? "600" : "400",
+              }}
+            >
+              {label}
+            </Text>
+          </Pressable>
         ))}
-      </View>
+      </ScrollView>
       <View style={s.between}>
-        <Text style={s.muted}>Nalezená témata: {visible.length}</Text>
+        <Text style={[s.muted, { fontSize: 12 }]}>
+          Nalezená témata: {visible.length}
+        </Text>
         <Pressable
           accessibilityRole="button"
+          disabled={!visible.length}
           onPress={() => {
-            const pool = visible.filter((l) => !Object.hasOwn(completed, l.id));
-            const choices = pool.length ? pool : visible;
+            const pool = visible.filter((l) => !Object.hasOwn(completed, l.id)),
+              choices = pool.length ? pool : visible;
             if (choices.length)
               setLesson(choices[Math.floor(Math.random() * choices.length)]);
           }}
-          disabled={!visible.length}
         >
-          <Text style={[s.link, !visible.length && { opacity: 0.4 }]}>
+          <Text
+            style={[
+              s.link,
+              { fontSize: 13 },
+              !visible.length && { opacity: 0.4 },
+            ]}
+          >
             Překvap mě →
           </Text>
         </Pressable>
       </View>
       {visible.length === 0 && (
-        <View style={s.card}>
+        <View style={{ gap: 15, paddingVertical: 22 }}>
           <Text style={s.h3}>Tady zatím žádné téma není.</Text>
           <Text style={s.muted}>
             {status === "saved"
-              ? "Témata si uložíš tlačítkem Uložit na jejich kartě."
+              ? "U tématu zvol Uložit a vrať se k němu později."
               : "Zkus jiný výraz nebo obnov všechny filtry."}
           </Text>
           <Button
@@ -226,91 +272,114 @@ export function Learning({
           </Button>
         </View>
       )}
-      {visible.map((l) => {
-        const done = Object.hasOwn(completed, l.id),
-          step = progress[l.id] ?? 0;
-        return (
-          <View key={l.id} style={[s.card, { padding: 18, gap: 14 }]}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Otevřít téma ${l.title}`}
-              onPress={() => setLesson(l)}
-              style={({ pressed }) => [
-                { gap: 14 },
-                pressed && { opacity: 0.75 },
-              ]}
-            >
-              <View style={s.row}>
-                <LessonArt id={l.id} size={72} />
-                <View style={{ flex: 1, gap: 6 }}>
-                  <Text style={s.label}>{l.category}</Text>
-                  <Text style={s.h2}>{l.title}</Text>
-                </View>
-              </View>
-              <Text style={s.muted}>{l.subtitle}</Text>
-              <View style={[s.row, { gap: 5 }]}>
-                {Array.from({ length: l.steps.length + 1 }, (_, i) => (
-                  <View
-                    key={i}
-                    style={{
-                      flex: 1,
-                      height: 4,
-                      borderRadius: 4,
-                      backgroundColor: done
-                        ? mint
-                        : i < step
-                          ? color
-                          : "#ffffff16",
-                    }}
-                  />
-                ))}
-              </View>
-              <View style={[s.between, { flexWrap: "wrap" }]}>
-                <Text style={s.muted}>
-                  {done
-                    ? "✓ Dokončeno"
-                    : step
-                      ? `${step}/4 kroků · pokračovat`
-                      : `${l.minutes} min · 4 kroky`}
-                </Text>
-                <Text style={[s.link, { fontSize: 13 }]}>
-                  {done ? "Zopakovat →" : step ? "Pokračovat →" : "Otevřít →"}
-                </Text>
-              </View>
-            </Pressable>
+      <View>
+        {visible.map((l, i) => {
+          const done = Object.hasOwn(completed, l.id),
+            step = progress[l.id] ?? 0;
+          return (
             <View
-              style={[
-                s.between,
-                { borderTopWidth: 1, borderColor: "#ffffff0b", paddingTop: 10 },
-              ]}
+              key={l.id}
+              style={{
+                borderTopWidth: 1,
+                borderColor: "#ffffff13",
+                paddingVertical: 23,
+                gap: 12,
+              }}
             >
-              <Text style={[s.muted, { fontSize: 12 }]}>
-                {done
-                  ? "Opakování bez dalších XP"
-                  : "První dokončení: až +15 XP"}
-              </Text>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`${saved.includes(l.id) ? "Odebrat uložené téma" : "Uložit téma"} ${l.title}`}
-                accessibilityState={{ selected: saved.includes(l.id) }}
-                onPress={() => onSaved(l.id)}
-                style={{ paddingVertical: 8, paddingLeft: 10 }}
+                accessibilityLabel={`Otevřít téma ${l.title}`}
+                onPress={() => setLesson(l)}
+                style={({ pressed }) => [
+                  { gap: 13 },
+                  pressed && { opacity: 0.7 },
+                ]}
               >
-                <Text style={[s.link, { fontSize: 13 }]}>
-                  {saved.includes(l.id) ? "✓ Uloženo" : "+ Uložit"}
-                </Text>
+                <View style={[s.row, { alignItems: "flex-start", gap: 14 }]}>
+                  <Text
+                    style={{
+                      color: `${color}80`,
+                      fontSize: 11,
+                      paddingTop: 3,
+                      fontVariant: ["tabular-nums"],
+                    }}
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </Text>
+                  <View style={{ flex: 1, gap: 7 }}>
+                    <Text style={s.label}>{l.category}</Text>
+                    <Text style={[s.h2, { fontSize: 25, fontWeight: "500" }]}>
+                      {l.title}
+                    </Text>
+                    <Text style={[s.muted, { fontSize: 12, lineHeight: 19 }]}>
+                      {l.subtitle}
+                    </Text>
+                  </View>
+                  <LessonArt id={l.id} size={54} />
+                </View>
+                <View
+                  style={[s.between, { paddingLeft: 28, flexWrap: "wrap" }]}
+                >
+                  <Text style={[s.muted, { fontSize: 12 }]}>
+                    {done
+                      ? "✓ Dokončeno"
+                      : step
+                        ? `${step}/4 kroků · pokračovat`
+                        : `${l.minutes} min · 4 kroky`}
+                  </Text>
+                  <Text style={[s.link, { fontSize: 13 }]}>
+                    {done ? "Zopakovat →" : step ? "Pokračovat →" : "Otevřít →"}
+                  </Text>
+                </View>
+                {(done || step > 0) && (
+                  <View style={[s.row, { gap: 4, paddingLeft: 28 }]}>
+                    {Array.from({ length: l.steps.length + 1 }, (_, n) => (
+                      <View
+                        key={n}
+                        style={{
+                          flex: 1,
+                          height: 2,
+                          backgroundColor: done
+                            ? mint
+                            : n < step
+                              ? color
+                              : "#ffffff10",
+                        }}
+                      />
+                    ))}
+                  </View>
+                )}
               </Pressable>
+              <View style={[s.between, { paddingLeft: 28 }]}>
+                <Text style={[s.muted, { fontSize: 11 }]}>
+                  {done
+                    ? "Opakování bez dalších XP"
+                    : "První dokončení: až +15 XP"}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${saved.includes(l.id) ? "Odebrat uložené téma" : "Uložit téma"} ${l.title}`}
+                  accessibilityState={{ selected: saved.includes(l.id) }}
+                  onPress={() => onSaved(l.id)}
+                  style={{ paddingVertical: 9, paddingLeft: 10 }}
+                >
+                  <Text style={[s.link, { fontSize: 12 }]}>
+                    {saved.includes(l.id) ? "✓ Uloženo" : "+ Uložit"}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
-        );
-      })}
-      <Text style={[s.muted, { fontSize: 12 }]}>
-        Připravené lekce fungují i bez připojení. Učení navazuje na tvůj uložený
-        postup; vlastní AI témata zatím nejsou součástí knihovny.
+          );
+        })}
+      </View>
+      <Text style={[s.muted, { fontSize: 11 }]}>
+        Připravené lekce fungují i bez připojení. Vlastní AI témata zatím nejsou
+        součástí knihovny.
       </Text>
     </ScrollView>
   );
 }
+
 function LessonPlayer({
   lesson,
   initialStep,
@@ -469,12 +538,17 @@ function LessonPlayer({
             }}
             style={{
               padding: 14,
-              borderRadius: 13,
-              borderWidth: 1,
+              borderRadius: 0,
+              borderWidth: 0,
+              borderBottomWidth: 1,
               borderColor:
                 choice === i ? (correct ? mint : "#ff8995") : "#36383e",
               backgroundColor:
-                choice === i ? (correct ? "#142821" : "#2a171b") : "#15171b",
+                choice === i
+                  ? correct
+                    ? "#8ae7d110"
+                    : "#ff899510"
+                  : "transparent",
             }}
           >
             <Text
@@ -521,11 +595,12 @@ function LessonPlayer({
       </ScrollView>
       <View
         style={{
-          padding: 14,
+          paddingHorizontal: 24,
+          paddingVertical: 16,
           paddingBottom: 18,
           borderTopWidth: 1,
           borderColor: "#303238",
-          backgroundColor: "#0b0c0f",
+          backgroundColor: "#070A12",
         }}
       >
         <Button

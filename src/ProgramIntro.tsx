@@ -154,11 +154,11 @@ export function ProgramIntro({
 }
 const styles = StyleSheet.create({
   hero: {
-    padding: 22,
+    paddingVertical: 24,
     gap: 16,
-    borderRadius: 28,
-    borderWidth: 1,
-    backgroundColor: surface,
+    borderRadius: 0,
+    borderBottomWidth: 1,
+    backgroundColor: "transparent",
   },
   label: { fontSize: 9, letterSpacing: 1.8, fontWeight: "700" },
   art: { alignItems: "center" },

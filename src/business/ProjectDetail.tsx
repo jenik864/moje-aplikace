@@ -51,23 +51,45 @@ export function ProjectDetail({
     );
   return (
     <>
-      <View style={s.hero}>
+      <View style={[s.hero, { paddingTop: 4 }]}>
         <View style={s.between}>
           <Text style={[s.label, { color }]}>
             {archived ? "V ARCHIVU" : statusNames[project.status].toUpperCase()}
           </Text>
           <View style={[s.dot, { backgroundColor: color }]} />
         </View>
-        <Text style={[s.h2, { fontSize: 29 }]}>{project.title}</Text>
+        <Text
+          style={[s.h2, { fontSize: 36, lineHeight: 40, letterSpacing: -1.2 }]}
+        >
+          {project.title}
+        </Text>
         <Text style={s.label}>VÝSLEDEK, KE KTERÉMU MÍŘÍŠ</Text>
         <Text style={s.text}>{project.outcome}</Text>
+        <View style={[s.summary, { borderBottomWidth: 0, paddingBottom: 0 }]}>
+          <View style={{ flex: 1, gap: 5 }}>
+            <Text style={[s.summaryNumber, { color }]}>
+              {Math.round(progress.fraction * 100)} %
+            </Text>
+            <Text style={s.summaryLabel}>cesty k výsledku</Text>
+          </View>
+          <View style={{ flex: 1, gap: 5, alignItems: "flex-end" }}>
+            <Text style={s.summaryNumber}>
+              {progress.done}
+              <Text style={{ fontSize: 18, color: "#65758b" }}>
+                {" "}
+                / {progress.total}
+              </Text>
+            </Text>
+            <Text style={s.summaryLabel}>kroků dokončeno</Text>
+          </View>
+        </View>
         <Progress value={progress.fraction} color={color} />
-        <Text style={s.small}>
-          {progress.done}/{progress.total} kroků dokončeno
-          {project.completedAt !== undefined
-            ? ` · projekt dokončen ${displayDate(dayKey(new Date(project.completedAt)))}`
-            : ""}
-        </Text>
+        {project.completedAt !== undefined && (
+          <Text style={s.small}>
+            Projekt dokončen{" "}
+            {displayDate(dayKey(new Date(project.completedAt)))}
+          </Text>
+        )}
       </View>
       {!archived && (
         <Button quiet onPress={onEdit}>
@@ -75,7 +97,18 @@ export function ProjectDetail({
         </Button>
       )}
       {!!project.notes.trim() && (
-        <View style={s.card}>
+        <View
+          style={[
+            s.card,
+            {
+              borderTopWidth: 0,
+              borderLeftWidth: 2,
+              borderLeftColor: `${color}50`,
+              paddingLeft: 17,
+              paddingVertical: 6,
+            },
+          ]}
+        >
           <Text style={s.label}>POZNÁMKY K PROJEKTU</Text>
           <Text style={s.text}>{project.notes}</Text>
         </View>
@@ -87,16 +120,18 @@ export function ProjectDetail({
         </Text>
       </View>
       {tasks.length ? (
-        tasks.map((task) => (
-          <TaskRow
-            key={task.id}
-            task={task}
-            project={project}
-            today={today}
-            onToggle={() => change((d) => toggleTask(d, task.id))}
-            onOpen={() => onOpen(task)}
-          />
-        ))
+        <View style={{ gap: 0 }}>
+          {tasks.map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              project={project}
+              today={today}
+              onToggle={() => change((d) => toggleTask(d, task.id))}
+              onOpen={() => onOpen(task)}
+            />
+          ))}
+        </View>
       ) : (
         <View style={s.card}>
           <Text style={s.muted}>
@@ -116,6 +151,7 @@ export function ProjectDetail({
           </Text>
           <Button
             disabled={!progress.total || progress.done !== progress.total}
+            quiet={!progress.total || progress.done !== progress.total}
             onPress={() =>
               change((d) => setProjectStatus(d, project.id, "done"))
             }
@@ -196,7 +232,11 @@ export function StepDetail({
               ? "DNEŠNÍ KROK"
               : "TVŮJ DALŠÍ KROK"}
         </Text>
-        <Text style={[s.h2, { fontSize: 29 }]}>{task.title}</Text>
+        <Text
+          style={[s.h2, { fontSize: 36, lineHeight: 40, letterSpacing: -1.2 }]}
+        >
+          {task.title}
+        </Text>
         <Text style={s.muted}>
           {task.plannedFor
             ? `V plánu: ${displayDate(task.plannedFor)}`
@@ -205,7 +245,18 @@ export function StepDetail({
         </Text>
         {task.priority === "high" && <Text style={s.link}>Důležitý krok</Text>}
       </View>
-      <View style={s.card}>
+      <View
+        style={[
+          s.card,
+          {
+            borderTopWidth: 0,
+            borderLeftWidth: 2,
+            borderLeftColor: colors[project.color],
+            paddingLeft: 17,
+            paddingVertical: 6,
+          },
+        ]}
+      >
         <Text style={s.label}>PROČ NA TOM ZÁLEŽÍ</Text>
         <Text style={s.text}>{project.outcome}</Text>
       </View>

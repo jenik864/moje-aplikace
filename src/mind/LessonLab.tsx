@@ -1,18 +1,40 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useId } from "react";
 import { View, Text, Pressable } from "react-native";
-import Svg, { Rect, Path, Circle, Text as SvgText } from "react-native-svg";
+import Svg, {
+  Rect,
+  Path,
+  Circle,
+  Defs,
+  LinearGradient,
+  Stop,
+  Text as SvgText,
+} from "react-native-svg";
 import { Chip, MindTheme, useMindStyles, mint } from "./components";
 import { ExtraLabs } from "./ExtraLabs";
 export function LessonArt({ id, size = 90 }: { id: string; size?: number }) {
-  const color = useContext(MindTheme);
+  const theme = useContext(MindTheme);
+  const color =
+    (
+      {
+        "python-start": "#B7A0FF",
+        "oil-to-fuel": "#77C6F4",
+        "compound-interest": "#F5C67B",
+        percentages: "#FFB89B",
+        internet: "#6ECFE1",
+        memory: "#A7E4B8",
+        "critical-thinking": "#EAA2DF",
+        electricity: "#E4ED8C",
+        algorithms: "#8FB4FF",
+      } as Record<string, string>
+    )[id] ?? theme;
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120">
       <Circle
         cx="60"
         cy="60"
         r="53"
-        fill={`${color}16`}
-        stroke={`${color}45`}
+        fill={`${color}0c`}
+        stroke={`${color}20`}
       />
       {id === "python-start" ? (
         <>
@@ -91,7 +113,8 @@ export function LessonArt({ id, size = 90 }: { id: string; size?: number }) {
 }
 export function LessonLab({ id, step }: { id: string; step: number }) {
   const s = useMindStyles(),
-    color = useContext(MindTheme);
+    color = useContext(MindTheme),
+    gradientId = `interest${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const [count, setCount] = useState(3),
     [age, setAge] = useState(17),
     [years, setYears] = useState(3),
@@ -116,7 +139,17 @@ export function LessonLab({ id, step }: { id: string; step: number }) {
           : Array.from({ length: count }, (_, i) => i).join("  ");
     return (
       <View
-        style={[s.card, { backgroundColor: "#0e161a", gap: 12, padding: 16 }]}
+        style={[
+          s.card,
+          {
+            backgroundColor: "#0b171c",
+            borderTopWidth: 0,
+            borderLeftWidth: 2,
+            borderColor: mint,
+            gap: 14,
+            padding: 18,
+          },
+        ]}
       >
         <View style={s.between}>
           <Text style={[s.label, { color: mint }]}>ŽIVÝ PŘÍKLAD / PYTHON</Text>
@@ -171,7 +204,9 @@ export function LessonLab({ id, step }: { id: string; step: number }) {
       "Nejtěžší část zůstává dole a dále se zpracovává.",
     ];
     return (
-      <View style={[s.card, { padding: 16, gap: 12 }]}>
+      <View
+        style={[s.card, { paddingVertical: 20, paddingHorizontal: 0, gap: 14 }]}
+      >
         <Text style={s.label}>
           {step === 0
             ? "JEDNA SUROVINA / VÍCE PRODUKTŮ"
@@ -341,13 +376,17 @@ export function LessonLab({ id, step }: { id: string; step: number }) {
   const initial = 1000,
     result = initial * Math.pow(1 + rate / 100, years),
     values = Array.from(
-      { length: Math.min(years, 10) },
-      (_, i) =>
-        initial *
-        Math.pow(1 + rate / 100, ((i + 1) * years) / Math.min(years, 10)),
-    );
+      { length: 21 },
+      (_, i) => initial * Math.pow(1 + rate / 100, (i * years) / 20),
+    ),
+    points = values.map(
+      (v, i) => `${15 + i * 13.5},${125 - (v / (result * 1.1)) * 90}`,
+    ),
+    line = `M${points.join("L")}`;
   return (
-    <View style={[s.card, { padding: 16, gap: 12 }]}>
+    <View
+      style={[s.card, { paddingVertical: 20, paddingHorizontal: 0, gap: 14 }]}
+    >
       <Text style={s.label}>ZKUS ZMĚNIT ČAS A SAZBU</Text>
       <View style={s.wrap}>
         {[1, 3, 10].map((n) => (
@@ -369,26 +408,37 @@ export function LessonLab({ id, step }: { id: string; step: number }) {
           />
         ))}
       </View>
-      <View
-        style={{
-          height: 82,
-          flexDirection: "row",
-          alignItems: "flex-end",
-          gap: 6,
-        }}
-      >
-        {values.map((v, i) => (
-          <View
-            key={i}
-            style={{
-              flex: 1,
-              height: Math.max(10, (v / result) * 80),
-              backgroundColor: i === values.length - 1 ? mint : `${color}80`,
-              borderRadius: 4,
-            }}
+      <Svg width="100%" height={160} viewBox="0 0 300 150" accessible={false}>
+        <Defs>
+          <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={mint} stopOpacity=".22" />
+            <Stop offset="1" stopColor={mint} stopOpacity="0" />
+          </LinearGradient>
+        </Defs>
+        {[45, 85, 125].map((y) => (
+          <Path
+            key={y}
+            d={`M15 ${y}H285`}
+            stroke="#ffffff10"
+            strokeWidth="1"
+            strokeDasharray="3 5"
           />
         ))}
-      </View>
+        <Path d={`${line}L285 125L15 125Z`} fill={`url(#${gradientId})`} />
+        <Path d={line} fill="none" stroke={mint} strokeWidth="2.5" />
+        <Circle
+          cx="285"
+          cy={125 - (result / (result * 1.1)) * 90}
+          r="4"
+          fill={mint}
+        />
+        <SvgText x="15" y="143" fill="#718098" fontSize="9">
+          Dnes
+        </SvgText>
+        <SvgText x="285" y="143" fill="#718098" fontSize="9" textAnchor="end">
+          {years} {years === 1 ? "rok" : years < 5 ? "roky" : "let"}
+        </SvgText>
+      </Svg>
       <Text accessibilityLiveRegion="polite" style={[s.h2, { color: mint }]}>
         {result.toLocaleString("cs-CZ", { maximumFractionDigits: 2 })} Kč
       </Text>

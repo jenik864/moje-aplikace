@@ -13,7 +13,7 @@ import {
   initialWindowMetrics,
 } from "react-native-safe-area-context";
 import { ranks } from "../model";
-import { RankStage, AppIcon } from "../design";
+import { RankStage, AppIcon, palette } from "../design";
 import { buildRank, buildPoints, buildMilestones } from "./ranking";
 import { rankColors, RankEmblem } from "../ui";
 import { Calendar } from "./Calendar";
@@ -94,7 +94,7 @@ export function BuildScreen({
   onAccent?: (color: string) => void;
   store: ReturnType<typeof useBuild>;
 }) {
-  const color = rankColors[buildRank(store.data)];
+  const color = palette.Build;
   useEffect(() => {
     if (store.loaded) onAccent?.(color);
   }, [color, store.loaded, onAccent]);
@@ -127,6 +127,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
   const [selected, setSelected] = useState(dateKey());
   const [route, setRoute] = useState<Route | null>(null);
   const [notice, setNotice] = useState("");
+  const [showAllWeek, setShowAllWeek] = useState(false);
   useEffect(() => {
     const t = setInterval(() => setToday(dateKey()), 30000);
     return () => clearInterval(t);
@@ -204,7 +205,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
         <RankStage
           rank={rank}
           prime={Math.max(rank, data.prime ?? 0)}
-          color={blue}
+          color={rankColors[rank]}
           label="BUILD / TVŮJ POSTUP"
           value={points.toLocaleString("cs-CZ")}
           unit="BODŮ POHYBU"
@@ -228,19 +229,44 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
             {notice}
           </Text>
         )}
-        <View
-          style={[
-            s.card,
-            { backgroundColor: blue + "0a", borderColor: blue + "25", gap: 20 },
-          ]}
-        >
+        <View style={{ gap: 18, paddingVertical: 10 }}>
           <View style={s.between}>
             <Text style={s.label}>DNEŠNÍ MISE</Text>
             <Text style={s.small}>{nice(today)}</Text>
           </View>
-          <View style={[s.row, { flexWrap: "nowrap" }]}>
+          <View
+            style={[
+              s.row,
+              { flexWrap: "nowrap", alignItems: "center", gap: 4 },
+            ]}
+          >
+            <View style={{ flex: 1, gap: 12 }}>
+              <Text
+                style={[
+                  s.h2,
+                  {
+                    fontSize: width < 360 ? 28 : 34,
+                    lineHeight: width < 360 ? 31 : 37,
+                    letterSpacing: -1.1,
+                  },
+                ]}
+              >
+                {next
+                  ? next.title
+                  : todayDone.length
+                    ? "Dnes splněno."
+                    : "Síla začíná i odpočinkem."}
+              </Text>
+              <Text style={s.muted}>
+                {next
+                  ? `${next.targetMinutes} min · ${kinds[next.kind].name}`
+                  : todayDone.length
+                    ? `${todayDone.length} dokončených aktivit`
+                    : "Dnes má tvoje tělo prostor na regeneraci."}
+              </Text>
+            </View>
             <MissionArtwork
-              size={width < 360 ? 80 : 96}
+              size={width < 360 ? 110 : 130}
               icon={
                 next ? kinds[next.kind].icon : todayDone.length ? "✓" : "↔"
               }
@@ -254,30 +280,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
                   .length
               }
             />
-            <View style={{ flex: 1, gap: 9 }}>
-              <Text style={[s.h2, { fontSize: width < 360 ? 22 : 24 }]}>
-                {next
-                  ? next.title
-                  : todayDone.length
-                    ? "Dnes splněno."
-                    : "Prostor pro regeneraci."}
-              </Text>
-              <Text style={s.muted}>
-                {next
-                  ? `${next.targetMinutes} min · ${kinds[next.kind].name}`
-                  : todayDone.length
-                    ? `${todayDone.length} dokončených aktivit`
-                    : "Pohyb i odpočinek mají své místo."}
-              </Text>
-            </View>
           </View>
-          <Text style={s.text}>
-            {next
-              ? "Jeden trénink. Další krok k silnějšímu tělu."
-              : todayDone.length
-                ? "Výkon je uložený. Dej tělu prostor na zotavení."
-                : "Můžeš si naplánovat týden nebo zapsat dnešní vlastní aktivitu."}
-          </Text>
           <Button
             title={
               next
@@ -317,11 +320,14 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
               <Text style={s.link}>Sestavit týden →</Text>
             </Pressable>
           </View>
-          <Button
-            secondary
-            title="Měsíční kalendář →"
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Měsíční kalendář →"
             onPress={() => setRoute({ type: "calendar" })}
-          />
+            style={{ paddingVertical: 4 }}
+          >
+            <Text style={s.link}>Měsíční kalendář →</Text>
+          </Pressable>
           <View style={s.between}>
             <Pressable
               accessibilityRole="button"
@@ -361,7 +367,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
                     done && s.done,
                     selected === day && {
                       borderColor: blue,
-                      backgroundColor: blue + "26",
+                      backgroundColor: blue + "20",
                     },
                   ]}
                 >
@@ -400,25 +406,45 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
                 : 0
             }
           />
-          <View style={s.card}>
-            <Text style={s.label}>CELÝ TÝDEN / CO TĚ ČEKÁ</Text>
-            {weekdays.map((day, i) => {
-              const items = weekActivities.filter((a) => a.day === day);
+          <View style={{ gap: 8, paddingTop: 8 }}>
+            <View style={s.between}>
+              <Text style={s.label}>
+                {showAllWeek
+                  ? "CELÝ TÝDEN / CO TĚ ČEKÁ"
+                  : `${nice(selected)} / TVŮJ POHYB`}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showAllWeek }}
+                onPress={() => setShowAllWeek(!showAllWeek)}
+                style={{ paddingVertical: 10 }}
+              >
+                <Text style={[s.link, { fontSize: 12 }]}>
+                  {showAllWeek ? "Jen vybraný den" : "Celý týden"}
+                </Text>
+              </Pressable>
+            </View>
+            {(showAllWeek ? weekdays : [selected]).map((day) => {
+              const items = weekActivities.filter((a) => a.day === day),
+                i = weekdays.indexOf(day);
               return (
                 <View
                   key={day}
                   style={{
-                    gap: 9,
+                    gap: 4,
                     paddingVertical: 10,
-                    borderBottomWidth: i < 6 ? 1 : 0,
-                    borderBottomColor: blue + "25",
+                    borderTopWidth: 1,
+                    borderColor: "#ffffff13",
                   }}
                 >
                   <View style={s.between}>
                     <Text
                       style={[
                         s.text,
-                        day === selected && { color: blue, fontWeight: "700" },
+                        {
+                          fontWeight: "600",
+                          color: day === selected ? blue : "#e8f1f2",
+                        },
                       ]}
                     >
                       {dayNames[i]} · {nice(day)}
@@ -428,7 +454,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
                       accessibilityRole="button"
                       accessibilityLabel={`Přidat aktivitu ${day}`}
                       onPress={() => setRoute({ type: "activity", day })}
-                      style={{ padding: 10 }}
+                      style={{ paddingVertical: 10, paddingLeft: 12 }}
                     >
                       <Text style={s.link}>+ Přidat</Text>
                     </Pressable>
@@ -442,26 +468,38 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
                           setRoute({ type: "activity", id: a.id, day })
                         }
                         style={{
-                          backgroundColor: blue + "10",
-                          borderRadius: 12,
-                          padding: 12,
-                          gap: 4,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 14,
+                          paddingVertical: 14,
                         }}
                       >
-                        <Text style={s.text}>
-                          {data.logs[a.id] ? "✓ " : ""}
-                          {a.title} →
-                        </Text>
-                        <Text style={s.small}>
-                          {kinds[a.kind].name} ·{" "}
-                          {data.logs[a.id]
-                            ? `${data.logs[a.id].minutes} min dokončeno`
-                            : `${a.targetMinutes} min${a.targetKm ? ` · ${a.targetKm} km` : ""}`}
-                        </Text>
+                        <View
+                          style={{
+                            width: 3,
+                            height: 38,
+                            backgroundColor: data.logs[a.id] ? blue : "#79bdff",
+                            borderRadius: 2,
+                          }}
+                        />
+                        <View style={{ flex: 1, gap: 5 }}>
+                          <Text style={[s.h2, { fontSize: 21 }]}>
+                            {data.logs[a.id] ? "✓ " : ""}
+                            {a.title} →
+                          </Text>
+                          <Text style={s.small}>
+                            {kinds[a.kind].name} ·{" "}
+                            {data.logs[a.id]
+                              ? `${data.logs[a.id].minutes} min dokončeno`
+                              : `${a.targetMinutes} min${a.targetKm ? ` · ${a.targetKm} km` : ""}`}
+                          </Text>
+                        </View>
                       </Pressable>
                     ))
                   ) : (
-                    <Text style={s.small}>Volno / regenerace</Text>
+                    <Text style={[s.muted, { paddingVertical: 8 }]}>
+                      Volno / regenerace
+                    </Text>
                   )}
                 </View>
               );
@@ -473,7 +511,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
             onPress={() => setRoute({ type: "activity", day: selected })}
           />
         </View>
-        <View style={s.card}>
+        <View style={[s.card, { gap: 18 }]}>
           <View style={s.between}>
             <Text style={s.label}>TVOJE VÝZVA</Text>
             <Pressable
@@ -516,7 +554,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
         {data.routines.map((r) => {
           const checked = (data.routineChecks[today] ?? []).includes(r.id);
           return (
-            <View key={r.id} style={s.card}>
+            <View key={r.id} style={[s.card, { gap: 12, paddingVertical: 18 }]}>
               <View style={s.between}>
                 <Text style={s.label}>
                   {r.period === "morning" ? "RÁNO" : "VEČER"}
@@ -555,9 +593,9 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
         <Pressable
           accessibilityRole="button"
           onPress={() => setRoute({ type: "library" })}
-          style={s.card}
+          style={[s.card, { borderColor: blue + "60", paddingVertical: 26 }]}
         >
-          <Text style={s.label}>KNIHOVNA POHYBU</Text>
+          <Text style={s.label}>KNIHOVNA POHYBU / 51 CVIKŮ</Text>
           <View style={s.between}>
             <Text style={[s.h2, s.flex]}>Technika, kterou máš po ruce.</Text>
             <Text style={s.icon}>→</Text>

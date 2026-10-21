@@ -12,7 +12,7 @@ import {
 } from "react-native-safe-area-context";
 import { RankArtwork } from "./RankArtwork";
 import { ranks } from "./model";
-import { AmbientBackdrop, ink } from "./design";
+import { AmbientBackdrop, ink, Reveal } from "./design";
 
 // Native tab screens and modal roots can initially report zero insets.
 // Window metrics preserve the status-bar clearance while their measurement settles.
@@ -43,7 +43,7 @@ export function Screen({
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        {children}
+        <Reveal style={{ flex: 1 }}>{children}</Reveal>
       </KeyboardAvoidingView>
     </View>
   );

@@ -1,7 +1,7 @@
 import React from "react";
 import { Text, View, Pressable } from "react-native";
 import { type Program, definitions } from "../model";
-import { rankColors } from "../ui";
+import { palette } from "../design";
 import { RankMark } from "../porn/visuals";
 import { ProgramIntro } from "../ProgramIntro";
 import type { DailyId } from "./analytics";
@@ -16,12 +16,12 @@ export function DailyWelcome({
   id: DailyId;
   activate: () => void;
 }) {
-  const s = dailyStyles(rankColors[0]);
+  const s = dailyStyles(palette.Quit);
   return (
     <>
       <Text style={s.label}>{definitions[id].label}</Text>
       <Text style={s.heading}>{definitions[id].title}</Text>
-      <ProgramIntro id={id} accent={rankColors[0]} />
+      <ProgramIntro id={id} accent={palette.Quit} />
       <View style={s.row}>
         <RankMark rank={0} size={40} />
         <View style={{ flex: 1, gap: 4 }}>
