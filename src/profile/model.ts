@@ -1,4 +1,6 @@
 import { milestones, ranks, type Data, type ProgramId } from "../model.ts";
+import { parseGoals, type GoalTargets } from "./goals.ts";
+import { dayKey, validDay } from "../mind/model.ts";
 import { foodPoints } from "../food/model.ts";
 import { usageSummary, timeThresholds } from "../scroll/scoring.ts";
 import { buildPoints, buildMilestones } from "../build/ranking.ts";
@@ -130,12 +132,15 @@ export function profileSummary(
     rank: score === null ? null : rankForScore(score),
   };
 }
+export type RankSnapshot = { day: string; at: number; score: number };
 export type Profile = {
   version: 1;
   name: string;
   intention: string;
   prime: number;
   createdAt: number;
+  goals?: GoalTargets;
+  snapshots?: RankSnapshot[];
 };
 export const initialProfile = (now = Date.now()): Profile => ({
   version: 1,
@@ -160,6 +165,25 @@ export function parseProfile(raw: string): Profile {
     p.createdAt < 0
   )
     throw new Error("Profil se nepodařilo načíst.");
+  if (p.goals !== undefined) parseGoals(p.goals);
+  if (
+    p.snapshots !== undefined &&
+    (!Array.isArray(p.snapshots) ||
+      p.snapshots.length > 366 ||
+      !p.snapshots.every(
+        (v: any, i: number) =>
+          v &&
+          validDay(v.day) &&
+          Number.isFinite(v.at) &&
+          v.at >= 0 &&
+          Math.abs(v.at - Date.parse(`${v.day}T12:00:00Z`)) <= 36 * 3600000 &&
+          Number.isFinite(v.score) &&
+          v.score >= 0 &&
+          v.score <= maxRank &&
+          (i === 0 || p.snapshots[i - 1].day < v.day),
+      ))
+  )
+    throw new Error("Historii ranku se nepodařilo načíst.");
   return p;
 }
 export function editProfile(
@@ -180,4 +204,31 @@ export function observeRank(profile: Profile, score: number): Profile {
     throw new Error("Neplatný celkový rank.");
   const rank = rankForScore(score);
   return rank > profile.prime ? { ...profile, prime: rank } : profile;
+}
+
+// Save observed daily values only; never reconstruct history from current totals.
+export function observeProfile(
+  profile: Profile,
+  score: number,
+  now = Date.now(),
+): Profile {
+  if (!Number.isFinite(now) || now < 0)
+    throw new Error("Neplatný čas záznamu.");
+  const ranked = observeRank(profile, score),
+    day = dayKey(new Date(now));
+  const old = profile.snapshots?.find((s) => s.day === day);
+  if (old && Math.floor(old.score * 100) === Math.floor(score * 100))
+    return ranked;
+  return {
+    ...ranked,
+    snapshots: [
+      ...(profile.snapshots ?? []).filter((s) => s.day !== day),
+      { day, at: now, score },
+    ]
+      .sort((a, b) => a.day.localeCompare(b.day))
+      .slice(-366),
+  };
+}
+export function setProfileGoals(profile: Profile, goals: GoalTargets): Profile {
+  return { ...profile, goals: parseGoals(goals) };
 }

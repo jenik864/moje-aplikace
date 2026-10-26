@@ -58,3 +58,8 @@ Denní check-in má samostatný dnešní koncept a potvrzení dokončeného vče
 Ranky, 28denní konzistence, statistiky, manifest s podpisem a návraty ze SOS mají vlastní rozklikávací přehledy. Detail kalendáře ukazuje potvrzený čas nebo průběžný zápis a počet návratů ze SOS. Graf Doomscrollingu zobrazuje ručně zaznamenané minuty za 14 dní a denní limit; graf Junk Food dodržení pravidla. Dnešní koncept má obrys, chybějící zápis není vyhodnocen jako neúspěch. Konzistence používá pouze potvrzené dny od aktivace v posledních 28 dnech. Nejlepší série přeruší návaznost při chybějícím či nesplněném dni; průměr minut nezahrnuje dnešní koncept ani historické dny bez zapsaného času.
 
 Sdílené SOS používá kruhovou pauzu: Doomscrolling 5 minut, Junk Food 2 minuty. Nové záznamy všech programů uchovávají, zda byla pauza spuštěna. Zavření záznam nevytvoří; návrat k plánu ho uloží i bez spouštěče. Data zůstávají lokální, bez automatického měření, systémového blokování či dalších bodů za SOS. Ukládací klíč a starší záznamy zůstávají kompatibilní. Neaktivní programy pageru jsou skryté pro čtečky obrazovky.
+
+
+## Rozšíření osobního prostoru Me
+
+Me spojuje skutečné uložené události čtyř oblastí, stávající odznaky Build/Mind a volitelné týdenní cíle. Cíle ani historie nezavádějí další bodování. Celkový rank a PRIME dál vycházejí ze stejných tří stejně vážených oblastí; Business je samostatný. Graf ranku začíná až skutečným pozorováním v této verzi a nevytváří odhad minulosti. Zálohu všech pěti datových oblastí lze stáhnout/sdílet a po náhledu výslovně obnovit s nahrazením současných dat. Obnova chrání původní hodnoty a po dokončení znovu načte všechny sekce. Účet a cloudová synchronizace nejsou součástí tohoto updatu.

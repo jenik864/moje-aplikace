@@ -44,8 +44,11 @@ type Route =
   | { type: "task"; projectId: string; id?: string }
   | { type: "step"; projectId: string; id: string };
 type Filter = "active" | "paused" | "done" | "archive";
-export function BusinessScreen() {
-  const store = useBusiness();
+export function BusinessScreen({
+  store,
+}: {
+  store: ReturnType<typeof useBusiness>;
+}) {
   const { data, loaded, loadError, saveError, saving } = store;
   const [today, setToday] = useState(dayKey()),
     [route, setRoute] = useState<Route | null>(null),

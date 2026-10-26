@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { initialBuild, parseBuild, type BuildData } from "./model";
 const key = "quitter.build.v1";
-export function useBuild() {
+export function useBuild(blocked = false, gate?: { current: boolean }) {
+  const lastWriteFailed = useRef(false);
+  const mounted = useRef(true),
+    hydration = useRef(0);
   const [data, setData] = useState<BuildData>(initialBuild);
   const [persisted, setPersisted] = useState<BuildData | null>(null);
   const current = useRef(data);
@@ -13,23 +16,31 @@ export function useBuild() {
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
   async function hydrate() {
+    const token = ++hydration.current;
     setLoadError("");
     setLoaded(false);
     try {
       const raw = await AsyncStorage.getItem(key);
       const next = raw === null ? initialBuild() : parseBuild(raw);
+      if (!mounted.current || token !== hydration.current) return;
       current.current = next;
       setData(next);
       setPersisted(next);
       setLoaded(true);
     } catch {
+      if (!mounted.current || token !== hydration.current) return;
       setLoadError(
         "Build se nepodařilo načíst. Uložená data zůstala nedotčená.",
       );
     }
   }
   useEffect(() => {
+    mounted.current = true;
     void hydrate();
+    return () => {
+      mounted.current = false;
+      hydration.current++;
+    };
   }, []);
   function save(next: BuildData) {
     const revision = ++serial.current;
@@ -41,12 +52,14 @@ export function useBuild() {
         () => {
           if (revision === serial.current) {
             setPersisted(next);
+            lastWriteFailed.current = false;
             setSaveError("");
             setSaving(false);
           }
         },
         () => {
           if (revision === serial.current) {
+            lastWriteFailed.current = true;
             setSaveError("Změny zatím nejsou uložené. Zkus uložení znovu.");
             setSaving(false);
           }
@@ -54,7 +67,7 @@ export function useBuild() {
       );
   }
   function update(fn: (d: BuildData) => BuildData) {
-    if (!loaded) return;
+    if (!loaded || blocked || gate?.current || !mounted.current) return;
     const next = fn(current.current);
     current.current = next;
     setData(next);
@@ -62,6 +75,7 @@ export function useBuild() {
   }
   return {
     data,
+    flush: () => queue.current.then(() => !lastWriteFailed.current),
     persisted,
     update,
     loaded,
@@ -70,7 +84,8 @@ export function useBuild() {
     saving,
     retryLoad: hydrate,
     retrySave: () => {
-      if (loaded) save(current.current);
+      if (loaded && !blocked && !gate?.current && mounted.current)
+        save(current.current);
     },
   };
 }

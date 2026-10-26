@@ -15,7 +15,14 @@ import {
 } from "react-native-safe-area-context";
 import { Screen, rankColors, RankEmblem } from "../ui";
 import { RankStage, RankStageArt, AppIcon, palette } from "../design";
-import { definitions, ranks, type ProgramId } from "../model";
+import { definitions, ranks, type ProgramId, type Data } from "../model";
+import type { useBusiness } from "../business/useBusiness";
+import { ActivityHistory } from "./ActivityHistory";
+import { BadgeCollection } from "./BadgeCollection";
+import { GoalsPanel } from "./GoalsPanel";
+import { goalProgress, defaultGoals } from "./goals";
+import { RankJourney } from "./RankJourney";
+import { BackupPanel } from "./BackupPanel";
 import { buildPoints } from "../build/ranking";
 import { mindXP } from "../mind/ranking";
 import { rankForScore, type profileSummary, type Profile } from "./model";
@@ -23,6 +30,14 @@ import type { useBuild } from "../build/useBuild";
 import type { useMind } from "../mind/useMind";
 import type { useProfile } from "./useProfile";
 type Props = {
+  quit: Data | null;
+  business: ReturnType<typeof useBusiness>;
+  createBackup: () => Promise<string>;
+  restoreBackup: (raw: string) => Promise<void>;
+  backupReady: boolean;
+  transferBusy: boolean;
+  restored: boolean;
+  recovered: boolean;
   summary: ReturnType<typeof profileSummary>;
   profile: ReturnType<typeof useProfile>;
   build: ReturnType<typeof useBuild>;
@@ -86,13 +101,40 @@ export function MeScreen({
   mind,
   quitPending,
   open,
+  quit,
+  business,
+  createBackup,
+  restoreBackup,
+  backupReady,
+  transferBusy,
+  restored,
+  recovered,
 }: Props) {
   const modalScroll = useRef<ScrollView>(null);
   const previewY = useRef(0);
-  const [route, setRoute] = useState<"ranks" | "edit" | "data" | null>(null),
+  const [route, setRoute] = useState<
+      | "ranks"
+      | "edit"
+      | "data"
+      | "history"
+      | "goals"
+      | "badges"
+      | "backup"
+      | null
+    >(null),
     [preview, setPreview] = useState(0),
     [dirty, setDirty] = useState(false),
     [confirm, setConfirm] = useState(false);
+  const [historyView, setHistoryView] = useState<"activity" | "rank">(
+    "activity",
+  );
+  const targets = profile.data.goals ?? defaultGoals();
+  const goals = goalProgress({
+    targets,
+    build: build.loaded ? build.data : null,
+    mind: mind.loaded ? mind.data : null,
+    business: business.loaded ? business.data : null,
+  });
   const rank = summary.rank,
     color = palette.Me,
     rankColor = rank === null ? "#c5d3ec" : rankColors[rank];
@@ -115,14 +157,23 @@ export function MeScreen({
     }),
     [build.loaded, build.data, mind.loaded, mind.data],
   );
-  const pending = quitPending || build.saving || mind.saving || profile.saving;
+  const pending =
+    quitPending ||
+    build.saving ||
+    mind.saving ||
+    business.saving ||
+    profile.saving;
   const hasSaveError =
-    !!build.saveError || !!mind.saveError || !!profile.saveError;
+    !!build.saveError ||
+    !!mind.saveError ||
+    !!business.saveError ||
+    !!profile.saveError;
   function close() {
+    if (transferBusy) return;
     if (dirty) setConfirm(true);
     else setRoute(null);
   }
-  function show(next: "ranks" | "edit" | "data") {
+  function show(next: Exclude<typeof route, null>) {
     setDirty(false);
     setConfirm(false);
     setPreview(rank ?? 0);
@@ -130,6 +181,20 @@ export function MeScreen({
   }
   const alerts = (
     <>
+      {business.loadError && (
+        <ErrorCard
+          message={business.loadError}
+          retry={business.retryLoad}
+          color={color}
+        />
+      )}
+      {business.saveError && (
+        <ErrorCard
+          message={business.saveError}
+          retry={business.retrySave}
+          color={color}
+        />
+      )}
       {build.loadError && (
         <ErrorCard
           message={build.loadError}
@@ -194,6 +259,55 @@ export function MeScreen({
             <AppIcon name="Me" color={color} size={22} />
           </Pressable>
         </View>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 12,
+            justifyContent: "space-between",
+            borderBottomWidth: 1,
+            borderColor: "#ffffff16",
+          }}
+        >
+          {(
+            [
+              ["history", "Historie"],
+              ["badges", "Odznaky"],
+              ["goals", "Cíle"],
+              ["backup", "Záloha"],
+            ] as const
+          ).map(([id, label]) => (
+            <Pressable
+              key={id}
+              accessibilityRole="button"
+              accessibilityLabel={`Me: ${label}`}
+              onPress={() => {
+                if (id === "history") setHistoryView("activity");
+                show(id);
+              }}
+              style={{
+                minHeight: 48,
+                justifyContent: "center",
+                paddingVertical: 12,
+              }}
+            >
+              <Text style={[s.link, { color, fontSize: 14 }]}>{label}</Text>
+            </Pressable>
+          ))}
+        </View>
+        {recovered && (
+          <Text accessibilityRole="alert" style={[s.muted, { color }]}>
+            Obnova byla přerušená. Znovu jsme načetli skutečný stav úložiště;
+            před dalším pokusem zkontroluj přehled.
+          </Text>
+        )}
+        {restored && (
+          <Text
+            accessibilityRole="alert"
+            style={[s.muted, { color: palette.Build }]}
+          >
+            Záloha byla obnovena. Všechny sekce pracují s obnovenými daty.
+          </Text>
+        )}
         {profile.loaded &&
           (!!profile.data.name || !!profile.data.intention) && (
             <View style={s.identity}>
@@ -270,6 +384,80 @@ export function MeScreen({
             </View>
           ))}
         </View>
+        <View style={s.card}>
+          <View style={s.between}>
+            <Text style={s.h2}>Týden podle tebe</Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => show("goals")}
+              style={{ minHeight: 44, justifyContent: "center" }}
+            >
+              <Text style={[s.link, { color }]}>Moje cíle →</Text>
+            </Pressable>
+          </View>
+          {goals.enabledCount ? (
+            <>
+              {goals.rows
+                .filter((g) => g.enabled)
+                .map((g) => (
+                  <View key={g.id} style={{ gap: 8, paddingVertical: 6 }}>
+                    <View style={s.between}>
+                      <Text style={[s.muted, { flex: 1 }]}>{g.title}</Text>
+                      <Text
+                        style={[
+                          s.link,
+                          { color: g.complete ? palette.Build : color },
+                        ]}
+                      >
+                        {g.actual === null ? "—" : g.actual}/{g.target}
+                      </Text>
+                    </View>
+                    <View style={{ height: 3, backgroundColor: "#ffffff12" }}>
+                      <View
+                        style={{
+                          height: 3,
+                          width: `${g.ratio * 100}%`,
+                          backgroundColor: g.complete ? palette.Build : color,
+                        }}
+                      />
+                    </View>
+                  </View>
+                ))}
+              <Text style={s.small}>
+                Cíle sledují skutečné záznamy. Nepřidávají další body ani XP.
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={s.muted}>
+                Zvol si vlastní týdenní tempo pro pohyb, hlavu, učení nebo
+                práci. Zapni jen to, co chceš sledovat.
+              </Text>
+              <Button color={color} quiet onPress={() => show("goals")}>
+                Nastavit moje týdenní cíle →
+              </Button>
+            </>
+          )}
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Vývoj mého ranku"
+          onPress={() => {
+            setHistoryView("rank");
+            show("history");
+          }}
+          style={[s.between, s.card]}
+        >
+          <View style={{ gap: 7, flex: 1 }}>
+            <Text style={s.label}>MOJE CESTA</Text>
+            <Text style={s.h3}>Vývoj celkového ranku</Text>
+            <Text style={s.small}>
+              {profile.data.snapshots?.length ?? 0} zaznamenaných dnů · skutečný
+              postup
+            </Text>
+          </View>
+          <Text style={[s.link, { color }]}>→</Text>
+        </Pressable>
         <View style={s.sectionHeading}>
           <Text style={s.label}>TVŮJ EKOSYSTÉM</Text>
           <Text style={s.h2}>Tvoje disciplíny</Text>
@@ -435,7 +623,15 @@ export function MeScreen({
                   ? "POSTUP"
                   : route === "edit"
                     ? "PROFIL"
-                    : "DATA"}
+                    : route === "data"
+                      ? "DATA"
+                      : route === "history"
+                        ? "MOJE CESTA"
+                        : route === "goals"
+                          ? "CÍLE"
+                          : route === "badges"
+                            ? "ODZNAKY"
+                            : "ZÁLOHA"}
               </Text>
             </View>
             <ScrollView
@@ -448,6 +644,83 @@ export function MeScreen({
               }
               aria-hidden={confirm}
             >
+              {alerts}
+              {route === "history" && (
+                <>
+                  <View style={{ flexDirection: "row", gap: 24 }}>
+                    {(
+                      [
+                        ["activity", "Činnosti"],
+                        ["rank", "Celkový rank"],
+                      ] as const
+                    ).map(([id, label]) => (
+                      <Pressable
+                        key={id}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: historyView === id }}
+                        onPress={() => setHistoryView(id)}
+                        style={{
+                          minHeight: 44,
+                          paddingVertical: 12,
+                          borderBottomWidth: 2,
+                          borderColor:
+                            historyView === id ? color : "transparent",
+                        }}
+                      >
+                        <Text
+                          style={[
+                            s.link,
+                            { color: historyView === id ? color : "#94a1b4" },
+                          ]}
+                        >
+                          {label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                  {historyView === "activity" ? (
+                    <ActivityHistory
+                      quit={quit}
+                      build={build.loaded ? build.data : null}
+                      mind={mind.loaded ? mind.data : null}
+                      business={business.loaded ? business.data : null}
+                      onOpen={(section, program) => {
+                        setRoute(null);
+                        open(section, program);
+                      }}
+                    />
+                  ) : (
+                    <RankJourney snapshots={profile.data.snapshots ?? []} />
+                  )}
+                </>
+              )}
+              {route === "badges" && (
+                <BadgeCollection
+                  build={build.loaded ? build.data : null}
+                  mind={mind.loaded ? mind.data : null}
+                  onOpen={(section) => {
+                    setRoute(null);
+                    open(section);
+                  }}
+                />
+              )}
+              {route === "goals" && (
+                <GoalsPanel
+                  targets={targets}
+                  progress={goals}
+                  disabled={!profile.loaded}
+                  saving={profile.saving}
+                  onDirty={setDirty}
+                  onChange={(value) => profile.setGoals(value)}
+                />
+              )}
+              {route === "backup" && (
+                <BackupPanel
+                  createBackup={createBackup}
+                  restoreBackup={restoreBackup}
+                  ready={backupReady}
+                />
+              )}
               {route === "edit" && profile.loaded && (
                 <ProfileEditor
                   profile={profile.data}
@@ -576,6 +849,12 @@ export function MeScreen({
                     {[
                       ["Quit", !quitPending],
                       [
+                        "Business",
+                        business.loaded &&
+                          !business.saving &&
+                          !business.saveError,
+                      ],
+                      [
                         "Build",
                         build.loaded && !build.saving && !build.saveError,
                       ],
@@ -598,12 +877,30 @@ export function MeScreen({
                   {alerts}
                   <Text style={s.muted}>
                     Odinstalování aplikace nebo vymazání jejích dat může záznamy
-                    odstranit. Přenos na jiné zařízení zatím není dostupný přímo
-                    z profilu.
+                    odstranit. Vytvoř si záložní soubor; stejnou zálohu můžeš
+                    obnovit i na jiném zařízení.
                   </Text>
                 </>
               )}
             </ScrollView>
+            {transferBusy && (
+              <View
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundColor: "#070A12f2",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 16,
+                  padding: 24,
+                }}
+              >
+                <ActivityIndicator color={color} />
+                <Text accessibilityRole="alert" style={s.text}>
+                  Pracujeme s daty. Chvilku prosím…
+                </Text>
+              </View>
+            )}
             {confirm && (
               <View
                 accessibilityViewIsModal

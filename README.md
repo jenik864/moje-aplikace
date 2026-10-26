@@ -90,3 +90,20 @@ Neaktivní program není neúspěšný den. Neúplná měření nejsou nula; chy
 Celkový PRIME je nejvyšší skutečně zaznamenaný společný rank od zavedení profilu. Neskládá se z nezávislých historických PRIME disciplín, které nemusely nastat zároveň. Sleduje se i mimo obrazovku Me a postup zaznamenává až po úspěšném uložení všech zdrojových dat. Opravy a resety jej nesnižují. Jméno, osobní záměr a PRIME se ukládají odděleně do `quitter.profile.v1`; chyba načtení původní data nepřepíše a chybu zápisu lze zopakovat.
 
 Build a Mind nyní používají jednu společnou instanci dat pro svou sekci i profil. Me ukazuje aktuální ranky, zdrojové body/XP, odznaky, počty potvrzených tréninků a aktivit. Z profilu lze otevřít konkrétní program Quit i ostatní sekce. Jméno a záměr jsou volitelné, formulář chrání rozepsané změny. Přehled ukládání vysvětluje lokální data; účet, přenos dat a cloudová synchronizace nejsou připojené.
+
+
+## Rozšíření Me
+
+Me nově obsahuje společnou historii, sbírku odznaků, vlastní týdenní cíle, pozorovaný vývoj celkového ranku a přenosnou zálohu všech pěti datových oblastí. Rychlé vstupy jsou hned pod hlavičkou; otevřená kompozice a materiálové barvy ranků zůstávají.
+
+Historie skládá současné skutečné záznamy Quit, Build, Mind a Business bez vytváření kopií aktivit. Nabízí oblasti, 7/30 dnů nebo celou historii, hledání bez diakritiky včetně poznámek, rozbalení detailu a 28denní graf dnů se záznamem. Nejde o auditní log odstraněných záznamů: opravy se projeví v aktuálních podkladech. Běh se řadí podle dne výkonu, blok přes půlnoc podle původního dne a Business podle skutečného dokončení. Rozběhnuté bloky, plán a pouhý uplynulý čas nevytvářejí dokončené události. Měření a SOS nejsou úspěšné denní check-iny ani další XP.
+
+Sbírka sjednocuje 18 existujících odznaků Build a Mind s filtrem oblasti a stavu. Datum získání pochází z uloženého `earned`, podmínku a dnešní podklady lze rozbalit. Oprava záznamu může snížit aktuální průběh, již získaný odznak zůstává. Nenačtená oblast je neznámá, ne nulová.
+
+Týdenní cíle se zapínají výslovně a jsou ve výchozím stavu vypnuté. Lze sledovat počet dokončených tréninků, aktivní dny Mind, první dokončení lekcí a skutečně hotové kroky Business v místním týdnu po–ne. Cíle neovlivňují ranky, XP ani PRIME. Ukládají se do volitelného `profile.goals`, editor chrání neuložené změny. Business sdílí jedinou instanci úložiště s Me, stejně jako Build/Mind.
+
+Historie ranku vzniká až od prvního skutečného pozorování v této verzi, jen po úspěšném uložení zdrojů. Zachovává poslední pozorovanou hodnotu dne, nejvýše 366 zaznamenaných dnů; během dne zapisuje změnu od jednoho celého bodu profilu a změnu ranku. Dny bez pozorování nedopočítává. Oprava dnešních údajů může snížit dnešní bod, ale PRIME zůstává. Uložený místní den je zachovaný i při přenosu mezi časovými pásmy. Při otevřené aplikaci se nový den zaznamená i při stejném skóre.
+
+Záloha je verziovaný JSON soubor (`quitter-backup`, verze 1, max. 8 MB) s přesnými hodnotami pěti známých klíčů. Web používá stažení/výběr souboru; telefon moduly Expo Document Picker, File System a Sharing. Soubor obsahuje i soukromé zápisy a podpis. Výběr a náhled neprovádějí změny; nahrazení všech oblastí vyžaduje druhé výslovné potvrzení, data se neslučují. Chybějící oblast se obnoví do výchozího stavu. Každá oblast souboru se validuje před zápisem; poškozená a neznámá data se odmítnou. Přenos je dostupný i při poškozeném zdrojovém úložišti, včetně záložního vstupu z chyby načítání Quit.
+
+Před obnovou se synchronně zablokují nové zápisy a doběhnou existující fronty. Původní přesné hodnoty chrání ověřovaný žurnál; chyba vrátí původní data, při selhání návratu se další zápisy pozastaví. Přerušenou obnovu aplikace dokončí před spuštěním datových hooků. Úspěšná obnova znovu načte všechny sdílené instance, takže stará obrazovka nemůže import přepsat. Chybný žurnál se nezahodí automaticky. Nejde o cloudovou synchronizaci, šifrovaný trezor ani účet. Nové volitelné položky profilu zůstávají kompatibilní se staršími profily.

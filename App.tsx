@@ -1,8 +1,15 @@
 import { MeScreen } from "./src/profile/MeScreen";
 import { profileSummary } from "./src/profile/model";
 import { useProfile } from "./src/profile/useProfile";
+import { BackupPanel } from "./src/profile/BackupPanel";
 import { useBuild } from "./src/build/useBuild";
 import { useMind } from "./src/mind/useMind";
+import { useBusiness } from "./src/business/useBusiness";
+import {
+  readBackup,
+  restoreBackup as applyBackup,
+  recoverBackup,
+} from "./src/profile/backupStorage";
 import { BusinessScreen } from "./src/business/BusinessScreen";
 import { MindScreen } from "./src/mind/MindScreen";
 import { BuildScreen } from "./src/build/BuildScreen";
@@ -482,8 +489,76 @@ function Setup({
   );
 }
 export default function App() {
-  const buildStore = useBuild();
-  const mindStore = useMind();
+  const [recovered, setRecovered] = useState(false);
+  const [boot, setBoot] = useState<"loading" | "ready" | "error">("loading"),
+    [generation, setGeneration] = useState(0),
+    [restored, setRestored] = useState(false);
+  async function recover() {
+    setBoot("loading");
+    try {
+      await recoverBackup(AsyncStorage);
+      setBoot("ready");
+    } catch {
+      setBoot("error");
+    }
+  }
+  useEffect(() => {
+    void recover();
+  }, []);
+  if (boot !== "ready")
+    return (
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <Screen accent={palette.Me}>
+          <View style={[s.center, { flex: 1, gap: 18 }]}>
+            {boot === "loading" ? (
+              <ActivityIndicator color={palette.Me} />
+            ) : (
+              <>
+                <Text style={s.sectionTitle}>Obnova čeká na dokončení.</Text>
+                <Text style={s.body}>
+                  Před načtením aplikace potřebujeme bezpečně dokončit
+                  přerušenou obnovu dat.
+                </Text>
+                <Button
+                  title="Zkusit dokončení obnovy"
+                  onPress={() => void recover()}
+                />
+              </>
+            )}
+          </View>
+        </Screen>
+      </SafeAreaProvider>
+    );
+  return (
+    <AppSession
+      key={generation}
+      restored={restored}
+      recovered={recovered}
+      restart={(success = true) => {
+        setRestored(success);
+        setRecovered(!success);
+        setGeneration((n) => n + 1);
+      }}
+    />
+  );
+}
+function AppSession({
+  restart,
+  restored,
+  recovered,
+}: {
+  restart: (success?: boolean) => void;
+  restored: boolean;
+  recovered: boolean;
+}) {
+  const [bootBackup, setBootBackup] = useState(false);
+  const [transferBusy, setTransferBusy] = useState(false),
+    [recoveryError, setRecoveryError] = useState(false);
+  const operationLock = useRef(false),
+    quitWriteFailed = useRef(false);
+  const buildStore = useBuild(transferBusy, operationLock);
+  const mindStore = useMind(transferBusy, operationLock);
+  const businessStore = useBusiness(transferBusy, operationLock);
   const [persistedQuit, setPersistedQuit] = useState<Data | null>(null);
   const [buildAccent, setBuildAccent] = useState(rankColors[0]);
   const [mindAccent, setMindAccent] = useState(rankColors[0]);
@@ -502,11 +577,12 @@ export default function App() {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE)
       .then((raw) => {
-        if (raw) {
+        if (raw !== null) {
           const parsed = JSON.parse(raw);
           if (
             !parsed ||
             typeof parsed !== "object" ||
+            Array.isArray(parsed) ||
             ids.some(
               (id) =>
                 parsed[id] &&
@@ -525,19 +601,23 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || operationLock.current) return;
     const raw = JSON.stringify(data);
     queue.current = queue.current
       .catch(() => {})
       .then(() => AsyncStorage.setItem(STORAGE, raw))
       .then(() => {
+        quitWriteFailed.current = false;
         setPersistedQuit(data);
         setSaveError(false);
       })
-      .catch(() => setSaveError(true));
+      .catch(() => {
+        quitWriteFailed.current = true;
+        setSaveError(true);
+      });
   }, [data, ready]);
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || operationLock.current) return;
     setData((prev) => {
       let changed = false;
       const next = { ...prev };
@@ -554,8 +634,9 @@ export default function App() {
       return changed ? next : prev;
     });
   }, [now, ready]);
-  const update = (id: ProgramId, p: Program) =>
-    setData((prev) => ({ ...prev, [id]: p }));
+  const update = (id: ProgramId, p: Program) => {
+    if (!operationLock.current) setData((prev) => ({ ...prev, [id]: p }));
+  };
   const quitAccent = palette.Quit;
   const Quit = () => (
     <Screen accent={quitAccent}>
@@ -711,23 +792,147 @@ export default function App() {
     buildStore.persisted === buildStore.data &&
     mindStore.loaded &&
     mindStore.persisted === mindStore.data;
-  const profile = useProfile(ready ? combined.score : null, settled);
+  const profile = useProfile(
+    ready ? combined.score : null,
+    settled,
+    transferBusy,
+    now,
+    operationLock,
+  );
+  const backupReady =
+    ready &&
+    settled &&
+    !saveError &&
+    profile.loaded &&
+    !profile.saving &&
+    !profile.saveError &&
+    businessStore.loaded &&
+    !businessStore.saving &&
+    !businessStore.saveError &&
+    !buildStore.saveError &&
+    !mindStore.saveError;
+  async function drainStores() {
+    const result = await Promise.all([
+      queue.current.then(() => !quitWriteFailed.current),
+      buildStore.flush(),
+      mindStore.flush(),
+      businessStore.flush(),
+      profile.flush(),
+    ]);
+    return result.every((ok) => ok);
+  }
+  async function exportData() {
+    if (operationLock.current || !backupReady)
+      throw new Error("Nejprve dokonči načtení a uložení všech sekcí.");
+    operationLock.current = true;
+    setTransferBusy(true);
+    try {
+      if (!(await drainStores()))
+        throw new Error(
+          "Některé změny se nepodařilo uložit. Nejdřív zopakuj uložení a potom vytvoř zálohu.",
+        );
+      return await readBackup(AsyncStorage);
+    } finally {
+      operationLock.current = false;
+      setTransferBusy(false);
+    }
+  }
+  async function importData(raw: string) {
+    if (operationLock.current)
+      throw new Error("Jiná operace s daty právě běží.");
+    operationLock.current = true;
+    setTransferBusy(true);
+    try {
+      await drainStores();
+      await applyBackup(AsyncStorage, raw);
+      restart();
+    } catch (error) {
+      try {
+        await recoverBackup(AsyncStorage);
+      } catch {
+        setRecoveryError(true);
+        throw error;
+      }
+      if (
+        error &&
+        typeof error === "object" &&
+        "recoveryRequired" in error &&
+        error.recoveryRequired
+      ) {
+        restart(false);
+        throw error;
+      }
+      operationLock.current = false;
+      setTransferBusy(false);
+      throw error;
+    }
+  }
+  if (recoveryError)
+    return (
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <Screen accent={palette.Me}>
+          <View style={[s.center, { flex: 1, gap: 18 }]}>
+            <Text style={s.sectionTitle}>Původní data čekají na obnovení.</Text>
+            <Text style={s.body}>
+              Zápis se nepodařil dokončit. Ostatní změny jsou pozastavené, dokud
+              se původní data nevrátí.
+            </Text>
+            <Button
+              title="Zkusit obnovit původní data"
+              onPress={() =>
+                void recoverBackup(AsyncStorage)
+                  .then(() => restart(false))
+                  .catch(() => setRecoveryError(true))
+              }
+            />
+          </View>
+        </Screen>
+      </SafeAreaProvider>
+    );
   if (!ready)
     return (
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <Screen>
-          <View style={s.center}>
+        <Screen accent={palette.Me}>
+          <ScrollView
+            contentContainerStyle={[s.center, { flexGrow: 1, gap: 20 }]}
+          >
             {loadError ? (
               <>
-                <Text style={s.cardTitle}>Data se nepodařilo načíst.</Text>
-                <Text style={s.body}>
-                  Nechali jsme je zachovaná. Zkus aplikaci znovu otevřít.
-                </Text>
+                {bootBackup ? (
+                  <>
+                    <Button
+                      secondary
+                      title="Zpět k přehledu načtení"
+                      onPress={() => {
+                        if (!transferBusy) setBootBackup(false);
+                      }}
+                    />
+                    <BackupPanel
+                      createBackup={exportData}
+                      restoreBackup={importData}
+                      ready={false}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Text style={s.sectionTitle}>
+                      Data se nepodařilo načíst.
+                    </Text>
+                    <Text style={s.body}>
+                      Původní data zůstala zachovaná. Můžeš znovu otevřít
+                      aplikaci nebo obnovit ověřenou zálohu.
+                    </Text>
+                    <Button
+                      title="Obnovit data ze zálohy"
+                      onPress={() => setBootBackup(true)}
+                    />
+                  </>
+                )}
               </>
             ) : (
-              <ActivityIndicator color={purple} />
+              <ActivityIndicator color={palette.Me} />
             )}
-          </View>
+          </ScrollView>
         </Screen>
       </SafeAreaProvider>
     );
@@ -759,6 +964,7 @@ export default function App() {
               }}
             />
           )}
+          initialRouteName={restored || recovered ? "Me" : "Quit"}
           screenOptions={{ headerShown: false }}
         >
           <Tab.Screen name="Quit">{Quit}</Tab.Screen>
@@ -768,7 +974,9 @@ export default function App() {
           <Tab.Screen name="Mind">
             {() => <MindScreen store={mindStore} onAccent={setMindAccent} />}
           </Tab.Screen>
-          <Tab.Screen name="Business">{() => <BusinessScreen />}</Tab.Screen>
+          <Tab.Screen name="Business">
+            {() => <BusinessScreen store={businessStore} />}
+          </Tab.Screen>
           <Tab.Screen name="Me">
             {({ navigation }) => (
               <MeScreen
@@ -777,6 +985,14 @@ export default function App() {
                 build={buildStore}
                 mind={mindStore}
                 quitPending={data !== persistedQuit || saveError}
+                quit={ready ? data : null}
+                business={businessStore}
+                createBackup={exportData}
+                restoreBackup={importData}
+                backupReady={backupReady}
+                transferBusy={transferBusy}
+                restored={restored}
+                recovered={recovered}
                 open={(section, program) => {
                   if (section === "Quit" && program) {
                     setActiveProgram(program);
