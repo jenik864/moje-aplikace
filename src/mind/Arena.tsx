@@ -82,7 +82,7 @@ export function Arena({
     answerRef = useRef(""),
     mistake = useRef(false),
     run = useRef(round),
-    input = useRef<TextInput>(null),
+    input = useRef<React.ComponentRef<typeof TextInput>>(null),
     callback = useRef(onResult),
     reduced = useRef(true),
     flash = useRef(new Animated.Value(1)).current;

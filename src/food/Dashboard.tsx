@@ -1,6 +1,6 @@
 import { RankStage, palette } from "../design";
 import React from "react";
-import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, View, Platform } from "react-native";
 import {
   SafeAreaProvider,
   initialWindowMetrics,
@@ -403,7 +403,7 @@ export function FoodDashboard({
       />
       <Modal
         visible={panel === "pillars" || panel === "days"}
-        animationType="slide"
+        animationType={Platform.OS === "web" ? "fade" : "slide"}
         onRequestClose={() => setPanel(null)}
       >
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>

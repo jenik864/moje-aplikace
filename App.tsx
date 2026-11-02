@@ -26,6 +26,7 @@ import {
   useWindowDimensions,
   PanResponder,
   Alert,
+  Platform,
 } from "react-native";
 import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -182,7 +183,7 @@ function Setup({
   const d = { ...definitions[id], color: rankColors[0] };
   const [step, setStep] = useState(0);
   const [drawing, setDrawing] = useState(false);
-  const setupScroll = useRef<ScrollView>(null);
+  const setupScroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const moveStep = (next: number) => {
     setStep(next);
     setDrawing(false);
@@ -572,7 +573,7 @@ function AppSession({
   const [sosPillar, setSosPillar] = useState<string | undefined>();
   const [activeProgram, setActiveProgram] = useState<ProgramId>("porn");
   const { width } = useWindowDimensions();
-  const pager = useRef<ScrollView>(null);
+  const pager = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const queue = useRef(Promise.resolve());
   useEffect(() => {
     AsyncStorage.getItem(STORAGE)
@@ -1024,7 +1025,7 @@ function AppSession({
       )}
       <Modal
         visible={setup !== null}
-        animationType="slide"
+        animationType={Platform.OS === "web" ? "fade" : "slide"}
         onRequestClose={() => setSetup(null)}
       >
         {setup && (
@@ -1042,7 +1043,7 @@ function AppSession({
       </Modal>
       <Modal
         visible={sos !== null}
-        animationType="slide"
+        animationType={Platform.OS === "web" ? "fade" : "slide"}
         onRequestClose={() => setSos(null)}
       >
         {sos && (

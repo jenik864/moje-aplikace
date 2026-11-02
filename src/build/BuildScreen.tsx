@@ -7,6 +7,7 @@ import {
   Modal,
   ActivityIndicator,
   useWindowDimensions,
+  Platform,
 } from "react-native";
 import {
   SafeAreaProvider,
@@ -110,7 +111,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
   const rank = buildRank(store.data),
     points = buildPoints(store.data);
   const { width } = useWindowDimensions();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const weekY = useRef(0);
   const {
     data,
@@ -607,7 +608,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
       </ScrollView>
       <Modal
         visible={route !== null}
-        animationType="slide"
+        animationType={Platform.OS === "web" ? "fade" : "slide"}
         onRequestClose={() => setRoute(null)}
       >
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>

@@ -398,7 +398,7 @@ export function ScrollDashboard({
       />
       <Modal
         visible={panel === "connect" || panel === "ranks" || panel === "data"}
-        animationType="slide"
+        animationType={Platform.OS === "web" ? "fade" : "slide"}
         onRequestClose={() => setPanel(null)}
       >
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>

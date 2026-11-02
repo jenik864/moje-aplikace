@@ -51,7 +51,7 @@ export function SosProtocol({
   const [deadline, setDeadline] = React.useState<number | null>(null);
   const [clock, setClock] = React.useState(Date.now());
   const [outcome, setOutcome] = React.useState("");
-  const scroll = React.useRef<ScrollView>(null);
+  const scroll = React.useRef<React.ComponentRef<typeof ScrollView>>(null);
   const food = id === "food";
   const accent =
     id === "food"

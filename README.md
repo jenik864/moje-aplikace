@@ -11,11 +11,22 @@ npm ci
 npm start
 ```
 
-Na telefonu použijte Expo Go kompatibilní s Expo SDK 57, pokud je pro váš telefon dostupné; jinak odpovídající development build. Telefon musí dosáhnout na Metro server. Přístup z cloudového prostředí není automaticky zajištěn. Pro web:
+Projekt používá Expo SDK 58 a vyžaduje Expo Go pro SDK 58. Telefon musí dosáhnout na Metro server. Přístup z cloudového prostředí není automaticky zajištěn. Pro web:
 
 ```sh
 npm run web
 ```
+
+Při přechodu ze starší stažené verze zastavte Metro pomocí `Ctrl+C`, stáhněte a rozbalte aktuální ZIP a v jeho složce spusťte:
+
+```sh
+npm ci
+npm start -- --clear
+```
+
+Potom naskenujte nový QR kód. Chyba „Project is incompatible with this version of Expo Go“ s SDK 57 znamená, že běží stará kopie projektu nebo její Metro server. Aktualizace samotného balíčku Expo bez odpovídajících verzí React Native a ostatních modulů nestačí; kompatibilní sadu obsahuje tento `package-lock.json`.
+
+Modální okna na webu používají prolnutí. Posuvná animace přesouvala v novém Safe Area Context provider mimo viewport při prvním měření a ponechávala chybný spodní inset přes celou výšku okna. Na iOS a Androidu zůstává posuvná animace.
 
 ## Vizuální systém
 

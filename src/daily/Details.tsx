@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
   useWindowDimensions,
+  Platform,
 } from "react-native";
 import {
   SafeAreaProvider,
@@ -56,13 +57,13 @@ export function DailyDetails({
   React.useEffect(() => {
     if (kind === "ranks") setPreviewRank(rank);
   }, [kind]);
-  const scroll = React.useRef<ScrollView>(null);
+  const scroll = React.useRef<React.ComponentRef<typeof ScrollView>>(null);
   React.useEffect(() => setEditing(false), [kind]);
   const { width } = useWindowDimensions();
   return (
     <Modal
       visible={kind !== null}
-      animationType="slide"
+      animationType={Platform.OS === "web" ? "fade" : "slide"}
       onRequestClose={() => (editing ? setEditing(false) : close())}
     >
       {kind && (

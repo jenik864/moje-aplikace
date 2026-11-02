@@ -407,7 +407,7 @@ function LessonPlayer({
 }) {
   const s = useMindStyles(),
     color = useContext(MindTheme),
-    scroll = useRef<ScrollView>(null);
+    scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const [step, setStep] = useState(initialStep),
     [choice, setChoice] = useState<number | null>(null),
     [done, setDone] = useState(false),

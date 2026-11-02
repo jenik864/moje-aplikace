@@ -7,6 +7,7 @@ import {
   Modal,
   ActivityIndicator,
   AppState,
+  Platform,
 } from "react-native";
 import {
   SafeAreaProvider,
@@ -57,7 +58,7 @@ export function BusinessScreen({
     [notice, setNotice] = useState(""),
     [dirty, setDirty] = useState(false),
     [confirmExit, setConfirmExit] = useState(false);
-  const modalScroll = useRef<ScrollView>(null);
+  const modalScroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   useEffect(() => {
     const tick = () => setToday(dayKey());
     const timer = setInterval(tick, 15000),
@@ -481,7 +482,7 @@ export function BusinessScreen({
         </ScrollView>
         <Modal
           visible={route !== null}
-          animationType="slide"
+          animationType={Platform.OS === "web" ? "fade" : "slide"}
           onRequestClose={close}
         >
           <SafeAreaProvider initialMetrics={initialWindowMetrics}>

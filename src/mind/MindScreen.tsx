@@ -7,6 +7,7 @@ import {
   View,
   Pressable,
   AppState,
+  Platform,
 } from "react-native";
 import {
   SafeAreaProvider,
@@ -108,7 +109,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
     [planDirty, setPlanDirty] = useState(false),
     [discardPlan, setDiscardPlan] = useState(false),
     [learningId, setLearningId] = useState<string | undefined>();
-  const modalScroll = useRef<ScrollView>(null);
+  const modalScroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const tasks = habitsFor(data, selected),
     days = Array.from({ length: 7 }, (_, i) => shift(week, i)),
     todayTasks = habitsFor(data, today),
@@ -696,7 +697,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
       </ScrollView>
       <Modal
         visible={route !== null}
-        animationType="slide"
+        animationType={Platform.OS === "web" ? "fade" : "slide"}
         onRequestClose={close}
       >
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>

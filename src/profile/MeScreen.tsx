@@ -8,6 +8,7 @@ import {
   Modal,
   StyleSheet,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import {
   SafeAreaProvider,
@@ -110,7 +111,7 @@ export function MeScreen({
   restored,
   recovered,
 }: Props) {
-  const modalScroll = useRef<ScrollView>(null);
+  const modalScroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const previewY = useRef(0);
   const [route, setRoute] = useState<
       | "ranks"
@@ -597,7 +598,7 @@ export function MeScreen({
       </ScrollView>
       <Modal
         visible={route !== null}
-        animationType="slide"
+        animationType={Platform.OS === "web" ? "fade" : "slide"}
         onRequestClose={close}
       >
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>

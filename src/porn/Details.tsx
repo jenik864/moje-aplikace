@@ -7,6 +7,7 @@ import {
   Pressable,
   StyleSheet,
   TextInput,
+  Platform,
 } from "react-native";
 import {
   SafeAreaProvider,
@@ -59,7 +60,7 @@ export function PornDetails({
   close: () => void;
   update: (p: Program) => void;
 }) {
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const { accent } = useRankTheme();
   const s = makeStyles(accent);
   const [editing, setEditing] = useState(false);
@@ -69,7 +70,7 @@ export function PornDetails({
   }, [kind]);
   const back = () => (editing ? setEditing(false) : close());
   return (
-    <Modal visible={kind !== null} animationType="slide" onRequestClose={back}>
+    <Modal visible={kind !== null} animationType={Platform.OS === "web" ? "fade" : "slide"} onRequestClose={back}>
       {kind && (
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
           <Screen modal accent={accent}>
