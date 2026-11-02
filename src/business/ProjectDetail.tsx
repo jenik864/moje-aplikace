@@ -75,7 +75,7 @@ export function ProjectDetail({
           <View style={{ flex: 1, gap: 5, alignItems: "flex-end" }}>
             <Text style={s.summaryNumber}>
               {progress.done}
-              <Text style={{ fontSize: 18, color: "#65758b" }}>
+              <Text style={{ fontSize: 18, color: "#737373" }}>
                 {" "}
                 / {progress.total}
               </Text>

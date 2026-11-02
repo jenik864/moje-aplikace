@@ -108,12 +108,12 @@ export function DailyCheckIn({
               s.button,
               {
                 flex: 1,
-                backgroundColor: success ? color : "#21181e",
+                backgroundColor: success ? color : "#1a1a1a",
                 borderWidth: 1,
                 borderColor:
                   (confirmed ? p.days[key] : p.dailyLogs?.[key]?.success) ===
                   success
-                    ? "#f3e4da"
+                    ? "#e6e6e6"
                     : success
                       ? color
                       : "#473038",
@@ -191,12 +191,12 @@ const s = StyleSheet.create({
   },
   label: { fontSize: 10, fontWeight: "600", letterSpacing: 1.2 },
   title: { color: "#f3f3ed", fontSize: 21, lineHeight: 28, fontWeight: "500" },
-  muted: { color: "#aca39f", fontSize: 12, lineHeight: 19 },
+  muted: { color: "#a5a5a5", fontSize: 12, lineHeight: 19 },
   input: {
     color: "#fff",
     backgroundColor: "#111",
     borderWidth: 1,
-    borderColor: "#443632",
+    borderColor: "#393939",
     borderRadius: 12,
     padding: 16,
     fontSize: 24,

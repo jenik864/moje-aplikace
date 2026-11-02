@@ -70,7 +70,7 @@ function RestBanner({ end, onStop }: { end: number; onStop: () => void }) {
       style={[
         s.between,
         {
-          backgroundColor: "#172b43",
+          backgroundColor: "#282828",
           paddingHorizontal: 20,
           paddingVertical: 12,
         },
@@ -377,7 +377,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
                     {new Date(`${day}T12:00:00`).getDate()}
                   </Text>
                   <Text
-                    style={{ color: done ? "#84d7bd" : blue, fontSize: 12 }}
+                    style={{ color: done ? "#c3c3c3" : blue, fontSize: 12 }}
                   >
                     {done ? "✓" : activities.length ? "•" : "—"}
                   </Text>
@@ -444,7 +444,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
                         s.text,
                         {
                           fontWeight: "600",
-                          color: day === selected ? blue : "#e8f1f2",
+                          color: day === selected ? blue : "#efefef",
                         },
                       ]}
                     >
@@ -479,7 +479,7 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
                           style={{
                             width: 3,
                             height: 38,
-                            backgroundColor: data.logs[a.id] ? blue : "#79bdff",
+                            backgroundColor: data.logs[a.id] ? blue : "#b3b3b3",
                             borderRadius: 2,
                           }}
                         />
@@ -862,15 +862,15 @@ function BuildContent({ store }: { store: ReturnType<typeof useBuild> }) {
                     return (
                       <View
                         key={b.id}
-                        style={[s.card, !earned && { borderColor: "#263345" }]}
+                        style={[s.card, !earned && { borderColor: "#323232" }]}
                       >
                         <View style={s.row}>
                           <View
                             style={[
                               s.badge,
                               !earned && {
-                                backgroundColor: "#101820",
-                                borderColor: "#41526a",
+                                backgroundColor: "#171717",
+                                borderColor: "#505050",
                               },
                             ]}
                           >

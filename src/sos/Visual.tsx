@@ -116,7 +116,7 @@ export function SosVisual({
               width={114}
               height={194}
               rx={27}
-              fill="#1b1713"
+              fill="#181818"
               stroke={accent}
               strokeWidth={1.5}
             />
@@ -136,7 +136,7 @@ export function SosVisual({
                 width={5}
                 height={25 + Math.sin(i * 0.8) * 20}
                 rx={2.5}
-                fill={i / 12 < fraction ? accent : "#493c30"}
+                fill={i / 12 < fraction ? accent : "#3e3e3e"}
               />
             ))}
             <Circle cx={115} cy={185} r={3} fill={accent} />
@@ -147,7 +147,7 @@ export function SosVisual({
               fontSize: 56,
               fontWeight: "500",
               fontVariant: ["tabular-nums"],
-              backgroundColor: "#1b1713",
+              backgroundColor: "#181818",
               paddingHorizontal: 10,
             }}
           >
@@ -155,7 +155,7 @@ export function SosVisual({
           </Text>
           <Text
             style={{
-              color: "#b7ada3",
+              color: "#aeaeae",
               fontSize: 9,
               letterSpacing: 2,
               marginTop: 8,
@@ -191,7 +191,7 @@ export function SosVisual({
                 : "Vědomá volba"
         }
       >
-        <Circle cx={92.5} cy={82.5} r={67} fill="#211b16" stroke="#47362b" />
+        <Circle cx={92.5} cy={82.5} r={67} fill="#1c1c1c" stroke="#47362b" />
         {Array.from({ length: 12 }, (_, i) => {
           const a = (i * Math.PI) / 6;
           return (

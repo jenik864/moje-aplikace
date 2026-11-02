@@ -1,3 +1,4 @@
+import { EmergencyAction } from "./EmergencyAction";
 import React from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Screen, rankColors } from "./ui";
@@ -119,7 +120,7 @@ export function SosProtocol({
         padding: 13,
         borderRadius: 24,
         borderWidth: 1,
-        borderColor: checked ? accent : "#39332c",
+        borderColor: checked ? accent : "#343434",
         backgroundColor: checked ? tint(accent, 0.13) : "transparent",
         justifyContent: "center",
       }}
@@ -345,23 +346,17 @@ export function SosProtocol({
         }}
       >
         {!choosing && (started === null || hunger) && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              hunger ? "POKRAČOVAT S JÍDLEM" : "SPUSTIT PAUZU"
-            }
-            onPress={hunger ? () => finish("Pokračovat s jídlem") : begin}
-            style={[s.button, { minHeight: 56 }]}
-          >
-            <Text style={[s.buttonText, { fontSize: 13 }]}>
+          <EmergencyAction accessibilityLabel={hunger ? "POKRAČOVAT S JÍDLEM" : "SPUSTIT PAUZU"}
+            onPress={hunger ? () => finish("Pokračovat s jídlem") : begin}>
+            <Text style={[s.buttonText, { fontSize: 13, color: "#FFFFFF", textAlign: "center" }]}>
               {hunger ? "POKRAČOVAT S JÍDLEM" : "SPUSTIT PAUZU"}
             </Text>
             {!hunger && (
-              <Text style={{ fontSize: 10, color: "#241c14", marginTop: 3 }}>
+              <Text style={{ fontSize: 10, color: "#FFFFFF", textAlign: "center", marginTop: 3 }}>
                 {food ? "2 MINUTY PRO TVOJI VOLBU" : "5 MINUT PRO TVOJI VOLBU"}
               </Text>
             )}
-          </Pressable>
+          </EmergencyAction>
         )}
         <Pressable
           accessibilityRole="button"
@@ -378,7 +373,7 @@ export function SosProtocol({
           <Text
             style={[
               s.buttonText,
-              { color: running || done ? "#171015" : "#aca39f", fontSize: 10 },
+              { color: running || done ? "#171015" : "#a5a5a5", fontSize: 10 },
             ]}
           >
             {"VRÁTIT SE K MÉMU PLÁNU"}

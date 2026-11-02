@@ -28,15 +28,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ranks } from "./model";
 import { RankArtwork } from "./RankArtwork";
 
-export const ink = "#070A12";
-export const surface = "#101724";
+export const ink = "#080808";
+export const surface = "#151515";
 export const border = "#ffffff14";
 export const palette = {
-  Quit: "#E8F18B",
-  Build: "#62EDBC",
-  Mind: "#B7A0FF",
-  Business: "#79BDFF",
-  Me: "#F5BBA0",
+  Quit: "#F5F5F5",
+  Build: "#F5F5F5",
+  Mind: "#F5F5F5",
+  Business: "#F5F5F5",
+  Me: "#F5F5F5",
 };
 
 export function useReducedMotion() {
@@ -108,74 +108,9 @@ export function Reveal({
 }
 const uid = (value: string) => value.replace(/[^a-zA-Z0-9]/g, "");
 
-export function AmbientBackdrop({ color = palette.Mind }: { color?: string }) {
-  const id = `ambient${uid(useId())}`;
-  const glow = useRef(new Animated.Value(1)).current,
-    reduced = useReducedMotion();
-  useEffect(() => {
-    if (reduced) {
-      glow.setValue(1);
-      return;
-    }
-    glow.setValue(0.35);
-    const motion = Animated.timing(glow, {
-      toValue: 1,
-      duration: 900,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    });
-    motion.start();
-    return () => motion.stop();
-  }, [color, reduced, glow]);
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={[StyleSheet.absoluteFill, { opacity: glow }]}
-    >
-      <Svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 400 900"
-        preserveAspectRatio="xMidYMin slice"
-        accessible={false}
-      >
-        <Defs>
-          <RadialGradient id={`${id}a`} cx="100%" cy="0%" rx="95%" ry="53%">
-            <Stop offset="0" stopColor={color} stopOpacity={0.22} />
-            <Stop offset=".46" stopColor={color} stopOpacity={0.065} />
-            <Stop offset="1" stopColor={ink} stopOpacity={0} />
-          </RadialGradient>
-          <RadialGradient id={`${id}b`} cx="-15%" cy="65%" rx="88%" ry="45%">
-            <Stop offset="0" stopColor="#6577F2" stopOpacity={0.13} />
-            <Stop offset="1" stopColor={ink} stopOpacity={0} />
-          </RadialGradient>
-          <LinearGradient id={`${id}line`} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={color} stopOpacity={0} />
-            <Stop offset=".55" stopColor={color} stopOpacity={0.2} />
-            <Stop offset="1" stopColor={color} stopOpacity={0} />
-          </LinearGradient>
-        </Defs>
-        <Rect width={400} height={900} fill={`url(#${id}a)`} />
-        <Rect width={400} height={900} fill={`url(#${id}b)`} />
-        <Path
-          d="M110 -75C420 40 485 155 348 312C250 426 286 546 477 623M138 -88C460 45 516 175 382 331"
-          stroke={`url(#${id}line)`}
-          strokeWidth={0.65}
-          fill="none"
-        />
-        {Array.from({ length: 24 }, (_, i) => (
-          <Circle
-            key={i}
-            cx={24 + (i % 6) * 64}
-            cy={44 + Math.floor(i / 6) * 94}
-            r={0.6}
-            fill="#fff"
-            opacity={0.08}
-          />
-        ))}
-      </Svg>
-    </Animated.View>
-  );
+// Screen backgrounds stay neutral; material colors belong to rank artwork only.
+export function AmbientBackdrop(_props: { color?: string }) {
+  return null;
 }
 
 // A shared material language: forged insignia, a light field and a fine orbital setting.
@@ -288,8 +223,8 @@ export function RankStage({
       style={({ pressed }) => [d.stage, pressed && { opacity: 0.72 }]}
     >
       <View style={d.between}>
-        <Text style={[d.overline, { color }]}>{label}</Text>
-        <AppIcon name="Build" color={color} size={18} />
+        <Text style={[d.overline, { color: palette.Me }]}>{label}</Text>
+        <AppIcon name="Build" color={palette.Me} size={18} />
       </View>
       <View
         style={{ flexDirection: "row", alignItems: "center", minHeight: 138 }}
@@ -298,7 +233,7 @@ export function RankStage({
           <Text style={d.micro}>CURRENT RANK</Text>
           <Text style={d.rank}>{ranks[rank]}</Text>
           {showPrime && (
-            <Text style={[d.primeText, { color }]}>
+            <Text style={[d.primeText, { color: palette.Me }]}>
               PRIME · {prime === null ? "—" : ranks[prime]}
             </Text>
           )}
@@ -311,7 +246,7 @@ export function RankStage({
               marginTop: 6,
             }}
           >
-            <Text style={[d.score, { color }]}>{value}</Text>
+            <Text style={[d.score, { color: palette.Me }]}>{value}</Text>
             <Text style={d.micro}>{unit}</Text>
           </View>
         </View>
@@ -322,18 +257,18 @@ export function RankStage({
           <RankStageArt rank={rank} color={color} />
         </View>
       </View>
-      <View style={[d.track, { backgroundColor: `${color}18` }]}>
+      <View style={[d.track, { backgroundColor: "#ffffff18" }]}>
         <View
           style={{
             width: `${Math.max(0, Math.min(1, progress)) * 100}%`,
             height: 2,
-            backgroundColor: color,
+            backgroundColor: palette.Me,
           }}
         />
       </View>
       <View style={d.between}>
         <Text style={[d.caption, { flex: 1 }]}>{nextLabel}</Text>
-        <Text style={[d.micro, { color }]}>
+        <Text style={[d.micro, { color: palette.Me }]}>
           {Math.round(Math.max(0, Math.min(1, progress)) * 100)} %
         </Text>
       </View>
@@ -400,9 +335,9 @@ export function ProjectArtwork() {
     <Svg width="100%" height={180} viewBox="0 0 340 200" accessible={false}>
       <Defs>
         <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor="#C1E7FF" />
-          <Stop offset=".5" stopColor={palette.Business} />
-          <Stop offset="1" stopColor="#5A58C6" />
+          <Stop offset="0" stopColor="#e1e1e1" />
+          <Stop offset={0.5} stopColor={palette.Business} />
+          <Stop offset="1" stopColor="#606060" />
         </LinearGradient>
         <RadialGradient id={`${id}glow`}>
           <Stop offset="0" stopColor={palette.Business} stopOpacity={0.22} />
@@ -424,14 +359,14 @@ export function ProjectArtwork() {
           <Path d={`M${x} ${y}l38 -20l36 19l-38 21Z`} fill={`url(#${id})`} />
           <Path
             d={`M${x} ${y}v${h}l36 19v-${h}Z`}
-            fill="#4564A5"
+            fill="#626262"
             opacity={0.8}
           />
-          <Path d={`M${x + 36} ${y + 20}l38 -21v${h}l-38 21Z`} fill="#203962" />
+          <Path d={`M${x + 36} ${y + 20}l38 -21v${h}l-38 21Z`} fill="#373737" />
           <Path
             d={`M${x} ${y}l36 20l38 -21`}
             fill="none"
-            stroke="#BDE9FF"
+            stroke="#e1e1e1"
             strokeWidth={0.8}
           />
         </G>
@@ -452,7 +387,7 @@ export function ProjectArtwork() {
         stroke={palette.Build}
         opacity={0.2}
       />
-      <Path d="M279 158V169M274 163H285" stroke="#CAE8FF" opacity={0.55} />
+      <Path d="M279 158V169M274 163H285" stroke="#e3e3e3" opacity={0.55} />
     </Svg>
   );
 }
@@ -506,9 +441,7 @@ export function PremiumTabs({
       <View style={d.dock}>
         {state.routes.map((route, index) => {
           const selected = state.index === index;
-          const color = selected
-            ? (accents[route.name] ?? "#d6dee9")
-            : "#788496";
+          const color = selected ? "#F5F5F5" : "#8A8A8A";
           const options = descriptors[route.key].options;
           return (
             <Pressable
@@ -568,7 +501,7 @@ const d = StyleSheet.create({
   },
   overline: { fontSize: 9, fontWeight: "700", letterSpacing: 1.9 },
   micro: {
-    color: "#91a0b4",
+    color: "#9e9e9e",
     fontSize: 9,
     fontWeight: "600",
     letterSpacing: 1.2,
@@ -580,7 +513,7 @@ const d = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: "#ffffff04",
   },
-  primeText: { color: "#c4cddb", fontSize: 9, fontWeight: "600" },
+  primeText: { color: "#cccccc", fontSize: 9, fontWeight: "600" },
   rank: {
     color: "#f4f6fa",
     fontSize: 36,
@@ -593,7 +526,7 @@ const d = StyleSheet.create({
     fontVariant: ["tabular-nums"],
     letterSpacing: -0.6,
   },
-  caption: { color: "#a6b1c2", fontSize: 11, lineHeight: 17 },
+  caption: { color: "#b0b0b0", fontSize: 11, lineHeight: 17 },
   track: {
     backgroundColor: "#ffffff0c",
     height: 3,
@@ -601,7 +534,7 @@ const d = StyleSheet.create({
     borderRadius: 3,
   },
   dockSpace: {
-    backgroundColor: "#070A12F8",
+    backgroundColor: "#0a0a0aF8",
     paddingTop: 0,
     paddingHorizontal: 14,
     borderTopWidth: 1,

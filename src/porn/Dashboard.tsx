@@ -1,3 +1,5 @@
+import { EmergencyAction } from "../EmergencyAction";
+import { palette as neutralPalette } from "../design";
 import React, { useState, useEffect, useRef } from "react";
 import { View, Text, Pressable, StyleSheet, AppState } from "react-native";
 import { Program, ranks, milestones, rankOf, resetProgram } from "../model";
@@ -11,7 +13,7 @@ import {
 import { summary, trendDays, durationLabel } from "./analytics";
 import { PornDetails, DetailKind } from "./Details";
 import { rankColors } from "../ui";
-import { RankThemeProvider, useRankTheme, tint } from "./theme";
+import { RankThemeProvider, tint } from "./theme";
 import { SeriesChart } from "./Charts";
 import { RankStageArt, palette as sectionPalette } from "../design";
 type DashboardProps = {
@@ -38,7 +40,7 @@ function DashboardBody({
   update: (p: Program) => void;
   sos: () => void;
 }) {
-  const { accent } = useRankTheme();
+  const accent = neutralPalette.Quit;
   const s = React.useMemo(() => makeStyles(accent), [accent]);
   const [detail, setDetail] = useState<DetailKind | null>(null);
   const rank = rankOf("porn", p, now);
@@ -105,13 +107,13 @@ function DashboardBody({
           </View>
         </View>
         <View style={s.prime}>
-          <Text style={[s.primeLabel, { color: rankColors[prime] }]}>
+          <Text style={[s.primeLabel, { color: neutralPalette.Quit }]}>
             PRIME
           </Text>
-          <Text style={[s.primeName, { color: rankColors[prime] }]}>
+          <Text style={[s.primeName, { color: neutralPalette.Quit }]}>
             {ranks[prime]}
           </Text>
-          <ArrowIcon color={rankColors[prime]} size={12} />
+          <ArrowIcon color={neutralPalette.Quit} size={12} />
         </View>
       </Pressable>
       <View style={s.hero}>
@@ -150,21 +152,16 @@ function DashboardBody({
           </Text>
         </Pressable>
       </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="SOS: Zastavit impulz"
-        onPress={sos}
-        style={({ pressed }) => [s.sos, pressed && { opacity: 0.8 }]}
-      >
+      <EmergencyAction accessibilityLabel="SOS: Zastavit impulz" onPress={sos}>
         <View style={s.sosTop}>
           <Text style={s.sosEyebrow}>SOS / ZPÁTKY K SOBĚ</Text>
           <Text style={s.sosDuration}>5 MIN</Text>
         </View>
         <View style={s.sosBody}>
           <Text style={s.sosTitle}>Zastavit impulz.</Text>
-          <ArrowIcon color="#12160b" size={24} />
+          <ArrowIcon color="#FFFFFF" size={24} />
         </View>
-      </Pressable>
+      </EmergencyAction>
       <View style={s.metrics}>
         <Pressable
           accessibilityRole="button"
@@ -282,7 +279,7 @@ function DashboardBody({
   );
 }
 function CardHeading({ label, detail }: { label: string; detail: string }) {
-  const { accent } = useRankTheme();
+  const accent = neutralPalette.Quit;
   const s = makeStyles(accent);
   return (
     <View style={s.spread}>
@@ -292,7 +289,7 @@ function CardHeading({ label, detail }: { label: string; detail: string }) {
   );
 }
 function ResetHold({ onReset }: { onReset: () => void }) {
-  const { accent } = useRankTheme();
+  const accent = neutralPalette.Quit;
   const s = makeStyles(accent);
   const [fraction, setFraction] = useState(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -339,14 +336,14 @@ function ResetHold({ onReset }: { onReset: () => void }) {
   );
 }
 export function PornWelcome({ activate }: { activate: () => void }) {
-  const { accent } = useRankTheme();
+  const accent = neutralPalette.Quit;
   const s = makeStyles(accent);
   return (
     <>
       <SectionLabel>DETOX / 01</SectionLabel>
       <Text style={s.title}>Porn Reboot</Text>
       <View style={s.welcome}>
-        <RankStageArt rank={0} color={accent} />
+        <RankStageArt rank={0} color={rankColors[0]} />
         <Text style={s.welcomeTitle}>
           {"Tvoje pozornost.\nTvoje rozhodnutí."}
         </Text>
@@ -438,7 +435,7 @@ const makeStyles = (accent: string) =>
       justifyContent: "space-between",
       gap: 12,
     },
-    nextTitle: { fontSize: 12, color: "#dce0e4", fontWeight: "500" },
+    nextTitle: { fontSize: 12, color: "#dfdfdf", fontWeight: "500" },
     percent: { color: accent, fontSize: 12, fontVariant: ["tabular-nums"] },
     track: { height: 2, backgroundColor: "#ffffff12", overflow: "hidden" },
     fill: { height: 2, backgroundColor: accent },
@@ -448,26 +445,19 @@ const makeStyles = (accent: string) =>
       lineHeight: 19,
       flexShrink: 1,
     },
-    sos: {
-      padding: 18,
-      backgroundColor: sectionPalette.Quit,
-      borderRadius: 4,
-      gap: 11,
-      overflow: "hidden",
-    },
     sosTop: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
     },
     sosEyebrow: {
-      color: "#3a4021",
+      color: "#FFFFFF",
       fontSize: 8,
       letterSpacing: 1.7,
       fontWeight: "700",
     },
     sosDuration: {
-      color: "#3a4021",
+      color: "#FFFFFF",
       fontSize: 9,
       fontWeight: "600",
       fontVariant: ["tabular-nums"],
@@ -479,7 +469,7 @@ const makeStyles = (accent: string) =>
       gap: 12,
     },
     sosTitle: {
-      color: "#11160c",
+      color: "#FFFFFF",
       fontSize: 25,
       lineHeight: 31,
       fontWeight: "600",
@@ -534,7 +524,7 @@ const makeStyles = (accent: string) =>
       marginVertical: 14,
     },
     manifestText: {
-      color: "#e9edf1",
+      color: "#ececec",
       fontSize: 25,
       lineHeight: 35,
       fontWeight: "400",
@@ -572,7 +562,7 @@ const makeStyles = (accent: string) =>
       letterSpacing: -1.8,
     },
     welcomeBody: {
-      color: "#a7b2c3",
+      color: "#b1b1b1",
       fontSize: 14,
       lineHeight: 23,
       flexShrink: 1,
@@ -595,6 +585,6 @@ const makeStyles = (accent: string) =>
       fontSize: 12,
       fontWeight: "700",
       letterSpacing: 1,
-      color: "#11160c",
+      color: "#141414",
     },
   });

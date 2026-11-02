@@ -76,7 +76,7 @@ export function DailyDetails({
                 style={s.back}
               >
                 <Text
-                  style={{ color: "#e4d9d1", fontSize: 12, fontWeight: "600" }}
+                  style={{ color: "#dbdbdb", fontSize: 12, fontWeight: "600" }}
                 >
                   ← ZPĚT
                 </Text>
@@ -217,7 +217,7 @@ export function DailyDetails({
                           style={[
                             s.title,
                             {
-                              color: i <= prime ? rankColors[i] : "#ada39f",
+                              color: i <= prime ? rankColors[i] : "#a5a5a5",
                               fontSize: 20,
                             },
                           ]}
@@ -237,7 +237,7 @@ export function DailyDetails({
                       <Text
                         style={{
                           fontSize: 9,
-                          color: i === rank ? rankColors[i] : "#aca39f",
+                          color: i === rank ? rankColors[i] : "#a5a5a5",
                         }}
                       >
                         {i === rank
@@ -344,7 +344,7 @@ export function DailyDetails({
                       “
                     </Text>
                     <Text
-                      style={{ color: "#ede5df", fontSize: 20, lineHeight: 31 }}
+                      style={{ color: "#e6e6e6", fontSize: 20, lineHeight: 31 }}
                     >
                       {p.reasons}
                     </Text>

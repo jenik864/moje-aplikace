@@ -99,7 +99,7 @@ export function HabitGarden({
               />
               <Path
                 d="M31 108 H69 L64 125 H36 Z"
-                fill="#30251e"
+                fill="#272727"
                 stroke={accent}
                 strokeOpacity={0.5}
               />
@@ -109,7 +109,7 @@ export function HabitGarden({
               style={{
                 fontSize: 10,
                 lineHeight: 14,
-                color: "#bdb0a4",
+                color: "#b2b2b2",
                 textAlign: "center",
               }}
             >

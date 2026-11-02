@@ -83,7 +83,7 @@ export function ProjectEditor({
                 <Text
                   style={[
                     s.number,
-                    { color: template === t.id ? colors[color] : "#536078" },
+                    { color: template === t.id ? colors[color] : "#5f5f5f" },
                   ]}
                 >
                   {template === t.id ? "✓" : `0${index + 1}`}

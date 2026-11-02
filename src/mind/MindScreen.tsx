@@ -709,7 +709,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
                   paddingHorizontal: 24,
                   paddingVertical: 16,
                   borderBottomWidth: 1,
-                  borderColor: "#282b30",
+                  borderColor: "#2b2b2b",
                 },
               ]}
             >
@@ -785,7 +785,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
                   style={[
                     s.card,
                     {
-                      backgroundColor: "#151326",
+                      backgroundColor: "#151515",
                       padding: 24,
                       borderRadius: 24,
                     },
@@ -827,7 +827,7 @@ function MindContent({ store }: { store: ReturnType<typeof useMind> }) {
                   style={[
                     s.card,
                     {
-                      backgroundColor: "#151326",
+                      backgroundColor: "#151515",
                       padding: 24,
                       borderRadius: 24,
                     },

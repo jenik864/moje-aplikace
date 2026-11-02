@@ -16,15 +16,15 @@ export function LessonArt({ id, size = 90 }: { id: string; size?: number }) {
   const color =
     (
       {
-        "python-start": "#B7A0FF",
-        "oil-to-fuel": "#77C6F4",
-        "compound-interest": "#F5C67B",
+        "python-start": "#acacac",
+        "oil-to-fuel": "#b9b9b9",
+        "compound-interest": "#cbcbcb",
         percentages: "#FFB89B",
-        internet: "#6ECFE1",
-        memory: "#A7E4B8",
-        "critical-thinking": "#EAA2DF",
-        electricity: "#E4ED8C",
-        algorithms: "#8FB4FF",
+        internet: "#bcbcbc",
+        memory: "#d4d4d4",
+        "critical-thinking": "#b6b6b6",
+        electricity: "#e4e4e4",
+        algorithms: "#b2b2b2",
       } as Record<string, string>
     )[id] ?? theme;
   return (
@@ -58,7 +58,7 @@ export function LessonArt({ id, size = 90 }: { id: string; size?: number }) {
             rx="12"
             stroke={color}
             strokeWidth="3"
-            fill="#15191d"
+            fill="#181818"
           />
           <Path
             d="M42 44H78M42 62H78M42 80H78M79 44H98V31M79 62H102M41 80H21V99"
@@ -142,7 +142,7 @@ export function LessonLab({ id, step }: { id: string; step: number }) {
         style={[
           s.card,
           {
-            backgroundColor: "#0b171c",
+            backgroundColor: "#151515",
             borderTopWidth: 0,
             borderLeftWidth: 2,
             borderColor: mint,
@@ -157,7 +157,7 @@ export function LessonLab({ id, step }: { id: string; step: number }) {
         </View>
         <Text
           style={{
-            color: "#dfe5e8",
+            color: "#e4e4e4",
             fontFamily: "monospace",
             fontSize: 14,
             lineHeight: 22,
@@ -224,7 +224,7 @@ export function LessonLab({ id, step }: { id: string; step: number }) {
                   width="52"
                   height="164"
                   rx="15"
-                  fill="#151a1f"
+                  fill="#191919"
                   stroke={color}
                   strokeWidth="2"
                 />
@@ -280,7 +280,7 @@ export function LessonLab({ id, step }: { id: string; step: number }) {
                       backgroundColor:
                         fraction === i ? `${color}25` : "#191c20",
                       borderWidth: 1,
-                      borderColor: fraction === i ? color : "#303238",
+                      borderColor: fraction === i ? color : "#323232",
                     }}
                   >
                     <Text
@@ -432,10 +432,10 @@ export function LessonLab({ id, step }: { id: string; step: number }) {
           r="4"
           fill={mint}
         />
-        <SvgText x="15" y="143" fill="#718098" fontSize="9">
+        <SvgText x="15" y="143" fill="#7f7f7f" fontSize="9">
           Dnes
         </SvgText>
-        <SvgText x="285" y="143" fill="#718098" fontSize="9" textAnchor="end">
+        <SvgText x="285" y="143" fill="#7f7f7f" fontSize="9" textAnchor="end">
           {years} {years === 1 ? "rok" : years < 5 ? "roky" : "let"}
         </SvgText>
       </Svg>

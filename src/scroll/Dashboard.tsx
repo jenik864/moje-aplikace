@@ -1,3 +1,4 @@
+import { EmergencyAction } from "../EmergencyAction";
 import React from "react";
 import {
   AppState,
@@ -175,12 +176,12 @@ export function ScrollDashboard({
                   />
                 )}
               </View>
-              <Text style={{ color: "#a8a0a4", fontSize: 10 }}>
+              <Text style={{ color: "#a2a2a2", fontSize: 10 }}>
                 {Number(key.slice(-2))}.
               </Text>
               {expanded && (
                 <Text
-                  style={{ color: day ? "#eee3dc" : "#a8a0a4", fontSize: 10 }}
+                  style={{ color: day ? "#e5e5e5" : "#a2a2a2", fontSize: 10 }}
                 >
                   {day ? Math.round(day.minutes) : "—"}
                 </Text>
@@ -219,7 +220,7 @@ export function ScrollDashboard({
           <Text
             style={[
               s.muted,
-              { color: status === "connected" ? accent : "#b7adb7" },
+              { color: status === "connected" ? accent : "#b0b0b0" },
             ]}
           >
             {status === "connected" ? "● MĚŘENO" : "○ NEPŘIPOJENO"}
@@ -243,7 +244,7 @@ export function ScrollDashboard({
             >
               {current ? Math.round(current.minutes) : "—"}
             </Text>
-            <Text style={[s.body, { fontSize: 18, color: "#79BDFF" }]}>
+            <Text style={[s.body, { fontSize: 18, color: "#b3b3b3" }]}>
               minut pozornosti
             </Text>
           </View>
@@ -340,7 +341,7 @@ export function ScrollDashboard({
           s.card,
           {
             backgroundColor: "transparent",
-            borderColor: "#79BDFF55",
+            borderColor: "#b3b3b355",
             borderLeftWidth: 2,
             paddingLeft: 18,
             gap: 18,
@@ -352,14 +353,9 @@ export function ScrollDashboard({
         <Text style={s.body}>
           Pět minut mimo obrazovku. Vyber si, co uděláš místo scrollování.
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="SOS: Doomscrolling"
-          onPress={() => sos()}
-          style={[s.button, { backgroundColor: "#79BDFF" }]}
-        >
-          <Text style={s.buttonText}>ODLOŽIT TELEFON · 5 MIN</Text>
-        </Pressable>
+        <EmergencyAction accessibilityLabel="SOS: Doomscrolling" onPress={() => sos()}>
+          <Text style={[s.buttonText, { color: "#FFFFFF", textAlign: "center" }]}>ODLOŽIT TELEFON · 5 MIN</Text>
+        </EmergencyAction>
       </View>
       <Pressable
         {...button("connect", "Zobrazit sledované aplikace")}
@@ -654,7 +650,7 @@ function AttentionOrbit({
       <Defs>
         <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
           <Stop offset="0" stopColor={over ? "#ffb0bd" : accent} />
-          <Stop offset="1" stopColor="#79BDFF" />
+          <Stop offset="1" stopColor="#b3b3b3" />
         </LinearGradient>
       </Defs>
       <Circle
@@ -669,7 +665,7 @@ function AttentionOrbit({
         cx="70"
         cy="70"
         r="45"
-        stroke="#79BDFF30"
+        stroke="#b3b3b330"
         strokeWidth="1"
         fill="none"
         strokeDasharray={ratio === null ? "2 8" : undefined}
@@ -690,7 +686,7 @@ function AttentionOrbit({
       ) : null}
       <Path
         d="M46 70H94M70 46V94M55 55L85 85M85 55L55 85"
-        stroke="#79BDFF"
+        stroke="#b3b3b3"
         strokeWidth="1"
         strokeOpacity=".45"
       />
@@ -700,13 +696,13 @@ function AttentionOrbit({
         r="13"
         stroke={`url(#${id})`}
         strokeWidth="2"
-        fill="#070A12"
+        fill="#0a0a0a"
       />
       <Circle
         cx="70"
         cy="70"
         r="3"
-        fill={ratio === null ? "#79BDFF" : accent}
+        fill={ratio === null ? "#b3b3b3" : accent}
       />
       <Path d="M58 137H82" stroke={accent} strokeWidth="2" />
     </Svg>

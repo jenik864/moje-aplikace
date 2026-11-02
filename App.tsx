@@ -64,11 +64,11 @@ import { foodPresets, type FoodPillar } from "./src/food/model";
 const Tab = createBottomTabNavigator();
 const ids: ProgramId[] = ["porn", "scroll", "food"];
 const STORAGE = "quitter.v1";
-const purple = "#b994ff";
+const purple = "#a4a4a4";
 function Button({
   title,
   onPress,
-  color = "#c5fa67",
+  color = "#e4e4e4",
   secondary = false,
 }: {
   title: string;
@@ -358,7 +358,7 @@ function Setup({
                   onChangeText={setCustomFood}
                   maxLength={80}
                   placeholder="Vlastní celodenní pravidlo"
-                  placeholderTextColor="#857b73"
+                  placeholderTextColor="#7d7d7d"
                   style={s.input}
                 />
                 <Button
@@ -1124,7 +1124,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  brand: { color: "#b7c3d5", fontSize: 9, letterSpacing: 3, fontWeight: "700" },
+  brand: { color: "#c2c2c2", fontSize: 9, letterSpacing: 3, fontWeight: "700" },
   heading: {
     color: "#fff",
     fontSize: 42,
@@ -1132,7 +1132,7 @@ const s = StyleSheet.create({
     letterSpacing: -1.5,
   },
   headerNote: {
-    color: "#94a1b4",
+    color: "#a0a0a0",
     fontSize: 8,
     letterSpacing: 1.3,
     lineHeight: 16,
@@ -1158,8 +1158,8 @@ const s = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.5,
   },
-  body: { color: "#c0c9d7", fontSize: 15, lineHeight: 24 },
-  muted: { color: "#94a1b4", fontSize: 12, lineHeight: 19 },
+  body: { color: "#c8c8c8", fontSize: 15, lineHeight: 24 },
+  muted: { color: "#a0a0a0", fontSize: 12, lineHeight: 19 },
   panel: {
     backgroundColor: "transparent",
     borderRadius: 0,

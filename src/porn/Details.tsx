@@ -1,3 +1,4 @@
+import { palette as neutralPalette } from "../design";
 import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
@@ -16,7 +17,7 @@ import {
 import Svg, { Path } from "react-native-svg";
 import { Screen, rankColors } from "../ui";
 import { Program, ranks, milestones, rankOf } from "../model";
-import { RankThemeProvider, useRankTheme, tint } from "./theme";
+import { RankThemeProvider, tint } from "./theme";
 import {
   palette,
   RankMark,
@@ -61,7 +62,7 @@ export function PornDetails({
   update: (p: Program) => void;
 }) {
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
-  const { accent } = useRankTheme();
+  const accent = neutralPalette.Quit;
   const s = makeStyles(accent);
   const [editing, setEditing] = useState(false);
   const [reasons, setReasons] = useState(p.reasons);
@@ -154,7 +155,7 @@ function DetailBody({
   now: number;
   edit: () => void;
 }) {
-  const { accent } = useRankTheme();
+  const accent = neutralPalette.Quit;
   const s = makeStyles(accent);
   const stats = summary(p, now);
   const rank = rankOf("porn", p, now);
@@ -230,7 +231,7 @@ function DetailBody({
                   s.title,
                   {
                     fontSize: 18,
-                    color: i <= prime ? rankColors[i] : "#8b8f86",
+                    color: i <= prime ? rankColors[i] : "#8d8d8d",
                   },
                 ]}
               >
@@ -302,7 +303,7 @@ function DetailBody({
                     >
                       <Text
                         style={{
-                          color: day.active ? palette.text : "#89827d",
+                          color: day.active ? palette.text : "#838383",
                           fontSize: 13,
                         }}
                       >
@@ -573,7 +574,7 @@ function DetailBody({
   );
 }
 function Metric({ label, value }: { label: string; value: string }) {
-  const { accent } = useRankTheme();
+  const accent = neutralPalette.Quit;
   const s = makeStyles(accent);
   return (
     <View style={{ flex: 1, gap: 8 }}>
@@ -591,7 +592,7 @@ function EventRow({
   value: string;
   at: number;
 }) {
-  const { accent } = useRankTheme();
+  const accent = neutralPalette.Quit;
   const s = makeStyles(accent);
   return (
     <View
@@ -672,7 +673,7 @@ const makeStyles = (accent: string) =>
       borderColor: palette.border,
     },
     row: { flexDirection: "row", gap: 16, alignItems: "center" },
-    body: { color: "#c0c9d7", fontSize: 14, lineHeight: 23 },
+    body: { color: "#c8c8c8", fontSize: 14, lineHeight: 23 },
     small: { color: palette.muted, fontSize: 12, lineHeight: 19 },
     title: {
       color: palette.text,
@@ -728,7 +729,7 @@ const makeStyles = (accent: string) =>
     },
     quote: { color: accent, fontSize: 60, lineHeight: 45 },
     manifestText: {
-      color: "#ede6e1",
+      color: "#e7e7e7",
       fontSize: 25,
       lineHeight: 36,
       fontWeight: "400",

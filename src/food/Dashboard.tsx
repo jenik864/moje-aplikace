@@ -1,3 +1,4 @@
+import { EmergencyAction } from "../EmergencyAction";
 import { RankStage, palette } from "../design";
 import React from "react";
 import { Modal, Pressable, ScrollView, Text, View, Platform } from "react-native";
@@ -100,8 +101,8 @@ export function FoodDashboard({
                 justifyContent: "center",
                 borderRadius: 22,
                 borderBottomWidth: 1,
-                borderColor: "#F5BBA050",
-                backgroundColor: "transparent",
+                borderColor: "#F13F4A",
+                backgroundColor: "#441018",
               }}
             >
               <Text style={{ color: accent, fontWeight: "600", fontSize: 12 }}>
@@ -175,8 +176,8 @@ export function FoodDashboard({
                           answer === value
                             ? value
                               ? accent
-                              : "#f6c2cb"
-                            : "#c5b9ae",
+                              : "#cecece"
+                            : "#bbbbbb",
                         fontSize: 12,
                         fontWeight: "600",
                       }}
@@ -302,7 +303,7 @@ export function FoodDashboard({
         <View style={{ flexDirection: "row", gap: 6 }}>
           {days.slice(-7).map((d) => (
             <View key={d.key} style={{ flex: 1, alignItems: "center", gap: 7 }}>
-              <Text style={{ color: "#a89f94", fontSize: 10 }}>
+              <Text style={{ color: "#a0a0a0", fontSize: 10 }}>
                 {d.date.toLocaleDateString("cs-CZ", { weekday: "short" })}
               </Text>
               <View
@@ -313,7 +314,7 @@ export function FoodDashboard({
                   alignItems: "center",
                   justifyContent: "center",
                   borderWidth: 1,
-                  borderColor: d.pending ? accent : "#332f2a",
+                  borderColor: d.pending ? accent : "#2f2f2f",
                   backgroundColor:
                     d.success === true
                       ? tint(accent, 0.18)
@@ -329,7 +330,7 @@ export function FoodDashboard({
                         ? "#e8a1ab"
                         : d.success === true
                           ? accent
-                          : "#a89f94",
+                          : "#a0a0a0",
                     fontSize: 16,
                   }}
                 >
@@ -342,7 +343,7 @@ export function FoodDashboard({
                         : "—"}
                 </Text>
               </View>
-              <Text style={{ color: "#a89f94", fontSize: 10 }}>
+              <Text style={{ color: "#a0a0a0", fontSize: 10 }}>
                 {d.date.getDate()}.
               </Text>
             </View>
@@ -357,7 +358,7 @@ export function FoodDashboard({
           s.card,
           {
             backgroundColor: "transparent",
-            borderColor: "#F5BBA055",
+            borderColor: "#FFFFFF55",
             borderLeftWidth: 2,
             paddingLeft: 18,
             gap: 16,
@@ -371,14 +372,9 @@ export function FoodDashboard({
         <Text style={s.body}>
           Hlad, stres nebo jen zvyk? Krátce se zastav a vyber další krok.
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="SOS: Junk Food"
-          onPress={() => sos()}
-          style={[s.button, { backgroundColor: accent }]}
-        >
-          <Text style={s.buttonText}>ROZLIŠIT HLAD A CHUŤ</Text>
-        </Pressable>
+        <EmergencyAction accessibilityLabel="SOS: Junk Food" onPress={() => sos()}>
+          <Text style={[s.buttonText, { color: "#FFFFFF", textAlign: "center" }]}>ROZLIŠIT HLAD A CHUŤ</Text>
+        </EmergencyAction>
       </View>
       <Pressable
         {...button("manifest", "Otevřít osobní manifest Junk Food")}
@@ -493,7 +489,7 @@ export function FoodDashboard({
                               borderWidth: 1,
                               borderColor:
                                 selected === d.key
-                                  ? "#eadfd2"
+                                  ? "#e0e0e0"
                                   : d.pending
                                     ? accent
                                     : "transparent",
@@ -509,7 +505,7 @@ export function FoodDashboard({
                             <Text
                               style={{
                                 color:
-                                  d.success === false ? "#e8a1ab" : "#d4c6b7",
+                                  d.success === false ? "#e8a1ab" : "#c8c8c8",
                                 fontSize: 11,
                               }}
                             >
@@ -565,7 +561,7 @@ export function FoodDashboard({
                                   ? accent
                                   : detail.answers[pillar.id] === false
                                     ? "#e8a1ab"
-                                    : "#aca39f",
+                                    : "#a5a5a5",
                             },
                           ]}
                         >

@@ -63,3 +63,7 @@ Sdílené SOS používá kruhovou pauzu: Doomscrolling 5 minut, Junk Food 2 minu
 ## Rozšíření osobního prostoru Me
 
 Me spojuje skutečné uložené události čtyř oblastí, stávající odznaky Build/Mind a volitelné týdenní cíle. Cíle ani historie nezavádějí další bodování. Celkový rank a PRIME dál vycházejí ze stejných tří stejně vážených oblastí; Business je samostatný. Graf ranku začíná až skutečným pozorováním v této verzi a nevytváří odhad minulosti. Zálohu všech pěti datových oblastí lze stáhnout/sdílet a po náhledu výslovně obnovit s nahrazením současných dat. Obnova chrání původní hodnoty a po dokončení znovu načte všechny sekce. Účet a cloudová synchronizace nejsou součástí tohoto updatu.
+
+## Jednotná barevnost
+
+Všech pět sekcí sdílí téměř černý základ, bílý text a bílé ovládání. Barevné ranky zůstávají na emblémech, cifernících a jejich náhledech. SOS je ve všech programech červené, s plastickým přechodem a statickou září; běžné primární akce jsou bílé. Grafy a navigace nepřebírají barvu aktuálního ranku.

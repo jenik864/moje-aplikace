@@ -53,7 +53,7 @@ export function DailyChart({
               strokeDasharray="3 5"
             />
             {id === "scroll" && (
-              <SvgText x={2} y={y + 3} fontSize={9} fill="#bdb3ad">
+              <SvgText x={2} y={y + 3} fontSize={9} fill="#b5b5b5">
                 {Math.round(maximum * (1 - i / 2))}
               </SvgText>
             )}
@@ -113,7 +113,7 @@ export function DailyChart({
             y={140}
             fontSize={9}
             textAnchor="middle"
-            fill="#bdb3ad"
+            fill="#b5b5b5"
           >
             {trend[i].date.getDate()}. {trend[i].date.getMonth() + 1}.
           </SvgText>
@@ -151,7 +151,7 @@ export function DailyChart({
                 >
                   <Text
                     style={{
-                      color: selected === d.key ? accent : "#c4bab3",
+                      color: selected === d.key ? accent : "#bcbcbc",
                       fontSize: 12,
                     }}
                   >

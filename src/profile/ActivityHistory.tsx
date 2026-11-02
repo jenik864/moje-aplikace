@@ -217,7 +217,7 @@ export function ActivityHistory({
           value={query}
           onChangeText={setQuery}
           placeholder="Četba, běh, název projektu…"
-          placeholderTextColor="#6d7c93"
+          placeholderTextColor="#7a7a7a"
           style={s.input}
           autoCorrect={false}
         />
@@ -442,8 +442,8 @@ const s = StyleSheet.create({
     color: palette.Me,
   },
   tag: { fontSize: 9, fontWeight: "700", letterSpacing: 1.5 },
-  muted: { fontSize: 13, lineHeight: 22, color: "#a0aec0" },
-  small: { fontSize: 10, lineHeight: 17, color: "#899ab1" },
+  muted: { fontSize: 13, lineHeight: 22, color: "#acacac" },
+  small: { fontSize: 10, lineHeight: 17, color: "#989898" },
   link: { fontSize: 13, fontWeight: "600", color: palette.Me },
   between: {
     flexDirection: "row",
@@ -470,7 +470,7 @@ const s = StyleSheet.create({
     borderColor: "#ffffff1b",
     justifyContent: "center",
   },
-  filterText: { fontSize: 12, fontWeight: "600", color: "#a4b2c5" },
+  filterText: { fontSize: 12, fontWeight: "600", color: "#b0b0b0" },
   input: {
     minHeight: 48,
     paddingHorizontal: 3,
@@ -495,7 +495,7 @@ const s = StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
   notice: {
-    color: "#ffc8ad",
+    color: "#d2d2d2",
     fontSize: 12,
     lineHeight: 20,
     borderLeftWidth: 2,
@@ -530,7 +530,7 @@ const s = StyleSheet.create({
     minHeight: 64,
   },
   eventDetails: { paddingLeft: 16, paddingTop: 14, gap: 12 },
-  note: { fontSize: 14, lineHeight: 24, color: "#d6dfeb" },
+  note: { fontSize: 14, lineHeight: 24, color: "#dedede" },
   loadMore: {
     minHeight: 48,
     justifyContent: "center",

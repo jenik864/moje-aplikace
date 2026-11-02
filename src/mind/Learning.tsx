@@ -217,7 +217,7 @@ export function Learning({
           >
             <Text
               style={{
-                color: status === id ? "#f8f6ff" : "#7f8ba3",
+                color: status === id ? "#f7f7f7" : "#8a8a8a",
                 fontSize: 13,
                 fontWeight: status === id ? "600" : "400",
               }}
@@ -542,11 +542,11 @@ function LessonPlayer({
               borderWidth: 0,
               borderBottomWidth: 1,
               borderColor:
-                choice === i ? (correct ? mint : "#ff8995") : "#36383e",
+                choice === i ? (correct ? mint : "#ff8995") : "#383838",
               backgroundColor:
                 choice === i
                   ? correct
-                    ? "#8ae7d110"
+                    ? "#d2d2d210"
                     : "#ff899510"
                   : "transparent",
             }}
@@ -557,7 +557,7 @@ function LessonPlayer({
                 {
                   fontSize: 15,
                   color:
-                    choice === i ? (correct ? mint : "#ffb5be") : "#e9e6e1",
+                    choice === i ? (correct ? mint : "#ffb5be") : "#e6e6e6",
                 },
               ]}
             >
@@ -599,8 +599,8 @@ function LessonPlayer({
           paddingVertical: 16,
           paddingBottom: 18,
           borderTopWidth: 1,
-          borderColor: "#303238",
-          backgroundColor: "#070A12",
+          borderColor: "#323232",
+          backgroundColor: "#0a0a0a",
         }}
       >
         <Button

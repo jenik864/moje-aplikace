@@ -21,7 +21,7 @@ export type GoalsPanelProps = {
 const colors: Record<GoalId, string> = {
   workouts: palette.Build,
   mindDays: palette.Mind,
-  lessons: "#D7EB96",
+  lessons: "#e1e1e1",
   businessSteps: palette.Business,
 };
 const draftFor = (targets: GoalTargets) =>
@@ -334,8 +334,8 @@ const s = StyleSheet.create({
     fontWeight: "500",
     letterSpacing: -1,
   },
-  week: { color: "#94A0B4", fontSize: 12, lineHeight: 19 },
-  description: { color: "#9EABC0", fontSize: 13, lineHeight: 21 },
+  week: { color: "#9f9f9f", fontSize: 12, lineHeight: 19 },
+  description: { color: "#aaaaaa", fontSize: 13, lineHeight: 21 },
   row: {
     paddingVertical: 21,
     gap: 17,
@@ -345,16 +345,16 @@ const s = StyleSheet.create({
   rowTop: { flexDirection: "row", gap: 13, alignItems: "flex-start" },
   index: { fontSize: 10, paddingTop: 3, fontVariant: ["tabular-nums"] },
   rowTitle: {
-    color: "#EDEEF6",
+    color: "#eeeeee",
     fontSize: 18,
     fontWeight: "500",
     letterSpacing: -0.3,
   },
-  detail: { color: "#8290A7", fontSize: 11, lineHeight: 18 },
+  detail: { color: "#8f8f8f", fontSize: 11, lineHeight: 18 },
   value: { alignItems: "flex-end", gap: 5, paddingLeft: 6 },
   count: { fontSize: 25, fontWeight: "400", fontVariant: ["tabular-nums"] },
-  target: { color: "#728099", fontSize: 14 },
-  state: { color: "#8290A7", fontSize: 10 },
+  target: { color: "#7f7f7f", fontSize: 14 },
+  state: { color: "#8f8f8f", fontSize: 10 },
   track: { height: 2, backgroundColor: "#FFFFFF0C", overflow: "hidden" },
   linkButton: { minHeight: 44, justifyContent: "center" },
   link: { color: palette.Me, fontSize: 14, fontWeight: "600" },
@@ -371,7 +371,7 @@ const s = StyleSheet.create({
     borderColor: "#FFFFFF10",
     paddingTop: 20,
   },
-  fieldLabel: { color: "#DCE1EC", fontSize: 14, lineHeight: 21 },
+  fieldLabel: { color: "#e1e1e1", fontSize: 14, lineHeight: 21 },
   stepper: { flexDirection: "row", alignItems: "center", gap: 8 },
   step: {
     width: 44,
@@ -381,7 +381,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#FFFFFF05",
   },
-  stepText: { color: "#D5DBE7", fontSize: 24, fontWeight: "400" },
+  stepText: { color: "#dbdbdb", fontSize: 24, fontWeight: "400" },
   input: {
     minWidth: 64,
     minHeight: 48,
@@ -402,7 +402,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 22,
   },
-  saveText: { color: "#17121A", fontSize: 14, fontWeight: "700" },
-  cancel: { color: "#9EABC0", fontSize: 13 },
+  saveText: { color: "#141414", fontSize: 14, fontWeight: "700" },
+  cancel: { color: "#aaaaaa", fontSize: 13 },
   error: { color: "#FFADB8", fontSize: 13, lineHeight: 21 },
 });

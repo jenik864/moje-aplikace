@@ -515,7 +515,7 @@ export function Arena({
                 fontWeight: "400",
                 letterSpacing: -1.8,
                 fontVariant: ["tabular-nums"],
-                color: left <= 10 ? "#FFB3BE" : "#F4F4FF",
+                color: left <= 10 ? "#FFB3BE" : "#f5f5f5",
               },
             ]}
           >

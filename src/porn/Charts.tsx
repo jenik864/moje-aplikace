@@ -1,3 +1,4 @@
+import { palette as neutralPalette } from "../design";
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import Svg, {
@@ -12,7 +13,7 @@ import Svg, {
 } from "react-native-svg";
 import type { Program } from "../model";
 import { seriesData, durationLabel, trendDays } from "./analytics";
-import { useRankTheme, tint } from "./theme";
+import { tint } from "./theme";
 import { palette } from "./visuals";
 export function SeriesChart({
   p,
@@ -23,7 +24,7 @@ export function SeriesChart({
   now: number;
   compact?: boolean;
 }) {
-  const { accent } = useRankTheme();
+  const accent = neutralPalette.Quit;
   const data = seriesData(p, now).slice(-8);
   const [selected, setSelected] = React.useState<string | null>("current");
   const maximum = Math.max(60000, ...data.map((d) => d.duration));
@@ -65,7 +66,7 @@ export function SeriesChart({
               strokeDasharray="3 5"
             />
             {!compact && (
-              <SvgText x="4" y={y + 3} fontSize="10" fill="#beb7b1">
+              <SvgText x="4" y={y + 3} fontSize="10" fill="#b8b8b8">
                 {axisDuration(maximum * (1 - i / 2))}
               </SvgText>
             )}
@@ -103,7 +104,7 @@ export function SeriesChart({
               cx={point.x}
               cy={point.y}
               r={data[i].current ? 5 : 3}
-              fill={data[i].current ? "#070a12" : accent}
+              fill={data[i].current ? "#0a0a0a" : accent}
               stroke={accent}
               strokeWidth={data[i].current ? 2 : 0}
               onPress={() => setSelected(data[i].id)}
@@ -113,7 +114,7 @@ export function SeriesChart({
               y="169"
               textAnchor="middle"
               fontSize="10"
-              fill="#b0a49c"
+              fill="#a6a6a6"
             >
               {data[i].current
                 ? "Teď"
@@ -164,7 +165,7 @@ export function SeriesChart({
   );
 }
 export function ActivityChart({ p, now }: { p: Program; now: number }) {
-  const { accent } = useRankTheme();
+  const accent = neutralPalette.Quit;
   const [selected, setSelected] = React.useState<number | null>(null);
   const data = trendDays(p, now);
   const peak = Math.max(0, ...data.map((d) => d.resets.length + d.sos.length));
@@ -178,7 +179,7 @@ export function ActivityChart({ p, now }: { p: Program; now: number }) {
         viewBox="0 0 300 150"
         accessibilityLabel="Počty resetů a SOS za posledních 14 dní"
       >
-        <SvgText x="4" y="18" fontSize="10" fill="#beb7b1">
+        <SvgText x="4" y="18" fontSize="10" fill="#b8b8b8">
           Počet událostí
         </SvgText>
         {[35, 72, 110].map((y, i) => (
@@ -191,7 +192,7 @@ export function ActivityChart({ p, now }: { p: Program; now: number }) {
               stroke="#ffffff12"
               strokeDasharray="3 5"
             />
-            <SvgText x="8" y={y + 3} fontSize="10" fill="#beb7b1">
+            <SvgText x="8" y={y + 3} fontSize="10" fill="#b8b8b8">
               {Math.round(max * (1 - i / 2))}
             </SvgText>
           </React.Fragment>
@@ -223,7 +224,7 @@ export function ActivityChart({ p, now }: { p: Program; now: number }) {
                   y="134"
                   textAnchor="middle"
                   fontSize="10"
-                  fill="#b0a49c"
+                  fill="#a6a6a6"
                 >
                   {`${day.date.getDate()}. ${day.date.getMonth() + 1}.`}
                 </SvgText>

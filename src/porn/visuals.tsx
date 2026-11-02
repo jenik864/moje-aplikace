@@ -22,11 +22,11 @@ import { rankColors } from "../ui";
 import { ranks } from "../model";
 import { useRankTheme, tint } from "./theme";
 export const palette = {
-  violet: "#b79afa",
-  text: "#f3f4ef",
-  muted: "#929eae",
+  violet: "#F5F5F5",
+  text: "#F5F5F5",
+  muted: "#999999",
   border: "#ffffff10",
-  panel: "#10151f",
+  panel: "#151515",
   red: "#ff777e",
 };
 export function RankMark({ rank, size = 42 }: { rank: number; size?: number }) {

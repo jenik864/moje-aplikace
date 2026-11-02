@@ -84,7 +84,7 @@ function Button({
     >
       <Text
         style={{
-          color: quiet ? color : "#0d121b",
+          color: quiet ? color : "#121212",
           fontSize: 14,
           fontWeight: "700",
           textAlign: "center",
@@ -138,7 +138,7 @@ export function MeScreen({
   });
   const rank = summary.rank,
     color = palette.Me,
-    rankColor = rank === null ? "#c5d3ec" : rankColors[rank];
+    rankColor = rank === null ? "#d2d2d2" : rankColors[rank];
   const stats = useMemo(
     () => ({
       workouts: build.loaded
@@ -485,7 +485,7 @@ export function MeScreen({
               {p.rank !== null ? (
                 <RankEmblem value={p.rank} size={40} />
               ) : (
-                <AppIcon name="Quit" color="#7d8ba0" size={30} />
+                <AppIcon name="Quit" color="#8a8a8a" size={30} />
               )}
               <View style={{ flex: 1, gap: 5 }}>
                 <Text style={s.h3}>{definitions[p.id].title}</Text>
@@ -671,7 +671,7 @@ export function MeScreen({
                         <Text
                           style={[
                             s.link,
-                            { color: historyView === id ? color : "#94a1b4" },
+                            { color: historyView === id ? color : "#a0a0a0" },
                           ]}
                         >
                           {label}
@@ -889,7 +889,7 @@ export function MeScreen({
                 style={{
                   position: "absolute",
                   inset: 0,
-                  backgroundColor: "#070A12f2",
+                  backgroundColor: "#0a0a0af2",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 16,
@@ -908,7 +908,7 @@ export function MeScreen({
                 style={{
                   position: "absolute",
                   inset: 0,
-                  backgroundColor: "#080b12f5",
+                  backgroundColor: "#0b0b0bf5",
                   padding: 24,
                   justifyContent: "center",
                 }}
@@ -1023,7 +1023,7 @@ function ProfileEditor({
         onChangeText={setName}
         maxLength={40}
         placeholder="Tvoje jméno nebo přezdívka"
-        placeholderTextColor="#637187"
+        placeholderTextColor="#707070"
         style={s.input}
       />
       <Text style={s.muted}>Na čem ti teď záleží</Text>
@@ -1034,7 +1034,7 @@ function ProfileEditor({
         maxLength={160}
         multiline
         placeholder="Např. Víc energie, klidnější hlava a čas na vlastní projekty."
-        placeholderTextColor="#637187"
+        placeholderTextColor="#707070"
         style={[s.input, { minHeight: 110, textAlignVertical: "top" }]}
       />
       <Button color={color} onPress={() => save(name, intention)}>
@@ -1071,10 +1071,10 @@ const s = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: -0.2,
   },
-  text: { color: "#d1d8e4", fontSize: 15, lineHeight: 25 },
-  muted: { color: "#9aabc0", fontSize: 13, lineHeight: 22 },
-  small: { color: "#90a0b5", fontSize: 11, lineHeight: 18 },
-  label: { color: "#9aabc0", fontSize: 9, fontWeight: "700", letterSpacing: 2 },
+  text: { color: "#d7d7d7", fontSize: 15, lineHeight: 25 },
+  muted: { color: "#a9a9a9", fontSize: 13, lineHeight: 22 },
+  small: { color: "#9e9e9e", fontSize: 11, lineHeight: 18 },
+  label: { color: "#a9a9a9", fontSize: 9, fontWeight: "700", letterSpacing: 2 },
   link: { fontSize: 13, fontWeight: "600" },
   metric: {
     fontSize: 37,
@@ -1086,7 +1086,7 @@ const s = StyleSheet.create({
     gap: 7,
     paddingLeft: 16,
     borderLeftWidth: 2,
-    borderLeftColor: "#F5BBA050",
+    borderLeftColor: "#FFFFFF50",
     paddingVertical: 3,
   },
   statsStrip: {
@@ -1141,7 +1141,7 @@ const s = StyleSheet.create({
     borderRadius: 46,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F5BBA00a",
+    backgroundColor: "#FFFFFF0a",
   },
   discipline: {
     flexDirection: "row",
@@ -1157,7 +1157,7 @@ const s = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ffffff12",
-    backgroundColor: "#070A12f5",
+    backgroundColor: "#0a0a0af5",
   },
   input: {
     backgroundColor: "#ffffff03",

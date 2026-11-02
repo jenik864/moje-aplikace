@@ -99,6 +99,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     alignSelf: "flex-start",
-    backgroundColor: "#151b25",
+    backgroundColor: "#151515",
   },
 });

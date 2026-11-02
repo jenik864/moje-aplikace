@@ -82,7 +82,7 @@ export function BudgetDial({
           fontFamily={font}
           fontSize={10}
           letterSpacing={2}
-          fill="#bdb3ae"
+          fill="#b5b5b5"
         >
           DNEŠNÍ ČAS
         </SvgText>
@@ -105,7 +105,7 @@ export function BudgetDial({
           textAnchor="middle"
           fontFamily={font}
           fontSize={11}
-          fill="#ded1c8"
+          fill="#d3d3d3"
         >
           z {limit.toLocaleString("cs-CZ")} min
         </SvgText>

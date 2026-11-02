@@ -65,7 +65,7 @@ export function Button({
             <Defs>
               <LinearGradient id={gradient} x1="0" y1="0" x2="1" y2="1">
                 <Stop offset="0" stopColor="#ffffff" stopOpacity=".18" />
-                <Stop offset=".55" stopColor={color} stopOpacity="0" />
+                <Stop offset={0.55} stopColor={color} stopOpacity="0" />
                 <Stop offset="1" stopColor="#000000" stopOpacity=".09" />
               </LinearGradient>
             </Defs>
@@ -73,7 +73,7 @@ export function Button({
           </Svg>
         </View>
       )}
-      <Text style={[s.buttonText, { color: quiet ? color : "#071322" }]}>
+      <Text style={[s.buttonText, { color: quiet ? color : "#121212" }]}>
         {children}
       </Text>
     </Pressable>
@@ -105,7 +105,7 @@ export function Chip({
     >
       <Text
         style={{
-          color: selected ? color : "#9aa8bb",
+          color: selected ? color : "#a6a6a6",
           fontSize: 12,
           fontWeight: "600",
         }}
@@ -140,7 +140,7 @@ export function Field({
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor="#637187"
+        placeholderTextColor="#707070"
         keyboardType={numeric ? "number-pad" : "default"}
         multiline={multiline}
         maxLength={maxLength}
@@ -266,7 +266,7 @@ export function TaskRow({
             cx={12}
             cy={12}
             r={10}
-            stroke={done ? color : "#67778d"}
+            stroke={done ? color : "#757575"}
             fill={done ? `${color}22` : "none"}
             strokeWidth={1.3}
           />
@@ -297,7 +297,7 @@ export function TaskRow({
           style={[
             s.text,
             { fontWeight: "500" },
-            done && { color: "#8997aa", textDecorationLine: "line-through" },
+            done && { color: "#959595", textDecorationLine: "line-through" },
           ]}
         >
           {task.title}
@@ -347,9 +347,9 @@ export const s = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: -0.2,
   },
-  text: { color: "#dce3ee", fontSize: 15, lineHeight: 23 },
-  muted: { color: "#94a1b4", fontSize: 13, lineHeight: 21 },
-  small: { color: "#94a1b4", fontSize: 11, lineHeight: 17 },
+  text: { color: "#e2e2e2", fontSize: 15, lineHeight: 23 },
+  muted: { color: "#a0a0a0", fontSize: 13, lineHeight: 21 },
+  small: { color: "#a0a0a0", fontSize: 11, lineHeight: 17 },
   label: {
     color: palette.Business,
     fontSize: 9,
@@ -391,10 +391,10 @@ export const s = StyleSheet.create({
     fontSize: 32,
     fontWeight: "500",
     letterSpacing: -1.2,
-    color: "#edf5ff",
+    color: "#f4f4f4",
     fontVariant: ["tabular-nums"],
   },
-  summaryLabel: { fontSize: 11, color: "#91a2ba", lineHeight: 17 },
+  summaryLabel: { fontSize: 11, color: "#a0a0a0", lineHeight: 17 },
   workspaceTabs: {
     flexDirection: "row",
     gap: 22,
@@ -402,7 +402,7 @@ export const s = StyleSheet.create({
     borderColor: "#ffffff14",
   },
   emptyHeadline: {
-    color: "#f6f7ff",
+    color: "#f7f7f7",
     fontSize: 42,
     fontWeight: "600",
     letterSpacing: -1.8,
@@ -475,7 +475,7 @@ export const s = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: border,
-    backgroundColor: "#070a12ee",
+    backgroundColor: "#0a0a0aee",
     gap: 12,
   },
   divider: { height: 1, backgroundColor: "#ffffff0d" },

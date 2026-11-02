@@ -30,9 +30,9 @@ Modální okna na webu používají prolnutí. Posuvná animace přesouvala v no
 
 ## Vizuální systém
 
-Rozhraní používá otevřenou kompozici: velkou typografii, řádkové seznamy, jemné oddělovače a ilustrace přímo v ploše. Hlavní obrazovky nestaví na opakovaných zaoblených kartách. `src/design.tsx` spravuje tmavé pozadí s barevnou aurorou a konturami, kompaktní otevřené zobrazení ranku a spodní navigaci bez velkého rámu. Navigace má vlastní výšku a respektuje bezpečný spodní okraj telefonu.
+Rozhraní používá otevřenou kompozici: velkou typografii, řádkové seznamy, jemné oddělovače a ilustrace přímo v ploše. Hlavní obrazovky nestaví na opakovaných zaoblených kartách. `src/design.tsx` spravuje jednotný téměř černý základ bez barevné aurory, kompaktní otevřené zobrazení ranku a spodní navigaci bez velkého rámu. Navigace má vlastní výšku a respektuje bezpečný spodní okraj telefonu.
 
-Každá sekce má vlastní akcent: Quit limetkový, Build mint, Mind fialový, Business modrý a Me broskvový. Materiálové barvy dvanácti ranků zůstávají na emblémech, cifernících a skutečném postupu. Build má pohybovou ilustraci, Mind neuronový motiv a Business prostorovou grafiku. Jemný vstup obrazovky, změna světla a odezva aktivní navigace respektují systémové omezení pohybu; pozadí neobsahuje nekonečnou animaci. Redesign nemění bodování, uložená data, denní limity ani pravidla PRIME.
+Všech pět sekcí používá stejné bílé ovládací prvky a text, neutrální šedé popisky a grafy. Barva ranku se objevuje na materiálových emblémech, cifernících a v jejich podrobných náhledech; neobarvuje celé obrazovky ani navigaci. SOS ve všech třech programech má společnou červenou akci s plastickým gradientem, světlou horní hranou a statickou září. Stejný vzhled má spuštění nouzové pauzy. Svalová mapa ponechává významovou červenou pro zapojené svaly a chyby zůstávají červené. Volitelná barva projektu je pouze lokální značka, ne téma celé sekce. Stisk dává jemnou odezvu, SOS nebliká. Redesign nemění bodování, uložená data, denní limity ani pravidla PRIME.
 
 ## Kontroly
 

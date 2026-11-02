@@ -62,7 +62,7 @@ export function RankJourney({
       >
         Cesta, kterou tvoříš.
       </Text>
-      <Text style={{ color: "#9daabc", fontSize: 14, lineHeight: 23 }}>
+      <Text style={{ color: "#a9a9a9", fontSize: 14, lineHeight: 23 }}>
         Skutečně zaznamenané body celkového ranku. V každém dni zůstává poslední
         uložená hodnota.
       </Text>
@@ -85,7 +85,7 @@ export function RankJourney({
           >
             <Text
               style={{
-                color: period === n ? palette.Me : "#9daabc",
+                color: period === n ? palette.Me : "#a9a9a9",
                 fontWeight: "600",
               }}
             >
@@ -110,7 +110,7 @@ export function RankJourney({
               y2={154 - v * 125}
               stroke="#ffffff12"
             />
-            <SvgText x={25} y={150 - v * 125} fill="#8290a5" fontSize={9}>
+            <SvgText x={25} y={150 - v * 125} fill="#8f8f8f" fontSize={9}>
               {Math.round(v * max)}
             </SvgText>
           </React.Fragment>
@@ -139,10 +139,10 @@ export function RankJourney({
             fill={palette.Me}
           />
         ))}
-        <SvgText x={28} y={178} fill="#8290a5" fontSize={10}>
+        <SvgText x={28} y={178} fill="#8f8f8f" fontSize={10}>
           {from.slice(8)}. {Number(from.slice(5, 7))}.
         </SvgText>
-        <SvgText x={308} y={178} textAnchor="end" fill="#8290a5" fontSize={10}>
+        <SvgText x={308} y={178} textAnchor="end" fill="#8f8f8f" fontSize={10}>
           Dnes
         </SvgText>
       </Svg>
@@ -154,16 +154,16 @@ export function RankJourney({
             })}{" "}
             bodů · {ranks[rankForScore(chosen.score)]}
           </Text>
-          <Text style={{ color: "#9daabc", fontSize: 13 }}>
+          <Text style={{ color: "#a9a9a9", fontSize: 13 }}>
             Záznam {new Date(chosen.at).toLocaleString("cs-CZ")}
           </Text>
         </View>
       ) : (
-        <Text style={{ color: "#dce3ee", fontSize: 16 }}>
+        <Text style={{ color: "#e2e2e2", fontSize: 16 }}>
           V tomto období zatím nemáš uložený bod.
         </Text>
       )}
-      <Text style={{ color: "#9daabc", fontSize: 13, lineHeight: 21 }}>
+      <Text style={{ color: "#a9a9a9", fontSize: 13, lineHeight: 21 }}>
         Historie začíná prvním záznamem tohoto updatu. Chybějící dny
         nedopočítáváme; přerušovaná čára pouze spojuje pozorování. Oprava
         aktivity může změnit dnešní hodnotu, dosažený PRIME zůstává.
@@ -189,7 +189,7 @@ export function RankJourney({
               paddingVertical: 12,
             }}
           >
-            <Text style={{ color: "#c0c9d7" }}>
+            <Text style={{ color: "#c8c8c8" }}>
               {new Date(`${p.day}T12:00:00`).toLocaleDateString("cs-CZ")}
             </Text>
             <Text style={{ color: palette.Me }}>

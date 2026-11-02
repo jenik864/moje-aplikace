@@ -301,7 +301,7 @@ export function ActivityDetail({
                       style={{
                         paddingVertical: 12,
                         borderBottomWidth: 1,
-                        borderBottomColor: "#253043",
+                        borderBottomColor: "#2f2f2f",
                       }}
                     >
                       <Text style={s.text}>+ {e.name}</Text>

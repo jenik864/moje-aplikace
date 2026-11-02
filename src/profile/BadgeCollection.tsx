@@ -20,7 +20,7 @@ function BadgeMark({
   source: "Build" | "Mind";
   earned: boolean;
 }) {
-  const color = earned ? palette[source] : "#5e6b80";
+  const color = earned ? palette[source] : "#6a6a6a";
   return (
     <Svg width={45} height={52} viewBox="0 0 48 56" accessible={false}>
       <Path
@@ -109,7 +109,7 @@ export function BadgeCollection({ build, mind, onOpen }: Props) {
         <View style={{ gap: 5 }}>
           <Text style={s.metric}>
             {earned}
-            <Text style={{ fontSize: 18, color: "#73849b" }}>
+            <Text style={{ fontSize: 18, color: "#828282" }}>
               {" "}
               / {all.length}
             </Text>
@@ -188,7 +188,7 @@ export function BadgeCollection({ build, mind, onOpen }: Props) {
                       {b.pinned ? " · PŘIPNUTO V BUILD" : ""}
                     </Text>
                     <Text
-                      style={[s.small, { color: unlocked ? color : "#8190a4" }]}
+                      style={[s.small, { color: unlocked ? color : "#8e8e8e" }]}
                     >
                       {unlocked ? "ZÍSKÁNO" : "VÝZVA"}
                     </Text>
@@ -279,8 +279,8 @@ const s = StyleSheet.create({
     letterSpacing: -0.3,
     color: "#f4f6fa",
   },
-  muted: { fontSize: 13, lineHeight: 22, color: "#a0aec0" },
-  small: { fontSize: 10, lineHeight: 18, color: "#899ab1" },
+  muted: { fontSize: 13, lineHeight: 22, color: "#acacac" },
+  small: { fontSize: 10, lineHeight: 18, color: "#989898" },
   link: { fontSize: 13, fontWeight: "600", color: palette.Me },
   tag: { fontSize: 9, letterSpacing: 1.1, fontWeight: "700" },
   summary: {
@@ -317,7 +317,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     justifyContent: "center",
   },
-  filterText: { fontSize: 12, fontWeight: "600", color: "#a4b2c5" },
+  filterText: { fontSize: 12, fontWeight: "600", color: "#b0b0b0" },
   row: { borderTopWidth: 1, borderColor: "#ffffff12", paddingTop: 16 },
   badgeHeader: {
     flexDirection: "row",
@@ -332,6 +332,6 @@ const s = StyleSheet.create({
     paddingLeft: 12,
     fontSize: 12,
     lineHeight: 20,
-    color: "#ffc8ad",
+    color: "#d2d2d2",
   },
 });

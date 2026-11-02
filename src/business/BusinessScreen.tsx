@@ -104,7 +104,7 @@ export function BusinessScreen({
       ? route.projectId
       : route?.id;
   const project = data.projects.find((p) => p.id === projectId);
-  const accent = project ? colors[project.color] : palette.Business;
+  const accent = palette.Business;
   const statusNotice = (
     <>
       {saveError && (
@@ -218,7 +218,7 @@ export function BusinessScreen({
                   style={{
                     fontSize: 15,
                     fontWeight: "600",
-                    color: view === id ? "#edf5ff" : "#7f8da4",
+                    color: view === id ? "#f4f4f4" : "#8c8c8c",
                   }}
                 >
                   {label}
@@ -475,7 +475,7 @@ export function BusinessScreen({
               )}
             </>
           )}
-          <Text style={[s.small, { paddingTop: 10, color: "#68778e" }]}>
+          <Text style={[s.small, { paddingTop: 10, color: "#757575" }]}>
             Projekty se ukládají na tomto zařízení. Spolupráce a AI zatím nejsou
             připojené.
           </Text>
@@ -614,7 +614,7 @@ export function BusinessScreen({
                   style={{
                     position: "absolute",
                     inset: 0,
-                    backgroundColor: "#080b12f5",
+                    backgroundColor: "#0b0b0bf5",
                     padding: 24,
                     justifyContent: "center",
                   }}

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import { Program, ProgramId, dayKey, consistencyStatus, rankOf } from "./model";
-import { rankColors } from "./ui";
+import { Program, ProgramId, dayKey, consistencyStatus } from "./model";
+import { palette } from "./design";
 import { dailyActivity } from "./daily/analytics";
 export function ConsistencyMatrix({
   id,
@@ -15,7 +15,7 @@ export function ConsistencyMatrix({
   const [selected, setSelected] = React.useState<string | null>(
     dayKey(new Date(now)),
   );
-  const color = rankColors[rankOf(id, p, now)];
+  const color = palette.Quit;
   const dates = Array.from({ length: 28 }, (_, i) => {
     const date = new Date(now);
     date.setDate(date.getDate() - 27 + i);
@@ -112,7 +112,7 @@ export function ConsistencyMatrix({
             gap: 10,
             paddingTop: 14,
             borderTopWidth: 1,
-            borderTopColor: "#332a2b",
+            borderTopColor: "#2c2c2c",
           }}
         >
           {!activity.active ? (
@@ -171,7 +171,7 @@ const s = StyleSheet.create({
     gap: 10,
   },
   title: {
-    color: "#c4bab3",
+    color: "#bcbcbc",
     fontSize: 11,
     fontWeight: "600",
     letterSpacing: 1,
@@ -187,7 +187,7 @@ const s = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
   },
-  muted: { color: "#aca39f", fontSize: 12, lineHeight: 19 },
+  muted: { color: "#a5a5a5", fontSize: 12, lineHeight: 19 },
   detail: { color: "#f3f3ed", fontSize: 18, lineHeight: 25 },
   legend: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
 });

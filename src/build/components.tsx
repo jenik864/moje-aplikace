@@ -39,20 +39,20 @@ export const s = StyleSheet.create({
   },
   label: { color: blue, fontSize: 9, fontWeight: "700", letterSpacing: 1.8 },
   title: {
-    color: "#f2f6fc",
+    color: "#f6f6f6",
     fontSize: 38,
     fontWeight: "700",
     letterSpacing: -1.8,
   },
   h2: {
-    color: "#edf3fc",
+    color: "#f2f2f2",
     fontSize: 25,
     fontWeight: "600",
     letterSpacing: -0.8,
   },
-  text: { color: "#dce3ee", fontSize: 15, lineHeight: 24 },
-  muted: { color: "#94a1b4", fontSize: 13, lineHeight: 21 },
-  small: { color: "#95a3b7", fontSize: 12, lineHeight: 18 },
+  text: { color: "#e2e2e2", fontSize: 15, lineHeight: 24 },
+  muted: { color: "#a0a0a0", fontSize: 13, lineHeight: 21 },
+  small: { color: "#a1a1a1", fontSize: 12, lineHeight: 18 },
   button: {
     backgroundColor: blue,
     borderRadius: 28,
@@ -62,13 +62,13 @@ export const s = StyleSheet.create({
     justifyContent: "center",
     minHeight: 50,
   },
-  buttonText: { color: "#0b1728", fontSize: 14, fontWeight: "700" },
+  buttonText: { color: "#161616", fontSize: 14, fontWeight: "700" },
   secondary: {
     backgroundColor: "transparent",
     borderBottomWidth: 1,
     borderColor: "#ffffff1b",
   },
-  secondaryText: { color: "#c2d9f7" },
+  secondaryText: { color: "#d6d6d6" },
   chip: {
     borderBottomWidth: 1,
     borderColor: "#ffffff18",
@@ -78,10 +78,10 @@ export const s = StyleSheet.create({
     minHeight: 44,
     justifyContent: "center",
   },
-  chipOn: { backgroundColor: "#62EDBC12", borderColor: blue },
+  chipOn: { backgroundColor: "#cccccc12", borderColor: blue },
   input: {
     backgroundColor: "#ffffff04",
-    color: "#edf3fc",
+    color: "#f2f2f2",
     borderBottomWidth: 1,
     borderColor: "#ffffff30",
     borderRadius: 4,
@@ -93,7 +93,7 @@ export const s = StyleSheet.create({
   error: { color: "#ffb5a7", fontSize: 14, lineHeight: 21 },
   icon: { color: blue, fontSize: 30, fontWeight: "600" },
   pill: {
-    backgroundColor: "#182b41",
+    backgroundColor: "#292929",
     borderRadius: 8,
     paddingHorizontal: 9,
     paddingVertical: 5,
@@ -103,11 +103,11 @@ export const s = StyleSheet.create({
     paddingVertical: 17,
     borderBottomWidth: 1,
     borderBottomColor: "#ffffff10",
-    backgroundColor: "#0d121bee",
+    backgroundColor: "#121212ee",
   },
   link: { color: blue, fontSize: 14, fontWeight: "600" },
   field: { gap: 7 },
-  metric: { color: "#f1f6ff", fontSize: 32, fontWeight: "600" },
+  metric: { color: "#f6f6f6", fontSize: 32, fontWeight: "600" },
   day: {
     flex: 1,
     alignItems: "center",
@@ -119,7 +119,7 @@ export const s = StyleSheet.create({
     gap: 9,
     minHeight: 88,
   },
-  done: { backgroundColor: "#62EDBC12", borderColor: "#62EDBC" },
+  done: { backgroundColor: "#cccccc12", borderColor: "#cccccc" },
   badge: {
     width: 58,
     height: 64,
@@ -127,7 +127,7 @@ export const s = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 0,
     borderColor: blue,
-    backgroundColor: "#62EDBC12",
+    backgroundColor: "#cccccc12",
     borderRadius: 30,
   },
   step: { flexDirection: "row", gap: 12 },
@@ -250,7 +250,7 @@ export function Field({
         keyboardType={numeric ? "decimal-pad" : "default"}
         multiline={multiline}
         placeholder={placeholder}
-        placeholderTextColor="#65758c"
+        placeholderTextColor="#737373"
       />
     </View>
   );
@@ -300,9 +300,9 @@ export function MissionArtwork({
     >
       <Defs>
         <LinearGradient id={`${artId}Track`} x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor="#b8ffe5" />
-          <Stop offset=".5" stopColor={blue} />
-          <Stop offset="1" stopColor="#408efd" />
+          <Stop offset="0" stopColor="#eeeeee" />
+          <Stop offset={0.5} stopColor={blue} />
+          <Stop offset="1" stopColor="#858585" />
         </LinearGradient>
         <RadialGradient id={`${artId}Glow`}>
           <Stop offset="0" stopColor={blue} stopOpacity=".25" />
@@ -344,13 +344,13 @@ export function MissionArtwork({
             : "M55 104L74 78L93 94L125 58M109 58H125V74"
         }
         fill="none"
-        stroke="#d7fff0"
+        stroke="#f5f5f5"
         strokeWidth="3.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <Circle cx="90" cy="13" r="4" fill="#b8ffe5" />
-      <Circle cx="151" cy="138" r="2.5" fill="#79bdff" />
+      <Circle cx="90" cy="13" r="4" fill="#eeeeee" />
+      <Circle cx="151" cy="138" r="2.5" fill="#b3b3b3" />
       <SvgText
         x="90"
         y="134"

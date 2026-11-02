@@ -9,9 +9,9 @@ import Svg, {
   RadialGradient,
   Ellipse,
 } from "react-native-svg";
-export const violet = "#B7A0FF",
-  mint = "#8ae7d1";
-export const MindTheme = createContext("#B7A0FF");
+export const violet = "#acacac",
+  mint = "#d2d2d2";
+export const MindTheme = createContext("#acacac");
 export function useMindStyles() {
   const color = useContext(MindTheme);
   return {
@@ -99,7 +99,7 @@ export function Chip({
     >
       <Text
         style={{
-          color: selected ? color : "#b8b5ae",
+          color: selected ? color : "#b5b5b5",
           fontSize: 13,
           fontWeight: "600",
         }}
@@ -140,7 +140,7 @@ export function Field({
         keyboardType={number ? "number-pad" : "default"}
         multiline={multiline}
         placeholder={placeholder}
-        placeholderTextColor="#746f80"
+        placeholderTextColor="#717171"
         maxLength={multiline ? 1000 : 80}
       />
     </View>
@@ -222,8 +222,8 @@ export function MindSignal({
         </RadialGradient>
         <LinearGradient id={`${id}line`} x1="0" y1="0" x2="1" y2="1">
           <Stop offset="0" stopColor={mint} />
-          <Stop offset=".5" stopColor={color} />
-          <Stop offset="1" stopColor="#7658EF" stopOpacity=".15" />
+          <Stop offset={0.5} stopColor={color} />
+          <Stop offset="1" stopColor="#696969" stopOpacity=".15" />
         </LinearGradient>
       </Defs>
       <Ellipse cx="132" cy="106" rx="114" ry="108" fill={`url(#${id}glow)`} />
@@ -286,14 +286,14 @@ export const s = StyleSheet.create({
     letterSpacing: -2.2,
   },
   h2: {
-    color: "#f6f3ff",
+    color: "#f5f5f5",
     fontSize: 27,
     fontWeight: "600",
     letterSpacing: -0.9,
   },
-  h3: { color: "#f6f3ff", fontSize: 19, fontWeight: "700" },
-  text: { color: "#dce3ee", fontSize: 15, lineHeight: 24 },
-  muted: { color: "#94a1b4", fontSize: 13, lineHeight: 21 },
+  h3: { color: "#f5f5f5", fontSize: 19, fontWeight: "700" },
+  text: { color: "#e2e2e2", fontSize: 15, lineHeight: 24 },
+  muted: { color: "#a0a0a0", fontSize: 13, lineHeight: 21 },
   label: { color: violet, fontSize: 9, fontWeight: "700", letterSpacing: 1.8 },
   link: { color: violet, fontSize: 15, fontWeight: "700" },
   card: {
@@ -308,7 +308,7 @@ export const s = StyleSheet.create({
   },
   hero: {
     backgroundColor: "transparent",
-    borderColor: "#B7A0FF25",
+    borderColor: "#acacac25",
     borderWidth: 0,
     borderRadius: 0,
     paddingVertical: 10,
@@ -324,7 +324,7 @@ export const s = StyleSheet.create({
     minHeight: 52,
   },
   buttonText: {
-    color: "#10131a",
+    color: "#131313",
     fontSize: 14,
     fontWeight: "700",
     textAlign: "center",
@@ -342,7 +342,7 @@ export const s = StyleSheet.create({
     paddingVertical: 11,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#39303f",
+    borderColor: "#333333",
     backgroundColor: "#121016",
   },
   input: {
@@ -358,7 +358,7 @@ export const s = StyleSheet.create({
   },
   track: {
     height: 5,
-    backgroundColor: "#332a42",
+    backgroundColor: "#2e2e2e",
     borderRadius: 5,
     overflow: "hidden",
   },

@@ -105,7 +105,7 @@ export function ExtraLabs({ id, step }: { id: string; step: number }) {
                 <Text
                   style={[
                     s.text,
-                    { color: i === value + 1 ? color : "#94a1b4" },
+                    { color: i === value + 1 ? color : "#a0a0a0" },
                   ]}
                 >
                   {v}
@@ -333,7 +333,7 @@ export function ExtraLabs({ id, step }: { id: string; step: number }) {
               <Text
                 style={{
                   fontWeight: "700",
-                  color: i === cursor ? "#10131a" : "#dce3ee",
+                  color: i === cursor ? "#131313" : "#e2e2e2",
                 }}
               >
                 {n}
@@ -363,7 +363,7 @@ export function ExtraLabs({ id, step }: { id: string; step: number }) {
         {
           padding: 18,
           gap: 16,
-          backgroundColor: "#0c161c",
+          backgroundColor: "#141414",
           borderColor: `${mint}35`,
           borderTopWidth: 0,
           borderLeftWidth: 2,

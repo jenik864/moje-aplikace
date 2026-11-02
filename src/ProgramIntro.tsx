@@ -40,8 +40,8 @@ export function ProgramIntro({
             </RadialGradient>
             <LinearGradient id={gradient} x1="0" y1="0" x2="1" y2="1">
               <Stop offset="0" stopColor={d.color} stopOpacity={0.28} />
-              <Stop offset="0.5" stopColor="#131e2e" />
-              <Stop offset="1" stopColor="#0b111c" />
+              <Stop offset="0.5" stopColor="#1d1d1d" />
+              <Stop offset="1" stopColor="#111111" />
             </LinearGradient>
           </Defs>
           <Circle cx={90} cy={65} r={64} fill={`url(#${gradient}halo)`} />
@@ -169,5 +169,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#fff",
   },
-  body: { fontSize: 14, lineHeight: 23, color: "#a6b1c2" },
+  body: { fontSize: 14, lineHeight: 23, color: "#b0b0b0" },
 });

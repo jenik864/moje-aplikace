@@ -354,14 +354,14 @@ const s = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: -1.2,
     lineHeight: 39,
-    color: "#f4f6ff",
+    color: "#f6f6f6",
   },
   h2: {
     fontSize: 20,
     lineHeight: 26,
     fontWeight: "600",
     letterSpacing: -0.3,
-    color: "#edf2ff",
+    color: "#f2f2f2",
   },
   label: {
     fontSize: 9,
@@ -369,8 +369,8 @@ const s = StyleSheet.create({
     letterSpacing: 1.7,
     color: palette.Me,
   },
-  text: { fontSize: 15, lineHeight: 24, color: "#d8dfed" },
-  muted: { fontSize: 13, lineHeight: 21, color: "#94a2b8" },
+  text: { fontSize: 15, lineHeight: 24, color: "#dfdfdf" },
+  muted: { fontSize: 13, lineHeight: 21, color: "#a1a1a1" },
   section: {
     gap: 14,
     paddingTop: 20,
@@ -390,8 +390,8 @@ const s = StyleSheet.create({
     borderBottomColor: "#ffffff0c",
     paddingBottom: 12,
   },
-  rowLabel: { width: 62, color: "#edf2ff", fontSize: 13, fontWeight: "600" },
-  rowValue: { flex: 1, fontSize: 13, lineHeight: 20, color: "#a7b3c7" },
+  rowLabel: { width: 62, color: "#f2f2f2", fontSize: 13, fontWeight: "600" },
+  rowValue: { flex: 1, fontSize: 13, lineHeight: 20, color: "#b2b2b2" },
   confirm: {
     gap: 16,
     paddingTop: 22,
@@ -410,7 +410,7 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     textAlign: "center",
-    color: "#11141c",
+    color: "#141414",
   },
   quiet: {
     borderRadius: 0,
@@ -420,5 +420,5 @@ const s = StyleSheet.create({
   },
   busy: { flexDirection: "row", alignItems: "center", gap: 10 },
   error: { fontSize: 13, lineHeight: 21, color: "#ffb3c0" },
-  notice: { fontSize: 13, lineHeight: 21, color: "#62edbc" },
+  notice: { fontSize: 13, lineHeight: 21, color: "#cccccc" },
 });
