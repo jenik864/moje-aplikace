@@ -1,3 +1,4 @@
+import { PersonalReasons } from "../PersonalReasons";
 import React from "react";
 import {
   Modal,
@@ -338,16 +339,7 @@ export function DailyDetails({
                     ]}
                   >
                     <Text style={s.label}>PROČ JSEM SE ROZHODL</Text>
-                    <Text
-                      style={{ color: accent, fontSize: 44, lineHeight: 46 }}
-                    >
-                      “
-                    </Text>
-                    <Text
-                      style={{ color: "#e6e6e6", fontSize: 20, lineHeight: 31 }}
-                    >
-                      {p.reasons}
-                    </Text>
+                    <PersonalReasons value={p.reasons} />
                     <View
                       style={{ height: 1, backgroundColor: tint(accent, 0.2) }}
                     />

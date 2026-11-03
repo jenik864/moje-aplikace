@@ -67,3 +67,7 @@ Me spojuje skutečné uložené události čtyř oblastí, stávající odznaky 
 ## Jednotná barevnost
 
 Všech pět sekcí sdílí téměř černý základ, bílý text a bílé ovládání. Barevné ranky zůstávají na emblémech, cifernících a jejich náhledech. SOS je ve všech programech červené, s plastickým přechodem a statickou září; běžné primární akce jsou bílé. Grafy a navigace nepřebírají barvu aktuálního ranku.
+
+## Materiálové ciferníky a smysluplné stavy
+
+Dvanáct lokálních generovaných ciferníků má materiál podle ranku; čísla jsou živá, renderovaná nad obrazem. Písmo ciferníku je lokálně přibalené Space Grotesk. Stavová zelená označuje dokončené úspěšné dny, červená zaznamenané resety; aktuální a nezaznamenané dny nejsou zelené. Statistiky Quit porovnávají série jako jednotlivé sloupce a rozlišují události SOS od resetů. Přepnutí rozsahu ani náhled ciferníku nic neuděluje a nemění rank. Důvody mají nové členění a původní podpis zůstává zachovaný.

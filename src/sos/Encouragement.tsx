@@ -1,6 +1,6 @@
 import React from "react";
 import { AccessibilityInfo, Animated, Text, View } from "react-native";
-/** Hold each complete sentence for two seconds, then fade and type the next. */
+/** Show complete sentences long enough to read; never expose half-typed words. */
 export function Encouragement({
   messages,
   color = "#f3f3ed",
@@ -38,7 +38,7 @@ export function Encouragement({
     setText(lines[0]);
     setFull(lines[0]);
     const schedule = () => {
-      timer = setTimeout(next, 2000);
+      timer = setTimeout(next, Math.max(6500, lines[index].length * 55));
     };
     const next = () => {
       if (disposed) return;
@@ -58,17 +58,15 @@ export function Encouragement({
       animation.start(({ finished }) => {
         if (disposed || !finished) return;
         setFull(line);
-        setText("");
-        opacity.setValue(1);
-        let chars = 0;
-        const type = () => {
-          if (disposed) return;
-          chars += 2;
-          setText(line.slice(0, chars));
-          if (chars < line.length) timer = setTimeout(type, 18);
-          else schedule();
-        };
-        type();
+        setText(line);
+        animation = Animated.timing(opacity, {
+          toValue: 1,
+          duration: 240,
+          useNativeDriver: true,
+        });
+        animation.start(() => {
+          if (!disposed) schedule();
+        });
       });
     };
     if (lines.length > 1) schedule();

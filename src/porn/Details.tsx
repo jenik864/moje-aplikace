@@ -1,3 +1,6 @@
+import { ProgressInsights } from "./ProgressInsights";
+import { statusColors, calendarColor } from "../statusColors";
+import { PersonalReasons } from "../PersonalReasons";
 import { palette as neutralPalette } from "../design";
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -32,7 +35,6 @@ import {
   durationLabel,
   seriesData,
 } from "./analytics";
-import { SeriesChart, ActivityChart } from "./Charts";
 export type DetailKind =
   | "ranks"
   | "matrix"
@@ -71,7 +73,11 @@ export function PornDetails({
   }, [kind]);
   const back = () => (editing ? setEditing(false) : close());
   return (
-    <Modal visible={kind !== null} animationType={Platform.OS === "web" ? "fade" : "slide"} onRequestClose={back}>
+    <Modal
+      visible={kind !== null}
+      animationType={Platform.OS === "web" ? "fade" : "slide"}
+      onRequestClose={back}
+    >
       {kind && (
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
           <Screen modal accent={accent}>
@@ -161,6 +167,7 @@ function DetailBody({
   const rank = rankOf("porn", p, now);
   const prime = Math.max(rank, p.prime);
   const [previewRank, setPreviewRank] = useState(rank);
+  const [showSignature, setShowSignature] = useState(false);
   const [selected, setSelected] = useState(now);
   const selectedDate = new Date(selected);
   const detail = dayActivity(p, selectedDate, now);
@@ -288,11 +295,7 @@ function DetailBody({
                       style={[
                         s.day,
                         {
-                          backgroundColor: day.resets.length
-                            ? "#2d171b"
-                            : day.successful
-                              ? tint(accent, 0.18)
-                              : "#201e1d",
+                          backgroundColor: calendarColor(day).surface,
                           borderColor: chosen
                             ? palette.text
                             : day.pending
@@ -303,7 +306,7 @@ function DetailBody({
                     >
                       <Text
                         style={{
-                          color: day.active ? palette.text : "#838383",
+                          color: calendarColor(day).text,
                           fontSize: 13,
                         }}
                       >
@@ -329,7 +332,9 @@ function DetailBody({
             </View>
           ))}
           <View style={[s.row, { flexWrap: "wrap" }]}>
-            <Text style={[s.small, { color: accent }]}>● Splněno</Text>
+            <Text style={[s.small, { color: statusColors.success }]}>
+              ● Splněno
+            </Text>
             <Text style={[s.small, { color: palette.red }]}>● Reset</Text>
             <Text style={[s.small, { color: accent }]}>● Dnes</Text>
             <Text style={s.small}>□ Vybraný den</Text>
@@ -385,82 +390,7 @@ function DetailBody({
         </Text>
       </>
     );
-  if (kind === "analytics") {
-    const days = trendDays(p, now, 28);
-    const completed = days.filter((d) => d.active && !d.pending);
-    const successful = completed.filter((d) => d.successful);
-    const triggers = Object.entries(
-      (p.triggers ?? []).reduce<Record<string, number>>(
-        (counts, e) => ({
-          ...counts,
-          [e.trigger]: (counts[e.trigger] ?? 0) + 1,
-        }),
-        {},
-      ),
-    ).sort((a, b) => b[1] - a[1]);
-    return (
-      <>
-        <View style={s.row}>
-          <View style={[s.card, { flex: 1 }]}>
-            <Metric label="NEJLEPŠÍ SÉRIE" value={durationLabel(stats.best)} />
-          </View>
-          <View style={[s.card, { flex: 1 }]}>
-            <Metric label="VŠECHNY SÉRIE" value={String(stats.attempts)} />
-          </View>
-        </View>
-        <View style={s.card}>
-          <SectionLabel>DÉLKA SÉRIÍ / POSLEDNÍCH 8</SectionLabel>
-          <SeriesChart p={p} now={now} />
-          {p.history.length === 0 && (
-            <Text style={s.body}>
-              První série stále běží. Pro srovnání zatím nemáme ukončené série.
-            </Text>
-          )}
-        </View>
-        <View style={s.card}>
-          <SectionLabel>UDÁLOSTI / POSLEDNÍCH 14 DNÍ</SectionLabel>
-          <ActivityChart p={p} now={now} />
-        </View>
-        <View style={s.card}>
-          <SectionLabel>KONZISTENCE / POSLEDNÍCH 28 DNÍ</SectionLabel>
-          <Text style={s.stat}>
-            {completed.length
-              ? `${Math.round((successful.length / completed.length) * 100)} %`
-              : "—"}
-          </Text>
-          <Text style={s.body}>
-            {completed.length
-              ? `${successful.length} z ${completed.length} dokončených dnů od zahájení bylo bez resetu.`
-              : "Zatím není dokončený žádný den. První výsledek uvidíš po půlnoci."}
-          </Text>
-          <Text style={s.small}>Dnešek ani dny před zahájením nepočítáme.</Text>
-        </View>
-        <View style={s.card}>
-          <SectionLabel>PRŮMĚR UKONČENÝCH SÉRIÍ</SectionLabel>
-          <Text style={s.stat}>
-            {stats.average === null ? "—" : durationLabel(stats.average)}
-          </Text>
-          <Text style={s.small}>Právě běžící série průměr neovlivňuje.</Text>
-        </View>
-        <View style={s.card}>
-          <SectionLabel>ZAZNAMENANÉ SPOUŠTĚČE</SectionLabel>
-          {triggers.length ? (
-            triggers.map(([trigger, count]) => (
-              <View key={trigger} style={s.row}>
-                <Text style={[s.body, { flex: 1 }]}>{trigger}</Text>
-                <Text style={{ color: accent, fontSize: 18 }}>{count}</Text>
-              </View>
-            ))
-          ) : (
-            <Text style={s.body}>Zatím nemáš uložené záznamy SOS.</Text>
-          )}
-        </View>
-        <Text style={s.body}>
-          Grafy vycházejí z časovače, resetů a záznamů SOS.
-        </Text>
-      </>
-    );
-  }
+  if (kind === "analytics") return <ProgressInsights p={p} now={now} />;
   if (kind === "manifest") {
     const nums = p.signature.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
     const xs = nums.filter((_, i) => i % 2 === 0);
@@ -473,22 +403,37 @@ function DetailBody({
       <>
         <View style={s.manifest}>
           <SectionLabel>PROČ JSEM SE ROZHODL</SectionLabel>
-          <Text style={s.quote}>„</Text>
-          <Text style={s.manifestText}>{p.reasons}</Text>
+          <PersonalReasons value={p.reasons} />
           <View style={s.rule} />
           <Text style={s.small}>{p.target}</Text>
         </View>
         <View style={s.card}>
-          <SectionLabel>TVŮJ PŮVODNÍ PODPIS</SectionLabel>
-          <Svg width="100%" height={100} viewBox={`${x} ${y} ${w} ${h}`}>
-            <Path
-              d={p.signature}
-              stroke={accent}
-              strokeWidth={2}
-              strokeLinecap="round"
-              fill="none"
-            />
-          </Svg>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Zobrazit původní podpis"
+            accessibilityState={{ expanded: showSignature }}
+            onPress={() => setShowSignature((v) => !v)}
+            style={{
+              minHeight: 44,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <SectionLabel>TVŮJ PŮVODNÍ PODPIS</SectionLabel>
+            <Text style={s.small}>{showSignature ? "−" : "+"}</Text>
+          </Pressable>
+          {showSignature && (
+            <Svg width="100%" height={100} viewBox={`${x} ${y} ${w} ${h}`}>
+              <Path
+                d={p.signature}
+                stroke={accent}
+                strokeWidth={2}
+                strokeLinecap="round"
+                fill="none"
+              />
+            </Svg>
+          )}
           <Text style={s.small}>
             Podepsáno{" "}
             {new Date(
@@ -721,10 +666,10 @@ const makeStyles = (accent: string) =>
       bottom: 4,
     },
     manifest: {
-      paddingLeft: 20,
+      paddingLeft: 0,
       paddingVertical: 12,
       gap: 20,
-      borderLeftWidth: 2,
+      borderLeftWidth: 0,
       borderColor: tint(accent, 0.5),
     },
     quote: { color: accent, fontSize: 60, lineHeight: 45 },

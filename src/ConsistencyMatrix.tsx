@@ -1,3 +1,4 @@
+import { statusColors } from "./statusColors";
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Program, ProgramId, dayKey, consistencyStatus } from "./model";
@@ -15,7 +16,7 @@ export function ConsistencyMatrix({
   const [selected, setSelected] = React.useState<string | null>(
     dayKey(new Date(now)),
   );
-  const color = palette.Quit;
+  const color = statusColors.success;
   const dates = Array.from({ length: 28 }, (_, i) => {
     const date = new Date(now);
     date.setDate(date.getDate() - 27 + i);
@@ -72,13 +73,13 @@ export function ConsistencyMatrix({
                       status === "success"
                         ? `${color}35`
                         : status === "reset"
-                          ? "#442027"
+                          ? statusColors.failureSurface
                           : "#252525",
                     borderColor:
                       selected === key
                         ? "#fff"
                         : status === "pending"
-                          ? color
+                          ? "#FFFFFF"
                           : "transparent",
                   },
                 ]}
@@ -89,7 +90,7 @@ export function ConsistencyMatrix({
                       status === "success"
                         ? color
                         : status === "reset"
-                          ? "#ff8992"
+                          ? statusColors.failure
                           : "#aaa",
                     fontSize: 11,
                   }}
@@ -148,7 +149,7 @@ export function ConsistencyMatrix({
       )}
       <View style={s.legend}>
         <Text style={{ color, fontSize: 11 }}>● Splněno</Text>
-        <Text style={{ color: "#ff8992", fontSize: 11 }}>
+        <Text style={{ color: statusColors.failure, fontSize: 11 }}>
           ● {id === "porn" ? "Reset" : "Mimo plán"}
         </Text>
         <Text style={s.muted}>○ Dnes</Text>

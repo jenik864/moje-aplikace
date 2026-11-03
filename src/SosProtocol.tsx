@@ -1,3 +1,4 @@
+import { PersonalReasons } from "./PersonalReasons";
 import { EmergencyAction } from "./EmergencyAction";
 import React from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -292,7 +293,7 @@ export function SosProtocol({
                 {!!reasons.trim() && (
                   <>
                     <Text style={s.label}>TVOJE PROČ</Text>
-                    <Text style={s.body}>{reasons}</Text>
+                    <PersonalReasons value={reasons} />
                   </>
                 )}
                 <Text style={s.label}>DALŠÍ KROK</Text>
@@ -346,13 +347,29 @@ export function SosProtocol({
         }}
       >
         {!choosing && (started === null || hunger) && (
-          <EmergencyAction accessibilityLabel={hunger ? "POKRAČOVAT S JÍDLEM" : "SPUSTIT PAUZU"}
-            onPress={hunger ? () => finish("Pokračovat s jídlem") : begin}>
-            <Text style={[s.buttonText, { fontSize: 13, color: "#FFFFFF", textAlign: "center" }]}>
+          <EmergencyAction
+            accessibilityLabel={
+              hunger ? "POKRAČOVAT S JÍDLEM" : "SPUSTIT PAUZU"
+            }
+            onPress={hunger ? () => finish("Pokračovat s jídlem") : begin}
+          >
+            <Text
+              style={[
+                s.buttonText,
+                { fontSize: 13, color: "#FFFFFF", textAlign: "center" },
+              ]}
+            >
               {hunger ? "POKRAČOVAT S JÍDLEM" : "SPUSTIT PAUZU"}
             </Text>
             {!hunger && (
-              <Text style={{ fontSize: 10, color: "#FFFFFF", textAlign: "center", marginTop: 3 }}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  color: "#FFFFFF",
+                  textAlign: "center",
+                  marginTop: 3,
+                }}
+              >
                 {food ? "2 MINUTY PRO TVOJI VOLBU" : "5 MINUT PRO TVOJI VOLBU"}
               </Text>
             )}

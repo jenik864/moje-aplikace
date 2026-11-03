@@ -1,20 +1,21 @@
-import { palette as neutralPalette } from "../design";
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
-import Svg, {
-  Path,
-  Line,
-  Circle,
-  Rect,
-  Defs,
-  LinearGradient,
-  Stop,
-  Text as SvgText,
-} from "react-native-svg";
 import type { Program } from "../model";
-import { seriesData, durationLabel, trendDays } from "./analytics";
-import { tint } from "./theme";
-import { palette } from "./visuals";
+import { seriesData, durationLabel, activityBuckets } from "./analytics";
+import { statusColors } from "../statusColors";
+
+const shortDuration = (ms: number) =>
+  ms >= 86400000
+    ? `${Number((ms / 86400000).toFixed(1))} d`
+    : ms >= 3600000
+      ? `${Number((ms / 3600000).toFixed(1))} h`
+      : `${Math.floor(ms / 60000)} m`;
+const date = (at: number) =>
+  new Date(at).toLocaleDateString("cs-CZ", {
+    day: "numeric",
+    month: "numeric",
+  });
+
 export function SeriesChart({
   p,
   now,
@@ -24,125 +25,102 @@ export function SeriesChart({
   now: number;
   compact?: boolean;
 }) {
-  const accent = neutralPalette.Quit;
-  const data = seriesData(p, now).slice(-8);
-  const [selected, setSelected] = React.useState<string | null>("current");
+  const data = seriesData(p, now).slice(compact ? -5 : -8);
+  const [selected, setSelected] = React.useState("current");
+  const pick = data.find((d) => d.id === selected) ?? data[data.length - 1];
   const maximum = Math.max(60000, ...data.map((d) => d.duration));
-  const points = data.map((item, i) => ({
-    x:
-      data.length === 1
-        ? 150
-        : (compact ? 12 : 62) + (i * (compact ? 276 : 222)) / (data.length - 1),
-    y: 140 - (item.duration / maximum) * 105,
-  }));
-  const path = points
-    .map((pt, i) => `${i ? "L" : "M"} ${pt.x} ${pt.y}`)
-    .join(" ");
-  const pick = data.find((d) => d.id === selected);
-  const gradient = React.useId().replace(/[^a-zA-Z0-9]/g, "");
+  const height = compact ? 100 : 150;
   return (
-    <View>
-      <Svg
-        width="100%"
-        height={compact ? 165 : 210}
-        viewBox="0 0 300 190"
-        preserveAspectRatio="none"
-        accessibilityLabel="Délky posledních sérií"
-      >
-        <Defs>
-          <LinearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={accent} stopOpacity={0.18} />
-            <Stop offset="1" stopColor={accent} stopOpacity="0" />
-          </LinearGradient>
-        </Defs>
-        {[35, 87, 140].map((y, i) => (
-          <React.Fragment key={y}>
-            <Line
-              x1={compact ? 12 : 62}
-              x2="288"
-              y1={y}
-              y2={y}
-              stroke="#ffffff12"
-              strokeDasharray="3 5"
-            />
-            {!compact && (
-              <SvgText x="4" y={y + 3} fontSize="10" fill="#b8b8b8">
-                {axisDuration(maximum * (1 - i / 2))}
-              </SvgText>
-            )}
-          </React.Fragment>
-        ))}
-        {data.length > 1 && (
-          <>
-            <Path
-              d={`${path} L ${points[points.length - 1].x} 145 L ${points[0].x} 145 Z`}
-              fill={`url(#${gradient})`}
-            />
-            {points.length > 2 && (
-              <Path
-                d={points
-                  .slice(0, -1)
-                  .map((pt, i) => `${i ? "L" : "M"} ${pt.x} ${pt.y}`)
-                  .join(" ")}
-                fill="none"
-                stroke={accent}
-                strokeWidth="2"
-              />
-            )}
-            <Path
-              d={`M ${points[points.length - 2].x} ${points[points.length - 2].y} L ${points[points.length - 1].x} ${points[points.length - 1].y}`}
-              fill="none"
-              stroke={accent}
-              strokeWidth="2"
-              strokeDasharray="4 5"
-            />
-          </>
+    <View style={{ gap: 14 }}>
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        {!compact && (
+          <View style={{ height, justifyContent: "space-between", width: 35 }}>
+            {[maximum, maximum / 2, 0].map((v, i) => (
+              <Text key={i} style={s.axis}>
+                {shortDuration(v)}
+              </Text>
+            ))}
+          </View>
         )}
-        {points.map((point, i) => (
-          <React.Fragment key={data[i].id}>
-            <Circle
-              cx={point.x}
-              cy={point.y}
-              r={data[i].current ? 5 : 3}
-              fill={data[i].current ? "#0a0a0a" : accent}
-              stroke={accent}
-              strokeWidth={data[i].current ? 2 : 0}
-              onPress={() => setSelected(data[i].id)}
-            />
-            <SvgText
-              x={point.x}
-              y="169"
-              textAnchor="middle"
-              fontSize="10"
-              fill="#a6a6a6"
-            >
-              {data[i].current
-                ? "Teď"
-                : `#${p.history.length - data.length + 2 + i}`}
-            </SvgText>
-          </React.Fragment>
-        ))}
-      </Svg>
-      {!compact && (
-        <>
-          <View style={s.selectors}>
+        <View style={{ flex: 1 }}>
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              { height, justifyContent: "space-between" },
+            ]}
+          >
+            {[0, 1, 2].map((n) => (
+              <View key={n} style={s.grid} />
+            ))}
+          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              gap: data.length > 5 ? 7 : 14,
+              height: height + 26,
+            }}
+          >
             {data.map((item, i) => (
               <Pressable
                 key={item.id}
-                accessibilityRole="button"
-                accessibilityLabel={`Detail ${item.current ? "aktuální série" : `série ${p.history.length - data.length + 2 + i}`}`}
-                accessibilityState={{ selected: selected === item.id }}
+                disabled={compact}
+                pointerEvents={compact ? "none" : "auto"}
+                accessible={!compact}
+                aria-hidden={compact || undefined}
+                accessibilityRole={compact ? undefined : "button"}
+                accessibilityState={{ selected: item.id === selected }}
+                accessibilityLabel={
+                  compact
+                    ? undefined
+                    : `Detail ${item.current ? "aktuální série" : `série ${p.history.length - data.length + 2 + i}`}`
+                }
+                accessibilityValue={{ text: durationLabel(item.duration) }}
                 onPress={() => setSelected(item.id)}
-                style={[
-                  s.chip,
-                  selected === item.id && {
-                    borderColor: accent,
-                    backgroundColor: tint(accent, 0.1),
-                  },
-                ]}
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                }}
               >
+                <View
+                  style={{
+                    flex: 1,
+                    width: "100%",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                  }}
+                >
+                  <View
+                    style={{
+                      height: Math.max(
+                        item.duration > 0 ? 2 : 0,
+                        (item.duration / maximum) * (height - 8),
+                      ),
+                      width: "72%",
+                      maxWidth: 44,
+                      borderTopLeftRadius: 5,
+                      borderTopRightRadius: 5,
+                      backgroundColor: item.current
+                        ? "#ffffff13"
+                        : item.id === selected
+                          ? "#EEEEEE"
+                          : "#646464",
+                      borderWidth: item.current ? 1.5 : 0,
+                      borderColor: "#DEDEDE",
+                      borderStyle: "dashed",
+                    }}
+                  />
+                </View>
                 <Text
-                  style={[s.muted, selected === item.id && { color: accent }]}
+                  style={[
+                    s.axis,
+                    {
+                      height: 26,
+                      paddingTop: 8,
+                      color: item.current ? "#E5E5E5" : "#858585",
+                    },
+                  ]}
                 >
                   {item.current
                     ? "Teď"
@@ -151,148 +129,199 @@ export function SeriesChart({
               </Pressable>
             ))}
           </View>
-          <Text style={s.muted}>
-            ● Ukončené série · ○ Běžící série (přerušovaně)
-          </Text>
-          <Text style={[s.muted, { color: palette.text, marginTop: 8 }]}>
-            {pick
-              ? `${pick.current ? "Aktuální série" : "Ukončená série"} · ${durationLabel(pick.duration)}`
-              : "Vyber sérii pro přesnou délku."}
+        </View>
+      </View>
+      {!compact && (
+        <>
+          <View style={s.readout}>
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text style={s.eyebrow}>
+                {pick.current ? "AKTUÁLNÍ SÉRIE" : "UKONČENÁ SÉRIE"}
+              </Text>
+              <Text style={s.value}>{durationLabel(pick.duration)}</Text>
+            </View>
+            <View style={{ alignItems: "flex-end", gap: 4 }}>
+              <Text style={s.muted}>
+                {date(pick.start)} → {pick.current ? "teď" : date(pick.end)}
+              </Text>
+              {pick.current && (
+                <Text
+                  style={{
+                    color: statusColors.success,
+                    fontSize: 10,
+                    letterSpacing: 1,
+                  }}
+                >
+                  ● BĚŽÍ
+                </Text>
+              )}
+            </View>
+          </View>
+          <Text style={s.note}>
+            Každý sloupec je jedna série. Obrys označuje tu, která právě běží.
+            Klepnutím zobrazíš délku a datum.
           </Text>
         </>
       )}
     </View>
   );
 }
-export function ActivityChart({ p, now }: { p: Program; now: number }) {
-  const accent = neutralPalette.Quit;
+
+export function ActivityChart({
+  p,
+  now,
+  days = 14,
+}: {
+  p: Program;
+  now: number;
+  days?: number;
+}) {
+  const data = activityBuckets(p, now, days);
   const [selected, setSelected] = React.useState<number | null>(null);
-  const data = trendDays(p, now);
-  const peak = Math.max(0, ...data.map((d) => d.resets.length + d.sos.length));
-  const max = Math.max(2, Math.ceil(peak / 2) * 2);
-  const selectedDay = selected === null ? null : data[selected];
+  React.useEffect(() => setSelected(null), [days]);
+  const max = Math.max(1, ...data.map((d) => d.resets + d.sos));
+  const pick = selected === null ? null : data[selected];
+  const total = data.reduce((sum, d) => sum + d.resets + d.sos, 0);
   return (
-    <View>
-      <Svg
-        width="100%"
-        height={150}
-        viewBox="0 0 300 150"
-        accessibilityLabel="Počty resetů a SOS za posledních 14 dní"
-      >
-        <SvgText x="4" y="18" fontSize="10" fill="#b8b8b8">
-          Počet událostí
-        </SvgText>
-        {[35, 72, 110].map((y, i) => (
-          <React.Fragment key={y}>
-            <Line
-              x1="30"
-              x2="288"
-              y1={y}
-              y2={y}
-              stroke="#ffffff12"
-              strokeDasharray="3 5"
-            />
-            <SvgText x="8" y={y + 3} fontSize="10" fill="#b8b8b8">
-              {Math.round(max * (1 - i / 2))}
-            </SvgText>
-          </React.Fragment>
-        ))}
-        {data.map((day, i) => {
-          const resets = (day.resets.length * 75) / max;
-          const sos = (day.sos.length * 75) / max;
-          return (
-            <React.Fragment key={i}>
-              <Rect
-                x={34 + i * 18}
-                y={110 - resets}
-                width="11"
-                height={resets}
-                rx="2"
-                fill={palette.red}
-              />
-              <Rect
-                x={34 + i * 18}
-                y={110 - resets - sos}
-                width="11"
-                height={sos}
-                rx="2"
-                fill={accent}
-              />
-              {[0, 6, 13].includes(i) && (
-                <SvgText
-                  x={39 + i * 18}
-                  y="134"
-                  textAnchor="middle"
-                  fontSize="10"
-                  fill="#a6a6a6"
+    <View style={{ gap: 14 }}>
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <View
+          style={{ width: 18, height: 120, justifyContent: "space-between" }}
+        >
+          <Text style={s.axis}>{max}</Text>
+          <Text style={s.axis}>0</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              { height: 120, justifyContent: "space-between" },
+            ]}
+          >
+            {[0, 1, 2].map((n) => (
+              <View key={n} style={s.grid} />
+            ))}
+          </View>
+          <View
+            style={{
+              height: 146,
+              flexDirection: "row",
+              gap: data.length > 7 ? 4 : 14,
+            }}
+          >
+            {data.map((day, i) => (
+              <Pressable
+                key={day.from}
+                accessibilityRole="button"
+                accessibilityLabel={`Události ${date(day.from)}${day.to !== day.from ? ` až ${date(day.to)}` : ""}`}
+                accessibilityValue={{
+                  text: `${day.resets} resetů, ${day.sos} návratů SOS`,
+                }}
+                accessibilityState={{ selected: selected === i }}
+                onPress={() => setSelected(i)}
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    width: "100%",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                  }}
                 >
-                  {`${day.date.getDate()}. ${day.date.getMonth() + 1}.`}
-                </SvgText>
-              )}
-            </React.Fragment>
-          );
-        })}
-      </Svg>
-      <View style={s.selectors}>
-        <Text style={[s.muted, { color: palette.red }]}>● Reset</Text>
-        <Text style={[s.muted, { color: accent }]}>● Návrat ze SOS</Text>
+                  <View
+                    style={{
+                      width: "72%",
+                      maxWidth: 34,
+                      opacity: selected === null || selected === i ? 1 : 0.4,
+                      borderTopLeftRadius: 3,
+                      borderTopRightRadius: 3,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <View
+                      style={{
+                        height: (day.resets / max) * 112,
+                        backgroundColor: statusColors.failure,
+                      }}
+                    />
+                    <View
+                      style={{
+                        height: (day.sos / max) * 112,
+                        backgroundColor: statusColors.success,
+                      }}
+                    />
+                  </View>
+                </View>
+                <Text
+                  numberOfLines={1}
+                  style={[s.axis, { height: 26, paddingTop: 8, fontSize: 9 }]}
+                >
+                  {data.length <= 7 ||
+                  i === 0 ||
+                  i === data.length - 1 ||
+                  i === Math.floor(data.length / 2)
+                    ? date(day.from)
+                    : ""}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
       </View>
-      <View style={s.selectors}>
-        {data.map((day, i) =>
-          day.resets.length + day.sos.length > 0 ? (
-            <Pressable
-              key={i}
-              accessibilityRole="button"
-              accessibilityLabel={`Události ${day.date.toLocaleDateString("cs-CZ")}`}
-              onPress={() => setSelected(i)}
-              style={[s.chip, selected === i && { borderColor: accent }]}
-            >
-              <Text style={s.muted}>
-                {day.date.getDate()}. {day.date.getMonth() + 1}.
-              </Text>
-            </Pressable>
-          ) : null,
-        )}
-      </View>
-      {selectedDay && (
-        <Text style={s.muted}>
-          {selectedDay.date.toLocaleDateString("cs-CZ")} · Resety:{" "}
-          {selectedDay.resets.length} · Návraty SOS: {selectedDay.sos.length}
+      <View style={{ flexDirection: "row", gap: 18 }}>
+        <Text style={[s.muted, { color: statusColors.failure }]}>● Reset</Text>
+        <Text style={[s.muted, { color: statusColors.success }]}>
+          ● Návrat ze SOS
         </Text>
+      </View>
+      {pick && (
+        <View style={s.readout}>
+          <Text style={s.muted}>
+            {date(pick.from)}
+            {pick.to !== pick.from ? ` – ${date(pick.to)}` : ""}
+          </Text>
+          <Text style={{ color: "#F5F5F5", fontSize: 12 }}>
+            {pick.resets} resetů · {pick.sos} SOS
+          </Text>
+        </View>
       )}
-      <Text style={s.muted}>
-        Výška sloupců odpovídá počtu uložených událostí. Prázdný den znamená
-        žádnou uloženou událost.
+      <Text style={s.note}>
+        {!total ? "V tomto období nejsou uložené žádné události. " : ""}
+        {days > 14
+          ? "Sloupce shrnují vždy 7 dní; poslední může být kratší."
+          : "Jeden sloupec odpovídá jednomu dni."}{" "}
+        Návrat ze SOS není reset.
       </Text>
     </View>
   );
 }
 const s = StyleSheet.create({
-  muted: { color: palette.muted, fontSize: 12, lineHeight: 20 },
-  selectors: {
+  axis: { color: "#777777", fontSize: 10, fontVariant: ["tabular-nums"] },
+  grid: { height: 1, backgroundColor: "#ffffff0d" },
+  muted: { color: "#A5A5A5", fontSize: 12, lineHeight: 19 },
+  note: { color: "#888888", fontSize: 11, lineHeight: 18 },
+  readout: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 12,
-  },
-  chip: {
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingVertical: 16,
+    borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "#ffffff14",
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 0,
+    borderColor: "#ffffff12",
+  },
+  eyebrow: { color: "#989898", fontSize: 9, letterSpacing: 1.4 },
+  value: {
+    color: "#F4F4F4",
+    fontSize: 24,
+    fontWeight: "600",
+    letterSpacing: -0.7,
+    fontVariant: ["tabular-nums"],
   },
 });
-
-function axisDuration(ms: number) {
-  const seconds = Math.max(0, Math.round(ms / 1000));
-  if (seconds < 60) return `${seconds} s`;
-  const minutes = Math.round(seconds / 60);
-  const days = Math.floor(minutes / 1440);
-  if (days) return `${days} ${days === 1 ? "den" : days < 5 ? "dny" : "dní"}`;
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-  return hours
-    ? `${hours} h${remainder ? ` ${remainder} min` : ""}`
-    : `${minutes} min`;
-}

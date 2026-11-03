@@ -89,3 +89,50 @@ export function durationLabel(ms: number) {
   if (minutes >= 60) return `${Math.floor(minutes / 60)} h ${minutes % 60} min`;
   return `${minutes} min`;
 }
+
+function rangeSize(count: number) {
+  if (!Number.isInteger(count) || count < 1 || count > 90)
+    throw new Error("Rozsah musí být 1–90 dní.");
+  return count;
+}
+
+export function periodSummary(p: Program, now: number, count = 28) {
+  const days = trendDays(p, now, rangeSize(count));
+  const start = new Date(days[0].date);
+  start.setHours(0, 0, 0, 0);
+  const inRange = (event: { at: number }) =>
+    event.at >= start.getTime() && event.at <= now;
+  const completed = days.filter((d) => d.active && !d.pending);
+  const successful = completed.filter((d) => d.successful).length;
+  const failed = completed.filter((d) => d.resets.length > 0).length;
+  return {
+    from: start.getTime(),
+    completed: completed.length,
+    successful,
+    failed,
+    unknown: completed.length - successful - failed,
+    rate: completed.length ? successful / completed.length : null,
+    resets: p.history.filter(inRange).length,
+    sos: (p.triggers ?? []).filter(inRange).length,
+  };
+}
+
+export function activityBuckets(p: Program, now: number, count = 14) {
+  const days = trendDays(p, now, rangeSize(count));
+  const stride = count > 14 ? 7 : 1;
+  return Array.from({ length: Math.ceil(days.length / stride) }, (_, index) => {
+    const group = days.slice(index * stride, (index + 1) * stride);
+    return {
+      from: group[0].date.getTime(),
+      to: group[group.length - 1].date.getTime(),
+      resets: group.reduce(
+        (n, day) => n + day.resets.filter((e) => e.at <= now).length,
+        0,
+      ),
+      sos: group.reduce(
+        (n, day) => n + day.sos.filter((e) => e.at <= now).length,
+        0,
+      ),
+    };
+  });
+}

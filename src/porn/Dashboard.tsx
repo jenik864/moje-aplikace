@@ -1,3 +1,5 @@
+import { statusColors, calendarColor } from "../statusColors";
+import { PersonalReasons } from "../PersonalReasons";
 import { EmergencyAction } from "../EmergencyAction";
 import { palette as neutralPalette } from "../design";
 import React, { useState, useEffect, useRef } from "react";
@@ -206,13 +208,7 @@ function DashboardBody({
                   style={[
                     s.miniCell,
                     {
-                      backgroundColor: !day.active
-                        ? "#ffffff08"
-                        : day.resets.length
-                          ? "#47262c"
-                          : day.successful
-                            ? accent
-                            : tint(accent, 0.14),
+                      backgroundColor: calendarColor(day).fill,
                       borderColor: day.pending ? accent : "transparent",
                     },
                   ]}
@@ -257,12 +253,7 @@ function DashboardBody({
           <Text style={s.primeLabel}>MOJE PROČ</Text>
           <Text style={s.primeLabel}>›</Text>
         </View>
-        <Text numberOfLines={3} style={s.manifestText}>
-          {p.reasons}
-        </Text>
-        <Text style={s.manifestFoot}>
-          Tvůj podepsaný závazek. Vždy po ruce.
-        </Text>
+        <PersonalReasons value={p.reasons} compact />
       </Pressable>
       <ResetHold onReset={() => update(resetProgram(p))} />
       <Text style={s.foot}>
