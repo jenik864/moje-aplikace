@@ -4,7 +4,13 @@ import ts from "typescript";
 import { readFileSync, readdirSync } from "node:fs";
 test("Feature screens never render literal text or explicit spaces directly inside native layouts", () => {
   const errors = [];
-  for (const dir of ["src/build", "src/mind", "src/business", "src/profile"])
+  for (const dir of [
+    "src/build",
+    "src/mind",
+    "src/business",
+    "src/profile",
+    "src/scroll",
+  ])
     for (const name of readdirSync(dir).filter((v) => v.endsWith(".tsx"))) {
       const source = ts.createSourceFile(
         name,

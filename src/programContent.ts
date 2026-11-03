@@ -32,12 +32,12 @@ export const programContent: Record<
   scroll: {
     headline: "Tvůj den není\nnekonečný feed.",
     intro:
-      "Dej scrollování hranici. Vyber aplikace, stanov rozpočet a rozhodni, čemu věnuješ získaný čas.",
-    focus: "DENNÍ ČASOVÝ ROZPOČET",
+      "Připrav si jiný krok pro chvíle nudy nebo stresu. Odlož telefon a vyber, čemu chceš věnovat pozornost.",
+    focus: "TVŮJ PLÁN PRO POZORNOST",
     detail:
-      "Skutečný čas v sociálních aplikacích, sedmidenní přehled a rychlá pauza od feedu.",
+      "Časované odložení telefonu, vlastní plán a reflexe fungují i bez systémového měření. Připojený čas má oddělený přehled.",
     steps: [
-      "Prohlédni si sledované aplikace",
+      "Vyber, čemu dáš svůj čas",
       "Nastav denní limit",
       "Podepiš plán pro svůj čas",
     ],

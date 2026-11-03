@@ -35,7 +35,9 @@ export function usageSummary(p: Program, now: number) {
     Number.isFinite(d.measuredAt) &&
     d.measuredAt <= now + 60000;
   const days = keys
-    .map((key) => p.usageDays?.[key])
+    .map((key) =>
+      p.usageDays?.[key]?.key === key ? p.usageDays[key] : undefined,
+    )
     .filter((d) => {
       if (!valid(d)) return false;
       const end = new Date(`${d!.key}T00:00:00`);
@@ -52,5 +54,11 @@ export function usageSummary(p: Program, now: number) {
           0,
         );
   const current = p.usageDays?.[today];
-  return { days, keys, average, rank, today: valid(current) ? current! : null };
+  return {
+    days,
+    keys,
+    average,
+    rank,
+    today: current?.key === today && valid(current) ? current : null,
+  };
 }

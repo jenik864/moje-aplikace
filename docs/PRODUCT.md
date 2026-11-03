@@ -71,3 +71,9 @@ Všech pět sekcí sdílí téměř černý základ, bílý text a bílé ovlád
 ## Materiálové ciferníky a smysluplné stavy
 
 Dvanáct lokálních generovaných ciferníků má materiál podle ranku; čísla jsou živá, renderovaná nad obrazem. Písmo ciferníku je lokálně přibalené Space Grotesk. Stavová zelená označuje dokončené úspěšné dny, červená zaznamenané resety; aktuální a nezaznamenané dny nejsou zelené. Statistiky Quit porovnávají série jako jednotlivé sloupce a rozlišují události SOS od resetů. Přepnutí rozsahu ani náhled ciferníku nic neuděluje a nemění rank. Důvody mají nové členění a původní podpis zůstává zachovaný.
+
+## Doomscrolling: bloky, plán a reflexe
+
+Aktuální rozhraní Quit používá rozbalovací výběr programu s názvem právě otevřeného programu. Doomscrolling nově funguje i bez měření: má trvalý odpočet 5/10/20 minut, ruční potvrzení výsledku, plán spouštěče a alternativy, denní reflexi a historii. Čas se připisuje jen výslovně potvrzeným blokům po vypršení odpočtu a patří dni zahájení; zrušené bloky body ani potvrzené minuty nepřidávají. Odpočet neznamená blokaci jiných aplikací. Stav je součástí existujícího úložiště Quit a přenosné zálohy, s validací a ochranou neuložených formulářů.
+
+Systémové statistiky používají pouze skutečné dostupné údaje. Osobní cíl lze upravit, rank ale stále závisí na sedmi platných dokončených dnech a pevných hranicích. Vlastní bloky a reflexe se zobrazují i v Me, bez vlivu na XP nebo celkový rank. Současné omezení iOS a Expo Go zůstává v přehledu možností měření uvedené. Běžné ovládání je neutrální, SOS zůstává červené; nová ilustrace je přibalená a nepotřebuje síť.

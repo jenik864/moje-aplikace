@@ -1,5 +1,6 @@
 import { foodPoints, type FoodPillar } from "./food/model.ts";
 import { usageSummary, type UsageDay } from "./scroll/scoring.ts";
+import type { AttentionData } from "./scroll/attention.ts";
 export const ranks = [
   "Copper",
   "Bronze",
@@ -33,6 +34,7 @@ export type Program = {
   screenTimeVersion?: 1;
   legacyScrollPrime?: number;
   usageDays?: Record<string, UsageDay>;
+  attention?: AttentionData;
   signedAt?: number;
   dailyLogs?: Record<
     string,
@@ -49,6 +51,21 @@ export type Program = {
   history: { at: number; duration: number }[];
 };
 export type Data = Partial<Record<ProgramId, Program>>;
+export type ProgramChange = Program | ((current: Program) => Program);
+export function applyProgramChange(
+  data: Data,
+  id: ProgramId,
+  value: ProgramChange,
+): Data {
+  const current = data[id];
+  const next =
+    typeof value === "function"
+      ? current
+        ? value(current)
+        : undefined
+      : value;
+  return !next || next === current ? data : { ...data, [id]: next };
+}
 export function dayKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }

@@ -44,7 +44,7 @@ npx expo export --platform web
 
 Pokud prostředí nedovoluje zápis do standardní npm cache, použijte `npm_config_cache=/tmp/quitter-npm-cache`. V tomto cloudovém sandboxu spouštějte Expo s `__UNSAFE_EXPO_HOME_DIRECTORY=/tmp/quitter-expo EXPO_OFFLINE=1`, aby jeho lokální nastavení používalo zapisovatelnou cestu. Offline režim nepoužívá Expo API; závislosti jsou stále ověřované npm.
 
-## První verze
+## Původní prototyp (historie)
 
 Quit má tři odlišné programy s onboardingem, podpisem, důvody a lokálním uložením. Porn Reboot má živý časovač a reset podržením 3 s. Doomscrolling a Junk Food mají ruční průběžný zápis dneška a potvrzení dokončeného předchozího dne. Dnešní koncept nezvyšuje rank. Doomscrolling ukazuje ručně zapsanou spotřebu vůči limitu. Vynechaný check-in přerušuje sérii. Nejde o automatické sledování ostatních aplikací.
 
@@ -128,3 +128,21 @@ Zelená v kalendáři znamená dokončený úspěšný den; červená zaznamenan
 Statistiky Porn Reboot mají rozsahy 7/14/28 dní, úspěšnost dokončených dní, samostatné počty resetů a návratů SOS a rozpis vybraných spouštěčů. Srovnání posledních osmi sérií používá sloupce; běžící série má obrys a nezapočítává se do průměru ukončených sérií. Události za 28 dní jsou ve čtyřech sedmidenních skupinách, kratší rozsahy ukazují jednotlivé dny. Zelený návrat ze SOS není automaticky splněný den. Budoucí události se do těchto souhrnů nezahrnují.
 
 Osobní důvody se člení do samostatných bodů bez přepisování původního textu. Úprava mění pouze `reasons`; začátek série, podpis, historie i PRIME zůstávají. Podpis v detailu Porn Reboot lze rozbalit. Povzbuzující věty v SOS se zobrazují celé a místo postupného psaní jemně prolínají; nastavení omezeného pohybu zůstává respektované.
+
+## Doomscrolling: pozornost v praxi
+
+Quit zobrazuje pouze právě vybraný program. Tlačítko s jeho názvem otevírá menu pro Porn Reboot, Doomscrolling a Junk Food; přechody z Me i horizontální přejetí mezi programy zůstávají dostupné. Menu upozorní i na rozpracovaný blok Doomscrollingu.
+
+Doomscrolling má nový otevřený přehled s lokálně přibalenou grafickou ilustrací telefonu. Je použitelný i bez systémového měření:
+
+- Vlastní blok 5/10/20 minut pro procházku, četbu, protažení, klid nebo vlastní činnost. Aktivní blok se ukládá do `Program.attention` ve stávajícím klíči Quit. Deadline je odvozený ze skutečného času, přežije návrat z pozadí i znovuotevření aplikace. Jde o časovač; neblokuje aplikace, neověřuje odložení telefonu a neposílá upozornění.
+- Vypršení odpočtu samo nic neudělí. Uživatel výsledek výslovně potvrdí, nebo blok ukončí bez potvrzení. Předčasné ukončení se do potvrzených minut nepočítá. Pozdní potvrzení připíše jen původně vybranou délku, ne celý čas do návratu. Blok přes půlnoc patří dni svého zahájení.
+- Plán „když… místo feedu…“ a upravitelný osobní denní cíl. Změna cíle nezvyšuje rank ani nemění původní podpis.
+- Jedna vlastní denní reflexe pozornosti 1–5 a volitelná poznámka. Oprava přepisuje pouze danou reflexi. Editory chrání neuložené změny, včetně návratu z potvrzovacího dialogu.
+- Týden potvrzených bloků a jejich historie. Ukládá se nejvýše 1 000 bloků a 732 denních reflexí. Dokončené bloky a reflexe jsou viditelné také ve společné historii Me, bez nových bodů.
+
+Skutečně měřený čas zůstává oddělený od vlastních potvrzení. Podporovaný Android modul může načítat čas aplikací; v Expo Go ani na iPhonu automatické měření v této verzi dostupné není. Bez dat se nenabízí prázdný velký graf, ale vysvětlení a přímý vstup do dostupných funkcí. Uložené údaje lze prohlédnout i bez aktuálního připojení, s časem posledního načtení. Statistiky mají rozsahy 7/14/28 dokončených dnů a rozpis podle aplikací; chybějící dny nejsou nula. Barvy porovnávají měření se současným osobním cílem.
+
+Pravidla ranku zůstávají stejná: vyžaduje všech sedm posledních dokončených dnů se systémovým měřením a pevné časové hranice. Bloky, reflexe, SOS ani staré ruční zápisy nevytvářejí naměřený čas. Záznam musí odpovídat klíči svého dne; duplikovaný den nelze vydávat za úplné sedmidenní měření.
+
+Nová část dat je zpětně kompatibilní, přenáší se ve stejné JSON záloze a validuje se před obnovením i při načítání aplikace. Neplatný nový stav se nesmaže automaticky. Systémové čtení aktualizuje nejnovější stav funkční změnou, takže nepřepíše souběžně uložený plán, reflexi ani aktivní blok. Pozdní odpověď po odpojení obrazovky nic nezapíše.

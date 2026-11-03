@@ -1,3 +1,6 @@
+import { applyProgramChange } from "./src/model";
+import { isAttention } from "./src/scroll/attention";
+import { ProgramPicker } from "./src/ProgramPicker";
 import { MeScreen } from "./src/profile/MeScreen";
 import { profileSummary } from "./src/profile/model";
 import { useProfile } from "./src/profile/useProfile";
@@ -589,7 +592,9 @@ function AppSession({
                 parsed[id] &&
                 (typeof parsed[id].startedAt !== "number" ||
                   !parsed[id].days ||
-                  !Array.isArray(parsed[id].history)),
+                  !Array.isArray(parsed[id].history) ||
+                  (parsed[id].attention !== undefined &&
+                    !isAttention(parsed[id].attention))),
             )
           )
             throw new Error("Invalid data");
@@ -635,8 +640,14 @@ function AppSession({
       return changed ? next : prev;
     });
   }, [now, ready]);
-  const update = (id: ProgramId, p: Program) => {
-    if (!operationLock.current) setData((prev) => ({ ...prev, [id]: p }));
+  const update = (
+    id: ProgramId,
+    value: Program | ((current: Program) => Program),
+  ) => {
+    if (!operationLock.current)
+      setData((prev) =>
+        operationLock.current ? prev : applyProgramChange(prev, id, value),
+      );
   };
   const quitAccent = palette.Quit;
   const Quit = () => (
@@ -660,39 +671,17 @@ function AppSession({
           <Text style={s.headerNote}>TVŮJ PROSTOR</Text>
         </View>
       </View>
-      <View style={s.tabs}>
-        {ids.map((id, i) => (
-          <Pressable
-            key={id}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeProgram === id }}
-            aria-selected={activeProgram === id}
-            style={[
-              s.programTab,
-              {
-                borderBottomColor:
-                  activeProgram === id ? quitAccent : "transparent",
-                backgroundColor: "transparent",
-              },
-            ]}
-            onPress={() => {
-              setActiveProgram(id);
-              pager.current?.scrollTo({ x: i * width, animated: true });
-            }}
-          >
-            <Text
-              style={[
-                s.smallTab,
-                {
-                  color: activeProgram === id ? quitAccent : "#888",
-                },
-              ]}
-            >
-              {definitions[id].title}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <ProgramPicker
+        selected={activeProgram}
+        data={data}
+        onChange={(id) => {
+          setActiveProgram(id);
+          pager.current?.scrollTo({
+            x: ids.indexOf(id) * width,
+            animated: true,
+          });
+        }}
+      />
       <ScrollView
         contentInsetAdjustmentBehavior="never"
         automaticallyAdjustContentInsets={false}
@@ -753,6 +742,8 @@ function AppSession({
                   p={p}
                   now={now}
                   update={(p) => update(id, p)}
+                  saveError={saveError}
+                  retrySave={() => setData((prev) => ({ ...prev }))}
                   sos={(pillarId?: string) => {
                     setSosPillar(
                       typeof pillarId === "string" ? pillarId : undefined,
@@ -1056,22 +1047,21 @@ function AppSession({
               reasons={data[sos]?.reasons ?? ""}
               close={() => setSos(null)}
               complete={(trigger, elapsed, pauseStarted, outcome, pillarId) => {
-                const p = data[sos];
-                if (p)
-                  update(sos, {
-                    ...p,
-                    triggers: [
-                      ...(p.triggers ?? []),
-                      {
-                        at: Date.now(),
-                        trigger: trigger || "Neuvedeno",
-                        durationSeconds: elapsed,
-                        pauseStarted,
-                        outcome,
-                        pillarId,
-                      },
-                    ],
-                  });
+                const at = Date.now();
+                update(sos, (p) => ({
+                  ...p,
+                  triggers: [
+                    ...(p.triggers ?? []),
+                    {
+                      at,
+                      trigger: trigger || "Neuvedeno",
+                      durationSeconds: elapsed,
+                      pauseStarted,
+                      outcome,
+                      pillarId,
+                    },
+                  ],
+                }));
                 setSos(null);
               }}
             />

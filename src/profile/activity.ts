@@ -1,3 +1,4 @@
+import { isAttention } from "../scroll/attention.ts";
 import { dayKey, definitions, type Data, type ProgramId } from "../model.ts";
 import {
   badges as buildBadges,
@@ -175,6 +176,33 @@ export function activityEvents(
         program,
       });
     });
+    if (program === "scroll" && isAttention(p.attention)) {
+      for (const session of p.attention.sessions)
+        if (session.outcome === "completed")
+          add({
+            id: `quit:scroll:break:${session.id}`,
+            source: "Quit",
+            kind: "focus",
+            program,
+            day: dayKey(new Date(session.startedAt)),
+            at: session.endedAt,
+            title: "Doomscrolling · odložení telefonu",
+            detail: `${session.durationMinutes} min · vlastní potvrzení`,
+            note: session.activity,
+          });
+      for (const [day, reflection] of Object.entries(p.attention.reflections))
+        add({
+          id: `quit:scroll:reflection:${day}`,
+          source: "Quit",
+          kind: "daily",
+          program,
+          day,
+          at: reflection.at,
+          title: "Doomscrolling · reflexe pozornosti",
+          detail: `Vlastní hodnocení ${reflection.rating}/5`,
+          note: reflection.note,
+        });
+    }
     if (program === "porn")
       p.history.forEach((entry, index) => {
         if (!stamp(entry.at)) return;

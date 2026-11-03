@@ -28,7 +28,7 @@ export function DailyWelcome({
           <Text style={s.title}>Tvoje první kroky.</Text>
           <Text style={s.muted}>
             {id === "scroll"
-              ? "Začínáš na Copper. Rank určí skutečný čas ze systému, až bude měření připojené."
+              ? "Bloky, plán a reflexi můžeš používat hned. Rank začne vycházet ze skutečného času, až bude připojené systémové měření."
               : "Začínáš na Copper. Každý potvrzený den se počítá."}
           </Text>
         </View>
@@ -44,7 +44,9 @@ export function DailyDashboard(props: {
   id: DailyId;
   p: Program;
   now: number;
-  update: (p: Program) => void;
+  update: (p: Program | ((current: Program) => Program)) => void;
+  saveError?: boolean;
+  retrySave?: () => void;
   sos: (pillarId?: string) => void;
 }) {
   return props.id === "scroll" ? (

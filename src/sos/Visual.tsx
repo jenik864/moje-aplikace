@@ -1,3 +1,4 @@
+import { AttentionArtwork } from "../scroll/Artwork";
 import React from "react";
 import { AccessibilityInfo, Animated, Text, View } from "react-native";
 import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
@@ -95,75 +96,29 @@ export function SosVisual({
           transform: [{ scale: pulse }],
         }}
       >
-        <View
+        <AttentionArtwork size={190} quiet />
+        <Text
           style={{
-            width: 230,
-            height: 210,
-            alignItems: "center",
-            justifyContent: "center",
+            color: "#F5F5F5",
+            fontSize: 56,
+            fontWeight: "500",
+            fontVariant: ["tabular-nums"],
+            letterSpacing: -2,
+            marginTop: -25,
           }}
         >
-          <Svg
-            width={230}
-            height={210}
-            viewBox="0 0 230 210"
-            accessible={false}
-            style={{ position: "absolute" }}
-          >
-            <Rect
-              x={58}
-              y={7}
-              width={114}
-              height={194}
-              rx={27}
-              fill="#181818"
-              stroke={accent}
-              strokeWidth={1.5}
-            />
-            <Line
-              x1={99}
-              y1={20}
-              x2={131}
-              y2={20}
-              stroke={accent}
-              strokeWidth={3}
-            />
-            {Array.from({ length: 12 }, (_, i) => (
-              <Rect
-                key={i}
-                x={18 + i * 17}
-                y={102 - Math.sin(i * 0.8) * 20}
-                width={5}
-                height={25 + Math.sin(i * 0.8) * 20}
-                rx={2.5}
-                fill={i / 12 < fraction ? accent : "#3e3e3e"}
-              />
-            ))}
-            <Circle cx={115} cy={185} r={3} fill={accent} />
-          </Svg>
-          <Text
-            style={{
-              color: accent,
-              fontSize: 56,
-              fontWeight: "500",
-              fontVariant: ["tabular-nums"],
-              backgroundColor: "#181818",
-              paddingHorizontal: 10,
-            }}
-          >
-            {time}
-          </Text>
-          <Text
-            style={{
-              color: "#aeaeae",
-              fontSize: 9,
-              letterSpacing: 2,
-              marginTop: 8,
-            }}
-          >
-            MIMO FEED
-          </Text>
-        </View>
+          {time}
+        </Text>
+        <Text
+          style={{
+            color: "#999999",
+            fontSize: 9,
+            letterSpacing: 2,
+            marginTop: 6,
+          }}
+        >
+          MIMO FEED
+        </Text>
       </Animated.View>
     );
   const drink = /nápoj/i.test(label),

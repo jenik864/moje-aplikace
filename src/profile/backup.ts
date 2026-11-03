@@ -3,6 +3,7 @@ import { parseBuild } from "../build/model.ts";
 import { parseMind, validDay } from "../mind/model.ts";
 import { parseBusiness } from "../business/model.ts";
 import { parseProfile } from "./model.ts";
+import { isAttention } from "../scroll/attention.ts";
 
 export const BACKUP_KEYS = [
   "quitter.v1",
@@ -105,6 +106,7 @@ export function parseQuitBackup(raw: string): Data {
       !optional(p.rankVersion, (v) => v === 2) ||
       !optional(p.screenTimeVersion, (v) => v === 1) ||
       !optional(p.legacyScrollPrime, rank) ||
+      !optional(p.attention, isAttention) ||
       !optional(p.dailyLogs, (v) =>
         dayRecords(
           v,
