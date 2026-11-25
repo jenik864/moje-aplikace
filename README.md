@@ -22,6 +22,15 @@ Ve 2 v 2 hrají dva pevné týmy:
 
 V 1 v 1 si každý vybere jednu z těchto čtyř postav. Postavy mají tělo s dresem a číslem, trenky, ruce a kopačky, běhají, při radosti mávají a po inkasovaném gólu se mračí.
 
+## Filmové scény a stadion
+
+- **Úvod zápasu**: kamera sjede z velké obrazovky na hřiště, hráči vyběhnou a vyjedou plakáty obou týmů s VS.
+- **Gól**: kamera se přiblíží k brance, síť se zavlní, publikum vyskakuje, reklamní tabule i velká obrazovka blikají GÓL a ukazují střelce.
+- **Záznam gólu**: zpomalené opakování posledních vteřin se zoomem na míč.
+- **Konec zápasu**: vítězové doběhnou doprostřed, nad nimi vyjede zlatý pohár, poražení odejdou ke své brance.
+
+Scény jdou přeskočit tlačítkem *Přeskočit* (nebo klávesou Enter). Online je ovládá hostitel a kamarádi je vidí zároveň s ním.
+
 ## Lobby (výběr hráčů)
 
 - **Hrát** (na tomto zařízení): vyber 1 v 1 nebo 2 v 2, délku zápasu a obtížnost počítače. Klepnutím na postavu ji dáš druhému hráči na stejném zařízení, dalším klepnutím ji vrátíš počítači. V 1 v 1 se šipkami mění postava.

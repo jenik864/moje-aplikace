@@ -192,6 +192,18 @@ const Sound = {
     [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone('square', f, f, 0.18, 0.045, 0.1 + i * 0.11));
   },
 
+  fanfare() {
+    if (!this.live()) return;
+    [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone('triangle', f, f, i === 4 ? 0.7 : 0.16, 0.08, i * 0.13));
+    [523.25, 659.25, 783.99].forEach((f) => this.tone('sine', f, f, 0.9, 0.05, 0.65));
+  },
+
+  whoosh() {
+    if (!this.live()) return;
+    this.hiss(0.35, 0.08, 'bandpass', 900, 0.7);
+    this.tone('sine', 220, 660, 0.3, 0.04);
+  },
+
   crowdLevel(v) {
     if (!this.ctx || Math.abs(v - this.crowdTarget) < 0.005) return;
     this.crowdTarget = v;

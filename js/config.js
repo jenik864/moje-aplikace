@@ -12,6 +12,7 @@ const GOAL_H = 180;              // výška horní hrany břevna nad trávníkem
 const BAR_T = 12;                // tloušťka břevna
 const BAR_Y = GROUND_Y - GOAL_H; // horní hrana břevna
 const STEP = 1 / 120;            // pevný krok fyziky v sekundách
+const KICKOFF_Y = 286;           // odkud se při výkopu pustí míč (pod velkou obrazovkou)
 
 const PHYS = {
   gravity: 2300,       // gravitace hráčů (px/s²)

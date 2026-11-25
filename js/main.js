@@ -19,8 +19,10 @@ const store = {
   },
 };
 
-const STATE_CODE = { countdown: 'c', kickoff: 'k', play: 'p', goal: 'g', over: 'o', paused: 'z' };
-const CODE_STATE = { c: 'countdown', k: 'kickoff', p: 'play', g: 'goal', o: 'over', z: 'paused' };
+const STATE_CODE = { intro: 'i', countdown: 'c', kickoff: 'k', play: 'p', goal: 'g', replay: 'r', over: 'o', paused: 'z' };
+const CODE_STATE = { i: 'intro', c: 'countdown', k: 'kickoff', p: 'play', g: 'goal', r: 'replay', o: 'over', z: 'paused' };
+const REPLAY_SPEED = 0.7;  // zpomalení záznamu gólu
+const RESULT_AT = 5.4;     // kdy po konci zápasu ukázat výsledek (s)
 const INTERP_MS = 100;
 
 const Game = {
@@ -43,6 +45,19 @@ const Game = {
   resultShown: false,
   demoGoalAt: 0,
   scorePop: [0, 0],
+  // kamera a filmové scény
+  cam: { x: W / 2, y: H / 2, z: 1, bars: 0 },
+  excite: 0,
+  goalTeam: -1,
+  scorerIdx: -1,
+  rec: [],        // záznam posledních vteřin pro opakování gólu
+  gameT: 0,
+  goalT: 0,
+  replayT: 0,
+  replayFrom: 0,
+  replayTo: 0,
+  replayIdx: 0,
+  trophyShown: false,
   // hostitel: fronta efektů pro kamarády
   evq: [],
   evN: 0,
@@ -67,7 +82,7 @@ const Game = {
   },
 
   inMatch() {
-    return this.screen === 'match' && ['countdown', 'kickoff', 'play', 'goal'].includes(this.state);
+    return this.screen === 'match' && ['intro', 'countdown', 'kickoff', 'play', 'goal', 'replay'].includes(this.state);
   },
 
   /* ---------------- obrazovky ---------------- */
@@ -353,13 +368,19 @@ const Game = {
     this.countShown = 0;
     this.scorePop = [0, 0];
     this.msg = null;
-    this.state = 'countdown';
+    this.state = 'intro';
     this.stateT = 0;
     this.acc = 0;
     this.paused = null;
     this.resultShown = false;
+    this.trophyShown = false;
+    this.goalTeam = -1;
+    this.scorerIdx = -1;
+    this.rec = [];
+    this.gameT = 0;
     this.evq = [];
     this.t0 = performance.now();
+    this.startIntro();
     Effects.clear();
     UI.show(null);
     Touch.build(humans >= 2);
@@ -448,12 +469,28 @@ const Game = {
         if (live) Sound.jump();
         break;
       case 'goal':
+        this.goalTeam = a[0];
+        this.scorerIdx = a[1] === undefined ? -1 : a[1];
         if (m) Effects.confetti(a[0], m.teams[a[0]]);
+        Renderer.netHit(a[0] === 0 ? 1 : 0, m ? m.ball.y : 540, 13);
         if (live) {
           Sound.goal();
           Sound.whistle('short');
           Effects.shake(16);
         }
+        break;
+      case 'net':
+        Renderer.netHit(a[0], a[1], Math.min(9, a[2] / 70));
+        break;
+      case 'trophy':
+        if (m) {
+          Effects.confetti(a[0], m.teams[a[0]]);
+          Effects.confetti(a[0], m.teams[a[0]]);
+        }
+        if (live) Sound.fanfare();
+        break;
+      case 'whoosh':
+        if (live) Sound.whoosh();
         break;
       case 'whistle':
         if (live) Sound.whistle(a[0]);
@@ -490,6 +527,9 @@ const Game = {
       case 'goal':
         this.onGoal(d);
         break;
+      case 'net':
+        this.fx('net', d.side, d.y, d.impact);
+        break;
     }
   },
 
@@ -501,6 +541,7 @@ const Game = {
     }
     this.state = 'goal';
     this.stateT = 0;
+    this.goalT = this.gameT;
     const s = d.scorer;
     let sub = '';
     if (s) {
@@ -509,7 +550,7 @@ const Game = {
     }
     this.showMsg('GÓL!', sub, 2.5, this.match.teams[d.team].color, 150);
     this.scorePop[d.team] = performance.now();
-    this.fx('goal', d.team);
+    this.fx('goal', d.team, d.scorerIdx);
   },
 
   timeUp() {
@@ -527,6 +568,12 @@ const Game = {
     const m = this.match;
     m.locked = true;
     m.celebrate = m.score[0] > m.score[1] ? 0 : 1;
+    // ceremoniál: vítězové doprostřed, poražení ke své brance
+    const win = m.celebrate;
+    const wins = m.players.filter((p) => p.team === win), loss = m.players.filter((p) => p.team !== win);
+    wins.forEach((p, k) => { p.cerX = W / 2 + (k - (wins.length - 1) / 2) * 120; });
+    loss.forEach((p, k) => { p.cerX = p.team === 0 ? 180 + k * 110 : W - 180 - k * 110; });
+    this.trophyShown = false;
     this.state = 'over';
     this.stateT = 0;
     this.resultShown = false;
@@ -541,13 +588,14 @@ const Game = {
     switch (this.state) {
       case 'menu': return m.ball.held ? 'freeze' : m.goalTeam >= 0 ? 'celebrate' : 'play';
       case 'play': return 'play';
-      case 'goal':
-      case 'over': return 'celebrate';
+      case 'goal': return 'celebrate';
+      case 'over': return 'ceremony';
       default: return 'freeze';
     }
   },
 
   physics(dt, scale) {
+    this.gameT += dt * scale;
     this.acc += dt * scale;
     let n = 0;
     while (this.acc >= STEP && n < 30) {
@@ -576,6 +624,17 @@ const Game = {
     const m = this.match;
 
     switch (this.state) {
+      case 'intro':
+        this.updateIntro(dt);
+        if (this.stateT >= INTRO_DUR) this.endIntro();
+        break;
+
+      case 'replay':
+        this.replayT += dt * REPLAY_SPEED;
+        this.applyReplay(this.replayFrom + this.replayT);
+        if (this.replayFrom + this.replayT >= this.replayTo) this.endReplay();
+        break;
+
       case 'menu':
         if (m.ball.held && this.stateT > 0.7) m.release();
         if ((m.goalTeam >= 0 && this.stateT - this.demoGoalAt > 1.8) || m.ball.stalled) {
@@ -631,6 +690,7 @@ const Game = {
         this.physics(dt, 1);
         if (this.state === 'play' && m.ball.stalled) {
           m.kickoff();
+          this.rec = [];
           this.state = 'kickoff';
           this.stateT = 0;
           this.showMsg('NOVÝ VÝKOP', '', 1, '#f3f6ef', 80);
@@ -643,26 +703,22 @@ const Game = {
       case 'goal':
         if (Math.random() < dt * 22) Effects.flash();
         this.physics(dt, this.stateT < 0.9 ? 0.4 : 1);
-        if (this.stateT > 2.7) {
-          if (this.golden || this.timeLeft <= 0) {
-            this.finish();
-          } else {
-            m.kickoff();
-            this.state = 'kickoff';
-            this.stateT = 0;
-          }
-        }
+        if (this.stateT > 2.6) this.startReplay();
         break;
 
       case 'over':
-        if (Math.random() < dt * 10) Effects.flash();
+        if (Math.random() < dt * 14) Effects.flash();
         this.physics(dt, 1);
-        if (!this.resultShown && this.stateT > 1.7) {
-          this.resultShown = true;
-          UI.showResult();
+        if (!this.trophyShown && this.stateT > 1.6) {
+          this.trophyShown = true;
+          this.fx('trophy', m.celebrate);
         }
+        if (!this.resultShown && this.stateT > RESULT_AT) this.showResultNow();
         break;
     }
+    if (this.screen === 'match' && (this.state === 'play' || this.state === 'goal')) this.record();
+    this.updateCam(dt);
+    UI.setSkip(this.canSkip());
 
     if (this.mode === 'host' && this.screen === 'match') {
       if (this.setup.rev !== this._sentRev) {
@@ -673,6 +729,193 @@ const Game = {
     }
   },
 
+  /* ---------------- filmové scény ---------------- */
+
+  startIntro() {
+    const m = this.match;
+    const order = [0, 0];
+    m.players.forEach((p) => {
+      const k = order[p.team]++;
+      p.introX = p.team === 0 ? -70 - k * 120 : W + 70 + k * 120;
+      p.x = p.introX;
+    });
+    m.ball.reset(W / 2, KICKOFF_Y);
+    this.cam.x = JUMBO.x + JUMBO.w / 2;
+    this.cam.y = JUMBO.y + JUMBO.h / 2 + 30;
+    this.cam.z = 1.75;
+    this.cam.bars = 1;
+    this.fx('whoosh');
+  },
+
+  // Hráči vybíhají na hřiště.
+  updateIntro(dt) {
+    const m = this.match;
+    const u = clamp((this.stateT - 0.4) / 1.9, 0, 1);
+    for (const p of m.players) {
+      const nx = lerp(p.introX, p.homeX, easeOutQuad(u));
+      p.vx = dt > 0 ? (nx - p.x) / dt : 0;
+      p.x = nx;
+      p.y = p.standY;
+      p.vy = 0;
+      p.onGround = true;
+      p.runPhase += p.vx * p.dir * dt * 0.05;
+    }
+  },
+
+  endIntro() {
+    const m = this.match;
+    for (const p of m.players) p.place(p.homeX);
+    this.state = 'countdown';
+    this.stateT = 0;
+    this.countShown = 0;
+  },
+
+  // Záznam pro opakování gólu (herní čas, ne skutečný).
+  record() {
+    const m = this.match, b = m.ball;
+    this.rec.push({
+      t: this.gameT,
+      b: [b.x, b.y, b.rot],
+      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy]),
+    });
+    while (this.rec.length && this.rec[0].t < this.gameT - 5) this.rec.shift();
+  },
+
+  startReplay() {
+    const rec = this.rec;
+    if (rec.length < 10) {
+      this.endReplay();
+      return;
+    }
+    this.replayFrom = Math.max(rec[0].t, this.goalT - 2.3);
+    this.replayTo = Math.min(rec[rec.length - 1].t, this.goalT + 0.55);
+    this.replayT = 0;
+    this.replayIdx = 0;
+    this.state = 'replay';
+    this.stateT = 0;
+    this.msg = null;
+    Effects.clear();
+    this.fx('whoosh');
+    this.applyReplay(this.replayFrom);
+  },
+
+  applyReplay(t) {
+    const rec = this.rec, m = this.match;
+    let i = this.replayIdx;
+    while (i < rec.length - 2 && rec[i + 1].t <= t) i++;
+    this.replayIdx = i;
+    const A = rec[i], B = rec[i + 1] || A;
+    const k = B.t > A.t ? clamp((t - A.t) / (B.t - A.t), 0, 1) : 0;
+    m.players.forEach((p, j) => {
+      const a = A.p[j], b = B.p[j];
+      if (!a || !b) return;
+      p.x = lerp(a[0], b[0], k);
+      p.y = lerp(a[1], b[1], k);
+      p.kickT = b[2];
+      p.onGround = !!b[3];
+      p.vx = b[4];
+      p.vy = b[5];
+      p.mood = 0;
+      if (p.onGround) p.runPhase += p.vx * p.dir * 0.016 * 0.05 * REPLAY_SPEED;
+    });
+    m.ball.x = lerp(A.b[0], B.b[0], k);
+    m.ball.y = lerp(A.b[1], B.b[1], k);
+    m.ball.rot = lerp(A.b[2], B.b[2], k);
+    m.ball.vx = (B.b[0] - A.b[0]) / Math.max(0.001, B.t - A.t);
+    m.ball.vy = (B.b[1] - A.b[1]) / Math.max(0.001, B.t - A.t);
+  },
+
+  endReplay() {
+    const m = this.match;
+    this.rec = [];
+    if (this.golden || this.timeLeft <= 0) {
+      this.finish();
+      return;
+    }
+    m.kickoff();
+    this.state = 'kickoff';
+    this.stateT = 0;
+  },
+
+  showResultNow() {
+    this.resultShown = true;
+    UI.showResult();
+  },
+
+  canSkip() {
+    if (this.mode === 'guest' || this.screen !== 'match') return false;
+    return this.state === 'intro' || this.state === 'replay' || (this.state === 'over' && !this.resultShown && this.stateT > 0.8);
+  },
+
+  skip() {
+    if (!this.canSkip()) return;
+    if (this.state === 'intro') this.endIntro();
+    else if (this.state === 'replay') this.endReplay();
+    else if (this.state === 'over') {
+      if (!this.trophyShown) {
+        this.trophyShown = true;
+        this.stateT = 1.6;
+        this.fx('trophy', this.match.celebrate);
+      } else {
+        this.showResultNow();
+      }
+    }
+  },
+
+  // Kamera: při scénách přibližuje, jinak ukazuje celé hřiště.
+  updateCam(dt) {
+    const c = this.cam, m = this.match, st = this.state, t = this.stateT;
+    let tx = W / 2, ty = H / 2, tz = 1, bars = 0, speed = 2.4;
+    if (this.screen === 'match' && m) {
+      if (st === 'intro') {
+        bars = 1;
+        if (t < 1.0) {
+          tx = JUMBO.x + JUMBO.w / 2;
+          ty = JUMBO.y + JUMBO.h / 2 + 30;
+          tz = 1.75;
+        }
+        speed = 2.2;
+      } else if (st === 'goal' && this.goalTeam >= 0 && t < 2.0) {
+        tx = this.goalTeam === 0 ? W - 260 : 260;
+        ty = 470;
+        tz = 1.3;
+        speed = 3;
+      } else if (st === 'replay') {
+        // míč i hráči v záběru; vysoký míč = širší záběr
+        tx = m.ball.x;
+        ty = clamp(m.ball.y + 60, 380, 480);
+        tz = m.ball.y < 290 ? 1.35 : 1.7;
+        bars = 1;
+        speed = 5;
+      } else if (st === 'over' && t > 1.3) {
+        const ps = m.players.filter((p) => p.team === m.celebrate);
+        tx = ps.length ? ps.reduce((a, p) => a + p.x, 0) / ps.length : W / 2;
+        ty = 438;
+        tz = 1.65;
+        bars = 1;
+        speed = 1.6;
+      }
+    }
+    const k = 1 - Math.exp(-dt * speed);
+    c.x += (tx - c.x) * k;
+    c.y += (ty - c.y) * k;
+    c.z += (tz - c.z) * k;
+    c.bars += (bars - c.bars) * (1 - Math.exp(-dt * 5));
+    const hw = W / (2 * c.z), hh = H / (2 * c.z);
+    c.x = clamp(c.x, hw, W - hw);
+    c.y = clamp(c.y, hh, H - hh);
+    // nadšení publika
+    let ex = 0.12;
+    if (this.screen === 'match') {
+      if (st === 'goal' || st === 'over') ex = 1;
+      else if (st === 'intro') ex = 0.75;
+      else if (st === 'replay') ex = 0.45;
+      else if (m && Math.min(m.ball.x, W - m.ball.x) < 240) ex = 0.35;
+      else ex = 0.08;
+    }
+    this.excite += (ex - this.excite) * (1 - Math.exp(-dt * 3));
+  },
+
   // Stav zápasu pro kamarády (malý, vejde se do „presence“).
   snapshot() {
     const m = this.match, b = m.ball, r = Math.round;
@@ -681,6 +924,7 @@ const Game = {
       n: ++this.snapN,
       ht: r(performance.now() - this.t0),
       s: STATE_CODE[this.state] || 'p',
+      st: Math.round(this.stateT * 100) / 100,
       t: r(this.timeLeft * 10),
       gd: this.golden ? 1 : 0,
       sc: [m.score[0], m.score[1]],
@@ -795,9 +1039,17 @@ const Game = {
     const st = CODE_STATE[g.s] || 'play';
     if (st !== this.state) {
       if (st === 'over') Touch.show(false);
+      if (st === 'replay' || st === 'intro') Effects.clear();
+      if (st === 'intro') {
+        this.cam.x = JUMBO.x + JUMBO.w / 2;
+        this.cam.y = JUMBO.y + JUMBO.h / 2 + 30;
+        this.cam.z = 1.75;
+        this.cam.bars = 1;
+      }
       this.state = st;
       this.stateT = 0;
     }
+    if (typeof g.st === 'number') this.stateT = g.st;
     this.timeLeft = (Number(g.t) || 0) / 10;
     this.golden = !!g.gd;
     if (g.rs && !this.resultShown) {
@@ -811,6 +1063,9 @@ const Game = {
     this.stateT += dt;
     const m = this.match;
     if (!m) return;
+    if (m.celebrate < 0 && this.state === 'over') m.celebrate = m.score[0] > m.score[1] ? 0 : 1;
+    this.updateCam(dt);
+    UI.setSkip(false);
     if ((this.state === 'goal' && Math.random() < dt * 22) || (this.state === 'over' && Math.random() < dt * 10)) Effects.flash();
     // vlastní ovládání hostiteli
     if (this.state !== 'over') Online.sendInput(Input.intent(0));
@@ -954,6 +1209,8 @@ const UI = {
     });
     click('btn-res-third', () => Game.toHome());
     this.el.pauseBtn.addEventListener('click', () => (Game.state === 'paused' ? Game.resume() : Game.pause()));
+    this.el.skip = $('btn-skip');
+    this.el.skip.addEventListener('click', () => Game.skip());
     this.el.muteBtn.addEventListener('click', () => {
       Sound.init();
       this.setMuted(!Sound.muted);
@@ -978,6 +1235,17 @@ const UI = {
       ? '<p>Levým palcem joystick: do stran běh, nahoru skok. Pravým palcem kop.</p>'
       : `<p>${k('A')}${k('D')} nebo ${k('←')}${k('→')} běh · ${k('W')} nebo ${k('↑')} skok · ${k('mezerník')} nebo ${k('↓')} kop</p>`
         + `<p class="dim">Dva hráči u jednoho počítače: hráč 1 ${k('W')}${k('A')}${k('S')}${k('D')} a ${k('mezerník')}, hráč 2 šipky · ${k('Esc')} pauza</p>`;
+  },
+
+  setSkip(v) {
+    if (this.el.skip && this.el.skip.hidden === v) this.el.skip.hidden = !v;
+    // během filmových scén schovat dotykové ovládání
+    const cut = Game.screen === 'match' && ['intro', 'replay', 'over'].includes(Game.state);
+    const t = document.getElementById('touch');
+    if (t && t.classList.contains('cut') !== cut) {
+      t.classList.toggle('cut', cut);
+      if (cut) Touch.reset();
+    }
   },
 
   onlineStatus(text, error) {
@@ -1089,6 +1357,11 @@ function boot() {
       else if (Game.inMatch()) Game.pause();
       else return;
       e.preventDefault();
+      return;
+    }
+    if ((e.code === 'Enter' || e.code === 'Space') && Game.canSkip()) {
+      e.preventDefault();
+      Game.skip();
       return;
     }
     if (Game.screen === 'match' && KEYMAP[e.code]) {

@@ -187,20 +187,41 @@ const Effects = {
 
 /* ---------------- renderer ---------------- */
 
+const ADS = [
+  { t: 'HLAVOUNI', bg: '#0d1526', fg: '#ffc93c' },
+  { t: 'KOPAČKY BLESK', bg: '#2f80ff', fg: '#ffffff' },
+  { t: 'LIMO HLAVIČKA', bg: '#ffc93c', fg: '#0d1526' },
+  { t: 'PEKÁRNA U MÍČE', bg: '#e8458f', fg: '#ffffff' },
+  { t: 'GÓL TV', bg: '#19a974', fg: '#ffffff' },
+  { t: 'NELCIS & MAJDA', bg: '#9e1f5c', fg: '#ffd1e6' },
+  { t: 'MARSAL & DURCADO', bg: '#1a4fb0', fg: '#cfe1ff' },
+];
+const STANDS_TOP = 150;
+const STANDS_BOTTOM = 458;
+const JUMBO = { x: 528, y: 162, w: 224, h: 92 };
+const DEFAULT_CAM = { x: W / 2, y: H / 2, z: 1, bars: 0 };
+const INTRO_DUR = 3.9;
+
 const Renderer = {
   canvas: null,
   ctx: null,
   bg: null,
+  crowd: null,
   scale: 1,
+  bgScale: 1,
   ox: 0,
   oy: 0,
   trail: [],
   _f: { x: 0, y: 0 },
+  nets: [{ t: -1e9, amp: 0, y: 500 }, { t: -1e9, amp: 0, y: 500 }],
+  figs: new Map(),
+  vig: null,
 
   init(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.bg = document.createElement('canvas');
+    this.crowd = document.createElement('canvas');
     this.resize();
   },
 
@@ -212,49 +233,82 @@ const Renderer = {
     this.scale = Math.min(this.canvas.width / W, this.canvas.height / H);
     this.ox = Math.round((this.canvas.width - W * this.scale) / 2);
     this.oy = Math.round((this.canvas.height - H * this.scale) / 2);
+    // pozadí ve vyšším rozlišení, aby bylo ostré i při přiblížení kamery
+    this.bgScale = Math.min(this.scale * 1.6, 4096 / W);
     this.buildBg();
   },
 
   /* ---- statické pozadí ---- */
 
   buildBg() {
-    const s = this.scale, c = this.bg;
+    const s = this.bgScale;
+    const c = this.bg;
     c.width = Math.max(1, Math.ceil(W * s));
     c.height = Math.max(1, Math.ceil(H * s));
     const x = c.getContext('2d');
     x.setTransform(s, 0, 0, s, 0, 0);
     this.drawSky(x);
-    this.drawStands(x);
-    this.drawBoards(x);
+    this.drawStandsBase(x);
     this.drawPitch(x);
-    this.drawGoalBack(x, 0);
-    this.drawGoalBack(x, 1);
+    this.drawGoalShadow(x, 0);
+    this.drawGoalShadow(x, 1);
+    const cr = this.crowd;
+    cr.width = Math.max(1, Math.ceil(W * s));
+    cr.height = Math.max(1, Math.ceil((STANDS_BOTTOM - STANDS_TOP) * s));
+    const y = cr.getContext('2d');
+    y.setTransform(s, 0, 0, s, 0, -STANDS_TOP * s);
+    this.drawFans(y);
   },
 
   drawSky(x) {
     const g = x.createLinearGradient(0, 0, 0, 170);
-    g.addColorStop(0, '#071022');
-    g.addColorStop(1, '#14305a');
+    g.addColorStop(0, '#050c1c');
+    g.addColorStop(1, '#152f57');
     x.fillStyle = g;
     x.fillRect(0, 0, W, 170);
     const rng = mulberry32(3);
-    x.fillStyle = 'rgba(255,255,255,.55)';
-    for (let i = 0; i < 40; i++) {
-      circle(x, rng() * W, rng() * 110, rng() * 1.1 + 0.3);
+    for (let i = 0; i < 60; i++) {
+      x.fillStyle = `rgba(255,255,255,${0.25 + rng() * 0.5})`;
+      circle(x, rng() * W, rng() * 100, rng() * 1.1 + 0.3);
       x.fill();
     }
+    // střecha s ocelovou konstrukcí
+    x.fillStyle = '#080e1a';
+    x.fillRect(0, 108, W, 44);
+    x.strokeStyle = 'rgba(120,150,200,.16)';
+    x.lineWidth = 2;
+    for (let k = -20; k < W + 40; k += 40) {
+      line(x, k, 110, k + 40, 150);
+      line(x, k + 40, 110, k, 150);
+    }
+    x.fillStyle = '#0c1424';
+    x.fillRect(0, 106, W, 5);
+    x.fillRect(0, 146, W, 6);
+    // světla pod střechou
+    for (let k = 20; k < W; k += 46) {
+      x.fillStyle = 'rgba(255,240,200,.25)';
+      circle(x, k, 150, 5);
+      x.fill();
+      x.fillStyle = '#fff5d6';
+      circle(x, k, 150, 1.8);
+      x.fill();
+    }
+    // stožáry reflektorů
     for (const lx of [74, W - 74]) {
       const glow = x.createRadialGradient(lx, 44, 4, lx, 44, 300);
-      glow.addColorStop(0, 'rgba(255,246,214,.55)');
+      glow.addColorStop(0, 'rgba(255,246,214,.6)');
       glow.addColorStop(0.25, 'rgba(255,246,214,.14)');
       glow.addColorStop(1, 'rgba(255,246,214,0)');
       x.fillStyle = glow;
       x.fillRect(lx - 300, 0, 600, 420);
-      x.fillStyle = '#0a111f';
-      x.fillRect(lx - 4, 64, 8, 80);
+      x.fillStyle = '#070c16';
+      x.fillRect(lx - 4, 64, 8, 50);
       x.fillStyle = '#1c2840';
       rrect(x, lx - 54, 20, 108, 46, 5);
       x.fill();
+      x.strokeStyle = 'rgba(255,255,255,.12)';
+      x.lineWidth = 1.5;
+      x.stroke();
       for (let r = 0; r < 2; r++) {
         for (let k = 0; k < 5; k++) {
           const cx = lx - 40 + k * 20, cy = 32 + r * 21;
@@ -269,34 +323,56 @@ const Renderer = {
     }
   },
 
-  drawStands(x) {
-    const top = 150, bottom = 458;
-    x.fillStyle = '#0a1120';
-    x.fillRect(0, 128, W, 24);
-    x.fillStyle = 'rgba(255,238,200,.55)';
-    x.fillRect(0, 150, W, 2);
+  drawStandsBase(x) {
+    const top = STANDS_TOP, bottom = STANDS_BOTTOM;
     const g = x.createLinearGradient(0, top, 0, bottom);
-    g.addColorStop(0, '#0f1828');
+    g.addColorStop(0, '#0d1626');
     g.addColorStop(1, '#1d2a40');
     x.fillStyle = g;
     x.fillRect(0, top + 2, W, bottom - top);
+    const rows = 13, rowH = (bottom - 14 - top) / rows;
+    for (let r = 0; r < rows; r++) {
+      const y = top + 8 + r * rowH;
+      x.fillStyle = r % 2 ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.1)';
+      x.fillRect(0, y, W, rowH);
+      x.fillStyle = 'rgba(255,255,255,.05)';
+      x.fillRect(0, y + rowH - 2, W, 1);
+    }
+    // schodiště mezi sektory
+    for (const ax of [214, 1066]) {
+      x.fillStyle = '#26344d';
+      x.fillRect(ax - 9, top + 4, 18, bottom - top - 4);
+      x.fillStyle = 'rgba(255,255,255,.08)';
+      for (let y = top + 10; y < bottom; y += rowH) x.fillRect(ax - 9, y, 18, 2);
+    }
+    // zábradlí a zeď pod tribunou
+    x.fillStyle = '#0b1322';
+    x.fillRect(0, bottom, W, 10);
+    x.fillStyle = 'rgba(255,255,255,.18)';
+    x.fillRect(0, bottom - 2, W, 1.5);
+    // podklad pro LED tabule
+    x.fillStyle = '#05080f';
+    x.fillRect(0, 462, W, 48);
+    x.fillStyle = 'rgba(0,0,0,.4)';
+    x.fillRect(0, 506, W, 5);
+  },
 
+  drawFans(x) {
+    const top = STANDS_TOP, bottom = STANDS_BOTTOM;
     const rng = mulberry32(7);
+    const pinks = ['#e8458f', '#c42f74', '#ff7ab4'];
     const blues = ['#2f80ff', '#1f5fd1', '#5b9bff'];
-    const reds = ['#f2463d', '#c8302a', '#ff6b62'];
-    const neutral = ['#e9edf2', '#2b3445', '#ffc93c', '#5b6b84', '#c9d3e0', '#7a4bd6'];
+    const neutral = ['#e9edf2', '#2b3445', '#ffc93c', '#5b6b84', '#c9d3e0', '#7a4bd6', '#19a974'];
     const skins = ['#f3c99b', '#e0ac69', '#c68642', '#8d5524', '#f8d8c0'];
     const rows = 13, rowH = (bottom - 14 - top) / rows;
     for (let r = 0; r < rows; r++) {
       const y = top + 8 + r * rowH;
-      x.fillStyle = r % 2 ? 'rgba(255,255,255,.025)' : 'rgba(0,0,0,.08)';
-      x.fillRect(0, y, W, rowH);
       const depth = r / (rows - 1);
       const sp = 11 + depth * 4, size = 3.6 + depth * 2;
       for (let cx = rng() * sp; cx < W; cx += sp * (0.85 + rng() * 0.4)) {
-        if (rng() < 0.07) continue;
+        if (rng() < 0.06 || Math.abs(cx - 214) < 12 || Math.abs(cx - 1066) < 12) continue;
         const home = cx < W / 2, q = rng();
-        const shirt = q < 0.48 ? pick2(rng, home ? blues : reds) : q < 0.6 ? pick2(rng, home ? reds : blues) : pick2(rng, neutral);
+        const shirt = q < 0.5 ? pick2(rng, home ? pinks : blues) : q < 0.62 ? pick2(rng, home ? blues : pinks) : pick2(rng, neutral);
         const yy = y + rowH - 1 + (rng() - 0.5) * 2;
         x.fillStyle = shirt;
         rrect(x, cx - size, yy - size * 1.7, size * 2, size * 1.7, size * 0.6);
@@ -304,54 +380,36 @@ const Renderer = {
         x.fillStyle = pick2(rng, skins);
         circle(x, cx, yy - size * 2.2, size * 0.78);
         x.fill();
-        if (rng() < 0.025) {
-          x.fillStyle = home ? '#2f80ff' : '#f2463d';
-          x.fillRect(cx - 1, yy - size * 5.2, 1.5, size * 3);
-          x.fillRect(cx, yy - size * 5.2, size * 2.6, size * 1.5);
+        const extra = rng();
+        if (extra < 0.03) {
+          // vlajka
+          x.fillStyle = home ? '#e8458f' : '#2f80ff';
+          x.fillRect(cx - 1, yy - size * 5.4, 1.5, size * 3.2);
+          x.fillRect(cx, yy - size * 5.4, size * 2.8, size * 1.6);
+        } else if (extra < 0.08) {
+          // šála nad hlavou
+          x.fillStyle = home ? '#ff9ccb' : '#9cc2ff';
+          x.fillRect(cx - size * 1.6, yy - size * 3.6, size * 3.2, size * 0.7);
         }
       }
     }
-    const shade = x.createLinearGradient(0, top, 0, bottom);
-    shade.addColorStop(0, 'rgba(4,8,18,.6)');
-    shade.addColorStop(0.6, 'rgba(4,8,18,.1)');
-    shade.addColorStop(1, 'rgba(4,8,18,0)');
-    x.fillStyle = shade;
+    // hloubka: horní řady tmavší
+    const sh = x.createLinearGradient(0, top, 0, bottom);
+    sh.addColorStop(0, 'rgba(4,8,18,.55)');
+    sh.addColorStop(0.6, 'rgba(4,8,18,.08)');
+    sh.addColorStop(1, 'rgba(4,8,18,0)');
+    x.globalCompositeOperation = 'source-atop';
+    x.fillStyle = sh;
     x.fillRect(0, top, W, bottom - top);
-    x.fillStyle = '#0b1322';
-    x.fillRect(0, bottom, W, 10);
-  },
-
-  drawBoards(x) {
-    const ads = [
-      { t: 'HLAVOUNI', bg: '#0d1526', fg: '#ffc93c' },
-      { t: 'KOPAČKY BLESK', bg: '#2f80ff', fg: '#ffffff' },
-      { t: 'LIMO HLAVIČKA', bg: '#ffc93c', fg: '#0d1526' },
-      { t: 'PEKÁRNA U MÍČE', bg: '#f2463d', fg: '#ffffff' },
-      { t: 'GÓL TV', bg: '#19a974', fg: '#ffffff' },
-    ];
-    const y = 466, h = 40, bw = 196;
-    x.textAlign = 'center';
-    x.textBaseline = 'middle';
-    x.font = `800 22px ${FONT_U}`;
-    for (let bx = -30, i = 0; bx < W; bx += bw, i++) {
-      const a = ads[i % ads.length];
-      x.fillStyle = a.bg;
-      x.fillRect(bx, y, bw - 3, h);
-      x.fillStyle = a.fg;
-      x.fillText(a.t, bx + bw / 2, y + h / 2 + 1);
-      x.fillStyle = 'rgba(255,255,255,.12)';
-      x.fillRect(bx, y, bw - 3, 6);
-    }
-    x.fillStyle = 'rgba(0,0,0,.35)';
-    x.fillRect(0, y + h, W, 4);
+    x.globalCompositeOperation = 'source-over';
   },
 
   drawPitch(x) {
-    const top = 508;
+    const top = 510;
     const g = x.createLinearGradient(0, top, 0, H);
-    g.addColorStop(0, '#2a6f30');
-    g.addColorStop(0.45, '#3c963d');
-    g.addColorStop(1, '#46a445');
+    g.addColorStop(0, '#286b2e');
+    g.addColorStop(0.45, '#3b943c');
+    g.addColorStop(1, '#48a646');
     x.fillStyle = g;
     x.fillRect(0, top, W, H - top);
     // posekané pruhy
@@ -366,21 +424,30 @@ const Renderer = {
       x.closePath();
       x.fill();
     }
-    const sh = x.createLinearGradient(0, top, 0, top + 30);
-    sh.addColorStop(0, 'rgba(0,0,0,.3)');
+    // stébla trávy
+    const rng = mulberry32(11);
+    for (let i = 0; i < 2600; i++) {
+      const px = rng() * W, py = top + 4 + rng() * (H - top - 4);
+      const k = (py - top) / (H - top);
+      x.strokeStyle = rng() < 0.5 ? `rgba(20,60,20,${0.18 + k * 0.12})` : `rgba(160,230,120,${0.08 + k * 0.1})`;
+      x.lineWidth = 0.8 + k;
+      line(x, px, py, px + (rng() - 0.5) * 2, py - 2 - k * 3);
+    }
+    const sh = x.createLinearGradient(0, top, 0, top + 34);
+    sh.addColorStop(0, 'rgba(0,0,0,.34)');
     sh.addColorStop(1, 'rgba(0,0,0,0)');
     x.fillStyle = sh;
-    x.fillRect(0, top, W, 30);
+    x.fillRect(0, top, W, 34);
 
     // čáry
-    x.strokeStyle = 'rgba(255,255,255,.72)';
+    x.strokeStyle = 'rgba(255,255,255,.75)';
     x.lineWidth = 3;
     x.lineCap = 'round';
     line(x, 0, 520, W, 520);
     line(x, W / 2, 520, W / 2, H);
     oval(x, W / 2, 602, 120, 36);
     x.stroke();
-    x.fillStyle = 'rgba(255,255,255,.8)';
+    x.fillStyle = 'rgba(255,255,255,.85)';
     oval(x, W / 2, 602, 5, 2.5);
     x.fill();
     for (let side = 0; side < 2; side++) {
@@ -399,59 +466,71 @@ const Renderer = {
     }
   },
 
-  drawGoalBack(x, side) {
+  drawGoalShadow(x, side) {
     const x0 = side === 0 ? 0 : W - GOAL_W;
-    const top = BAR_Y + BAR_T;
-    x.fillStyle = 'rgba(0,0,0,.25)';
-    oval(x, x0 + GOAL_W / 2, GROUND_Y + 4, GOAL_W * 0.7, 10);
+    x.fillStyle = 'rgba(0,0,0,.28)';
+    oval(x, x0 + GOAL_W / 2, GROUND_Y + 4, GOAL_W * 0.75, 11);
     x.fill();
-    x.fillStyle = 'rgba(6,12,24,.4)';
-    x.fillRect(x0, top, GOAL_W, GROUND_Y - top);
-    x.save();
-    x.beginPath();
-    x.rect(x0, BAR_Y, GOAL_W, GROUND_Y - BAR_Y);
-    x.clip();
-    x.strokeStyle = 'rgba(235,242,250,.38)';
-    x.lineWidth = 1.2;
-    for (let k = -260; k < 300; k += 13) {
-      line(x, x0 + k, BAR_Y, x0 + k + 220, BAR_Y + 220);
-      line(x, x0 + k, BAR_Y, x0 + k - 220, BAR_Y + 220);
-    }
-    x.restore();
-    x.fillStyle = '#c3ccd8';
-    x.fillRect(side === 0 ? 1 : W - 7, BAR_Y, 6, GROUND_Y - BAR_Y);
   },
 
   /* ---- snímek ---- */
 
   draw(g) {
     const ctx = this.ctx, s = this.scale, m = g.match;
+    const now = performance.now();
+    const cam = g.cam || DEFAULT_CAM;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.drawLetterbox(ctx);
 
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(this.ox, this.oy, W * s, H * s);
+    ctx.clip();
     let sx = 0, sy = 0;
     if (Effects.shakeAmt > 0.2) {
       sx = rand(-1, 1) * Effects.shakeAmt;
       sy = rand(-1, 1) * Effects.shakeAmt;
     }
-    ctx.setTransform(s, 0, 0, s, this.ox + sx * s, this.oy + sy * s);
+    const z = cam.z, k = s * z;
+    ctx.setTransform(k, 0, 0, k, this.ox + (W / 2 - cam.x * z + sx) * s, this.oy + (H / 2 - cam.y * z + sy) * s);
     ctx.drawImage(this.bg, 0, 0, W, H);
-    if (!m) return;
+    this.drawCrowd(ctx, g.excite || 0, now);
+    this.drawBeams(ctx, g);
+    this.drawJumbotron(ctx, g, now);
+    this.drawBoards(ctx, g, now);
 
-    Effects.drawFlashes(ctx);
-    const b = m.ball;
-    for (const p of m.players) this.drawShadow(ctx, p.x, p.standY - p.y, 36);
-    this.drawShadow(ctx, b.x, GROUND_Y - b.r - b.y, 16);
-    const now = performance.now();
-    for (const p of m.players) this.drawPlayer(ctx, p, b, m.teams, now);
-    this.drawBall(ctx, b);
-    this.drawGoalFront(ctx, 0);
-    this.drawGoalFront(ctx, 1);
-    Effects.draw(ctx);
+    if (m) {
+      Effects.drawFlashes(ctx);
+      this.drawNet(ctx, 0, now);
+      this.drawNet(ctx, 1, now);
+      const b = m.ball;
+      for (const p of m.players) this.drawShadow(ctx, p.x, p.standY - p.y, 36);
+      this.drawShadow(ctx, b.x, GROUND_Y - b.r - b.y, 16);
+      for (const p of m.players) this.drawPlayer(ctx, p, b, m.teams, now);
+      if (g.state !== 'intro') this.drawBall(ctx, b);
+      this.drawGoalFront(ctx, 0);
+      this.drawGoalFront(ctx, 1);
+      if (g.screen === 'match' && g.state === 'over') this.drawTrophy(ctx, g, now);
+      Effects.draw(ctx);
+      if (g.state !== 'menu' && cam.bars < 0.3) {
+        for (const p of m.players) this.drawTag(ctx, p, m.teams);
+      }
+    }
+    this.drawVignette(ctx);
+    ctx.restore();
 
-    if (g.state !== 'menu') {
-      for (const p of m.players) this.drawTag(ctx, p, m.teams);
-      this.drawHUD(ctx, g);
+    // obrazovka (nezávisle na kameře)
+    ctx.setTransform(s, 0, 0, s, this.ox, this.oy);
+    if (cam.bars > 0.01) this.drawBars(ctx, cam.bars);
+    if (m && g.state !== 'menu') {
+      const a = clamp(1 - cam.bars * 1.6, 0, 1);
+      if (a > 0) {
+        ctx.globalAlpha = a;
+        this.drawHUD(ctx, g);
+        ctx.globalAlpha = 1;
+      }
+      if (g.state === 'intro') this.drawIntro(ctx, g, now);
+      if (g.state === 'replay') this.drawReplayLabel(ctx, now);
     }
     if (g.state === 'paused' && g.mode === 'guest') {
       this.drawMsg(ctx, { text: 'PAUZA', sub: 'Hostitel hru pozastavil', t: 1, dur: 9, size: 110, color: '#f3f6ef' });
@@ -472,13 +551,516 @@ const Renderer = {
     g.addColorStop(1, '#46a445');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, c.width, c.height);
-    ctx.fillStyle = 'rgba(3,6,14,.55)';
+    ctx.fillStyle = 'rgba(3,6,14,.6)';
     ctx.fillRect(0, 0, c.width, c.height);
+  },
+
+  // Publikum: při vzrušení vyskakuje ve vlnách.
+  drawCrowd(ctx, ex, now) {
+    const c = this.crowd, h = STANDS_BOTTOM - STANDS_TOP;
+    if (ex < 0.05) {
+      ctx.drawImage(c, 0, STANDS_TOP, W, h);
+      return;
+    }
+    const n = 32, sw = W / n, csw = c.width / n;
+    for (let i = 0; i < n; i++) {
+      const off = -Math.max(0, Math.sin(now * 0.012 + i * 0.9)) * 6 * ex;
+      ctx.drawImage(c, i * csw, 0, csw, c.height, i * sw, STANDS_TOP + off, sw + 0.6, h);
+    }
+  },
+
+  drawBeams(ctx, g) {
+    const boost = g.state === 'goal' ? 1.7 : g.state === 'over' ? 1.4 : 1;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const [lx, dir] of [[74, 1], [W - 74, -1]]) {
+      const gr = ctx.createLinearGradient(lx, 44, lx + dir * 320, 620);
+      gr.addColorStop(0, `rgba(255,240,205,${0.09 * boost})`);
+      gr.addColorStop(1, 'rgba(255,240,205,0)');
+      ctx.fillStyle = gr;
+      ctx.beginPath();
+      ctx.moveTo(lx - 34, 44);
+      ctx.lineTo(lx + 34, 44);
+      ctx.lineTo(lx + dir * 640, 650);
+      ctx.lineTo(lx + dir * 230, 650);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  },
+
+  // Velká obrazovka na tribuně.
+  drawJumbotron(ctx, g, now) {
+    const { x, y, w, h } = JUMBO;
+    const m = g.match, st = g.state;
+    ctx.fillStyle = '#070b14';
+    ctx.fillRect(x + 36, y + h + 4, 10, 60);
+    ctx.fillRect(x + w - 46, y + h + 4, 10, 60);
+    ctx.fillStyle = '#111a2c';
+    rrect(ctx, x - 7, y - 7, w + 14, h + 14, 7);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.16)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.save();
+    rrect(ctx, x, y, w, h, 3);
+    ctx.clip();
+    ctx.fillStyle = '#050912';
+    ctx.fillRect(x, y, w, h);
+    const cx = x + w / 2, cy = y + h / 2;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const inMatch = m && g.screen === 'match' && st !== 'menu';
+    if (!inMatch) {
+      const gr = ctx.createLinearGradient(x, 0, x + w, 0);
+      gr.addColorStop(0, 'rgba(232,69,143,.55)');
+      gr.addColorStop(1, 'rgba(47,128,255,.55)');
+      ctx.fillStyle = gr;
+      ctx.fillRect(x, y, w, h);
+      ctx.font = `38px ${FONT_D}`;
+      ctx.fillStyle = '#ffc93c';
+      ctx.fillText('HLAVOUNI', cx, cy + 2 + Math.sin(now * 0.003) * 3);
+    } else if (st === 'goal' && g.goalTeam >= 0) {
+      const T = m.teams[g.goalTeam];
+      ctx.fillStyle = Math.floor(now / 170) % 2 ? T.color : T.dark;
+      ctx.fillRect(x, y, w, h);
+      const sp = m.players[g.scorerIdx];
+      if (sp) this.drawFigure(ctx, sp.look, T, x + 46, y + 58, 0.62, 1, 1, { x: x + 300, y: y + 20 });
+      ctx.font = `48px ${FONT_D}`;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('GÓL!', cx + 34, cy + 2);
+    } else if (st === 'intro') {
+      ctx.fillStyle = m.teams[0].dark;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(cx + 18, y);
+      ctx.lineTo(cx - 18, y + h);
+      ctx.lineTo(x, y + h);
+      ctx.fill();
+      ctx.fillStyle = m.teams[1].dark;
+      ctx.beginPath();
+      ctx.moveTo(cx + 18, y);
+      ctx.lineTo(x + w, y);
+      ctx.lineTo(x + w, y + h);
+      ctx.lineTo(cx - 18, y + h);
+      ctx.fill();
+      ctx.font = `52px ${FONT_D}`;
+      ctx.fillStyle = '#ffc93c';
+      ctx.fillText('VS', cx, cy + 3);
+    } else if (st === 'replay') {
+      ctx.fillStyle = '#0b1220';
+      ctx.fillRect(x, y, w, h);
+      if (Math.floor(now / 500) % 2 === 0) {
+        ctx.fillStyle = '#ff3b3b';
+        circle(ctx, x + 26, cy, 8);
+        ctx.fill();
+      }
+      ctx.font = `34px ${FONT_D}`;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('ZÁZNAM', cx + 14, cy + 2);
+    } else if (st === 'over') {
+      const win = m.score[0] > m.score[1] ? 0 : 1, T = m.teams[win];
+      const gr = ctx.createLinearGradient(0, y, 0, y + h);
+      gr.addColorStop(0, T.color);
+      gr.addColorStop(1, T.dark);
+      ctx.fillStyle = gr;
+      ctx.fillRect(x, y, w, h);
+      ctx.font = `800 20px ${FONT_U}`;
+      ctx.fillStyle = '#ffc93c';
+      ctx.fillText('VÍTĚZ', cx, y + 22);
+      this.fitText(ctx, T.name, w - 20, 34, FONT_D, '');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(T.name, cx, cy + 14);
+    } else {
+      const T0 = m.teams[0], T1 = m.teams[1];
+      ctx.fillStyle = T0.dark;
+      ctx.fillRect(x, y, w / 2, h);
+      ctx.fillStyle = T1.dark;
+      ctx.fillRect(x + w / 2, y, w / 2, h);
+      ctx.font = `54px ${FONT_D}`;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(String(m.score[0]), x + w * 0.27, cy + 4);
+      ctx.fillText(String(m.score[1]), x + w * 0.73, cy + 4);
+      ctx.fillStyle = '#ffc93c';
+      ctx.font = `800 22px ${FONT_U}`;
+      const t = Math.max(0, Math.ceil(g.timeLeft));
+      ctx.fillText(g.golden ? 'ZG' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`, cx, cy + 2);
+    }
+    // LED mřížka a lesk
+    ctx.fillStyle = 'rgba(0,0,0,.22)';
+    for (let i = x; i < x + w; i += 3) ctx.fillRect(i, y, 1, h);
+    for (let j = y; j < y + h; j += 3) ctx.fillRect(x, j, w, 1);
+    const sheen = ctx.createLinearGradient(x, y, x, y + h);
+    sheen.addColorStop(0, 'rgba(255,255,255,.12)');
+    sheen.addColorStop(0.5, 'rgba(255,255,255,0)');
+    ctx.fillStyle = sheen;
+    ctx.fillRect(x, y, w, h);
+    ctx.restore();
+  },
+
+  fitText(ctx, text, maxW, size, family, weight) {
+    ctx.font = `${weight} ${size}px ${family}`;
+    while (size > 12 && ctx.measureText(text).width > maxW) {
+      size -= 2;
+      ctx.font = `${weight} ${size}px ${family}`;
+    }
+    return size;
+  },
+
+  // LED reklamy: střídají se, při gólu blikají.
+  drawBoards(ctx, g, now) {
+    const y = 466, h = 40, bw = 196;
+    const m = g.match;
+    const goal = m && g.screen === 'match' && g.state === 'goal' && g.goalTeam >= 0;
+    const T = goal ? m.teams[g.goalTeam] : null;
+    const cycle = 5200;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let bx = -30, i = 0; bx < W; bx += bw, i++) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(bx, y, bw - 3, h);
+      ctx.clip();
+      if (goal) {
+        const on = (Math.floor(now / 150) + i) % 2 === 0;
+        ctx.fillStyle = on ? T.color : '#0b1220';
+        ctx.fillRect(bx, y, bw, h);
+        ctx.fillStyle = on ? '#ffffff' : T.light;
+        ctx.font = `30px ${FONT_D}`;
+        ctx.fillText('GÓÓÓL', bx + bw / 2, y + h / 2 + 2);
+      } else {
+        const tt = now + i * 140;
+        const idx = Math.floor(tt / cycle), t = tt % cycle;
+        const roll = t < 380 ? easeInOutQuad(t / 380) : 1;
+        const cur = ADS[(i + idx) % ADS.length], prev = ADS[(i + idx - 1 + ADS.length * 9) % ADS.length];
+        ctx.font = `800 22px ${FONT_U}`;
+        if (roll < 1) {
+          this.boardAd(ctx, prev, bx, y - roll * h, bw, h);
+          this.boardAd(ctx, cur, bx, y + (1 - roll) * h, bw, h);
+        } else {
+          this.boardAd(ctx, cur, bx, y, bw, h);
+        }
+      }
+      ctx.fillStyle = 'rgba(255,255,255,.13)';
+      ctx.fillRect(bx, y, bw, 6);
+      ctx.fillStyle = 'rgba(0,0,0,.16)';
+      for (let j = y + 1; j < y + h; j += 3) ctx.fillRect(bx, j, bw, 1);
+      ctx.restore();
+    }
+  },
+
+  boardAd(ctx, a, x, y, w, h) {
+    ctx.fillStyle = a.bg;
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = a.fg;
+    ctx.fillText(a.t, x + w / 2, y + h / 2 + 1);
+  },
+
+  // Míč v síti ji rozvlní.
+  netHit(side, y, amp) {
+    const n = this.nets[side];
+    n.t = performance.now();
+    n.amp = clamp(amp, 0, 14);
+    n.y = y;
+  },
+
+  drawNet(ctx, side, now) {
+    const x0 = side === 0 ? 0 : W - GOAL_W, x1 = x0 + GOAL_W;
+    const top = BAR_Y + BAR_T, bot = GROUND_Y;
+    const n = this.nets[side], age = (now - n.t) / 1000;
+    const A = n.amp * Math.exp(-age * 2.6);
+    ctx.fillStyle = 'rgba(6,12,24,.42)';
+    ctx.fillRect(x0, top, GOAL_W, bot - top);
+    const back = side === 0 ? -1 : 1;
+    const off = (px, py) => {
+      if (A < 0.05) return 0;
+      const f = Math.exp(-((py - n.y) ** 2) / 4500) * Math.exp(-(((side === 0 ? px - x0 : x1 - px)) ** 2) / 9000);
+      return Math.sin(age * 24 - Math.abs(py - n.y) * 0.07) * A * f;
+    };
+    ctx.strokeStyle = 'rgba(235,242,250,.42)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    for (let gx = x0 + 6; gx < x1; gx += 11) {
+      ctx.moveTo(gx, top);
+      for (let gy = top + 8; gy <= bot; gy += 8) ctx.lineTo(gx + off(gx, gy) * back, gy + off(gx, gy) * 0.3);
+    }
+    for (let gy = top + 6; gy < bot; gy += 11) {
+      ctx.moveTo(x0, gy);
+      for (let gx = x0 + 8; gx <= x1; gx += 8) ctx.lineTo(gx + off(gx, gy) * back, gy + off(gx, gy) * 0.3);
+    }
+    ctx.stroke();
+    ctx.fillStyle = '#c3ccd8';
+    ctx.fillRect(side === 0 ? 1 : W - 7, BAR_Y, 6, bot - BAR_Y);
+  },
+
+  drawVignette(ctx) {
+    if (!this.vig) {
+      const g = ctx.createRadialGradient(W / 2, H * 0.58, H * 0.38, W / 2, H * 0.58, W * 0.78);
+      g.addColorStop(0, 'rgba(0,0,10,0)');
+      g.addColorStop(1, 'rgba(0,0,10,.36)');
+      this.vig = g;
+    }
+    ctx.fillStyle = this.vig;
+    ctx.fillRect(0, 0, W, H);
+  },
+
+  drawBars(ctx, k) {
+    const bh = 74 * easeInOutQuad(clamp(k, 0, 1));
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, W, bh);
+    ctx.fillRect(0, H - bh, W, bh);
+  },
+
+  // Postavička mimo hřiště (plakáty, obrazovka).
+  drawFigure(ctx, look, T, x, y, sc, dir, mood, lookAt) {
+    let f = this.figs.get(look.id);
+    if (!f) {
+      f = new Player({ team: 0, x: 0, look, role: 'attacker', ctrl: 'cpu' });
+      this.figs.set(look.id, f);
+    }
+    f.x = 0;
+    f.y = 0;
+    f.dir = dir;
+    f.mood = mood || 0;
+    f.kickT = -1;
+    f.onGround = true;
+    f.vx = 0;
+    f.vy = 0;
+    f.blink = 0;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(sc, sc);
+    const la = lookAt ? { x: (lookAt.x - x) / sc, y: (lookAt.y - y) / sc } : { x: dir * 300, y: -20 };
+    this.drawPlayer(ctx, f, la, [T], performance.now());
+    ctx.restore();
+  },
+
+  // Úvod zápasu: plakáty týmů a VS.
+  drawIntro(ctx, g, now) {
+    const t = g.stateT, m = g.match;
+    const a = clamp((t - 1.0) / 0.45, 0, 1), out = clamp((t - (INTRO_DUR - 0.55)) / 0.4, 0, 1);
+    if (a <= 0 || out >= 1) return;
+    const slide = (1 - easeOutBack(a)) + out * 1.3;
+    const by = 200, bh = 210;
+    for (let side = 0; side < 2; side++) {
+      const T = m.teams[side];
+      const dir = side === 0 ? -1 : 1;
+      ctx.save();
+      ctx.translate(dir * slide * W * 0.6, 0);
+      ctx.beginPath();
+      if (side === 0) {
+        ctx.moveTo(-20, by);
+        ctx.lineTo(W / 2 + 6, by);
+        ctx.lineTo(W / 2 - 54, by + bh);
+        ctx.lineTo(-20, by + bh);
+      } else {
+        ctx.moveTo(W / 2 + 54, by);
+        ctx.lineTo(W + 20, by);
+        ctx.lineTo(W + 20, by + bh);
+        ctx.lineTo(W / 2 - 6, by + bh);
+      }
+      ctx.closePath();
+      const gr = ctx.createLinearGradient(0, by, 0, by + bh);
+      gr.addColorStop(0, T.color);
+      gr.addColorStop(1, T.dark);
+      ctx.fillStyle = gr;
+      ctx.fill();
+      ctx.save();
+      ctx.clip();
+      // pruhy v pozadí
+      ctx.fillStyle = 'rgba(255,255,255,.08)';
+      for (let k = -4; k < 14; k++) {
+        const sx = (side === 0 ? 0 : W / 2) + k * 70 + ((now * 0.03) % 70);
+        ctx.beginPath();
+        ctx.moveTo(sx, by);
+        ctx.lineTo(sx + 30, by);
+        ctx.lineTo(sx - 30, by + bh);
+        ctx.lineTo(sx - 60, by + bh);
+        ctx.fill();
+      }
+      const ps = m.players.filter((p) => p.team === side);
+      ps.forEach((p, k) => {
+        const fx = side === 0 ? 92 + k * 135 : W - 92 - k * 135;
+        this.drawFigure(ctx, p.look, T, fx, by + 112, 1.25, side === 0 ? 1 : -1, 0, { x: W / 2, y: by + 70 });
+      });
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(255,255,255,.55)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      // jméno týmu
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = side === 0 ? 'right' : 'left';
+      const nx = side === 0 ? W / 2 - 70 : W / 2 + 70;
+      this.fitText(ctx, T.name, 250, 40, FONT_D, '');
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 7;
+      ctx.strokeStyle = 'rgba(0,0,0,.45)';
+      ctx.strokeText(T.name, nx, by + bh - 32);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(T.name, nx, by + bh - 32);
+      ctx.restore();
+    }
+    const v = easeOutBack(clamp((t - 1.35) / 0.4, 0, 1)) * (1 - out);
+    if (v > 0) {
+      ctx.save();
+      ctx.translate(W / 2, by + bh / 2);
+      ctx.scale(v, v);
+      ctx.rotate(-0.08);
+      ctx.fillStyle = '#0b1220';
+      circle(ctx, 0, 0, 62);
+      ctx.fill();
+      ctx.strokeStyle = '#ffc93c';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+      ctx.font = `68px ${FONT_D}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffc93c';
+      ctx.fillText('VS', 0, 4);
+      ctx.restore();
+    }
+    // nadpis
+    const ta = clamp((t - 0.3) / 0.4, 0, 1) * (1 - out);
+    if (ta > 0) {
+      ctx.save();
+      ctx.globalAlpha = ta;
+      ctx.font = `800 26px ${FONT_U}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const label = `${g.setup ? (g.setup.format === '2v2' ? '2 V 2' : '1 V 1') : ''} · ZÁPAS ZAČÍNÁ`;
+      const w = ctx.measureText(label).width + 40;
+      ctx.fillStyle = 'rgba(8,13,26,.8)';
+      rrect(ctx, W / 2 - w / 2, 130, w, 40, 20);
+      ctx.fill();
+      ctx.fillStyle = '#ffc93c';
+      ctx.fillText(label, W / 2, 151);
+      ctx.restore();
+    }
+  },
+
+  drawReplayLabel(ctx, now) {
+    ctx.save();
+    ctx.font = `800 28px ${FONT_U}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    if (Math.floor(now / 500) % 2 === 0) {
+      ctx.fillStyle = '#ff3b3b';
+      circle(ctx, 44, 37, 9);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('ZÁZNAM GÓLU', 64, 38);
+    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    ctx.font = `800 22px ${FONT_U}`;
+    ctx.fillText('ZPOMALENĚ', 36, H - 37);
+    ctx.restore();
+  },
+
+  // Pohár nad vítězi.
+  drawTrophy(ctx, g, now) {
+    const t = g.stateT;
+    if (t < 1.6) return;
+    const m = g.match;
+    const win = m.score[0] > m.score[1] ? 0 : 1;
+    const ps = m.players.filter((p) => p.team === win);
+    if (!ps.length) return;
+    const cx = ps.reduce((a, p) => a + p.x, 0) / ps.length;
+    const rise = easeOutBack(clamp((t - 1.6) / 0.9, 0, 1));
+    const cy = lerp(380, 318, rise) + Math.sin(now * 0.004) * 4;
+    if (rise <= 0.01) return;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(rise, rise);
+    const glow = ctx.createRadialGradient(0, -6, 4, 0, -6, 120);
+    glow.addColorStop(0, 'rgba(255,215,90,.55)');
+    glow.addColorStop(1, 'rgba(255,215,90,0)');
+    ctx.fillStyle = glow;
+    circle(ctx, 0, -6, 120);
+    ctx.fill();
+    ctx.save();
+    ctx.rotate(now * 0.0006);
+    ctx.fillStyle = 'rgba(255,225,130,.14)';
+    for (let i = 0; i < 12; i++) {
+      ctx.rotate(TAU / 12);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(120, -12);
+      ctx.lineTo(120, 12);
+      ctx.fill();
+    }
+    ctx.restore();
+    const gold = ctx.createLinearGradient(-32, 0, 32, 0);
+    gold.addColorStop(0, '#9a6200');
+    gold.addColorStop(0.35, '#ffd34d');
+    gold.addColorStop(0.55, '#fff3b0');
+    gold.addColorStop(0.75, '#e2a624');
+    gold.addColorStop(1, '#8a5400');
+    ctx.strokeStyle = '#6b4300';
+    // ucha
+    ctx.lineWidth = 9;
+    ctx.strokeStyle = '#6b4300';
+    ctx.beginPath();
+    ctx.arc(-30, -22, 14, Math.PI * 0.5, Math.PI * 1.5);
+    ctx.moveTo(30, -36);
+    ctx.arc(30, -22, 14, -Math.PI * 0.5, Math.PI * 0.5);
+    ctx.stroke();
+    ctx.lineWidth = 5.5;
+    ctx.strokeStyle = '#f2c23c';
+    ctx.stroke();
+    // kalich
+    ctx.beginPath();
+    ctx.moveTo(-32, -42);
+    ctx.lineTo(32, -42);
+    ctx.quadraticCurveTo(32, 8, 0, 18);
+    ctx.quadraticCurveTo(-32, 8, -32, -42);
+    ctx.closePath();
+    ctx.fillStyle = gold;
+    ctx.fill();
+    ctx.lineWidth = 2.6;
+    ctx.strokeStyle = '#6b4300';
+    ctx.stroke();
+    ctx.fillStyle = '#fff3b0';
+    oval(ctx, 0, -42, 32, 5);
+    ctx.fill();
+    ctx.stroke();
+    // noha a podstavec
+    ctx.fillStyle = gold;
+    ctx.fillRect(-5, 16, 10, 16);
+    ctx.strokeRect(-5, 16, 10, 16);
+    oval(ctx, 0, 24, 10, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#3a2416';
+    rrect(ctx, -26, 32, 52, 14, 3);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#ffd34d';
+    rrect(ctx, -14, 35.5, 28, 7, 2);
+    ctx.fill();
+    // hvězda a lesk
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    star(ctx, 0, -16, 9, 4);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.7)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(-6, -20, 20, Math.PI * 0.75, Math.PI * 1.05);
+    ctx.stroke();
+    ctx.restore();
+    // jiskry
+    for (let i = 0; i < 7; i++) {
+      const ang = i * 0.9 + now * 0.0012;
+      const r = 70 + Math.sin(now * 0.003 + i) * 14;
+      const tw = (Math.sin(now * 0.008 + i * 2) + 1) / 2;
+      ctx.fillStyle = `rgba(255,248,210,${0.4 + tw * 0.6})`;
+      star(ctx, cx + Math.cos(ang) * r, cy - 6 + Math.sin(ang) * r * 0.7, 3 + tw * 4, 1.2);
+      ctx.fill();
+    }
   },
 
   drawShadow(ctx, x, h, w) {
     const k = clamp(1 - h / 320, 0.3, 1);
-    ctx.fillStyle = `rgba(0,0,0,${0.3 * k})`;
+    ctx.fillStyle = `rgba(0,0,0,${0.32 * k})`;
     oval(ctx, x, GROUND_Y + 2, w * k, w * 0.2 * k);
     ctx.fill();
   },
@@ -1235,6 +1817,17 @@ const Renderer = {
     ctx.restore();
   },
 };
+
+function star(ctx, x, y, r, r2) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r2 : r;
+    const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
 
 function pick2(rng, arr) {
   return arr[Math.floor(rng() * arr.length)];

@@ -7,7 +7,7 @@ const CHEER = Object.freeze({ left: false, right: false, jump: true, kick: false
 class Ball {
   constructor() {
     this.r = PHYS.ballR;
-    this.reset(W / 2, 200);
+    this.reset(W / 2, KICKOFF_Y);
   }
 
   reset(x, y) {
@@ -206,6 +206,17 @@ class Match {
     });
   }
 
+  // Po zápase: vítězové doběhnou doprostřed a skáčou, poražení odejdou ke své brance.
+  ceremonyIntent(p) {
+    const o = this._ci || (this._ci = { left: false, right: false, jump: false, kick: false, move: 0 });
+    const win = p.team === this.celebrate;
+    const d = (p.cerX === undefined ? p.x : p.cerX) - p.x;
+    o.move = Math.abs(d) < 8 ? 0 : clamp(d / 70, -1, 1) * (win ? 0.85 : 0.45);
+    o.jump = win && Math.abs(d) < 26;
+    o.kick = false;
+    return o;
+  }
+
   // Hráče převezme počítač (třeba když kamarád odejde ze hry).
   makeCPU(p) {
     p.brain = new AIBrain(p, this.level, p.role);
@@ -222,7 +233,7 @@ class Match {
       p.place(p.homeX);
       if (p.brain) p.brain.reset();
     }
-    this.ball.reset(W / 2, 200);
+    this.ball.reset(W / 2, KICKOFF_Y);
     this.goalTeam = -1;
     this.celebrate = -1;
   }
@@ -246,12 +257,14 @@ class Match {
         else it = Input.intent(p.slot);
       } else if (mode === 'celebrate') {
         it = p.team === this.celebrate ? CHEER : IDLE;
+      } else if (mode === 'ceremony') {
+        it = this.ceremonyIntent(p);
       } else if (p.human) {
         Input.intent(p.slot); // zahodit kopy zmáčknuté během odpočtu
       } else if (p.remote && this.remoteIntent) {
         this.remoteIntent(p.remote);
       }
-      p.mood = mode === 'celebrate' && this.celebrate >= 0 ? (p.team === this.celebrate ? 1 : -1) : 0;
+      p.mood = (mode === 'celebrate' || mode === 'ceremony') && this.celebrate >= 0 ? (p.team === this.celebrate ? 1 : -1) : 0;
       this.movePlayer(p, it, dt);
     }
     this.collidePlayers();
@@ -464,10 +477,16 @@ class Match {
     const inNet = b.y > BAR_Y + BAR_T; // pod břevnem u kraje = zadní síť
     if (b.x - r < 0) {
       b.x = r;
-      if (b.vx < 0) b.vx = -b.vx * (inNet ? 0.2 : PHYS.wallBounce);
+      if (b.vx < 0) {
+        if (inNet && b.vx < -90) this.onEvent('net', { side: 0, y: b.y, impact: -b.vx });
+        b.vx = -b.vx * (inNet ? 0.2 : PHYS.wallBounce);
+      }
     } else if (b.x + r > W) {
       b.x = W - r;
-      if (b.vx > 0) b.vx = -b.vx * (inNet ? 0.2 : PHYS.wallBounce);
+      if (b.vx > 0) {
+        if (inNet && b.vx > 90) this.onEvent('net', { side: 1, y: b.y, impact: b.vx });
+        b.vx = -b.vx * (inNet ? 0.2 : PHYS.wallBounce);
+      }
     }
     for (let side = 0; side < 2; side++) {
       const [x0, x1] = goalRect(side);
@@ -587,6 +606,6 @@ class Match {
     this.celebrate = team;
     this.score[team]++;
     const s = b.lastTouch;
-    this.onEvent('goal', { team, scorer: s, own: !!s && s.team !== team });
+    this.onEvent('goal', { team, scorer: s, scorerIdx: s ? this.players.indexOf(s) : -1, own: !!s && s.team !== team });
   }
 }
