@@ -1,0 +1,187 @@
+'use strict';
+/*
+ * Počítačový hráč. Každých pár setin sekundy se rozhodne, kam běžet,
+ * jestli vyskočit na hlavičku a jestli kopnout. Obtížnost mění rychlost
+ * reakce, běhu a přesnost.
+ */
+
+const PDT = 1 / 60;
+const _pred = [];
+
+// Odhad dráhy míče (bez hráčů) na `horizon` sekund dopředu.
+function predictBall(b, horizon) {
+  let x = b.x, y = b.y, vx = b.vx, vy = b.vy;
+  const r = b.r, n = Math.round(horizon / PDT);
+  for (let i = 0; i < n; i++) {
+    if (!b.held) {
+      vy += PHYS.ballGravity * PDT;
+      x += vx * PDT;
+      y += vy * PDT;
+      if (y + r > GROUND_Y) {
+        y = GROUND_Y - r;
+        if (vy > 90) vx *= PHYS.groundGrip;
+        vy = vy > 90 ? -vy * PHYS.ballBounce : 0;
+      }
+      if (y - r < 0) { y = r; vy = -vy * 0.7; }
+      if (x - r < 0) { x = r; vx = -vx * PHYS.wallBounce; }
+      else if (x + r > W) { x = W - r; vx = -vx * PHYS.wallBounce; }
+    }
+    const q = _pred[i] || (_pred[i] = { x: 0, y: 0 });
+    q.x = x;
+    q.y = y;
+  }
+  _pred.length = n;
+  return _pred;
+}
+
+function predAt(pred, t) {
+  return pred[clamp(Math.round(t / PDT) - 1, 0, pred.length - 1)];
+}
+
+// Jak daleko to má hráč k míči (stát na špatné straně stojí navíc).
+function reachCost(q, b) {
+  const wrong = (b.x - q.x) * q.dir < -q.R * 0.4;
+  return Math.abs(b.x - q.x) + (wrong ? 260 : 0);
+}
+// Totéž pro rozhodnutí ve dvojici: obránce se do souboje hrne méně.
+function engageCost(q, b) {
+  return reachCost(q, b) + (q.role === 'defender' ? 70 : 0);
+}
+
+class AIBrain {
+  constructor(p, level, role) {
+    this.p = p;
+    this.L = AI_LEVELS[level] || AI_LEVELS.medium;
+    this.role = role;
+    this.out = { left: false, right: false, jump: false, kick: false };
+    this.reset();
+  }
+
+  reset() {
+    this.t = rand(0.1, 0.3);
+    this.noise = 0;
+    this.noiseT = 0;
+    this.disciplined = Math.random() < this.L.defend;
+    this.out.left = this.out.right = this.out.jump = this.out.kick = false;
+  }
+
+  update(dt, m) {
+    this.out.kick = false; // kop je jen jednorázový stisk
+    this.t -= dt;
+    this.noiseT -= dt;
+    if (this.noiseT <= 0) {
+      this.noise = rand(-1, 1) * this.L.err;
+      this.noiseT = rand(0.5, 1.2);
+      this.disciplined = Math.random() < this.L.defend;
+    }
+    if (this.t <= 0) {
+      this.t = this.L.think * rand(0.75, 1.25);
+      this.think(m);
+    }
+    return this.out;
+  }
+
+  think(m) {
+    const p = this.p, b = m.ball, L = this.L, dir = p.dir, R = p.R, br = b.r;
+    const speed = PHYS.moveSpeed * p.speedMul;
+    const pred = predictBall(b, 1.3);
+    const ownLine = p.team === 0 ? GOAL_W : W - GOAL_W;
+    const toOwnGoal = -b.vx * dir; // > 0 když míč letí k mé brance
+
+    // 1) Kde míč nejdřív stihnu (a je dost nízko, abych na něj dosáhl).
+    let ix = pred[pred.length - 1].x;
+    for (let i = 0; i < pred.length; i++) {
+      const q = pred[i];
+      if (q.y < GROUND_Y - 210) continue;
+      if (Math.abs(q.x - dir * 30 - p.x) <= speed * ((i + 1) * PDT + 0.05)) {
+        ix = q.x;
+        break;
+      }
+    }
+    let tx = ix - dir * 30 + this.noise; // stát kousek za míčem
+    let jump = false, kick = false;
+
+    // 2) Míč je za mnou (mezi mnou a mou brankou) – oběhnout, nízký míč přeskočit.
+    //    Když za míč nejde (je u stěny), jít přímo na něj a hlavičkovat.
+    const rel = (b.x - p.x) * dir;
+    if (rel < -R * 0.4) {
+      const behind = b.x - dir * (R + br + 46);
+      if (behind > R && behind < W - R) {
+        tx = behind;
+        if (p.onGround && b.y > GROUND_Y - 95 && Math.abs(b.x - p.x) < R + 80 && Math.random() < L.jump) jump = true;
+      } else {
+        tx = b.x;
+        if (p.onGround && Math.abs(b.x - p.x) < R + 30 && b.y < p.y) jump = true;
+      }
+    }
+
+    // 3) Soupeř je u míče dřív – vrátit se před svou branku a čekat na střelu.
+    //    Po výkopu se do souboje uprostřed nehrnout, branka by zůstala prázdná.
+    const opps = m.players.filter((q) => q.team !== p.team);
+    const oppReach = Math.min(...opps.map((q) => reachCost(q, b)));
+    const myReach = reachCost(p, b);
+    const kickoffScrum = m.playT < 2 && Math.abs(b.x - W / 2) < 120 && myReach < oppReach + 120;
+    if (this.disciplined && (oppReach + 90 < myReach || kickoffScrum)) {
+      tx = ownLine + dir * clamp((b.x - ownLine) * dir * 0.3, 50, 200);
+      jump = false;
+    }
+
+    // 4) Ve dvojici k míči běží ten, kdo to má blíž. Druhý drží pozici.
+    const mates = m.players.filter((q) => q !== p && q.team === p.team);
+    if (mates.length) {
+      const mine = engageCost(p, b);
+      const best = Math.min(...mates.map((q) => engageCost(q, b)));
+      const danger = (b.x - ownLine) * dir < 300;
+      const engage = mine <= best || (this.role === 'defender' && danger);
+      if (!engage) {
+        jump = false;
+        if (this.role === 'defender') tx = ownLine + dir * (110 + clamp((b.x - ownLine) * dir * 0.2, 0, 170));
+        else tx = clamp(b.x + dir * 230, GOAL_W + R + 20, W - GOAL_W - R - 20);
+      }
+    }
+
+    // 5) Hlavička: vyskočit jen tehdy, když míč přeletí nad stojící hlavou,
+    //    ale hlava ve skoku ho trefí. Jinak by míč proletěl pod nohama.
+    if (!jump && p.onGround) {
+      const hitR = R + br;
+      for (let k = 1; k <= 8; k++) {
+        const t = k * 0.05;
+        const q = predAt(pred, t);
+        const hx = p.x + clamp(tx - p.x, -speed * t, speed * t);
+        const dx = q.x - hx;
+        const sy = q.y - p.y;
+        if (dx * dx + sy * sy < hitR * hitR) break; // stačí zůstat stát
+        const hy = p.y - PHYS.jumpV * t + 0.5 * PHYS.gravity * t * t;
+        const jy = q.y - hy;
+        const useful = dx * dir > -R * 0.5 || toOwnGoal > 250;
+        if (q.y < p.y - 10 && useful && dx * dx + jy * jy < (hitR + 4) * (hitR + 4)) {
+          jump = Math.random() < L.jump;
+          break;
+        }
+      }
+    }
+
+    // 6) V cestě stojí jiný hráč a tlačíme se – přeskočit ho.
+    const mv = Math.sign(tx - p.x);
+    if (!jump && p.onGround && mv !== 0 && Math.abs(tx - p.x) > 60 && Math.abs(p.vx) < 140) {
+      for (const q of m.players) {
+        const ahead = (q.x - p.x) * mv;
+        if (q !== p && ahead > 0 && ahead < 2 * R + 12 && Math.abs(q.y - p.y) < R) {
+          jump = Math.random() < L.jump * 0.8;
+          break;
+        }
+      }
+    }
+
+    // 7) Kop: míč je (nebo za okamžik bude) v dosahu kopačky.
+    const zx = p.x + dir * (R + 4), zy = p.y + R - 4;
+    const inZone = (q) => (q.x - p.x) * dir > 0 && Math.hypot(q.x - zx, q.y - zy) < 46;
+    if ((inZone(b) || inZone(predAt(pred, 0.06))) && Math.random() < L.kick) kick = true;
+
+    const dx = tx - p.x;
+    this.out.left = dx < -8;
+    this.out.right = dx > 8;
+    this.out.jump = jump;
+    this.out.kick = kick;
+  }
+}
