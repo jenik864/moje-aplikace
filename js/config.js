@@ -52,18 +52,12 @@ const DUO_TEAMS = [
   { name: 'MARSAL & DURCADO', short: 'Marsal a Durcado', girls: false, color: '#2f80ff', dark: '#1a4fb0', light: '#9cc2ff', chars: ['marsal', 'durcado'] },
 ];
 
-// Postavy. hair = účes, accent = doplněk (gumička, mašle).
+// Postavy. hair = účes, accent = doplněk (gumička, mašle, náušnice).
 const ROSTER = [
-  { id: 'nelcis', name: 'Nelcis', girl: true, num: 7, skin: '#f7d2b6', hair: 'ponytail', hairColor: '#7b4a2b', eyes: '#3f9160', brow: '#5b3520', accent: '#ffd23f' },
-  { id: 'majda', name: 'Majda', girl: true, num: 10, skin: '#f9dcc6', hair: 'long', hairColor: '#e7bf62', eyes: '#3a78d6', brow: '#a9802f', accent: '#ff5fa2' },
-  { id: 'marsal', name: 'Marsal', num: 9, skin: '#efc29c', hair: 'quiff', hairColor: '#2d1e17', eyes: '#6b4428', brow: '#21160f' },
-  { id: 'durcado', name: 'Durcado', num: 11, skin: '#f4cba8', hair: 'cap', hairColor: '#7a5132', eyes: '#3a78d6', brow: '#4f331f' },
-  { id: 'ferda', name: 'Ferda', num: 4, skin: '#f3c99b', hair: 'spiky', hairColor: '#f2c230', eyes: '#3a78d6', brow: '#a87a0c' },
-  { id: 'kuba', name: 'Kuba', num: 8, skin: '#8a5636', hair: 'afro', hairColor: '#241812', eyes: '#3b2416', brow: '#1a110c' },
-  { id: 'olda', name: 'Olda', num: 5, skin: '#e3a777', hair: 'mohawk', hairColor: '#e8452f', eyes: '#5a3a1e', brow: '#7a2a1a' },
-  { id: 'boza', name: 'Bóža', num: 3, skin: '#c88b5c', hair: 'bald', hairColor: '#3a281c', eyes: '#4a2f1a', brow: '#2b1c12', beard: true },
-  { id: 'mates', name: 'Mates', num: 6, skin: '#f6d3b3', hair: 'swoosh', hairColor: '#1d2230', eyes: '#4c7a3f', brow: '#1d2230' },
-  { id: 'tonda', name: 'Tonda', num: 2, skin: '#f8d8c0', hair: 'curly', hairColor: '#d4651f', eyes: '#3f8a5a', brow: '#a44a12', freckles: true },
+  { id: 'nelcis', name: 'Nelcis', girl: true, num: 7, skin: '#f7d6bf', hair: 'ponytail', hairColor: '#f1cd6c', hairDark: '#b2832a', hairLight: '#fff1b8', eyes: '#3d8f6c', brow: '#a8833f', accent: '#ff6fb0' },
+  { id: 'majda', name: 'Majda', girl: true, num: 10, skin: '#f4d1b6', hair: 'long', hairColor: '#6d3f22', hairDark: '#3d2211', hairLight: '#a86f43', eyes: '#6a4426', brow: '#4a2a16', accent: '#ffd23f' },
+  { id: 'marsal', name: 'Marsal', num: 9, skin: '#f3cdac', hair: 'quiff', hairColor: '#ebc65f', hairDark: '#a98326', hairLight: '#fff2b0', eyes: '#3a78d6', brow: '#b08b3c' },
+  { id: 'durcado', name: 'Durcado', num: 11, skin: '#f1c6a6', hair: 'wavy', hairColor: '#8e5d34', hairDark: '#4f321b', hairLight: '#d09a5c', eyes: '#6f93ad', brow: '#5a3a20' },
 ];
 const charById = (id) => ROSTER.find((c) => c.id === id) || ROSTER[0];
 

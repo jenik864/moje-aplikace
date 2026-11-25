@@ -17,10 +17,10 @@ Ve 2 v 2 hrají dva pevné týmy:
 
 | Tým | Hráči |
 | --- | --- |
-| Nelcis & Majda (růžoví) | Nelcis (cop), Majda (dlouhé vlasy s mašlí) |
-| Marsal & Durcado (modří) | Marsal (patka), Durcado (kšiltovka dozadu) |
+| Nelcis & Majda (růžoví) | Nelcis (blond cop), Majda (dlouhé hnědé vlasy s mašlí) |
+| Marsal & Durcado (modří) | Marsal (blond patka), Durcado (vlnité hnědé vlasy) |
 
-V 1 v 1 si každý vybere libovolnou z deseti postav (k těm čtyřem ještě Ferda, Kuba, Olda, Bóža, Mates a Tonda). Postavy mají tělo s dresem a číslem, trenky, ruce a kopačky, běhají, při radosti mávají a po inkasovaném gólu se mračí.
+V 1 v 1 si každý vybere jednu z těchto čtyř postav. Postavy mají tělo s dresem a číslem, trenky, ruce a kopačky, běhají, při radosti mávají a po inkasovaném gólu se mračí.
 
 ## Lobby (výběr hráčů)
 
