@@ -876,9 +876,23 @@ const Renderer = {
       gr.addColorStop(1, 'rgba(47,128,255,.55)');
       ctx.fillStyle = gr;
       ctx.fillRect(x, y, w, h);
-      ctx.font = `38px ${FONT_D}`;
-      ctx.fillStyle = '#ffc93c';
-      ctx.fillText('FIFA67', cx, cy + 2 + Math.sin(now * 0.003) * 3);
+      // střídá se logo hry a sponzoři
+      const slot = Math.floor(now / 3500) % (SPONSORS.length + 1);
+      if (slot === 0) {
+        ctx.font = `38px ${FONT_D}`;
+        ctx.fillStyle = '#ffc93c';
+        ctx.fillText('FIFA67', cx, cy + 2 + Math.sin(now * 0.003) * 3);
+      } else {
+        const sp = SPONSORS[slot - 1];
+        ctx.fillStyle = sp.bg;
+        ctx.fillRect(x, y, w, h);
+        ctx.font = `800 14px ${FONT_U}`;
+        ctx.fillStyle = 'rgba(255,255,255,.7)';
+        ctx.fillText('PARTNER HRY', cx, y + 22);
+        ctx.font = `32px ${FONT_D}`;
+        ctx.fillStyle = sp.fg;
+        ctx.fillText(sp.t, cx, cy + 12);
+      }
     } else if (st === 'goal' && g.goalTeam >= 0) {
       const T = m.teams[g.goalTeam];
       ctx.fillStyle = Math.floor(now / 170) % 2 ? T.color : T.dark;
@@ -888,6 +902,21 @@ const Renderer = {
       ctx.font = `48px ${FONT_D}`;
       ctx.fillStyle = '#ffffff';
       ctx.fillText('GÓL!', cx + 34, cy + 2);
+    } else if (st === 'intro' && g.stateT < 1.15) {
+      // úvod: zápas přinášejí sponzoři
+      ctx.fillStyle = '#0b1220';
+      ctx.fillRect(x, y, w, h);
+      ctx.font = `800 14px ${FONT_U}`;
+      ctx.fillStyle = '#ffc93c';
+      ctx.fillText('ZÁPAS VÁM PŘINÁŠÍ', cx, y + 17);
+      SPONSORS.forEach((sp, k) => {
+        const yy = y + 42 + k * 29;
+        ctx.fillStyle = sp.bg;
+        ctx.fillRect(x + 14, yy - 13, w - 28, 26);
+        ctx.font = `21px ${FONT_D}`;
+        ctx.fillStyle = sp.fg;
+        ctx.fillText(sp.t, cx, yy + 1);
+      });
     } else if (st === 'intro') {
       ctx.fillStyle = m.teams[0].dark;
       ctx.beginPath();
@@ -991,7 +1020,10 @@ const Renderer = {
         const tt = now + i * 140;
         const idx = Math.floor(tt / cycle), t = tt % cycle;
         const roll = t < 380 ? easeInOutQuad(t / 380) : 1;
-        const cur = ADS[(i + idx) % ADS.length], prev = ADS[(i + idx - 1 + ADS.length * 9) % ADS.length];
+        // každá druhá tabule patří sponzorům
+        const list = i % 2 === 0 ? SPONSORS : ADS;
+        const k = i % 2 === 0 ? i / 2 : (i - 1) / 2;
+        const cur = list[(k + idx) % list.length], prev = list[(k + idx - 1 + list.length * 9) % list.length];
         ctx.font = `800 22px ${FONT_U}`;
         if (roll < 1) {
           this.boardAd(ctx, prev, bx, y - roll * h, bw, h);
@@ -1011,8 +1043,54 @@ const Renderer = {
   boardAd(ctx, a, x, y, w, h) {
     ctx.fillStyle = a.bg;
     ctx.fillRect(x, y, w, h);
+    if (a.icon) {
+      // sponzor: větší písmo a ikonka
+      ctx.save();
+      ctx.font = `25px ${FONT_D}`;
+      const tw = ctx.measureText(a.t).width, iw = 24, total = tw + iw + 8;
+      const x0 = x + w / 2 - total / 2;
+      this.sponsorIcon(ctx, a.icon, x0 + iw / 2, y + h / 2, 11);
+      ctx.fillStyle = a.fg;
+      ctx.textAlign = 'left';
+      ctx.fillText(a.t, x0 + iw + 8, y + h / 2 + 2);
+      ctx.restore();
+      return;
+    }
     ctx.fillStyle = a.fg;
     ctx.fillText(a.t, x + w / 2, y + h / 2 + 1);
+  },
+
+  // Ikonka sponzora: chilli paprička nebo hvězda.
+  sponsorIcon(ctx, kind, x, y, r) {
+    ctx.save();
+    ctx.translate(x, y);
+    if (kind === 'chili') {
+      ctx.rotate(-0.5);
+      ctx.fillStyle = '#e8261c';
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.2, -r * 0.55);
+      ctx.quadraticCurveTo(r * 0.9, -r * 0.6, r * 0.55, r * 0.35);
+      ctx.quadraticCurveTo(r * 0.2, r * 1.1, -r * 0.9, r * 1.05);
+      ctx.quadraticCurveTo(-r * 0.1, r * 0.55, -r * 0.45, -r * 0.2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.45)';
+      ctx.beginPath();
+      ctx.ellipse(r * 0.15, -r * 0.2, r * 0.25, r * 0.1, -0.4, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = '#3fae3a';
+      ctx.lineWidth = r * 0.28;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.1, -r * 0.5);
+      ctx.quadraticCurveTo(-r * 0.2, -r * 1.0, r * 0.25, -r * 1.1);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#ffd23f';
+      star(ctx, 0, 0, r, r * 0.45);
+      ctx.fill();
+    }
+    ctx.restore();
   },
 
   // Míč v síti ji rozvlní.

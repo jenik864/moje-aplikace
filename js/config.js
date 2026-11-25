@@ -117,6 +117,12 @@ const DUO_SHOUTS = [
   ['MÁ VO2max 67'],
 ];
 
+// Sponzoři (tabule kolem hřiště, velká obrazovka, menu).
+const SPONSORS = [
+  { t: 'HOT PEPPERS', bg: '#1b0f0c', fg: '#ff5a2a', icon: 'chili' },
+  { t: 'RADEGAST', bg: '#14532d', fg: '#ffffff', icon: 'star' },
+];
+
 // Poháry a ligy (postup se ukládá v zařízení).
 const RANKS = [
   { name: 'Nováček', min: 0, color: '#9fb0c7' },

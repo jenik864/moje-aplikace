@@ -37,6 +37,10 @@ V 1 v 1 si každý vybere libovolnou z deseti postav. Dres má barvu její dvoji
 
 Scény jdou přeskočit tlačítkem *Přeskočit* (nebo klávesou Enter). Online je ovládá hostitel a kamarádi je vidí zároveň s ním.
 
+## Sponzoři
+
+Partneři hry HOT PEPPERS a RADEGAST jsou na každé druhé reklamní tabuli kolem hřiště (s ikonkou chilli papričky a hvězdy), střídají se na velké obrazovce v menu, na začátku úvodu zápasu je na obrazovce „Zápas vám přináší HOT PEPPERS, RADEGAST“, poločas přináší HOT PEPPERS a hráče zápasu RADEGAST. V menu jsou pod tlačítky. Jsou to jen nápisy ve stylu hry, bez log značek.
+
 ## Čas a poločasy
 
 Zápas má dva poločasy po 45 sekundách. Hodiny ukazují čas jako ve fotbale: první poločas 0:00 → 45:00, druhý 45:00 → 90:00 (1 sekunda hry = 1 minuta na hodinách). Pod hodinami je, který poločas se hraje. O poločase rozhodčí zapíská, hráči se vrátí na místa a ukáže se přestávka se skóre, rozhodčím a statistikami, druhý poločas začne tlačítkem *Druhý poločas* (online ho spouští hostitel). Při remíze po 90. minutě se hraje na zlatý gól.
