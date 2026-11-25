@@ -892,6 +892,10 @@ kbd {
   border: 2px solid rgba(0, 0, 0, 0.4);
 }
 .tbtn.super svg { position: relative; opacity: 0.45; }
+/* erb JENDA PRIME: větší a barevný i před nabitím (jen trochu potlačený) */
+.tbtn svg.crest { width: 66%; height: 66%; stroke: none; }
+.tbtn.super svg.crest { opacity: 0.6; filter: saturate(0.5); }
+.tbtn.super.full svg.crest { opacity: 1; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45)); }
 .tbtn.super.full::before { background: radial-gradient(circle at 35% 28%, #ffffff, var(--sc) 55%, #3b2a80); }
 .tbtn.super.full svg { opacity: 1; color: #fff; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.4)); }
 .tbtn.super.full { animation: super-glow 0.9s ease-in-out infinite; }
