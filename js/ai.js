@@ -93,23 +93,23 @@ class AIBrain {
     let ix = pred[pred.length - 1].x;
     for (let i = 0; i < pred.length; i++) {
       const q = pred[i];
-      if (q.y < GROUND_Y - 210) continue;
-      if (Math.abs(q.x - dir * 30 - p.x) <= speed * ((i + 1) * PDT + 0.05)) {
+      if (q.y < GROUND_Y - 250) continue;
+      if (Math.abs(q.x - dir * 30 * PS - p.x) <= speed * ((i + 1) * PDT + 0.05)) {
         ix = q.x;
         break;
       }
     }
-    let tx = ix - dir * 30 + this.noise; // stát kousek za míčem
+    let tx = ix - dir * 30 * PS + this.noise; // stát kousek za míčem
     let jump = false, kick = false;
 
     // 2) Míč je za mnou (mezi mnou a mou brankou) – oběhnout, nízký míč přeskočit.
     //    Když za míč nejde (je u stěny), jít přímo na něj a hlavičkovat.
     const rel = (b.x - p.x) * dir;
     if (rel < -R * 0.4) {
-      const behind = b.x - dir * (R + br + 46);
+      const behind = b.x - dir * (R + br + 46 * PS);
       if (behind > R && behind < W - R) {
         tx = behind;
-        if (p.onGround && b.y > GROUND_Y - 95 && Math.abs(b.x - p.x) < R + 80 && Math.random() < L.jump) jump = true;
+        if (p.onGround && b.y > GROUND_Y - 95 * PS && Math.abs(b.x - p.x) < R + 80 && Math.random() < L.jump) jump = true;
       } else {
         tx = b.x;
         if (p.onGround && Math.abs(b.x - p.x) < R + 30 && b.y < p.y) jump = true;
@@ -176,10 +176,10 @@ class AIBrain {
 
     // 7) Přetlačovaná: soupeř těsně přede mnou a míč dole mezi námi – vyskočit
     //    a uvolnit ho (jinak se míč jen odráží mezi hlavami).
-    if (!jump && p.onGround && b.y > GROUND_Y - 80 && (b.x - p.x) * dir > 0) {
+    if (!jump && p.onGround && b.y > GROUND_Y - 80 * PS && (b.x - p.x) * dir > 0) {
       for (const q of opps) {
         const gap = (q.x - p.x) * dir;
-        if (gap > 0 && gap < 2 * R + 14 && q.onGround && Math.abs(b.x - (p.x + q.x) / 2) < 45) {
+        if (gap > 0 && gap < 2 * R + 14 && q.onGround && Math.abs(b.x - (p.x + q.x) / 2) < 45 * PS) {
           jump = Math.random() < L.jump * 0.35;
           break;
         }
@@ -187,8 +187,8 @@ class AIBrain {
     }
 
     // 8) Kop: míč je (nebo za okamžik bude) v dosahu kopačky.
-    const zx = p.x + dir * (R + 4), zy = p.y + R + PHYS.footH - 24;
-    const inZone = (q) => (q.x - p.x) * dir > 0 && Math.hypot(q.x - zx, q.y - zy) < 46;
+    const zx = p.x + dir * (R + 4), zy = p.y + R + PHYS.footH - 24 * PS;
+    const inZone = (q) => (q.x - p.x) * dir > 0 && Math.hypot(q.x - zx, q.y - zy) < 46 * PS;
     if ((inZone(b) || inZone(predAt(pred, 0.06))) && Math.random() < L.kick) kick = true;
 
     // superstřela, když je nabitá a branka soupeře není daleko

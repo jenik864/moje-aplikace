@@ -5,6 +5,7 @@ const STORE_LOBBY = 'hlavouni.lobby';
 const STORE_MUTE = 'hlavouni.ztlumeno';
 const STORE_NAME = 'hlavouni.jmeno';
 const STORE_SWAP = 'hlavouni.prohodit';
+const STORE_PROFILE = 'hlavouni.profil';
 
 const store = {
   get(key, fallback) {
@@ -17,6 +18,20 @@ const store = {
   },
   set(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* nevadí */ }
+  },
+};
+
+// Poháry a statistiky hráče na tomto zařízení.
+const Profile = {
+  get() {
+    const p = store.get(STORE_PROFILE, null);
+    const d = { trophies: 0, played: 0, wins: 0, goals: 0, supers: 0, knocks: 0, streak: 0, bestStreak: 0 };
+    if (!p || typeof p !== 'object') return d;
+    for (const k in d) d[k] = Math.max(0, Math.floor(Number(p[k]) || 0));
+    return d;
+  },
+  save(p) {
+    store.set(STORE_PROFILE, p);
   },
 };
 
@@ -386,6 +401,10 @@ const Game = {
     this.gameT = 0;
     this.evq = [];
     this.t0 = performance.now();
+    this.stats = setup.players.map(() => ({ goals: 0, knocks: 0, supers: 0 }));
+    this.lateShout = false;
+    this.nextShout = 4;
+    this.lastShout = 0;
     this.startIntro();
     Effects.clear();
     UI.show(null);
@@ -477,7 +496,12 @@ const Game = {
       case 'goal':
         this.goalTeam = a[0];
         this.scorerIdx = a[1] === undefined ? -1 : a[1];
+        if (live && !a[2]) this.stat(a[1], 'goals');
         if (m) Effects.confetti(a[0], m.teams[a[0]]);
+        if (m && live) {
+          const T = m.teams[a[0]];
+          for (const x of [330, W - 330]) Effects.pyro(x, [T.color, T.light, '#ffe14d', '#ffffff']);
+        }
         Renderer.netHit(a[0] === 0 ? 1 : 0, m ? m.ball.y : 540, 13);
         if (live) {
           Sound.goal();
@@ -504,8 +528,10 @@ const Game = {
       case 'super': {
         const sp = m && m.players[a[3]];
         const col = sp ? superColor(sp.look.id) : '#ffc93c';
+        if (live) this.stat(a[3], 'supers');
         Effects.rings.push({ x: a[0], y: a[1], t: 0, dur: 0.45, r0: 10, r1: 90, rgb: hexRgb(col) });
         Effects.spark(a[0], a[1]);
+        if (live) Effects.pop('SUPER!', a[0], a[1] - 70, col, 40);
         if (live) {
           Sound.superShot();
           Effects.shake(10);
@@ -515,11 +541,52 @@ const Game = {
       case 'knock':
         Effects.puff(a[0], a[1]);
         Effects.spark(a[0], a[1]);
+        Effects.rings.push({ x: a[0], y: a[1], t: 0, dur: 0.4, r0: 20, r1: 120, rgb: '255,225,77' });
+        if (live) this.stat(a[2], 'knocks');
         if (live) {
+          Effects.pop(pick(['BUM!', 'PRÁSK!', 'BAC!']), a[0], a[1] - 90, '#ff4d4d', 50);
           Sound.knock();
-          Effects.shake(8);
+          Effects.shake(12);
         }
         break;
+      case 'thud':
+        Effects.dust(a[0]);
+        Effects.grass(a[0], 10);
+        if (live) {
+          Sound.thud();
+          Effects.shake(5);
+        }
+        break;
+      case 'pyro':
+        if (m) {
+          for (let side = 0; side < 2; side++) {
+            const T = m.teams[side], cols = [T.color, T.light, '#ffe14d', '#ffffff'];
+            const x0 = side === 0 ? GOAL_W + 60 : W - GOAL_W - 60;
+            Effects.pyro(x0, cols);
+            Effects.pyro(side === 0 ? 470 : W - 470, cols);
+          }
+        }
+        if (live) {
+          Sound.pyro();
+          Effects.shake(4);
+        }
+        break;
+      case 'shout': {
+        const team = a[1] === 1 ? 1 : 0;
+        const col = m ? m.teams[team].color : '#ffc93c';
+        const c = this.cam, v = Renderer.view;
+        const hw = (v.x1 - v.x0) / (2 * c.z), hh = (v.y1 - v.y0) / (2 * c.z);
+        Effects.shout(String(a[0] || '').slice(0, 30), team, col, { x0: c.x - hw, x1: c.x + hw, y0: c.y - hh, y1: c.y + hh });
+        if (live) Sound.blip();
+        break;
+      }
+      case 'chant':
+        if (live) Sound.chant();
+        break;
+      case 'ooh':
+        if (live) Sound.ooh();
+        break;
+
       case 'whistle':
         if (live) Sound.whistle(a[0]);
         break;
@@ -539,12 +606,20 @@ const Game = {
         break;
       case 'head':
         this.fx('head', d.x, d.y, Math.min(1, d.impact / 700));
+        if (this.state === 'play' && d.impact > 500 && Math.random() < 0.25 && this.gameT - (this.lastShout || 0) > 2.5) {
+          const b = this.match.ball;
+          this.shout('head', b.lastTouch ? b.lastTouch.team : 0, b.lastTouch);
+        }
         break;
       case 'bounce':
         this.fx('bounce', d.x, Math.min(1, d.impact / 900));
         break;
       case 'post':
         this.fx('post', d.x, d.y);
+        if (this.state === 'play' && this.gameT - (this.lastShout || 0) > 1) {
+          this.fx('ooh');
+          this.shout('post', this.ballSide());
+        }
         break;
       case 'swing':
         this.fx('swing');
@@ -563,9 +638,19 @@ const Game = {
         break;
       case 'super':
         this.fx('super', d.x, d.y, d.dir, d.idx);
+        if (this.state === 'play' && Math.random() < 0.6) {
+          const p = this.match.players[d.idx];
+          if (p) this.shout('super', p.team, p);
+        }
         break;
-      case 'knock':
-        this.fx('knock', d.x, d.y);
+      case 'knock': {
+        const b = this.match.ball, by = this.match.players[b.superBy];
+        this.fx('knock', d.x, d.y, by ? b.superBy : -1);
+        if (this.state === 'play') this.shout('knock', by ? by.team : 0, by);
+        break;
+      }
+      case 'thud':
+        this.fx('thud', d.x, d.y);
         break;
     }
   },
@@ -583,11 +668,16 @@ const Game = {
     let sub = '';
     if (s) {
       const who = s.isHuman && s.label && s.label !== s.look.name ? `${s.look.name} (${s.label})` : s.look.name;
-      sub = d.own ? `Vlastní gól: ${who}` : `Skóruje ${who}`;
+      const how = d.how === 'super' ? ' superstřelou' : d.how === 'head' ? ' hlavou' : '';
+      sub = d.own ? `Vlastní gól: ${who}` : `Skóruje ${who}${how}`;
     }
+    this.shout('goal', d.team, s && !d.own ? s : null);
+    setTimeout(() => {
+      if (this.match && this.state === 'goal') this.shout(Math.random() < 0.5 ? 'goal' : 'sad', Math.random() < 0.5 ? d.team : 1 - d.team);
+    }, 700);
     this.showMsg('GÓL!', sub, 2.5, this.match.teams[d.team].color, 150);
     this.scorePop[d.team] = performance.now();
-    this.fx('goal', d.team, d.scorerIdx);
+    this.fx('goal', d.team, d.scorerIdx, d.own ? 1 : 0);
   },
 
   timeUp() {
@@ -608,8 +698,8 @@ const Game = {
     // ceremoniál: vítězové doprostřed, poražení ke své brance
     const win = m.celebrate;
     const wins = m.players.filter((p) => p.team === win), loss = m.players.filter((p) => p.team !== win);
-    wins.forEach((p, k) => { p.cerX = W / 2 + (k - (wins.length - 1) / 2) * 120; });
-    loss.forEach((p, k) => { p.cerX = p.team === 0 ? 180 + k * 110 : W - 180 - k * 110; });
+    wins.forEach((p, k) => { p.cerX = W / 2 + (k - (wins.length - 1) / 2) * 140; });
+    loss.forEach((p, k) => { p.cerX = p.team === 0 ? 200 + k * 125 : W - 200 - k * 125; });
     this.trophyShown = false;
     this.state = 'over';
     this.stateT = 0;
@@ -734,6 +824,18 @@ const Game = {
         }
         const nearGoal = Math.min(m.ball.x, W - m.ball.x) < 260;
         Sound.crowdLevel(nearGoal ? 0.1 : 0.05);
+        // tribuny čas od času povzbuzují
+        this.nextShout -= dt;
+        if (this.nextShout <= 0) {
+          this.nextShout = rand(5, 8.5);
+          const lead = m.score[0] === m.score[1] ? (Math.random() < 0.5 ? 0 : 1) : m.score[0] < m.score[1] ? 0 : 1;
+          this.shout('chant', Math.random() < 0.65 ? lead : 1 - lead);
+          if (Math.random() < 0.5) this.fx('chant');
+        }
+        if (!this.golden && !this.lateShout && this.timeLeft < 10.5) {
+          this.lateShout = true;
+          this.shout('late', m.score[0] <= m.score[1] ? 0 : 1);
+        }
         break;
       }
 
@@ -805,7 +907,110 @@ const Game = {
     this.cam.y = JUMBO.y + JUMBO.h / 2 + 30;
     this.cam.z = 1.75;
     this.cam.bars = 1;
+    this.introTalk = this.makeTalk(this.setup);
+    this.introCues = 0;
     this.fx('whoosh');
+  },
+
+  // Kdo z každého týmu před zápasem promluví a co řekne (stejné u všech hráčů online).
+  makeTalk(setup) {
+    const rng = mulberry32(seedOf(String(setup.id || 'x')));
+    const out = [];
+    for (let team = 0; team < 2; team++) {
+      const idx = setup.players.map((sp, i) => (sp.team === team ? i : -1)).filter((i) => i >= 0);
+      if (!idx.length) continue;
+      const i = idx[Math.floor(rng() * idx.length)];
+      const id = setup.players[i].char;
+      const pool = (QUIPS[id] || []).concat(rng() < 0.3 ? QUIPS_ANY : []);
+      out.push({ idx: i, at: TALK_AT[team], text: pick2(rng, pool.length ? pool : QUIPS_ANY) });
+    }
+    return out;
+  },
+
+  // Pokřik z tribuny (hostitel ho rozešle i kamarádům).
+  shout(kind, team, who) {
+    if (!this.match || this.state === 'menu') return;
+    const list = SHOUTS[kind];
+    if (!list) return;
+    const T = this.match.teams[team];
+    const ps = this.match.players.filter((p) => p.team === team);
+    const p = who || pick(ps);
+    let text = pick(list);
+    text = text.replace(/\{V\}/g, p ? VOCATIVE[p.look.id] || p.look.name : 'kluci');
+    text = text.replace(/\{T\}/g, p ? p.look.name.toUpperCase() : T.name);
+    this.lastShout = this.gameT;
+    this.fx('shout', text.slice(0, 30), team);
+  },
+
+  // Na které půlce je míč (fanoušci toho týmu reagují).
+  ballSide() {
+    return this.match && this.match.ball.x > W / 2 ? 0 : 1;
+  },
+
+  stat(idx, key) {
+    const st = this.stats && this.stats[idx];
+    if (st) st[key]++;
+  },
+
+  // Hráč zápasu: nejvíc gólů, pak odstřelení a superstřely (vítězný tým má přednost).
+  computeMvp() {
+    const m = this.match;
+    if (!m || !this.stats) return null;
+    const win = m.score[0] === m.score[1] ? -1 : m.score[0] > m.score[1] ? 0 : 1;
+    let best = -1, bestScore = -1;
+    m.players.forEach((p, i) => {
+      const st = this.stats[i];
+      if (!st) return;
+      const sc = st.goals * 10 + st.knocks * 3 + st.supers + (p.team === win ? 5 : 0);
+      if (sc > bestScore) {
+        bestScore = sc;
+        best = i;
+      }
+    });
+    return best < 0 ? null : Object.assign({ idx: best, p: m.players[best] }, this.stats[best]);
+  },
+
+  // Poháry za zápas pro hráče na tomto zařízení (jednou za zápas).
+  award() {
+    const m = this.match, setup = this.setup;
+    if (!m || !setup) return null;
+    if (this.awardedId === setup.id) return this.lastReward;
+    const me = this.myPlayer();
+    if (!me || m.score[0] === m.score[1]) return null;
+    this.awardedId = setup.id;
+    const idx = m.players.indexOf(me);
+    const st = (this.stats && this.stats[idx]) || { goals: 0, knocks: 0, supers: 0 };
+    const win = (m.score[0] > m.score[1] ? 0 : 1) === me.team;
+    const prof = Profile.get();
+    const before = prof.trophies;
+    const mult = this.mode === 'local' ? { easy: 0.5, medium: 1, hard: 1.5 }[setup.level] || 1 : 1.25;
+    const parts = [];
+    let delta;
+    if (win) {
+      const base = Math.round(8 * mult);
+      const big = Math.min(3, Math.abs(m.score[0] - m.score[1]) - 1);
+      const goals = Math.min(3, st.goals);
+      delta = base + big + goals;
+      parts.push(`výhra +${base}`);
+      if (big > 0) parts.push(`rozdíl +${big}`);
+      if (goals > 0) parts.push(`tvoje góly +${goals}`);
+    } else {
+      const lose = this.mode === 'local' && setup.level === 'easy' ? 1 : 3;
+      const goals = Math.min(2, st.goals);
+      delta = -Math.min(before, Math.max(0, lose - goals));
+      parts.push(goals ? `prohra −${lose}, tvoje góly +${goals}` : `prohra −${lose}`);
+    }
+    prof.trophies = Math.max(0, before + delta);
+    prof.played++;
+    if (win) prof.wins++;
+    prof.goals += st.goals;
+    prof.supers += st.supers;
+    prof.knocks += st.knocks;
+    prof.streak = win ? prof.streak + 1 : 0;
+    prof.bestStreak = Math.max(prof.bestStreak, prof.streak);
+    Profile.save(prof);
+    this.lastReward = { delta, before, after: prof.trophies, win, parts, streak: prof.streak };
+    return this.lastReward;
   },
 
   // Hráči vybíhají na hřiště.
@@ -820,12 +1025,23 @@ const Game = {
       p.vy = 0;
       p.onGround = true;
       p.runPhase += p.vx * p.dir * dt * 0.05;
+      p.mood = 0;
     }
+    const t = this.stateT;
+    // mluvčí při hlášce mává rukama
+    for (const k of this.introTalk || []) {
+      if (t >= k.at && t < k.at + TALK_DUR && m.players[k.idx]) m.players[k.idx].mood = 1;
+    }
+    // ohňostroj a pokřiky tribun
+    const cues = [[POSTER_END, () => this.fx('pyro')], [4.4, () => this.shout('chant', 0)], [5.9, () => this.shout('chant', 1)], [6.7, () => this.shout('chant', 0)]];
+    while (this.introCues < cues.length && t >= cues[this.introCues][0]) cues[this.introCues++][1]();
   },
 
   endIntro() {
     const m = this.match;
     for (const p of m.players) p.place(p.homeX);
+    this.introCues = 99;
+    this.nextShout = 3;
     this.state = 'countdown';
     this.stateT = 0;
     this.countShown = 0;
@@ -836,8 +1052,8 @@ const Game = {
     const m = this.match, b = m.ball;
     this.rec.push({
       t: this.gameT,
-      b: [b.x, b.y, b.rot],
-      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy]),
+      b: [b.x, b.y, b.rot, b.superT, b.superBy],
+      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin]),
     });
     while (this.rec.length && this.rec[0].t < this.gameT - 5) this.rec.shift();
   },
@@ -876,12 +1092,16 @@ const Game = {
       p.onGround = !!b[3];
       p.vx = b[4];
       p.vy = b[5];
+      p.stunT = b[6] || 0;
+      p.spin = b[7] && a[7] && Math.sign(a[7]) === Math.sign(b[7]) ? lerp(a[7], b[7], k) : b[7] || 0;
       p.mood = 0;
       if (p.onGround) p.runPhase += p.vx * p.dir * 0.016 * 0.05 * REPLAY_SPEED;
     });
     m.ball.x = lerp(A.b[0], B.b[0], k);
     m.ball.y = lerp(A.b[1], B.b[1], k);
     m.ball.rot = lerp(A.b[2], B.b[2], k);
+    m.ball.superT = B.b[3] || 0;
+    m.ball.superBy = B.b[4] === undefined ? -1 : B.b[4];
     m.ball.vx = (B.b[0] - A.b[0]) / Math.max(0.001, B.t - A.t);
     m.ball.vy = (B.b[1] - A.b[1]) / Math.max(0.001, B.t - A.t);
   },
@@ -942,12 +1162,22 @@ const Game = {
       }
       if (st === 'intro') {
         bars = 1;
+        speed = 2.2;
         if (t < 1.0) {
           tx = JUMBO.x + JUMBO.w / 2;
           ty = JUMBO.y + JUMBO.h / 2 + 30;
           tz = 1.75;
+        } else if (t >= POSTER_END - 0.2 && t < INTRO_DUR - 0.5) {
+          // záběr na hráče, který zrovna hecuje soupeře
+          const k = (this.introTalk || []).find((q) => t < q.at + TALK_DUR);
+          const p = k && m.players[k.idx];
+          if (p) {
+            tx = p.x + p.dir * 70;
+            ty = p.y - 30;
+            tz = 1.75;
+            speed = 3;
+          }
         }
-        speed = 2.2;
       } else if (st === 'goal' && this.goalTeam >= 0 && t < 2.0) {
         tx = this.goalTeam === 0 ? W - 260 : 260;
         ty = 470;
@@ -1002,7 +1232,7 @@ const Game = {
       gd: this.golden ? 1 : 0,
       sc: [m.score[0], m.score[1]],
       b: [r(b.x), r(b.y), r(b.rot * 100), r(b.superT * 100), b.superBy],
-      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100)]),
+      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100)]),
       m: msg ? [msg.id, msg.text, msg.sub || '', msg.color, msg.size, Math.round(msg.dur * 10)] : 0,
       e: this.evq,
       rs: this.resultShown ? 1 : 0,
@@ -1065,6 +1295,8 @@ const Game = {
     this.resultShown = false;
     this.scorePop = [0, 0];
     this.timeLeft = setup.minutes * 60;
+    this.introTalk = this.makeTalk(setup);
+    this.stats = setup.players.map(() => ({ goals: 0, knocks: 0, supers: 0 }));
     Input.clear();
     Effects.clear();
     UI.show(null);
@@ -1167,6 +1399,9 @@ const Game = {
       p.vx = pb[5] * 10;
       p.vy = pb[6] * 10;
       p.superCharge = (Number(pb[7]) || 0) / 100;
+      p.stunT = (Number(pb[8]) || 0) / 100;
+      const sa = Number(pa[9]) || 0, sb = Number(pb[9]) || 0;
+      p.spin = sb === 0 || Math.sign(sa) !== Math.sign(sb) ? sb / 100 : lerp(sa, sb, k) / 100;
       if (p.onGround) p.runPhase += p.vx * p.dir * dt * 0.05;
       p.blinkT -= dt;
       if (p.blinkT <= 0) {
@@ -1250,6 +1485,7 @@ const UI = {
       resKicker: $('res-kicker'), resTitle: $('res-title'), resA: $('res-a'), resB: $('res-b'), resSub: $('res-sub'),
       resMain: $('btn-res-main'), resSecond: $('btn-res-second'), resThird: $('btn-res-third'), resWait: $('res-wait'),
       pauseSecond: $('btn-restart'), pauseThird: $('btn-quit'),
+      profile: $('profile'), chip: $('profile-chip'),
     };
     const click = (id, fn) => $(id).addEventListener('click', () => {
       Sound.init();
@@ -1264,6 +1500,8 @@ const UI = {
       Game.toOnline();
     });
     click('btn-swap', () => this.setSwap(!Touch.swap));
+    click('profile-chip', () => this.openProfile());
+    click('btn-profile-close', () => this.show('home'));
     click('btn-swap2', () => this.setSwap(!Touch.swap));
     const fs = $('btn-fs');
     const standalone = window.matchMedia && window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
@@ -1319,7 +1557,121 @@ const UI = {
     $('public-url').textContent = PUBLIC_URL.replace(/^https:\/\//, '').replace(/\/$/, '');
     this.setMuted(store.get(STORE_MUTE, false) === true);
     this.renderHelp();
+    this.renderProfile();
     this.orient();
+  },
+
+  // šířka ikon v rohu (podle ní se odsadí horní lišta lobby)
+  measureHud() {
+    const hud = document.getElementById('hud');
+    if (hud) document.documentElement.style.setProperty('--hud-w', `${hud.offsetWidth}px`);
+  },
+
+  setEmblem(el, rank) {
+    if (el) el.style.setProperty('--rank', rank.color);
+  },
+
+  // Odznak ligy a poháry v rohu menu.
+  renderProfile() {
+    const prof = Profile.get(), r = rankOf(prof.trophies);
+    const $ = (id) => document.getElementById(id);
+    $('pc-tro').textContent = prof.trophies;
+    $('pc-rank').textContent = r.rank.name;
+    $('pc-bar').style.width = `${Math.round(r.prog * 100)}%`;
+    this.setEmblem($('pc-emblem'), r.rank);
+  },
+
+  openProfile() {
+    const prof = Profile.get(), r = rankOf(prof.trophies);
+    const $ = (id) => document.getElementById(id);
+    $('pf-tro').textContent = prof.trophies;
+    $('pf-rank').textContent = r.rank.name;
+    $('pf-rank').style.color = r.rank.color;
+    $('pf-bar').style.width = `${Math.round(r.prog * 100)}%`;
+    $('pf-next').textContent = r.next ? `Do ligy ${r.next.name} chybí ${r.next.min - prof.trophies} pohárů` : 'Nejvyšší liga! Jsi legenda.';
+    this.setEmblem($('pf-emblem'), r.rank);
+    const stats = [
+      ['Zápasy', prof.played], ['Výhry', prof.wins], ['Góly', prof.goals],
+      ['Superstřely', prof.supers], ['Odstřelení', prof.knocks], ['Nejdelší série', prof.bestStreak],
+    ];
+    const box = $('pf-stats');
+    box.textContent = '';
+    for (const [k, v] of stats) {
+      const d = document.createElement('div');
+      d.className = 'pf-stat';
+      const b = document.createElement('b');
+      b.textContent = v;
+      const sp = document.createElement('span');
+      sp.textContent = k;
+      d.append(b, sp);
+      box.appendChild(d);
+    }
+    const lad = $('pf-ladder');
+    lad.textContent = '';
+    RANKS.forEach((rk, i) => {
+      const d = document.createElement('div');
+      d.className = 'pf-step' + (i === r.i ? ' now' : i > r.i ? ' locked' : '');
+      const em = document.getElementById('pf-emblem').cloneNode(true);
+      em.removeAttribute('id');
+      em.className = 'rank-emblem';
+      this.setEmblem(em, rk);
+      const n = document.createElement('span');
+      n.textContent = rk.name;
+      const t = document.createElement('small');
+      t.textContent = rk.min;
+      d.append(em, n, t);
+      lad.appendChild(d);
+    });
+    this.show('profile');
+  },
+
+  // Hráč zápasu a poháry na obrazovce výsledku.
+  renderRewards() {
+    const $ = (id) => document.getElementById(id);
+    const mvp = Game.computeMvp(), m = Game.match;
+    const mvpEl = $('res-mvp');
+    mvpEl.hidden = !mvp;
+    if (mvp) {
+      const p = mvp.p, T = m.teams[p.team];
+      const who = p.label && p.label !== 'CPU' && p.label !== p.look.name ? ` (${p.label})` : '';
+      $('res-mvp-name').textContent = p.look.name + who;
+      $('res-mvp-name').style.color = T.light;
+      const pl = (n, one, few, many) => `${n} ${n === 1 ? one : n >= 2 && n <= 4 ? few : many}`;
+      const bits = [];
+      if (mvp.goals) bits.push(pl(mvp.goals, 'gól', 'góly', 'gólů'));
+      if (mvp.knocks) bits.push(`${mvp.knocks} odstřelení`);
+      if (mvp.supers) bits.push(pl(mvp.supers, 'superstřela', 'superstřely', 'superstřel'));
+      $('res-mvp-stats').textContent = bits.length ? bits.join(' · ') : p.look.girl ? 'Bojovala celý zápas' : 'Bojoval celý zápas';
+      requestAnimationFrame(() => Renderer.portrait($('res-mvp-pic'), p.look.id, T, 1));
+    }
+    const rw = Game.award();
+    const card = $('res-reward');
+    card.hidden = !rw;
+    card.classList.remove('rankup');
+    if (!rw) return;
+    const r0 = rankOf(rw.before), r1 = rankOf(rw.after);
+    $('res-delta').textContent = (rw.delta >= 0 ? '+' : '−') + Math.abs(rw.delta);
+    $('res-delta').className = rw.delta >= 0 ? 'up' : 'down';
+    $('res-note').textContent = rw.parts.join(' · ') + (rw.streak >= 2 ? ` · ${rw.streak} výhry v řadě!` : '');
+    // načítání poháru po kouskách
+    const t0 = performance.now(), dur = 1300;
+    const step = (now) => {
+      const k = clamp((now - t0) / dur, 0, 1), e = easeOutQuad(k);
+      const v = Math.round(lerp(rw.before, rw.after, e));
+      const r = rankOf(v);
+      $('res-total').textContent = v;
+      $('res-rank').textContent = r.rank.name;
+      $('res-bar').style.width = `${Math.round(r.prog * 100)}%`;
+      this.setEmblem($('res-emblem'), r.rank);
+      if (k < 1) requestAnimationFrame(step);
+      else if (r1.i > r0.i) {
+        card.classList.add('rankup');
+        Sound.fanfare();
+        this.toast(`Nová liga: ${r1.rank.name}!`);
+      }
+    };
+    requestAnimationFrame(step);
+    this.renderProfile();
   },
 
   setMuted(v) {
@@ -1421,7 +1773,13 @@ const UI = {
   },
 
   show(name) {
-    for (const key of ['home', 'online', 'lobby', 'pause', 'result']) this.el[key].hidden = name !== key;
+    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile']) {
+      this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home');
+    }
+    this.el.chip.hidden = name !== 'home';
+    // u velkých tabulek schovat ikony v rohu, ať nic nepřekrývají
+    document.getElementById('app').classList.toggle('modal', name === 'result' || name === 'profile');
+    this.measureHud();
     this.el.pauseBtn.hidden = !(Game.screen === 'match' && Game.mode !== 'guest' && (Game.inMatch() || Game.state === 'paused'));
     if (name === 'pause') {
       this.el.pauseThird.textContent = Game.mode === 'host' ? 'Do lobby (i kamarádi)' : 'Výběr hráčů';
@@ -1468,6 +1826,7 @@ const UI = {
     this.el.resThird.hidden = guest;
     this.el.resThird.textContent = Game.mode === 'host' ? 'Ukončit online hru' : 'Hlavní menu';
     this.show('result');
+    this.renderRewards();
   },
 
   orient() {

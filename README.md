@@ -27,7 +27,8 @@ V 1 v 1 si každý vybere libovolnou z deseti postav. Dres má barvu její dvoji
 
 ## Filmové scény a stadion
 
-- **Úvod zápasu**: kamera sjede z velké obrazovky na hřiště, hráči vyběhnou a vyjedou plakáty obou týmů s VS.
+- **Úvod zápasu**: kamera sjede z velké obrazovky na hřiště, hráči vyběhnou a vyjedou plakáty obou týmů s VS. Pak vybuchne ohňostroj a z každého týmu jeden hráč v bublině hecuje soupeře (každá postava má své hlášky). Kamera se na něj přiblíží.
+- **Fanoušci**: během zápasu povzbuzují v bublinách na tribunách („Do toho, Šimšo!“, „NELCIS! NELCIS!“), tleskají do rytmu bubnu, při tyčce zklamaně zahučí a reagují na góly, superstřely i odstřelení.
 - **Gól**: kamera se přiblíží k brance, síť se zavlní, publikum vyskakuje, reklamní tabule i velká obrazovka blikají GÓL a ukazují střelce.
 - **Záznam gólu**: zpomalené opakování posledních vteřin se zoomem na míč.
 - **Konec zápasu**: vítězové doběhnou doprostřed, nad nimi vyjede zlatý pohár, poražení odejdou ke své brance.
@@ -59,11 +60,17 @@ Scény jdou přeskočit tlačítkem *Přeskočit* (nebo klávesou Enter). Online
 
 ### Superstřela
 
-Nabíjí se časem (asi 15 s) a každým kopem do míče. Nabitá superstřela vystřelí míč skoro dvakrát rychleji s ohnivou stopou v barvě postavy a soupeře, kterého trefí, odhodí. Když švih mine míč, nabití zůstane. Každá postava má zatím stejnou superstřelu, jen v jiné barvě. Vlastní superschopnosti pro jednotlivé hráče přijdou později. Počítač superstřelu používá taky.
+Nabíjí se časem (asi 15 s) a každým kopem do míče. Nabitá superstřela vystřelí míč skoro dvakrát rychleji s ohnivou stopou v barvě postavy. Soupeře, kterého trefí, odstřelí: s výbuchem „BUM!“ odletí točící se kus dál, po dopadu je chvíli omámený (spirálové oči, hvězdičky kolem hlavy) a nemůže hrát. Míč letí dál a může odstřelit i dalšího. Když švih mine míč, nabití zůstane. Každá postava má zatím stejnou superstřelu, jen v jiné barvě. Vlastní superschopnosti pro jednotlivé hráče přijdou později. Počítač superstřelu používá taky.
+
+### Poháry a ligy
+
+Za každý zápas dostane hráč na svém zařízení poháry: za výhru +8 (proti lehkému počítači méně, proti těžkému víc, online +10), navíc za větší rozdíl skóre a za vlastní góly. Za prohru se 3 poháry ztratí. Podle pohárů postupuje ligami Nováček → Bronz → Stříbro → Zlato → Diamant → Mistr → Legenda. Liga a poháry jsou vidět vpravo nahoře v menu. Po klepnutí se ukáže profil se statistikami (zápasy, výhry, góly, superstřely, odstřelení, nejdelší série výher). Po zápase se ukáže hráč zápasu a kolik pohárů přibylo. Postup se ukládá v prohlížeči daného zařízení.
 
 ### Celá obrazovka
 
 Hra vyplní celý displej bez černých pruhů. Na širokém telefonu je vidět víc stadionu do stran a kamera hřiště přiblíží na celou šířku. Tlačítko vpravo nahoře zapne celou obrazovku prohlížeče. Úplně bez lišt prohlížeče hra běží po *Přidat na plochu* (manifest `manifest.webmanifest` s režimem fullscreen a orientací na šířku). Na výšku hra ukáže výzvu k otočení telefonu.
+
+V aplikaci Claude (artifact) zůstane kolem hry rámeček aplikace: horní lišta s křížkem a okraje po stranách. Ten hra odstranit nemůže. Bez jakýchkoli lišt hra běží jen jako webová verze přidaná na plochu (viz Zveřejnění na GitHub Pages).
 
 ## Online hra: jak funguje
 

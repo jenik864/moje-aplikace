@@ -24,6 +24,11 @@
   <canvas id="game" aria-label="Hřiště"></canvas>
 
   <div id="hud">
+    <button id="profile-chip" class="profile-chip" type="button" aria-label="Profil a poháry" hidden>
+      <span class="rank-emblem" id="pc-emblem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8 3.6 5v6.2c0 5.3 3.6 9.6 8.4 11 4.8-1.4 8.4-5.7 8.4-11V5z"/><path class="st" d="m12 6.6 1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"/></svg></span>
+      <span class="pc-text"><span class="pc-rank" id="pc-rank">Nováček</span><span class="pc-bar"><i id="pc-bar"></i></span></span>
+      <span class="pc-tro"><svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v2.5a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 14.6V17h3v3H8v-3h3v-2.4A5 5 0 0 1 8.4 11.5H8a4 4 0 0 1-4-4V5h3zm0 4H6v.5a2 2 0 0 0 1.2 1.8zm10 0v2.3A2 2 0 0 0 18 7.5V7z"/></svg><b id="pc-tro">0</b></span>
+    </button>
     <button id="btn-pause" class="icon-btn" type="button" aria-label="Pauza" hidden>
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>
     </button>
@@ -162,15 +167,55 @@
   <!-- výsledek -->
   <section id="result" class="screen dim" aria-labelledby="res-title" hidden>
     <div class="dialog result">
-      <p id="res-kicker" class="res-kicker">Konec zápasu</p>
-      <h2 id="res-title" class="res-title">Výhra!</h2>
-      <p class="res-score"><span id="res-a">0</span><span class="colon">:</span><span id="res-b">0</span></p>
-      <p id="res-sub" class="res-sub"></p>
-      <p id="res-wait" class="status wait" hidden>Čeká se na hostitele…</p>
+      <div class="res-main">
+        <p id="res-kicker" class="res-kicker">Konec zápasu</p>
+        <h2 id="res-title" class="res-title">Výhra!</h2>
+        <p class="res-score"><span id="res-a">0</span><span class="colon">:</span><span id="res-b">0</span></p>
+        <p id="res-sub" class="res-sub"></p>
+        <p id="res-wait" class="status wait" hidden>Čeká se na hostitele…</p>
+      </div>
+      <div class="res-side">
+        <div id="res-mvp" class="res-card mvp" hidden>
+          <canvas id="res-mvp-pic" class="mvp-pic" aria-hidden="true"></canvas>
+          <div class="mvp-text">
+            <p class="mini-kicker">Hráč zápasu</p>
+            <p id="res-mvp-name" class="mvp-name"></p>
+            <p id="res-mvp-stats" class="mvp-stats"></p>
+          </div>
+        </div>
+        <div id="res-reward" class="res-card reward" hidden>
+          <div class="rw-top"><svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v2.5a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 14.6V17h3v3H8v-3h3v-2.4A5 5 0 0 1 8.4 11.5H8a4 4 0 0 1-4-4V5h3zm0 4H6v.5a2 2 0 0 0 1.2 1.8zm10 0v2.3A2 2 0 0 0 18 7.5V7z"/></svg><b id="res-delta">+0</b><span id="res-total" class="rw-total">0</span></div>
+          <div class="rw-rank"><span class="rank-emblem" id="res-emblem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8 3.6 5v6.2c0 5.3 3.6 9.6 8.4 11 4.8-1.4 8.4-5.7 8.4-11V5z"/><path class="st" d="m12 6.6 1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"/></svg></span><span id="res-rank" class="rw-name">Nováček</span><span class="rw-bar"><i id="res-bar"></i></span></div>
+          <p id="res-note" class="rw-note"></p>
+        </div>
+      </div>
       <div class="dialog-buttons row">
         <button id="btn-res-third" class="btn-game" type="button">Hlavní menu</button>
         <button id="btn-res-second" class="btn-game" type="button">Výběr hráčů</button>
         <button id="btn-res-main" class="btn-play" type="button">Hrát znovu</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- profil -->
+  <section id="profile" class="screen dim" aria-labelledby="profile-title" hidden>
+    <div class="dialog profile">
+      <header class="profile-head">
+        <h2 id="profile-title" class="screen-title">Tvoje liga</h2>
+        <button id="btn-profile-close" class="btn-mini" type="button" aria-label="Zavřít">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <div class="profile-left">
+        <span class="rank-emblem big" id="pf-emblem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8 3.6 5v6.2c0 5.3 3.6 9.6 8.4 11 4.8-1.4 8.4-5.7 8.4-11V5z"/><path class="st" d="m12 6.6 1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"/></svg></span>
+        <p id="pf-rank" class="pf-rank">Nováček</p>
+        <p class="pf-tro"><svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v2.5a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 14.6V17h3v3H8v-3h3v-2.4A5 5 0 0 1 8.4 11.5H8a4 4 0 0 1-4-4V5h3zm0 4H6v.5a2 2 0 0 0 1.2 1.8zm10 0v2.3A2 2 0 0 0 18 7.5V7z"/></svg><b id="pf-tro">0</b></p>
+        <span class="rw-bar wide"><i id="pf-bar"></i></span>
+        <p id="pf-next" class="pf-next"></p>
+      </div>
+      <div class="profile-right">
+        <div id="pf-stats" class="pf-stats"></div>
+        <div id="pf-ladder" class="pf-ladder" aria-label="Ligy"></div>
       </div>
     </div>
   </section>

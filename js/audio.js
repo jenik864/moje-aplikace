@@ -217,6 +217,63 @@ const Sound = {
     this.tone('triangle', 990, 1980, 0.16, 0.04, 0.08);
   },
 
+  // dopad odstřeleného hráče
+  thud() {
+    if (!this.live()) return;
+    this.tone('sine', 110, 40, 0.3, 0.55);
+    this.hiss(0.12, 0.25, 'lowpass', 500);
+  },
+
+  // ohňostroj: sykot a praskání
+  pyro() {
+    if (!this.live()) return;
+    this.hiss(1.1, 0.12, 'highpass', 3500);
+    for (let i = 0; i < 14; i++) this.hiss(0.03, 0.18, 'bandpass', 2500 + Math.random() * 2500, 2, 0.15 + Math.random() * 1.1);
+    this.tone('sine', 90, 50, 0.35, 0.3);
+  },
+
+  // bublina s pokřikem
+  blip() {
+    if (!this.live()) return;
+    this.tone('triangle', 620, 940, 0.07, 0.035);
+  },
+
+  // tleskání a buben v rytmu (bum bum, bum-bum-bum)
+  chant() {
+    if (!this.live()) return;
+    const beats = [0, 0.32, 0.64, 0.8, 0.96];
+    for (const at of beats) {
+      this.tone('sine', 95, 55, 0.18, 0.28, at);
+      for (let k = 0; k < 4; k++) this.hiss(0.05, 0.05, 'bandpass', 1300 + k * 220, 1.2, at + 0.01 + k * 0.012);
+    }
+  },
+
+  // zklamané „úúú“ tribun (tyčka, těsně vedle)
+  ooh() {
+    if (!this.live()) return;
+    const c = this.ctx, t = c.currentTime;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.09, t + 0.18);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.3);
+    const lp = c.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 900;
+    lp.connect(g);
+    g.connect(this.master);
+    for (let i = 0; i < 7; i++) {
+      const o = c.createOscillator();
+      o.type = 'sawtooth';
+      const f = 170 + Math.random() * 120;
+      o.frequency.setValueAtTime(f * 1.12, t);
+      o.frequency.exponentialRampToValueAtTime(f * 0.86, t + 1.2);
+      o.connect(lp);
+      o.start(t + Math.random() * 0.08);
+      o.stop(t + 1.35);
+    }
+    this.hiss(1, 0.05, 'bandpass', 500, 0.8);
+  },
+
   whoosh() {
     if (!this.live()) return;
     this.hiss(0.35, 0.08, 'bandpass', 900, 0.7);

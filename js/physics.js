@@ -20,6 +20,7 @@ class Ball {
     this.superBy = -1; // kdo ji vystřelil (index hráče)
     this.held = true; // při výkopu visí míč nad středem hřiště
     this.lastTouch = null;
+    this.lastHow = ''; // čím se ho naposledy dotkl: kick, head, super, body
     this.idle = 0;
     this.stuck = 0;
     this.stale = 0;
@@ -78,6 +79,9 @@ class Player {
     this.kickHit = false;
     this.kickCd = 0;
     this.mood = 0; // 1 radost, -1 smutek
+    this.stunT = 0; // omámení po zásahu superstřelou
+    this.spin = 0;  // otočení při letu vzduchem
+    this.knockDir = 0;
   }
 
   // Průběh švihu 0 → 1 → 0.
@@ -90,8 +94,8 @@ class Player {
   // Poloha kopačky: kvadratická křivka od země dopředu a nahoru.
   footAt(s, out) {
     const R = this.R, F = PHYS.footH, i = 1 - s;
-    const lx = i * i * 8 + 2 * i * s * (R + 22) + s * s * (R + 18);
-    const ly = i * i * (R + F - 12) + 2 * i * s * (R + F - 4) + s * s * (R + F - 50);
+    const lx = i * i * 8 * PS + 2 * i * s * (R + 22 * PS) + s * s * (R + 18 * PS);
+    const ly = i * i * (R + F - 12 * PS) + 2 * i * s * (R + F - 4 * PS) + s * s * (R + F - 50 * PS);
     out = out || {};
     out.x = this.x + this.dir * lx;
     out.y = this.y + ly;
@@ -187,8 +191,8 @@ class Match {
   build() {
     const s = this.setup;
     const two = s.format === '2v2';
-    const attX = two ? 410 : 300;
-    const defX = 205;
+    const attX = two ? 430 : 310;
+    const defX = 230;
     // V týmu jde dopředu nejdřív člověk, počítač brání.
     const roles = [];
     for (let team = 0; team < 2; team++) {
@@ -287,14 +291,14 @@ class Match {
     }
     // Míč sevřený mezi soupeři (oba se ho dotýkají a drží ho dole) vyskočí
     // nad jejich hlavy a dopadne stranou, jinak by se hra zasekla.
-    const low = b.y > GROUND_Y - 130;
+    const low = b.y > GROUND_Y - 130 * PS;
     this.lowT = low ? this.lowT + dt : 0;
     if (low && this.lowT > 0.6 && this.playT - this.touchAt[0] < 0.3 && this.playT - this.touchAt[1] < 0.3) {
       this.pinchT += dt;
       if (this.pinchT > 0.6) {
         // hráče u míče odstrčit od sebe, aby mezi hlavami vznikla mezera
         for (const p of this.players) {
-          if (Math.abs(p.x - b.x) < 110 && p.onGround) p.vx = (p.x < b.x ? -1 : 1) * 380;
+          if (Math.abs(p.x - b.x) < 110 * PS && p.onGround) p.vx = (p.x < b.x ? -1 : 1) * 380;
         }
         b.vy = -700;
         b.vx = rand(-70, 70);
@@ -328,9 +332,17 @@ class Match {
   }
 
   movePlayer(p, it, dt) {
+    const stunned = p.stunT > 0;
+    if (stunned) {
+      // odstřelený hráč neovládá nic: ve vzduchu letí a točí se, na zemi se motá
+      p.stunT = Math.max(0, p.stunT - dt);
+      it = IDLE;
+      if (!p.onGround) p.spin += p.knockDir * 13 * dt;
+    }
     const input = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
     const max = PHYS.moveSpeed * p.speedMul;
-    p.vx = approach(p.vx, input * max, (p.onGround ? PHYS.accelGround : PHYS.accelAir) * dt);
+    if (!stunned) p.vx = approach(p.vx, input * max, (p.onGround ? PHYS.accelGround : PHYS.accelAir) * dt);
+    else if (p.onGround) p.vx = approach(p.vx, 0, 1700 * dt);
 
     if (it.jump && p.onGround) {
       p.vy = -PHYS.jumpV;
@@ -367,9 +379,14 @@ class Match {
     p.vy += PHYS.gravity * dt;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
+    const wasAir = !p.onGround;
     p.onGround = false;
     this.playerWorld(p);
     if (p.onGround) p.runPhase += p.vx * p.dir * dt * 0.05;
+    if (stunned && wasAir && p.onGround && p.spin !== 0) {
+      p.spin = 0;
+      this.onEvent('thud', { x: p.x, y: GROUND_Y, idx: this.players.indexOf(p) });
+    }
 
     p.blinkT -= dt;
     if (p.blinkT <= 0) {
@@ -413,12 +430,14 @@ class Match {
       if (p.vy > 0) p.vy = 0;
       p.onGround = true;
     }
+    // odstřelený hráč se od stěny odrazí
+    const wall = p.stunT > 0 ? -0.35 : 0;
     if (p.x < p.R) {
       p.x = p.R;
-      if (p.vx < 0) p.vx = 0;
+      if (p.vx < 0) p.vx *= wall;
     } else if (p.x > W - p.R) {
       p.x = W - p.R;
-      if (p.vx > 0) p.vx = 0;
+      if (p.vx > 0) p.vx *= wall;
     }
   }
 
@@ -430,7 +449,7 @@ class Match {
           const a = ps[i], c = ps[j];
           let dx = c.x - a.x, dy = c.y - a.y;
           let d = Math.hypot(dx, dy);
-          const min = a.R + c.R - 6;
+          const min = a.R + c.R - 6 * PS;
           if (d >= min) continue;
           if (d < 0.01) { dx = a.team === 0 ? 1 : -1; dy = 0; d = 1; }
           const nx = dx / d, ny = dy / d, o = min - d;
@@ -521,18 +540,25 @@ class Match {
     let touch = false;
     // superstřela soupeře srazí a letí dál
     if (b.superT > 0 && b.superBy >= 0 && this.players[b.superBy] && this.players[b.superBy].team !== p.team) {
-      for (const [cx, cy, cr] of [[p.x, p.y, p.R], [p.x - p.dir, p.y + p.R + 18, PHYS.bodyR]]) {
+      for (const [cx, cy, cr] of [[p.x, p.y, p.R], [p.x - p.dir, p.y + p.R + PHYS.bodyOff, PHYS.bodyR]]) {
         const dx = p.x - b.x, rr = cr + b.r;
         if ((b.x - cx) ** 2 + (b.y - cy) ** 2 >= rr * rr) continue;
+        if (p.stunT > 0) break; // už letí
         const dir = Math.sign(b.vx) || (dx > 0 ? 1 : -1);
-        p.vx = dir * 560;
-        p.vy = -460;
+        // odstřelit pořádně dozadu a nahoru, hráč se ve vzduchu točí
+        p.vx = dir * PHYS.knockVX;
+        p.vy = -PHYS.knockVY;
         p.onGround = false;
-        p.x += dir * 6;
-        b.vx *= 0.72;
-        b.vy *= 0.72;
-        b.superT = 0;
-        this.onEvent('knock', { x: p.x, y: p.y, idx: this.players.indexOf(p) });
+        p.x += dir * 8;
+        p.y -= 6;
+        p.stunT = PHYS.stunTime;
+        p.knockDir = dir;
+        p.kickT = -1;
+        p.superKick = false;
+        // míč letí dál a může odstřelit i dalšího
+        b.vx *= 0.86;
+        b.vy *= 0.86;
+        this.onEvent('knock', { x: p.x, y: p.y, idx: this.players.indexOf(p), dir });
         return true;
       }
     }
@@ -551,6 +577,7 @@ class Match {
     const hit = collideBallCircle(b, p.x, p.y, p.R, p.vx, p.vy, PHYS.headBounce, PHYS.headMinOut);
     if (hit) {
       b.lastTouch = p;
+      b.lastHow = 'head';
       touch = true;
       if (hit.ny < -0.25) b.vx += p.dir * PHYS.headerPush;
       // Míč sevřený mezi dvěma hlavami nesmí nabírat rychlost donekonečna.
@@ -562,7 +589,7 @@ class Match {
       if (hit.impact > 140) this.onEvent('head', { x: b.x - hit.nx * b.r, y: b.y - hit.ny * b.r, impact: hit.impact });
     }
     // 3) tělo a kopačka v klidu jsou pevné překážky (vedení míče)
-    if (collideBallCircle(b, p.x - p.dir, p.y + p.R + 18, PHYS.bodyR, p.vx, p.vy, 0.4, 50)) {
+    if (collideBallCircle(b, p.x - p.dir, p.y + p.R + PHYS.bodyOff, PHYS.bodyR, p.vx, p.vy, 0.4, 50)) {
       b.lastTouch = p;
       touch = true;
     }
@@ -588,6 +615,7 @@ class Match {
       b.superBy = this.players.indexOf(p);
       p.kickHit = true;
       b.lastTouch = p;
+      b.lastHow = 'super';
       this.onEvent('super', { x: b.x, y: b.y, dir: p.dir, idx: b.superBy });
       return;
     }
@@ -595,7 +623,7 @@ class Match {
     // Soupeř stojí těsně před míčem: kop ho přeloží obloučkem (jinak by se míč
     // jen odrážel mezi dvěma hráči).
     const close = this.players.some((q) => q.team !== p.team && (q.x - p.x) * p.dir > 0
-      && (q.x - p.x) * p.dir < 2 * p.R + 45 && Math.abs(q.y - p.y) < 70);
+      && (q.x - p.x) * p.dir < 2 * p.R + 45 * PS && Math.abs(q.y - p.y) < 70 * PS);
     if (close) deg = Math.max(deg, 63);
     const el = (deg * Math.PI) / 180;
     const run = Math.max(0, p.vx * p.dir);
@@ -610,6 +638,7 @@ class Match {
     }
     p.kickHit = true;
     b.lastTouch = p;
+    b.lastHow = 'kick';
     this.onEvent('kick', { x: b.x, y: b.y, dir: p.dir, power: clamp(power / PHYS.kickSpeed, 0.6, 1.2) });
   }
 
@@ -623,7 +652,7 @@ class Match {
     for (const p of this.players) {
       // hlava, potom tělo
       for (let part = 0; part < 2; part++) {
-        const cx = part ? p.x - p.dir : p.x, cy = part ? p.y + p.R + 18 : p.y;
+        const cx = part ? p.x - p.dir : p.x, cy = part ? p.y + p.R + PHYS.bodyOff : p.y;
         const rr = (part ? PHYS.bodyR : p.R) + r - 0.5;
         const dx = b.x - cx, dy = b.y - cy;
         const d2 = dx * dx + dy * dy;
@@ -653,6 +682,6 @@ class Match {
     this.celebrate = team;
     this.score[team]++;
     const s = b.lastTouch;
-    this.onEvent('goal', { team, scorer: s, scorerIdx: s ? this.players.indexOf(s) : -1, own: !!s && s.team !== team });
+    this.onEvent('goal', { team, scorer: s, scorerIdx: s ? this.players.indexOf(s) : -1, own: !!s && s.team !== team, how: b.lastHow });
   }
 }

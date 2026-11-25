@@ -48,6 +48,8 @@ const Effects = {
   parts: [],
   rings: [],
   flashes: [],
+  pops: [],     // komiksové nápisy (BUM!, SUPER!)
+  bubbles: [],  // pokřiky fanoušků v bublinách na tribuně
   shakeAmt: 0,
   reduced: !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches),
 
@@ -55,7 +57,38 @@ const Effects = {
     this.parts.length = 0;
     this.rings.length = 0;
     this.flashes.length = 0;
+    this.pops.length = 0;
+    this.bubbles.length = 0;
     this.shakeAmt = 0;
+  },
+  pop(text, x, y, color, size = 46) {
+    if (this.pops.length > 4) this.pops.shift();
+    this.pops.push({ text, x, y: Math.max(y, 110), color, size, t: 0, dur: 1.0, rot: rand(-0.16, 0.16) });
+  },
+  // Bublina s pokřikem z tribuny (fanoušci týmu 0 vlevo, týmu 1 vpravo).
+  // rect = část světa, kterou kamera právě ukazuje.
+  shout(text, team, color, rect) {
+    if (this.bubbles.length >= 4) this.bubbles.shift();
+    const r = rect || { x0: 0, x1: W, y0: 0, y1: H };
+    const mid = (r.x0 + r.x1) / 2, pad = 120;
+    const lo = team === 0 ? r.x0 + pad : mid + 40, hi = team === 0 ? mid - 40 : r.x1 - pad;
+    const ylo = Math.max(r.y0 + 120, 190), yhi = Math.max(ylo + 10, Math.min(r.y1 - 150, 360));
+    let x = 0, y = 0;
+    for (let k = 0; k < 12; k++) {
+      x = rand(lo, Math.max(lo + 1, hi));
+      y = rand(ylo, yhi);
+      const hitsJumbo = x > JUMBO.x - 90 && x < JUMBO.x + JUMBO.w + 90 && y < JUMBO.y + JUMBO.h + 70;
+      if (!hitsJumbo && !this.bubbles.some((b) => Math.abs(b.x - x) < 200 && Math.abs(b.y - y) < 64)) break;
+    }
+    this.bubbles.push({ text, x, y, color, t: 0, dur: 2.6, tail: Math.random() < 0.5 ? -1 : 1 });
+  },
+  // Ohňostroj: fontána jisker ze země.
+  pyro(x, colors) {
+    const n = this.reduced ? 20 : 70;
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + rand(-0.22, 0.22), sp = rand(620, 980);
+      this.add({ x: x + rand(-6, 6), y: GROUND_Y - 6, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 900, life: rand(0.7, 1.2), size: rand(2.5, 4.5), color: pick(colors), wait: rand(0, 0.9), glow: true });
+    }
   },
   shake(a) {
     if (!this.reduced) this.shakeAmt = Math.max(this.shakeAmt, a);
@@ -118,6 +151,10 @@ const Effects = {
     const ps = this.parts;
     for (let i = ps.length - 1; i >= 0; i--) {
       const p = ps[i];
+      if (p.wait > 0) {
+        p.wait -= dt;
+        continue;
+      }
       p.t += dt;
       if (p.t >= p.life) {
         ps[i] = ps[ps.length - 1];
@@ -138,7 +175,7 @@ const Effects = {
         p.vx *= 0.6;
       }
     }
-    for (const list of [this.rings, this.flashes]) {
+    for (const list of [this.rings, this.flashes, this.pops, this.bubbles]) {
       for (let i = list.length - 1; i >= 0; i--) {
         list[i].t += dt;
         if (list[i].t >= list[i].dur) list.splice(i, 1);
@@ -167,9 +204,19 @@ const Effects = {
       ctx.stroke();
     }
     for (const p of this.parts) {
+      if (p.wait > 0) continue;
       ctx.globalAlpha = clamp((p.life - p.t) / 0.35, 0, 1);
       ctx.fillStyle = p.color;
-      if (p.kind === 'conf') {
+      if (p.glow) {
+        ctx.globalCompositeOperation = 'lighter';
+        circle(ctx, p.x, p.y, p.size * 2.2);
+        ctx.globalAlpha *= 0.35;
+        ctx.fill();
+        ctx.globalAlpha /= 0.35;
+        circle(ctx, p.x, p.y, p.size * 0.8);
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+      } else if (p.kind === 'conf') {
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot);
@@ -183,7 +230,86 @@ const Effects = {
     }
     ctx.globalAlpha = 1;
   },
+
+  drawPops(ctx) {
+    for (const p of this.pops) {
+      const k = p.t / p.dur;
+      const sc = k < 0.18 ? easeOutBack(k / 0.18) : 1 + (k - 0.18) * 0.12;
+      ctx.save();
+      ctx.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1;
+      ctx.translate(p.x, p.y - 40 * k);
+      ctx.rotate(p.rot);
+      ctx.scale(sc, sc);
+      ctx.font = `${p.size}px ${FONT_D}`;
+      const tw = ctx.measureText(p.text).width;
+      // výbuch za nápisem
+      const r = tw * 0.62 + 18;
+      ctx.beginPath();
+      for (let i = 0; i < 24; i++) {
+        const a = (i * TAU) / 24, rr = i % 2 ? r * 0.72 : r;
+        ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr * 0.62);
+      }
+      ctx.closePath();
+      ctx.fillStyle = p.color;
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#0b1220';
+      ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 8;
+      ctx.strokeText(p.text, 0, 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(p.text, 0, 2);
+      ctx.restore();
+    }
+  },
+
+  drawBubbles(ctx) {
+    for (const b of this.bubbles) {
+      const k = b.t / b.dur;
+      const sc = b.t < 0.22 ? easeOutBack(b.t / 0.22) : 1;
+      const a = k > 0.85 ? 1 - (k - 0.85) / 0.15 : 1;
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.translate(b.x, b.y + Math.sin(b.t * 5) * 2.5);
+      ctx.scale(sc, sc);
+      drawSpeech(ctx, b.text, 0, 0, b.color, 24, b.tail);
+      ctx.restore();
+    }
+  },
 };
+
+// Bublina s textem; (x, y) je špička ocásku.
+function drawSpeech(ctx, text, x, y, color, size, tail) {
+  ctx.font = `${size}px ${FONT_D}`;
+  const tw = ctx.measureText(text).width;
+  const w = tw + size * 1.1, h = size * 1.7;
+  const bx = x - w / 2 - tail * w * 0.22, by = y - h - size * 0.55;
+  ctx.fillStyle = 'rgba(0,0,0,.25)';
+  rrect(ctx, bx + 3, by + 5, w, h, h / 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x - size * 0.35, by + h - 2);
+  ctx.lineTo(x, y);
+  ctx.lineTo(x + size * 0.35, by + h - 2);
+  ctx.closePath();
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.lineWidth = 3.5;
+  ctx.strokeStyle = color;
+  ctx.stroke();
+  rrect(ctx, bx, by, w, h, h / 2);
+  ctx.fill();
+  ctx.stroke();
+  // zakrýt čáru mezi bublinou a ocáskem
+  ctx.fillRect(x - size * 0.33, by + h - 4, size * 0.66, 5);
+  ctx.fillStyle = '#0b1220';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, bx + w / 2, by + h / 2 + 1);
+}
 
 /* ---------------- renderer ---------------- */
 
@@ -197,13 +323,17 @@ const ADS = [
   { t: 'MARSAL & DURCADO', bg: '#1a4fb0', fg: '#cfe1ff' },
   { t: 'TÓMA & PELI', bg: '#0d7040', fg: '#c9ffe2' },
   { t: 'BÉMIČ & KIKI', bg: '#b85400', fg: '#ffe6cc' },
+  { t: 'ŠIMŠA & JENDA', bg: '#5527c4', fg: '#e3d9ff' },
 ];
 const STANDS_TOP = 150;
 const STANDS_BOTTOM = 458;
 const JUMBO = { x: 528, y: 162, w: 224, h: 92 };
 const DEFAULT_CAM = { x: W / 2, y: H / 2, z: 1, bars: 0 };
 const AISLES = [-638, 214, 1066, 1918];
-const INTRO_DUR = 3.9;
+const INTRO_DUR = 7.4;   // celý úvod zápasu
+const POSTER_END = 3.9;  // do kdy jsou vidět plakáty týmů
+const TALK_AT = [4.15, 5.65]; // předzápasové hlášky: tým vlevo, tým vpravo
+const TALK_DUR = 1.35;
 
 const Renderer = {
   canvas: null,
@@ -567,14 +697,15 @@ const Renderer = {
     this.drawBeams(ctx, g);
     this.drawJumbotron(ctx, g, now);
     this.drawBoards(ctx, g, now);
+    Effects.drawBubbles(ctx);
 
     if (m) {
       Effects.drawFlashes(ctx);
       this.drawNet(ctx, 0, now);
       this.drawNet(ctx, 1, now);
       const b = m.ball;
-      for (const p of m.players) this.drawShadow(ctx, p.x, p.standY - p.y, 36);
-      this.drawShadow(ctx, b.x, GROUND_Y - b.r - b.y, 16);
+      for (const p of m.players) this.drawShadow(ctx, p.x, p.standY - p.y, 36 * PS);
+      this.drawShadow(ctx, b.x, GROUND_Y - b.r - b.y, b.r);
       for (const p of m.players) this.drawPlayer(ctx, p, b, m.teams, now);
       const sp = b.superT > 0 && m.players[b.superBy];
       if (g.state !== 'intro') this.drawBall(ctx, b, sp ? superColor(sp.look.id) : null);
@@ -582,6 +713,9 @@ const Renderer = {
       this.drawGoalFront(ctx, 1);
       if (g.screen === 'match' && g.state === 'over') this.drawTrophy(ctx, g, now);
       Effects.draw(ctx);
+      for (const p of m.players) if (p.stunT > 0 && p.onGround) this.drawDizzy(ctx, p, now);
+      if (g.screen === 'match' && g.state === 'intro') this.drawIntroTalk(ctx, g, now);
+      Effects.drawPops(ctx);
       if (g.state !== 'menu' && cam.bars < 0.3) {
         for (const p of m.players) this.drawTag(ctx, p, m.teams);
       }
@@ -887,8 +1021,10 @@ const Renderer = {
     f.blink = 0;
     ctx.save();
     ctx.translate(x, y);
-    ctx.scale(sc, sc);
-    const la = lookAt ? { x: (lookAt.x - x) / sc, y: (lookAt.y - y) / sc } : { x: dir * 300, y: -20 };
+    // drawPlayer kreslí o PS větší, tady chceme přesně měřítko sc
+    const k = sc / PS;
+    ctx.scale(k, k);
+    const la = lookAt ? { x: (lookAt.x - x) / k, y: (lookAt.y - y) / k } : { x: dir * 300, y: -20 };
     this.drawPlayer(ctx, f, la, [T], performance.now());
     ctx.restore();
   },
@@ -896,7 +1032,7 @@ const Renderer = {
   // Úvod zápasu: plakáty týmů a VS.
   drawIntro(ctx, g, now) {
     const t = g.stateT, m = g.match;
-    const a = clamp((t - 1.0) / 0.45, 0, 1), out = clamp((t - (INTRO_DUR - 0.55)) / 0.4, 0, 1);
+    const a = clamp((t - 1.0) / 0.45, 0, 1), out = clamp((t - (POSTER_END - 0.55)) / 0.4, 0, 1);
     if (a <= 0 || out >= 1) return;
     const slide = (1 - easeOutBack(a)) + out * 1.3;
     const by = 200, bh = 210;
@@ -993,6 +1129,28 @@ const Renderer = {
       ctx.fill();
       ctx.fillStyle = '#ffc93c';
       ctx.fillText(label, W / 2, 151);
+      ctx.restore();
+    }
+  },
+
+  // Předzápasové hecování: hráč pronese hlášku v bublině.
+  drawIntroTalk(ctx, g, now) {
+    const talk = g.introTalk, m = g.match, t = g.stateT;
+    if (!talk) return;
+    for (const k of talk) {
+      const u = t - k.at;
+      if (u < 0 || u > TALK_DUR) continue;
+      const p = m.players[k.idx];
+      if (!p) continue;
+      const T = m.teams[p.team];
+      const sc = u < 0.2 ? easeOutBack(u / 0.2) : 1;
+      const a = u > TALK_DUR - 0.15 ? (TALK_DUR - u) / 0.15 : 1;
+      ctx.save();
+      ctx.globalAlpha = clamp(a, 0, 1);
+      const x = p.x + p.dir * 18, y = p.y - p.R - 8;
+      ctx.translate(x, y);
+      ctx.scale(sc, sc);
+      drawSpeech(ctx, k.text, 0, 0, T.color, 24, p.dir);
       ctx.restore();
     }
   },
@@ -1172,7 +1330,8 @@ const Renderer = {
   /* ---- hráč ---- */
 
   drawPlayer(ctx, p, ball, teams, now) {
-    const T = teams[p.team], L = p.look, R = p.R, F = PHYS.footH;
+    // kresba je v základních rozměrech, na hřišti se zvětší o PS
+    const T = teams[p.team], L = p.look, R = p.R / PS, F = PHYS.footH / PS;
     const kicking = p.kickT >= 0;
     const s = p.kickS();
     const air = !p.onGround;
@@ -1190,8 +1349,8 @@ const Renderer = {
     }
     if (kicking) {
       const f = p.footAt(s, this._f);
-      fx = (f.x - p.x) * p.dir;
-      fy = f.y - p.y + 5;
+      fx = ((f.x - p.x) * p.dir) / PS;
+      fy = (f.y - p.y) / PS + 5;
     }
     // úhel ruky od svislice: kladný dopředu, ±π nahoru
     let aBack, aFront;
@@ -1216,7 +1375,14 @@ const Renderer = {
 
     ctx.save();
     ctx.translate(p.x, p.y);
-    ctx.scale(p.dir, 1);
+    if (p.spin) {
+      // odstřelený hráč se točí kolem středu těla
+      const c = (p.R + PHYS.footH) * 0.5;
+      ctx.translate(0, c);
+      ctx.rotate(p.spin);
+      ctx.translate(0, -c);
+    }
+    ctx.scale(p.dir * PS, PS);
     this.drawHair(ctx, p, T, 'back', now);
     this.drawArm(ctx, -12, R + 1, aBack, T, L, true);
     this.drawLeg(ctx, -6, R + 18, bx, by, T, L, 0, true);
@@ -1297,7 +1463,7 @@ const Renderer = {
   },
 
   drawTorso(ctx, p, T, L) {
-    const R = p.R;
+    const R = p.R / PS;
     // trenky
     ctx.fillStyle = T.dark;
     rrect(ctx, -15, R + 9, 29, 13, 4);
@@ -1347,7 +1513,7 @@ const Renderer = {
   },
 
   drawHead(ctx, p, ball, T, now) {
-    const R = p.R, L = p.look;
+    const R = p.R / PS, L = p.look;
     // krk
     ctx.fillStyle = shade(L.skin, -0.14);
     rrect(ctx, -8, R - 14, 15, 16, 5);
@@ -1394,7 +1560,7 @@ const Renderer = {
 
   // Vlasy mají tři vrstvy: 'back' (za tělem), 'cap' (na hlavě), 'top' (přes obrys a čelo).
   drawHair(ctx, p, T, layer, now) {
-    const R = p.R, L = p.look;
+    const R = p.R / PS, L = p.look;
     const base = L.hairColor, dark = L.hairDark, light = L.hairLight;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
@@ -1755,6 +1921,39 @@ const Renderer = {
     }
   },
 
+  drawDizzyEye(ctx, x, y, r, t) {
+    ctx.fillStyle = '#ffffff';
+    circle(ctx, x, y, r + 1);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(28,16,10,.8)';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+    ctx.beginPath();
+    const rot = t * 14;
+    for (let i = 0; i <= 30; i++) {
+      const a = rot + i * 0.42, rr = (i / 30) * r;
+      ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    ctx.strokeStyle = '#2a1a12';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  },
+
+  // Hvězdičky kolem hlavy omámeného hráče.
+  drawDizzy(ctx, p, now) {
+    const cx = p.x, cy = p.y - p.R - 6;
+    for (let i = 0; i < 3; i++) {
+      const a = now * 0.006 + (i * TAU) / 3;
+      const x = cx + Math.cos(a) * 34, y = cy + Math.sin(a) * 10;
+      ctx.fillStyle = '#ffe14d';
+      star(ctx, x, y, 8, 3.6);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(80,50,0,.7)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  },
+
   drawFace(ctx, p, ball) {
     const L = p.look;
     let lx = (ball.x - p.x) * p.dir, ly = ball.y - p.y;
@@ -1774,9 +1973,14 @@ const Renderer = {
       }
     }
 
-    // oči
-    this.drawEye(ctx, p, L, 9, -3, 5.4, 6.8, lx, ly, false);
-    this.drawEye(ctx, p, L, 27, -3, 6.2, 7.6, lx, ly, true);
+    // oči (odstřelený hráč má spirály)
+    if (p.stunT > 0) {
+      this.drawDizzyEye(ctx, 9, -3, 6, p.stunT);
+      this.drawDizzyEye(ctx, 27, -3, 7, p.stunT);
+    } else {
+      this.drawEye(ctx, p, L, 9, -3, 5.4, 6.8, lx, ly, false);
+      this.drawEye(ctx, p, L, 27, -3, 6.2, 7.6, lx, ly, true);
+    }
 
     // obočí: soustředění při kopu, smutek po inkasovaném gólu
     let inner = 0, outer = 0;
@@ -1972,7 +2176,7 @@ const Renderer = {
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     const ctx = canvas.getContext('2d');
-    const k = Math.min(w / 126, h / 156) * dpr;
+    const k = (Math.min(w / 126, h / 156) * dpr) / PS;
     ctx.setTransform(k, 0, 0, k, canvas.width / 2, canvas.height / 2 - 12 * k);
     const p = new Player({ team: 0, x: 0, look: charById(charId), role: 'attacker', ctrl: 'cpu' });
     p.x = 0;
@@ -2036,6 +2240,7 @@ const Renderer = {
     circle(ctx, 0, 0, b.r);
     ctx.clip();
     ctx.rotate(b.rot);
+    ctx.scale(b.r / 17, b.r / 17); // vzor je nakreslený pro poloměr 17
     ctx.fillStyle = '#1c2230';
     pentagon(ctx, 0, 0, 6.3, -Math.PI / 2);
     for (let k = 0; k < 5; k++) {
@@ -2049,7 +2254,7 @@ const Renderer = {
       line(ctx, Math.cos(a) * 6.3, Math.sin(a) * 6.3, Math.cos(a) * 11, Math.sin(a) * 11);
     }
     ctx.restore();
-    const g = ctx.createRadialGradient(-6, -7, 1, 0, 0, b.r);
+    const g = ctx.createRadialGradient(-b.r * 0.35, -b.r * 0.4, 1, 0, 0, b.r);
     g.addColorStop(0, 'rgba(255,255,255,.65)');
     g.addColorStop(0.45, 'rgba(255,255,255,0)');
     g.addColorStop(1, 'rgba(0,0,0,.3)');

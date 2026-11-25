@@ -7,8 +7,9 @@
 const W = 1280;
 const H = 720;
 const GROUND_Y = 590;            // čára, na které stojí hráči
-const GOAL_W = 96;               // hloubka branky (od zadní sítě po brankovou čáru)
-const GOAL_H = 180;              // výška horní hrany břevna nad trávníkem
+const PS = 1.25;                 // velikost postav oproti základní kresbě
+const GOAL_W = 120;              // hloubka branky (od zadní sítě po brankovou čáru)
+const GOAL_H = 228;              // výška horní hrany břevna nad trávníkem
 const BAR_T = 12;                // tloušťka břevna
 const BAR_Y = GROUND_Y - GOAL_H; // horní hrana břevna
 const STEP = 1 / 120;            // pevný krok fyziky v sekundách
@@ -19,14 +20,15 @@ const PHYS = {
   moveSpeed: 420,      // maximální rychlost běhu
   accelGround: 4200,
   accelAir: 2700,
-  jumpV: 860,          // rychlost odrazu při skoku
-  playerR: 40,         // poloměr hlavy
-  footH: 46,           // od spodku hlavy k trávníku (tělo a nohy)
-  footR: 12,           // poloměr kopačky pro kolize
-  bodyR: 18,           // poloměr těla pro kolize s míčem
+  jumpV: 910,          // rychlost odrazu při skoku
+  playerR: 40 * PS,    // poloměr hlavy
+  footH: 46 * PS,      // od spodku hlavy k trávníku (tělo a nohy)
+  footR: 12 * PS,      // poloměr kopačky pro kolize
+  bodyR: 18 * PS,      // poloměr těla pro kolize s míčem
+  bodyOff: 18 * PS,    // střed těla pod spodkem hlavy
   kickDur: 0.24,       // délka švihu nohou
   kickCooldown: 0.1,
-  ballR: 17,
+  ballR: 20,
   ballGravity: 1300,
   ballBounce: 0.7,     // odraz od trávníku
   wallBounce: 0.78,
@@ -38,6 +40,9 @@ const PHYS = {
   ballMaxSpeed: 1500,
   superCharge: 15,     // za kolik sekund se nabije superstřela
   superSpeed: 1450,    // rychlost superstřely
+  knockVX: 820,        // superstřela odstřelí soupeře: vodorovně
+  knockVY: 820,        //   a nahoru
+  stunTime: 1.6,       // jak dlouho je odstřelený hráč omámený
   kickSpeed: 880,
   airDrag: 0.12,
   rollFriction: 1.1,
@@ -76,6 +81,64 @@ const ROSTER = [
 ];
 
 // Superschopnost postavy (zatím superstřela v barvě postavy; schopnosti doladíme).
+// Oslovení (5. pád) do pokřiků fanoušků a předzápasové hlášky postav.
+const VOCATIVE = {
+  nelcis: 'Nelcis', majda: 'Majdo', marsal: 'Marsale', durcado: 'Durcado', toma: 'Tómo',
+  peli: 'Peli', bemic: 'Bémiči', kiki: 'Kiki', simsa: 'Šimšo', jenda: 'Jendo',
+};
+const QUIPS = {
+  nelcis: ['Tohle vyhrajeme levou zadní!', 'Připravte se prohrát!'],
+  majda: ['Dneska dám hattrick!', 'Majda je v ráži!'],
+  marsal: ['Moje patka trefí cokoli!', 'Dneska nedostaneme gól!'],
+  durcado: ['Moje hlava je zbraň!', 'Na mě si nepřijdete!'],
+  toma: ['Jdeme na ně, kluci!', 'Tóma se nezastaví!'],
+  peli: ['Ani neuvidíte míč!', 'Rychlejší jsem jen já!'],
+  bemic: ['Zrzavá bomba je tady!', 'Bémič střílí, Bémič skóruje!'],
+  kiki: ['Kiki nikdy neprohrává!', 'Hlavně se nebojte!'],
+  simsa: ['Šimša jde na věc!', 'Tenhle zápas je můj!'],
+  jenda: ['Jenda dává góly!', 'Dneska vás rozstřílíme!'],
+};
+const QUIPS_ANY = ['Dneska padne gól za gólem!', 'Na tohle jsem čekal!', 'Pojďte na to!', 'Vy jste ty soupeři? Haha!'];
+// Pokřiky z tribun ({V} = oslovení hráče, {T} = jméno dvojice).
+const SHOUTS = {
+  chant: ['Do toho, {V}!', '{T}! {T}!', 'Hlavouni do toho!', 'Dej gól!', 'Jdeme na ně!', 'Pojď, {V}!', 'Ole, ole, ole!', 'Bojujte!', 'Střílej, {V}!'],
+  goal: ['GÓÓÓL!', 'Jóóó!', 'To byla pecka!', '{V}! {V}!', 'Krása!', 'Ten sedl!'],
+  sad: ['Néé!', 'To snad ne…', 'Probuďte se!', 'Ještě to otočíme!'],
+  super: ['BOMBA!', 'Superstřela!', 'Wow!', 'To je dělo!'],
+  knock: ['Au!', 'To bolelo!', 'Ten letěl!', 'Strike!', 'Ajaj!'],
+  post: ['Tyčka!', 'Těsně!', 'Uáá!', 'Skoro!'],
+  head: ['Hlavička!', 'Hezká hlava!', 'Hlavou!'],
+  late: ['Posledních 10 vteřin!', 'Ještě to dáme!', 'Rychle!'],
+};
+
+// Poháry a ligy (postup se ukládá v zařízení).
+const RANKS = [
+  { name: 'Nováček', min: 0, color: '#9fb0c7' },
+  { name: 'Bronz', min: 40, color: '#d98b4a' },
+  { name: 'Stříbro', min: 120, color: '#cfd8e6' },
+  { name: 'Zlato', min: 250, color: '#ffc93c' },
+  { name: 'Diamant', min: 450, color: '#53d2ff' },
+  { name: 'Mistr', min: 700, color: '#b07bff' },
+  { name: 'Legenda', min: 1000, color: '#ff5fb0' },
+];
+function rankOf(trophies) {
+  let i = 0;
+  while (i + 1 < RANKS.length && trophies >= RANKS[i + 1].min) i++;
+  const r = RANKS[i], next = RANKS[i + 1] || null;
+  const prog = next ? (trophies - r.min) / (next.min - r.min) : 1;
+  return { i, rank: r, next, prog: clamp(prog, 0, 1) };
+}
+
+// Opakovatelný náhodný výběr (stejný u hostitele i u kamarádů).
+function seedOf(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
 const SUPER_COLORS = {
   nelcis: '#ff5fb0', majda: '#e86bff', marsal: '#3fa2ff', durcado: '#4fe0c0', toma: '#5fe36b',
   peli: '#b07bff', bemic: '#ff7a1f', kiki: '#53d2ff', simsa: '#c6ff3d', jenda: '#ff4d4d',
