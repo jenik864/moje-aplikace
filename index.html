@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hlavouni</title>
-<meta name="description" content="Fotbal velkých hlav pro jednoho nebo dva hráče: 1 v 1 nebo 2 v 2.">
+<meta name="description" content="Fotbal velkých hlav: 1 v 1 nebo 2 v 2, proti počítači, na jednom zařízení nebo online, každý na svém telefonu.">
 <meta name="theme-color" content="#0b1324">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,49 +28,69 @@
 
   <div id="touch" hidden></div>
 
-  <section id="menu" class="overlay" aria-labelledby="logo">
-    <div class="panel menu-panel">
+  <section id="home" class="overlay" aria-labelledby="logo">
+    <div class="panel home-panel">
       <header class="brand">
         <h1 id="logo" class="logo" aria-label="Hlavouni">HLAV<svg class="logo-ball" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#f7f8fa" stroke="#0b1220" stroke-width="3"/><path d="M20 12.5l7 5.1-2.7 8.2h-8.6L13 17.6z" fill="#0b1220"/><path d="M20 12.5V3M27 17.6l8.6-3M24.3 25.8l5.3 7.4M15.7 25.8l-5.3 7.4M13 17.6l-8.6-3" stroke="#0b1220" stroke-width="2.4" fill="none"/></svg>UNI</h1>
         <p class="tagline">Fotbal velkých hlav</p>
       </header>
+      <div class="stack">
+        <button id="btn-local" class="btn-play" type="button">Hrát</button>
+        <button id="btn-online" class="btn btn-online" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="13" rx="1.6"/><rect x="14" y="7" width="7" height="13" rx="1.6"/><path d="M10 10.5h4M12 8.5l2 2-2 2"/></svg>
+          Online s kamarády
+        </button>
+      </div>
+      <div id="home-help" class="help"></div>
+    </div>
+  </section>
 
-      <div class="opts">
-        <div class="opt">
-          <span class="opt-label" id="lbl-format">Zápas</span>
-          <div class="seg" role="group" aria-labelledby="lbl-format" data-key="format">
-            <button type="button" data-v="1v1">1 v 1</button>
-            <button type="button" data-v="2v2">2 v 2</button>
-          </div>
+  <section id="online" class="overlay" aria-labelledby="online-title" hidden>
+    <div class="panel small-panel online-panel">
+      <h2 id="online-title" class="panel-title">Online</h2>
+      <p class="lead">Každý hraje na svém telefonu. Jeden hru založí, ostatní se připojí kódem.</p>
+      <label class="field" for="nick"><span>Tvoje jméno</span><input id="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="např. Honza"></label>
+      <button id="btn-create" class="btn-play" type="button">Založit hru</button>
+      <div class="join">
+        <label class="field" for="join-code"><span>Kód hry od kamaráda</span>
+          <input id="join-code" type="text" maxlength="4" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="ABCD"></label>
+        <button id="btn-join" class="btn" type="button">Připojit</button>
+      </div>
+      <p id="online-status" class="status" role="status"></p>
+      <button id="btn-online-back" class="btn ghost" type="button">Zpět</button>
+    </div>
+  </section>
+
+  <section id="lobby" class="overlay" aria-labelledby="lobby-kicker" hidden>
+    <div class="panel lobby-panel">
+      <div class="lobby-head">
+        <button id="btn-lobby-back" class="btn-mini" type="button" aria-label="Zpět do menu">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+        </button>
+        <h2 id="lobby-kicker" class="lobby-kicker">Výběr hráčů</h2>
+        <div id="lobby-code-box" class="code-box" hidden><span>Kód hry</span><strong id="lobby-code"></strong></div>
+      </div>
+      <div class="lobby-opts">
+        <div class="seg" role="group" aria-label="Zápas" data-key="format">
+          <button type="button" data-v="1v1">1 v 1</button>
+          <button type="button" data-v="2v2">2 v 2</button>
         </div>
-        <div class="opt">
-          <span class="opt-label" id="lbl-players">Hráči</span>
-          <div class="seg" role="group" aria-labelledby="lbl-players" data-key="players">
-            <button type="button" data-v="1p">1 hráč</button>
-            <button type="button" data-v="pvp">2 proti sobě</button>
-            <button type="button" data-v="coop" id="opt-coop">2 spolu</button>
-          </div>
+        <div class="seg" role="group" aria-label="Délka zápasu" data-key="minutes">
+          <button type="button" data-v="1">1 min</button>
+          <button type="button" data-v="2">2 min</button>
+          <button type="button" data-v="3">3 min</button>
         </div>
-        <div class="opt" id="row-level">
-          <span class="opt-label" id="lbl-level">Počítač</span>
-          <div class="seg" role="group" aria-labelledby="lbl-level" data-key="level">
-            <button type="button" data-v="easy">Lehký</button>
-            <button type="button" data-v="medium">Střední</button>
-            <button type="button" data-v="hard">Těžký</button>
-          </div>
-        </div>
-        <div class="opt">
-          <span class="opt-label" id="lbl-time">Délka</span>
-          <div class="seg" role="group" aria-labelledby="lbl-time" data-key="minutes">
-            <button type="button" data-v="1">1 min</button>
-            <button type="button" data-v="2">2 min</button>
-            <button type="button" data-v="3">3 min</button>
-          </div>
+        <div id="lobby-level" class="seg" role="group" aria-label="Obtížnost počítače" data-key="level">
+          <button type="button" data-v="easy">Lehký</button>
+          <button type="button" data-v="medium">Střední</button>
+          <button type="button" data-v="hard">Těžký</button>
         </div>
       </div>
-
-      <button id="btn-play" class="btn-play" type="button">Hrát</button>
-      <div id="controls-help" class="help" aria-live="polite"></div>
+      <div id="slots" class="slots"></div>
+      <p id="lobby-members" class="members" hidden></p>
+      <p id="lobby-hint" class="hint"></p>
+      <button id="btn-start" class="btn-play" type="button">Hrát</button>
+      <p id="lobby-wait" class="status wait" hidden>Čeká se, až hostitel spustí zápas…</p>
     </div>
   </section>
 
@@ -80,7 +100,7 @@
       <div class="stack">
         <button id="btn-resume" class="btn-play" type="button">Pokračovat</button>
         <button id="btn-restart" class="btn" type="button">Hrát znovu</button>
-        <button id="btn-quit" class="btn" type="button">Do menu</button>
+        <button id="btn-quit" class="btn" type="button">Výběr hráčů</button>
       </div>
     </div>
   </section>
@@ -89,15 +109,18 @@
     <div class="panel small-panel">
       <p id="res-kicker" class="res-kicker">Konec zápasu</p>
       <h2 id="res-title" class="res-title">Výhra!</h2>
-      <p class="res-score"><span id="res-a" class="t0">0</span><span class="colon">:</span><span id="res-b" class="t1">0</span></p>
+      <p class="res-score"><span id="res-a">0</span><span class="colon">:</span><span id="res-b">0</span></p>
       <p id="res-sub" class="res-sub"></p>
       <div class="stack">
-        <button id="btn-again" class="btn-play" type="button">Hrát znovu</button>
-        <button id="btn-menu" class="btn" type="button">Do menu</button>
+        <button id="btn-res-main" class="btn-play" type="button">Hrát znovu</button>
+        <p id="res-wait" class="status wait" hidden>Čeká se na hostitele…</p>
+        <button id="btn-res-second" class="btn" type="button">Výběr hráčů</button>
+        <button id="btn-res-third" class="btn ghost" type="button">Hlavní menu</button>
       </div>
     </div>
   </section>
 
+  <div id="toast" class="toast" role="status" hidden></div>
   <div id="rotate" class="rotate" hidden>Otoč telefon na šířku</div>
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
@@ -108,6 +131,8 @@
 <script src="js/ai.js"></script>
 <script src="js/physics.js"></script>
 <script src="js/render.js"></script>
+<script src="js/net.js"></script>
+<script src="js/lobby.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

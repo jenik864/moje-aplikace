@@ -173,8 +173,20 @@ class AIBrain {
       }
     }
 
-    // 7) Kop: míč je (nebo za okamžik bude) v dosahu kopačky.
-    const zx = p.x + dir * (R + 4), zy = p.y + R - 4;
+    // 7) Přetlačovaná: soupeř těsně přede mnou a míč dole mezi námi – vyskočit
+    //    a uvolnit ho (jinak se míč jen odráží mezi hlavami).
+    if (!jump && p.onGround && b.y > GROUND_Y - 80 && (b.x - p.x) * dir > 0) {
+      for (const q of opps) {
+        const gap = (q.x - p.x) * dir;
+        if (gap > 0 && gap < 2 * R + 14 && q.onGround && Math.abs(b.x - (p.x + q.x) / 2) < 45) {
+          jump = Math.random() < L.jump * 0.35;
+          break;
+        }
+      }
+    }
+
+    // 8) Kop: míč je (nebo za okamžik bude) v dosahu kopačky.
+    const zx = p.x + dir * (R + 4), zy = p.y + R + PHYS.footH - 24;
     const inZone = (q) => (q.x - p.x) * dir > 0 && Math.hypot(q.x - zx, q.y - zy) < 46;
     if ((inZone(b) || inZone(predAt(pred, 0.06))) && Math.random() < L.kick) kick = true;
 

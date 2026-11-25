@@ -39,8 +39,11 @@ class Player {
     this.team = o.team;
     this.dir = o.team === 0 ? 1 : -1; // směr útoku a pohledu
     this.look = o.look;
-    this.label = o.label;
-    this.slot = o.slot; // -1 = počítač
+    this.label = o.label || '';
+    this.ctrl = o.ctrl || 'cpu'; // 'cpu', 'p1', 'p2', 'host' nebo id kamaráda online
+    this.slot = -1;              // vstup na tomto zařízení (0 = hráč 1, 1 = hráč 2)
+    this.remote = null;          // id kamaráda, který hráče ovládá na svém telefonu
+    this.isHuman = this.ctrl !== 'cpu';
     this.role = o.role;
     this.homeX = o.x;
     this.R = PHYS.playerR;
@@ -48,6 +51,7 @@ class Player {
     this.brain = null;
     this.blinkT = rand(1, 4);
     this.blink = 0;
+    this.runPhase = 0;
     this.place(o.x);
   }
 
@@ -81,9 +85,9 @@ class Player {
 
   // Poloha kopačky: kvadratická křivka od země dopředu a nahoru.
   footAt(s, out) {
-    const R = this.R, i = 1 - s;
-    const lx = i * i * 12 + 2 * i * s * (R + 18) + s * s * (R + 14);
-    const ly = i * i * (R + 13) + 2 * i * s * (R + 18) + s * s * (R - 20);
+    const R = this.R, F = PHYS.footH, i = 1 - s;
+    const lx = i * i * 8 + 2 * i * s * (R + 22) + s * s * (R + 18);
+    const ly = i * i * (R + F - 12) + 2 * i * s * (R + F - 4) + s * s * (R + F - 50);
     out = out || {};
     out.x = this.x + this.dir * lx;
     out.y = this.y + ly;
@@ -151,9 +155,12 @@ function collideBallRect(b, x0, y0, x1, y1, e) {
 const goalRect = (side) => (side === 0 ? [0, GOAL_W] : [W - GOAL_W, W]);
 
 class Match {
-  constructor(cfg, onEvent) {
-    this.cfg = cfg;
+  // setup: { format, level, teams: [..2], players: [{ char, team, ctrl, name }] }
+  constructor(setup, onEvent, remoteIntent) {
+    this.setup = setup;
+    this.teams = setup.teams;
     this.onEvent = onEvent || (() => {});
+    this.remoteIntent = remoteIntent || null;
     this.ball = new Ball();
     this.players = [];
     this.score = [0, 0];
@@ -161,52 +168,53 @@ class Match {
     this.celebrate = -1; // tým, který slaví
     this.locked = false; // po konci zápasu už se góly nepočítají
     this.playT = 0;      // jak dlouho se hraje od posledního výkopu
+    this.touchAt = [-9, -9]; // kdy se míče naposledy dotkl každý tým
+    this.lowT = 0;
+    this.pinchT = 0;
     this._f = { x: 0, y: 0 };
     this.build();
     this.kickoff();
   }
 
+  get level() {
+    return AI_LEVELS[this.setup.level] ? this.setup.level : 'medium';
+  }
+
   build() {
-    const c = this.cfg;
-    const looks = shuffle(ROSTER.slice());
-    const two = c.format === '2v2';
+    const s = this.setup;
+    const two = s.format === '2v2';
     const attX = two ? 410 : 300;
     const defX = 205;
-    const add = (team, x, ai, slot, role, label) => {
-      const p = new Player({
-        team,
-        x: team === 0 ? x : W - x,
-        look: looks[this.players.length % looks.length],
-        slot,
-        role,
-        label,
-      });
-      if (ai) {
-        const lvl = AI_LEVELS[c.level] ? c.level : 'medium';
-        p.brain = new AIBrain(p, lvl, role);
-        p.speedMul = AI_LEVELS[lvl].speed;
-      }
+    // V týmu jde dopředu nejdřív člověk, počítač brání.
+    const roles = [];
+    for (let team = 0; team < 2; team++) {
+      s.players
+        .map((sp, i) => ({ sp, i }))
+        .filter((o) => o.sp.team === team)
+        .sort((a, b) => (a.sp.ctrl === 'cpu') - (b.sp.ctrl === 'cpu') || a.i - b.i)
+        .forEach((o, k) => { roles[o.i] = k === 0 ? 'attacker' : 'defender'; });
+    }
+    s.players.forEach((sp, i) => {
+      const role = roles[i];
+      const x = role === 'attacker' ? attX : defX;
+      const p = new Player({ team: sp.team, x: sp.team === 0 ? x : W - x, look: charById(sp.char), role, ctrl: sp.ctrl, label: sp.name });
+      if (sp.ctrl === 'cpu') this.makeCPU(p);
+      else if (sp.ctrl === 'p1' || sp.ctrl === 'host') p.slot = 0;
+      else if (sp.ctrl === 'p2') p.slot = 1;
+      else p.remote = sp.ctrl;
       this.players.push(p);
-    };
+    });
+  }
 
-    if (c.players === 'demo') {
-      add(0, attX, true, -1, 'attacker', 'CPU');
-      add(1, attX, true, -1, 'attacker', 'CPU');
-      if (two) {
-        add(0, defX, true, -1, 'defender', 'CPU');
-        add(1, defX, true, -1, 'defender', 'CPU');
-      }
-      return;
-    }
-
-    add(0, attX, false, 0, 'attacker', 'P1');
-    if (two) {
-      if (c.players === 'coop') add(0, defX, false, 1, 'defender', 'P2');
-      else add(0, defX, true, -1, 'defender', 'CPU');
-    }
-    if (c.players === 'pvp') add(1, attX, false, 1, 'attacker', 'P2');
-    else add(1, attX, true, -1, 'attacker', 'CPU');
-    if (two) add(1, defX, true, -1, 'defender', 'CPU');
+  // Hráče převezme počítač (třeba když kamarád odejde ze hry).
+  makeCPU(p) {
+    p.brain = new AIBrain(p, this.level, p.role);
+    p.speedMul = AI_LEVELS[this.level].speed;
+    p.ctrl = 'cpu';
+    p.slot = -1;
+    p.remote = null;
+    p.isHuman = false;
+    p.label = 'CPU';
   }
 
   kickoff() {
@@ -232,9 +240,17 @@ class Match {
     const b = this.ball;
     for (const p of this.players) {
       let it = IDLE;
-      if (mode === 'play') it = p.brain ? p.brain.update(dt, this) : Input.intent(p.slot);
-      else if (mode === 'celebrate') it = p.team === this.celebrate ? CHEER : IDLE;
-      else if (p.human) Input.intent(p.slot); // zahodit kopy zmáčknuté během odpočtu
+      if (mode === 'play') {
+        if (p.brain) it = p.brain.update(dt, this);
+        else if (p.remote) it = this.remoteIntent ? this.remoteIntent(p.remote) : IDLE;
+        else it = Input.intent(p.slot);
+      } else if (mode === 'celebrate') {
+        it = p.team === this.celebrate ? CHEER : IDLE;
+      } else if (p.human) {
+        Input.intent(p.slot); // zahodit kopy zmáčknuté během odpočtu
+      } else if (p.remote && this.remoteIntent) {
+        this.remoteIntent(p.remote);
+      }
       p.mood = mode === 'celebrate' && this.celebrate >= 0 ? (p.team === this.celebrate ? 1 : -1) : 0;
       this.movePlayer(p, it, dt);
     }
@@ -249,7 +265,28 @@ class Match {
     this.playT += dt;
     const px = b.x, py = b.y;
     this.moveBall(dt);
-    for (const p of this.players) this.ballVsPlayer(p);
+    for (const p of this.players) {
+      if (this.ballVsPlayer(p)) this.touchAt[p.team] = this.playT;
+    }
+    // Míč sevřený mezi soupeři (oba se ho dotýkají a drží ho dole) vyskočí
+    // nad jejich hlavy a dopadne stranou, jinak by se hra zasekla.
+    const low = b.y > GROUND_Y - 130;
+    this.lowT = low ? this.lowT + dt : 0;
+    if (low && this.lowT > 0.6 && this.playT - this.touchAt[0] < 0.3 && this.playT - this.touchAt[1] < 0.3) {
+      this.pinchT += dt;
+      if (this.pinchT > 0.6) {
+        // hráče u míče odstrčit od sebe, aby mezi hlavami vznikla mezera
+        for (const p of this.players) {
+          if (Math.abs(p.x - b.x) < 110 && p.onGround) p.vx = (p.x < b.x ? -1 : 1) * 380;
+        }
+        b.vy = -700;
+        b.vx = rand(-70, 70);
+        this.pinchT = 0;
+        this.lowT = 0;
+      }
+    } else if (!low) {
+      this.pinchT = 0;
+    }
     this.settleBall();
     if (this.goalTeam < 0 && !this.locked) this.checkGoal();
 
@@ -274,14 +311,14 @@ class Match {
   }
 
   movePlayer(p, it, dt) {
-    const input = (it.right ? 1 : 0) - (it.left ? 1 : 0);
+    const input = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
     const max = PHYS.moveSpeed * p.speedMul;
     p.vx = approach(p.vx, input * max, (p.onGround ? PHYS.accelGround : PHYS.accelAir) * dt);
 
     if (it.jump && p.onGround) {
       p.vy = -PHYS.jumpV;
       p.onGround = false;
-      this.onEvent('jump', { human: p.human });
+      this.onEvent('jump', { human: p.isHuman });
     }
     if (it.kick && p.kickT < 0 && p.kickCd <= 0) {
       p.kickT = 0;
@@ -304,6 +341,7 @@ class Match {
     p.y += p.vy * dt;
     p.onGround = false;
     this.playerWorld(p);
+    if (p.onGround) p.runPhase += p.vx * p.dir * dt * 0.05;
 
     p.blinkT -= dt;
     if (p.blinkT <= 0) {
@@ -441,20 +479,26 @@ class Match {
     }
   }
 
+  // Vrací true, když se hráč míče dotkl.
   ballVsPlayer(p) {
     const b = this.ball;
+    let touch = false;
     // 1) kop – kopačka ve švihu
     if (p.kickT >= 0 && !p.kickHit && p.kickT / PHYS.kickDur <= 0.55) {
       const s = p.kickS();
       const f = p.footAt(s, this._f);
       const dx = b.x - f.x, dy = b.y - f.y, rr = PHYS.footR + 6 + b.r;
-      if (dx * dx + dy * dy < rr * rr) this.doKick(p, s, f);
+      if (dx * dx + dy * dy < rr * rr) {
+        this.doKick(p, s, f);
+        touch = true;
+      }
     }
     // 2) hlava
     const s0 = b.speed;
     const hit = collideBallCircle(b, p.x, p.y, p.R, p.vx, p.vy, PHYS.headBounce, PHYS.headMinOut);
     if (hit) {
       b.lastTouch = p;
+      touch = true;
       if (hit.ny < -0.25) b.vx += p.dir * PHYS.headerPush;
       // Míč sevřený mezi dvěma hlavami nesmí nabírat rychlost donekonečna.
       const cap = Math.max(s0, PHYS.headMaxSpeed), s1 = b.speed;
@@ -464,16 +508,30 @@ class Match {
       }
       if (hit.impact > 140) this.onEvent('head', { x: b.x - hit.nx * b.r, y: b.y - hit.ny * b.r, impact: hit.impact });
     }
-    // 3) kopačka v klidu je pevná překážka (vedení míče)
+    // 3) tělo a kopačka v klidu jsou pevné překážky (vedení míče)
+    if (collideBallCircle(b, p.x - p.dir, p.y + p.R + 18, PHYS.bodyR, p.vx, p.vy, 0.4, 50)) {
+      b.lastTouch = p;
+      touch = true;
+    }
     if (p.kickT < 0) {
       const f = p.footAt(0, this._f);
-      if (collideBallCircle(b, f.x, f.y, PHYS.footR, p.vx, p.vy, 0.45, 60)) b.lastTouch = p;
+      if (collideBallCircle(b, f.x, f.y, PHYS.footR, p.vx, p.vy, 0.45, 60)) {
+        b.lastTouch = p;
+        touch = true;
+      }
     }
+    return touch;
   }
 
   doKick(p, s, f) {
     const b = this.ball;
-    const el = ((24 + 34 * s) * Math.PI) / 180; // pozdní zásah = vyšší lob
+    let deg = 24 + 34 * s; // pozdní zásah = vyšší lob
+    // Soupeř stojí těsně před míčem: kop ho přeloží obloučkem (jinak by se míč
+    // jen odrážel mezi dvěma hráči).
+    const close = this.players.some((q) => q.team !== p.team && (q.x - p.x) * p.dir > 0
+      && (q.x - p.x) * p.dir < 2 * p.R + 45 && Math.abs(q.y - p.y) < 70);
+    if (close) deg = Math.max(deg, 63);
+    const el = (deg * Math.PI) / 180;
     const run = Math.max(0, p.vx * p.dir);
     const power = PHYS.kickSpeed * rand(0.94, 1.02) + run * 0.3;
     b.vx = p.dir * Math.cos(el) * power;
@@ -497,19 +555,24 @@ class Match {
     if (b.x < r) b.x = r;
     else if (b.x > W - r) b.x = W - r;
     for (const p of this.players) {
-      const dx = b.x - p.x, dy = b.y - p.y, rr = p.R + r - 0.5;
-      const d2 = dx * dx + dy * dy;
-      if (d2 >= rr * rr) continue;
-      const d = Math.sqrt(d2) || 0.001, o = rr - d, nx = dx / d, ny = dy / d;
-      p.x -= nx * o;
-      p.y -= ny * o;
-      if (ny > 0.3) {
+      // hlava, potom tělo
+      for (let part = 0; part < 2; part++) {
+        const cx = part ? p.x - p.dir : p.x, cy = part ? p.y + p.R + 18 : p.y;
+        const rr = (part ? PHYS.bodyR : p.R) + r - 0.5;
+        const dx = b.x - cx, dy = b.y - cy;
+        const d2 = dx * dx + dy * dy;
+        if (d2 >= rr * rr) continue;
+        const d = Math.sqrt(d2) || 0.001, o = rr - d, nx = dx / d, ny = dy / d;
+        p.x -= nx * o;
+        p.y -= ny * o;
+        if (ny > 0.3) {
         // hráč stojí na míči – míč vyklouzne do strany
         if (p.vy > 0) p.vy = 0;
         p.onGround = true;
-        b.vx += (Math.abs(dx) > 2 ? Math.sign(dx) : Math.random() < 0.5 ? -1 : 1) * 40;
+          b.vx += (Math.abs(dx) > 2 ? Math.sign(dx) : Math.random() < 0.5 ? -1 : 1) * 40;
+        }
+        this.clampPlayer(p);
       }
-      this.clampPlayer(p);
     }
   }
 
@@ -517,7 +580,7 @@ class Match {
     const b = this.ball;
     if (b.y <= BAR_Y) return;
     let team = -1;
-    if (b.x + b.r < GOAL_W) team = 1; // celý míč za čarou levé branky – skórují červení
+    if (b.x + b.r < GOAL_W) team = 1; // celý míč za čarou levé branky – skóruje pravý tým
     else if (b.x - b.r > W - GOAL_W) team = 0;
     if (team < 0) return;
     this.goalTeam = team;
