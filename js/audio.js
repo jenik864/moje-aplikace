@@ -233,6 +233,14 @@ const Sound = {
     this.tone('sine', 90, 50, 0.35, 0.3);
   },
 
+  // JENDA PRIME: slavnostní akord a třpyt
+  prime() {
+    if (!this.live()) return;
+    [392, 493.88, 587.33, 783.99].forEach((f, i) => this.tone('sawtooth', f, f, 0.5, 0.035, i * 0.05));
+    [1568, 2093, 2637].forEach((f, i) => this.tone('sine', f, f * 1.02, 0.25, 0.04, 0.25 + i * 0.07));
+    this.hiss(0.5, 0.08, 'highpass', 6000);
+  },
+
   // basketbalový driblink
   dribble() {
     if (!this.live()) return;

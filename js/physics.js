@@ -66,6 +66,7 @@ class Player {
     this.power = powerOf(o.look && o.look.id);
     this.boostT = 0;      // VO2max: zrychlení
     this.pengT = 0;       // proměna v tučňáka
+    this.primeT = 0;      // JENDA PRIME
     this.place(o.x);
   }
 
@@ -91,6 +92,7 @@ class Player {
     this.stunT = 0; // omámení po zásahu superstřelou
     this.boostT = 0;
     this.pengT = 0;
+    this.primeT = 0;
     this.shootT = 0;  // basketbalový hod (ruce nahoře)
     this.celeb = '';  // oslava gólu: 'slide' (po kolenou) nebo 'plane' (letadlo)
     this.celebT = 0;
@@ -296,6 +298,10 @@ class Match {
       if (mode === 'play') p.superCharge = Math.min(1, p.superCharge + dt / PHYS.superCharge);
       if (p.boostT > 0) p.boostT = Math.max(0, p.boostT - dt);
       if (p.pengT > 0) p.pengT = Math.max(0, p.pengT - dt);
+      if (p.primeT > 0) {
+        p.primeT = Math.max(0, p.primeT - dt);
+        if (p.primeT === 0) this.onEvent('unprime', { idx: this.players.indexOf(p) });
+      }
       this.movePlayer(p, it, dt);
     }
     for (let t = 0; t < 2; t++) {
@@ -395,13 +401,13 @@ class Match {
       if (!p.onGround) p.spin += p.knockDir * 13 * dt;
     }
     const input = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
-    const boost = p.boostT > 0 ? BOOST_MUL : 1;
+    const boost = (p.boostT > 0 ? BOOST_MUL : 1) * (p.primeT > 0 ? PRIME_SPEED : 1);
     const max = PHYS.moveSpeed * p.speedMul * boost;
     if (!stunned && !p.celeb) p.vx = approach(p.vx, input * max, (p.onGround ? PHYS.accelGround : PHYS.accelAir) * boost * dt);
     else if (p.onGround) p.vx = approach(p.vx, 0, 1700 * dt);
 
     if (it.jump && p.onGround) {
-      p.vy = -PHYS.jumpV;
+      p.vy = -PHYS.jumpV * (p.primeT > 0 ? PRIME_JUMP : 1);
       p.onGround = false;
       this.onEvent('jump', { human: p.isHuman });
     }
@@ -486,6 +492,8 @@ class Match {
       this.clearGoal(t);
     } else if (p.power === 'vo2') {
       p.boostT = BOOST_TIME;
+    } else if (p.power === 'prime') {
+      p.primeT = PRIME_TIME;
     }
     this.onEvent('power', { idx, kind: p.power, team: p.team });
     return true;
@@ -590,6 +598,9 @@ class Match {
           let wa = 0.5, wc = 0.5;
           if (a.onGround && !c.onGround) { wa = 0.1; wc = 0.9; }
           else if (c.onGround && !a.onGround) { wa = 0.9; wc = 0.1; }
+          // JENDA PRIME soupeře odstrčí
+          if (a.primeT > 0 && !(c.primeT > 0)) { wa = 0.1; wc = 0.9; }
+          else if (c.primeT > 0 && !(a.primeT > 0)) { wa = 0.9; wc = 0.1; }
           a.x -= nx * o * wa; a.y -= ny * o * wa;
           c.x += nx * o * wc; c.y += ny * o * wc;
           const rv = (c.vx - a.vx) * nx + (c.vy - a.vy) * ny;
@@ -725,6 +736,15 @@ class Match {
         if ((b.x - cx) ** 2 + (b.y - cy) ** 2 >= rr * rr) continue;
         if (p.stunT > 0) break; // už letí
         const dir = Math.sign(b.vx) || (dx > 0 ? 1 : -1);
+        if (p.primeT > 0) {
+          // JENDA PRIME superstřelu ustojí, jen ho to posune
+          p.vx = dir * 260;
+          b.vx *= -0.45;
+          b.vy *= 0.5;
+          b.superT = 0;
+          this.onEvent('head', { x: b.x, y: b.y, impact: 600 });
+          return true;
+        }
         // odstřelit pořádně dozadu a nahoru, hráč se ve vzduchu točí
         p.vx = dir * PHYS.knockVX;
         p.vy = -PHYS.knockVY;
@@ -759,9 +779,9 @@ class Match {
       b.lastTouch = p;
       b.lastHow = 'head';
       touch = true;
-      if (hit.ny < -0.25) b.vx += p.dir * PHYS.headerPush;
+      if (hit.ny < -0.25) b.vx += p.dir * PHYS.headerPush * (p.primeT > 0 ? 3 : 1);
       // Míč sevřený mezi dvěma hlavami nesmí nabírat rychlost donekonečna.
-      const cap = Math.max(s0, PHYS.headMaxSpeed), s1 = b.speed;
+      const cap = Math.max(s0, PHYS.headMaxSpeed * (p.primeT > 0 ? 1.3 : 1)), s1 = b.speed;
       if (s1 > cap) {
         b.vx *= cap / s1;
         b.vy *= cap / s1;
@@ -807,7 +827,7 @@ class Match {
     if (close) deg = Math.max(deg, 63);
     const el = (deg * Math.PI) / 180;
     const run = Math.max(0, p.vx * p.dir);
-    const power = PHYS.kickSpeed * rand(0.94, 1.02) + run * 0.3;
+    const power = (PHYS.kickSpeed * rand(0.94, 1.02) + run * 0.3) * (p.primeT > 0 ? PRIME_KICK : 1);
     b.vx = p.dir * Math.cos(el) * power;
     b.vy = -Math.sin(el) * power + Math.min(0, p.vy) * 0.25;
     // míč vysunout před kopačku

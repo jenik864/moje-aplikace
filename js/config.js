@@ -166,10 +166,18 @@ const POWERS = {
   shot: { name: 'Superstřela', short: 'Super', icon: '⚡', desc: 'Dělová rána s ohněm, odstřelí soupeře' },
   cheese: { name: 'Obří hermelín', short: 'Hermelín', icon: '🧀', desc: 'Na 3 s zablokuje vaši bránu' },
   vo2: { name: 'VO2max 67', short: 'VO2max', icon: '💨', desc: '5 s běhá 2× rychleji' },
+  prime: { name: 'JENDA PRIME', short: 'Prime', icon: '⭐', desc: '5 s v bílém dresu Realu Madrid: rychlejší, silnější, skáče výš' },
   basket: { name: 'Trojka', short: 'Trojka', icon: '🏀', desc: 'U míče: míč se změní v basketbalový a letí obloukem do brány soupeře' },
   penguin: { name: 'Tučňák', short: 'Tučňák', icon: '🐧', desc: 'Promění se v tučňáka, brána zamrzne na 3 s' },
 };
-const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket' };
+const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime' };
+// JENDA PRIME: na 5 s hráč Realu Madrid
+const PRIME_TIME = 5;
+const PRIME_SPEED = 1.5; // rychlost běhu
+const PRIME_JUMP = 1.3;  // výskok
+const PRIME_KICK = 1.4;  // síla kopu
+// bílý dres se zlatým a tmavomodrým lemováním (bez znaku klubu)
+const PRIME_KIT = { name: 'JENDA PRIME', short: 'Jenda Prime', color: '#f8f8f5', dark: '#d9dde6', light: '#c9a227', num: '#1d2b5c' };
 const powerOf = (id) => CHAR_POWER[id] || 'shot';
 const BLOCK_TIME = 3;    // jak dlouho hermelín / led blokuje bránu
 const BOOST_TIME = 5;    // VO2max

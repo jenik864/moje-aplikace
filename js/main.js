@@ -676,6 +676,16 @@ const Game = {
             Effects.pop('TUČŇÁK!', p.x, p.y - 110, '#53d2ff', 38);
             Effects.shake(6);
           }
+        } else if (kind === 'prime') {
+          Effects.rings.push({ x: p.x, y: p.y, t: 0, dur: 0.5, r0: 20, r1: 150, rgb: '255,210,80' });
+          Effects.rings.push({ x: p.x, y: p.y, t: 0, dur: 0.35, r0: 10, r1: 90, rgb: '255,255,255' });
+          Effects.spark(p.x, p.y);
+          Effects.spark(p.x, p.y - 40);
+          if (live) {
+            Effects.pop('JENDA PRIME!', p.x, p.y - 120, '#ffc93c', 38);
+            Effects.shake(6);
+            Sound.prime();
+          }
         } else if (kind === 'basket') {
           Effects.say(a[0], 'STŘÍLIM TY TROJKY', col, 2.2);
           Effects.puff(m.ball.x, m.ball.y);
@@ -710,6 +720,11 @@ const Game = {
           Sound.thud();
           Effects.shake(4 * (a[3] || 0.5));
         }
+        break;
+      }
+      case 'unprime': {
+        const p = m && m.players[a[0]];
+        if (p) Effects.puff(p.x, p.y);
         break;
       }
       case 'unblock': {
@@ -811,6 +826,9 @@ const Game = {
         break;
       case 'unblock':
         this.fx('unblock', d.team, d.kind === 'ice' ? 1 : 0);
+        break;
+      case 'unprime':
+        this.fx('unprime', d.idx);
         break;
     }
   },
@@ -1316,7 +1334,7 @@ const Game = {
     this.rec.push({
       t: this.gameT,
       b: [b.x, b.y, b.rot, b.superT, b.superBy, b.basketT, b.basketSide],
-      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin, p.boostT, p.pengT, p.kneel, p.face, p.plane, p.shootT]),
+      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin, p.boostT, p.pengT, p.kneel, p.face, p.plane, p.shootT, p.primeT]),
       bk: [m.blocks[0], m.blocks[1]],
     });
     while (this.rec.length && this.rec[0].t < this.gameT - 5) this.rec.shift();
@@ -1363,6 +1381,7 @@ const Game = {
       p.face = b[11] || 0;
       p.plane = b[12] || 0;
       p.shootT = b[13] || 0;
+      p.primeT = b[14] || 0;
       p.spin = b[7] && a[7] && Math.sign(a[7]) === Math.sign(b[7]) ? lerp(a[7], b[7], k) : b[7] || 0;
       p.mood = 0;
       if (p.onGround) p.runPhase += p.vx * p.dir * 0.016 * 0.05 * REPLAY_SPEED;
@@ -1519,7 +1538,7 @@ const Game = {
       ts: this.tstats ? this.tstats.map((a) => a.map((v) => r(v))) : 0,
       sc: [m.score[0], m.score[1]],
       b: [r(b.x), r(b.y), r(b.rot * 100), r(b.superT * 100), b.superBy, r(b.basketT * 100), b.basketSide, b.carryBy >= 0 ? 1 : 0],
-      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100)]),
+      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100), r(p.primeT * 100)]),
       bk: [r(m.blocks[0] * 100), r(m.blocks[1] * 100), m.blockKind[0] === 'ice' ? 1 : 0, m.blockKind[1] === 'ice' ? 1 : 0],
       m: msg ? [msg.id, msg.text, msg.sub || '', msg.color, msg.size, Math.round(msg.dur * 10)] : 0,
       e: this.evq,
@@ -1709,6 +1728,7 @@ const Game = {
       p.face = pb[13] === 1 || pb[13] === -1 ? pb[13] : 0;
       p.plane = (Number(pb[14]) || 0) / 100;
       p.shootT = (Number(pb[15]) || 0) / 100;
+      p.primeT = (Number(pb[16]) || 0) / 100;
       const sa = Number(pa[9]) || 0, sb = Number(pb[9]) || 0;
       p.spin = sb === 0 || Math.sign(sa) !== Math.sign(sb) ? sb / 100 : lerp(sa, sb, k) / 100;
       if (p.onGround) p.runPhase += p.vx * p.dir * dt * 0.05;

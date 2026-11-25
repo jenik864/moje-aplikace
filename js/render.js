@@ -1480,6 +1480,18 @@ const Renderer = {
   /* ---- hráč ---- */
 
   drawPlayer(ctx, p, ball, teams, now) {
+    // JENDA PRIME: zlatá záře a bílý dres
+    if (p.primeT > 0 && !p._primeDraw) {
+      this.drawPrimeAura(ctx, p, now);
+      const kit = p.team === 0 ? [PRIME_KIT, teams[1]] : [teams[0], PRIME_KIT];
+      p._primeDraw = true;
+      try {
+        this.drawPlayer(ctx, p, ball, kit, now);
+      } finally {
+        p._primeDraw = false;
+      }
+      return;
+    }
     // při oslavě se hráč může otočit k vlastním fanouškům
     if (p.face && p.face !== p.dir) {
       const d = p.dir;
@@ -1698,6 +1710,41 @@ const Renderer = {
     ctx.stroke();
     ctx.fillStyle = T.light;
     ctx.fillRect(-21, R + 10, 8, 3);
+    ctx.restore();
+  },
+
+  // JENDA PRIME: zlatá záře kolem hráče a jiskry.
+  drawPrimeAura(ctx, p, now) {
+    const cx = p.x, cy = p.y + (p.R + p.F) * 0.35, r = (p.R + p.F) * 0.85;
+    const pulse = 1 + Math.sin(now * 0.012) * 0.06;
+    const fade = Math.min(1, p.primeT / 0.4);
+    ctx.save();
+    ctx.globalAlpha = fade;
+    const g = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * pulse);
+    g.addColorStop(0, 'rgba(255,230,140,.55)');
+    g.addColorStop(0.6, 'rgba(255,200,60,.22)');
+    g.addColorStop(1, 'rgba(255,200,60,0)');
+    ctx.fillStyle = g;
+    circle(ctx, cx, cy, r * pulse);
+    ctx.fill();
+    ctx.fillStyle = '#fff3b0';
+    for (let i = 0; i < 5; i++) {
+      const a = now * 0.003 + (i * TAU) / 5, k = (now * 0.0015 + i * 0.2) % 1;
+      const x = cx + Math.cos(a) * r * 0.75, y = cy - k * r * 1.2 + r * 0.4;
+      star(ctx, x, y, 6 * Math.sin(k * Math.PI) + 1, 2);
+      ctx.fill();
+    }
+    // nápis nad hlavou
+    ctx.font = `20px ${FONT_D}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#1d2b5c';
+    const ty = p.y - p.R - (p.label ? 60 : 30);
+    ctx.strokeText('JENDA PRIME', cx, ty);
+    ctx.fillStyle = '#ffd23f';
+    ctx.fillText('JENDA PRIME', cx, ty);
     ctx.restore();
   },
 
@@ -2038,8 +2085,9 @@ const Renderer = {
     ctx.save();
     ctx.translate(-3, R + 8);
     if (p.dir < 0) ctx.scale(-1, 1);
+    if (T.num) ctx.strokeStyle = T.light;
     ctx.strokeText(String(L.num), 0, 0);
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = T.num || '#ffffff';
     ctx.fillText(String(L.num), 0, 0);
     ctx.restore();
   },
