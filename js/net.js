@@ -15,7 +15,7 @@
 
 const NET_V = 2;
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const PEERJS_SRC = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+const PEERJS_SRC = 'js/vendor/peerjs.min.js'; // PeerJS 1.5.4 (MIT), přibalené ke hře
 
 function makeCode() {
   let s = '';
@@ -68,7 +68,9 @@ async function openRoomTransport(room, code) {
 async function openPeerTransport(code, asHost) {
   if (!window.Peer) await loadScript(PEERJS_SRC);
   const hostId = 'hlavouni-' + code.toLowerCase();
-  const peer = asHost ? new window.Peer(hostId) : new window.Peer();
+  // window.HLAVOUNI_PEER umožní testům použít vlastní server PeerJS
+  const opts = Object.assign({ debug: 0 }, window.HLAVOUNI_PEER || {});
+  const peer = asHost ? new window.Peer(hostId, opts) : new window.Peer(opts);
   await new Promise((resolve, reject) => {
     const t = setTimeout(() => reject(new Error('timeout')), 12000);
     peer.on('open', () => { clearTimeout(t); resolve(); });
@@ -256,6 +258,7 @@ const Online = {
   hostP: null,
   hostSeen: 0,
   wantN: 0,
+  ready: false,
   kickSeq: 0,
   lastIn: '',
   // zpětná volání do hry
@@ -299,10 +302,11 @@ const Online = {
     this.uid = 'g' + randomId(7);
     this.hostP = null;
     this.wantN = 0;
+    this.ready = false;
     this.kickSeq = 0;
     this.lastIn = '';
     this.unsub = this.t.onPeers((l) => this.guestPeers(l));
-    this.t.setPresence({ v: NET_V, role: 'guest', uid: this.uid, name: this.name, want: null, in: null });
+    this.t.setPresence({ v: NET_V, role: 'guest', uid: this.uid, name: this.name, want: null, in: null, ready: false });
     // počkat na hostitele
     const t0 = Date.now();
     while (!this.hostP) {
@@ -367,13 +371,14 @@ const Online = {
       let g = this.guests.get(uid);
       const isNew = !g;
       if (!g) {
-        g = { uid, name: '', wantN: 0, in: null, kick: pr.in && Number(pr.in.k) || 0, seen: now };
+        g = { uid, name: '', wantN: 0, in: null, ready: false, kick: pr.in && Number(pr.in.k) || 0, seen: now };
         this.guests.set(uid, g);
       }
       g.seen = now;
       const name = cleanName(pr.name);
-      const renamed = name !== g.name;
+      const renamed = name !== g.name || !!pr.ready !== g.ready;
       g.name = name;
+      g.ready = !!pr.ready;
       g.in = pr.in && typeof pr.in === 'object' ? pr.in : null;
       let wanted = false;
       if (pr.want && typeof pr.want === 'object' && Number(pr.want.n) > g.wantN) {
@@ -400,8 +405,8 @@ const Online = {
   },
 
   members() {
-    const out = [{ uid: 'host', name: this.name }];
-    for (const g of this.guests.values()) out.push({ uid: g.uid, name: g.name });
+    const out = [{ uid: 'host', name: this.name, ready: true }];
+    for (const g of this.guests.values()) out.push({ uid: g.uid, name: g.name, ready: g.ready });
     return out;
   },
 
@@ -418,6 +423,11 @@ const Online = {
     if (host.presence === this.hostP) return;
     this.hostP = host.presence;
     if (this.onHost) this.onHost(host.presence);
+  },
+
+  setReady(v) {
+    this.ready = !!v;
+    this.publish({ ready: this.ready });
   },
 
   want(slot, char) {

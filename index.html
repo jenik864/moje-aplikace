@@ -60,20 +60,34 @@
         <button id="btn-join" class="btn" type="button">Připojit</button>
       </div>
       <p id="online-status" class="status" role="status"></p>
+      <div id="public-hint" class="public-hint" hidden>
+        <p>Bez účtu na Claude hrajte online na webu:</p>
+        <p class="url" id="public-url"></p>
+        <button id="btn-copy-public" class="btn" type="button">Kopírovat adresu</button>
+      </div>
       <button id="btn-online-back" class="btn ghost" type="button">Zpět</button>
     </div>
   </section>
 
-  <section id="lobby" class="overlay" aria-labelledby="lobby-kicker" hidden>
-    <div class="panel lobby-panel">
-      <div class="lobby-head">
+  <section id="lobby" class="overlay" aria-labelledby="lobby-title" hidden>
+    <div class="lobby">
+      <header class="lobby-top">
         <button id="btn-lobby-back" class="btn-mini" type="button" aria-label="Zpět do menu">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
         </button>
-        <h2 id="lobby-kicker" class="lobby-kicker">Výběr hráčů</h2>
-        <div id="lobby-code-box" class="code-box" hidden><span>Kód hry</span><strong id="lobby-code"></strong></div>
-      </div>
-      <div class="lobby-opts">
+        <div class="lobby-heading">
+          <p id="lobby-kicker" class="lobby-kicker">Výběr hráčů</p>
+          <h2 id="lobby-title" class="lobby-title">Na tomto zařízení</h2>
+        </div>
+        <div id="lobby-invite" class="invite" hidden>
+          <div class="code-box"><span>Kód hry</span><strong id="lobby-code"></strong></div>
+          <button id="btn-invite" class="btn-invite" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+            Pozvat
+          </button>
+        </div>
+      </header>
+      <div class="lobby-settings">
         <div class="seg" role="group" aria-label="Zápas" data-key="format">
           <button type="button" data-v="1v1">1 v 1</button>
           <button type="button" data-v="2v2">2 v 2</button>
@@ -89,10 +103,15 @@
           <button type="button" data-v="hard">Těžký</button>
         </div>
       </div>
-      <div id="slots" class="slots"></div>
-      <p id="lobby-members" class="members" hidden></p>
-      <p id="lobby-hint" class="hint"></p>
-      <button id="btn-start" class="btn-play" type="button">Hrát</button>
+      <div id="slots" class="arena"></div>
+      <ul id="lobby-members" class="members" aria-label="Hráči ve hře" hidden></ul>
+      <div class="lobby-bottom">
+        <p id="lobby-hint" class="hint"></p>
+        <div class="lobby-actions">
+          <button id="btn-ready" class="btn btn-ready" type="button" hidden>Jsem připraven</button>
+          <button id="btn-start" class="btn-play" type="button">Hrát</button>
+        </div>
+      </div>
       <p id="lobby-wait" class="status wait" hidden>Čeká se, až hostitel spustí zápas…</p>
     </div>
   </section>

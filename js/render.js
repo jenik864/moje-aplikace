@@ -195,6 +195,8 @@ const ADS = [
   { t: 'GÓL TV', bg: '#19a974', fg: '#ffffff' },
   { t: 'NELCIS & MAJDA', bg: '#9e1f5c', fg: '#ffd1e6' },
   { t: 'MARSAL & DURCADO', bg: '#1a4fb0', fg: '#cfe1ff' },
+  { t: 'TÓMA & PELI', bg: '#0d7040', fg: '#c9ffe2' },
+  { t: 'BÉMIČ & KIKI', bg: '#b85400', fg: '#ffe6cc' },
 ];
 const STANDS_TOP = 150;
 const STANDS_BOTTOM = 458;
@@ -216,6 +218,20 @@ const Renderer = {
   nets: [{ t: -1e9, amp: 0, y: 500 }, { t: -1e9, amp: 0, y: 500 }],
   figs: new Map(),
   vig: null,
+  fanColors: ['#e8458f', '#2f80ff'],
+
+  // Fanoušci v barvách týmů, které právě hrají.
+  setFans(teams) {
+    const c = [teams[0].color, teams[1].color];
+    if (c[0] === this.fanColors[0] && c[1] === this.fanColors[1]) return;
+    this.fanColors = c;
+    const s = this.bgScale, cr = this.crowd;
+    const y = cr.getContext('2d');
+    y.setTransform(1, 0, 0, 1, 0, 0);
+    y.clearRect(0, 0, cr.width, cr.height);
+    y.setTransform(s, 0, 0, s, 0, -STANDS_TOP * s);
+    this.drawFans(y);
+  },
 
   init(canvas) {
     this.canvas = canvas;
@@ -360,8 +376,9 @@ const Renderer = {
   drawFans(x) {
     const top = STANDS_TOP, bottom = STANDS_BOTTOM;
     const rng = mulberry32(7);
-    const pinks = ['#e8458f', '#c42f74', '#ff7ab4'];
-    const blues = ['#2f80ff', '#1f5fd1', '#5b9bff'];
+    const [ca, cb] = this.fanColors;
+    const pinks = [ca, shade(ca, -0.2), shade(ca, 0.25)];
+    const blues = [cb, shade(cb, -0.2), shade(cb, 0.25)];
     const neutral = ['#e9edf2', '#2b3445', '#ffc93c', '#5b6b84', '#c9d3e0', '#7a4bd6', '#19a974'];
     const skins = ['#f3c99b', '#e0ac69', '#c68642', '#8d5524', '#f8d8c0'];
     const rows = 13, rowH = (bottom - 14 - top) / rows;
@@ -383,12 +400,12 @@ const Renderer = {
         const extra = rng();
         if (extra < 0.03) {
           // vlajka
-          x.fillStyle = home ? '#e8458f' : '#2f80ff';
+          x.fillStyle = home ? ca : cb;
           x.fillRect(cx - 1, yy - size * 5.4, 1.5, size * 3.2);
           x.fillRect(cx, yy - size * 5.4, size * 2.8, size * 1.6);
         } else if (extra < 0.08) {
           // šála nad hlavou
-          x.fillStyle = home ? '#ff9ccb' : '#9cc2ff';
+          x.fillStyle = home ? shade(ca, 0.45) : shade(cb, 0.45);
           x.fillRect(cx - size * 1.6, yy - size * 3.6, size * 3.2, size * 0.7);
         }
       }
@@ -1478,6 +1495,117 @@ const Renderer = {
         strand(-6, -36, 14, -46, 34, -36, dark, 1.5);
         break;
 
+      case 'messy': {
+        // střapaté pramínky sčesané dopředu
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(-34, 20);
+          ctx.quadraticCurveTo(-45, 2, -41, -14);
+          const tufts = [[-2.78, 11], [-2.42, 16], [-2.04, 19], [-1.64, 20], [-1.24, 18], [-0.9, 13]];
+          for (const [a, len] of tufts) {
+            const tip = a + 0.32, r0 = R - 1, r1 = R + len;
+            ctx.lineTo(Math.cos(a - 0.15) * r0, Math.sin(a - 0.15) * r0);
+            ctx.quadraticCurveTo(Math.cos(a) * (r1 - 3), Math.sin(a) * (r1 - 3), Math.cos(tip) * r1, Math.sin(tip) * r1);
+            ctx.quadraticCurveTo(Math.cos(a + 0.12) * (r0 + 2), Math.sin(a + 0.12) * (r0 + 2), Math.cos(a + 0.18) * r0, Math.sin(a + 0.18) * r0);
+          }
+          ctx.quadraticCurveTo(43, -24, 39, -12);
+          ctx.quadraticCurveTo(32, -19, 25, -16);
+          ctx.quadraticCurveTo(20, -23, 8, -24);
+          ctx.quadraticCurveTo(-10, -21, -17, -5);
+          ctx.quadraticCurveTo(-23, 10, -34, 20);
+          ctx.closePath();
+        });
+        strand(-20, -36, 0, -46, 22, -40, light, 2.4);
+        strand(-30, -20, -36, -32, -26, -38, light, 1.8);
+        break;
+      }
+
+      case 'buzz': {
+        // krátký sestřih: tenká vrstva vlasů, jemná textura
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(-34, 18);
+          ctx.arc(0, -1, R + 2.5, Math.PI * 0.86, Math.PI * 1.83);
+          ctx.quadraticCurveTo(26, -25, 6, -27);
+          ctx.quadraticCurveTo(-12, -22, -17, -6);
+          ctx.quadraticCurveTo(-22, 8, -34, 18);
+          ctx.closePath();
+        });
+        ctx.save();
+        circle(ctx, 0, -1, R + 2);
+        ctx.clip();
+        ctx.fillStyle = light;
+        const rng = mulberry32(5);
+        for (let i = 0; i < 70; i++) {
+          const a = lerp(Math.PI * 0.9, Math.PI * 1.8, rng()), r = R - 1 - rng() * 14;
+          const px = Math.cos(a) * r, py = Math.sin(a) * r;
+          if (py > -20 && px > -16) continue;
+          ctx.fillRect(px, py, 1.4, 1.4);
+        }
+        ctx.restore();
+        strand(-24, -30, -6, -42, 16, -40, light, 2);
+        break;
+      }
+
+      case 'spiky': {
+        // ježek dozadu
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(-34, 20);
+          ctx.quadraticCurveTo(-46, 4, -42, -12);
+          const spikes = [[-2.8, 16], [-2.45, 22], [-2.08, 25], [-1.72, 25], [-1.36, 22], [-1.02, 17]];
+          for (const [a, len] of spikes) {
+            const tip = a - 0.22, r0 = R - 1, r1 = R + len;
+            ctx.lineTo(Math.cos(a - 0.16) * r0, Math.sin(a - 0.16) * r0);
+            ctx.lineTo(Math.cos(tip) * r1, Math.sin(tip) * r1);
+            ctx.lineTo(Math.cos(a + 0.16) * r0, Math.sin(a + 0.16) * r0);
+          }
+          ctx.quadraticCurveTo(40, -26, 37, -20);
+          ctx.quadraticCurveTo(24, -23, 8, -25);
+          ctx.quadraticCurveTo(-10, -21, -17, -5);
+          ctx.quadraticCurveTo(-23, 10, -34, 20);
+          ctx.closePath();
+        });
+        for (const [a, len] of [[-2.08, 25], [-1.72, 25], [-1.36, 22]]) {
+          const r1 = R + len - 6;
+          strand(Math.cos(a) * (R - 4), Math.sin(a) * (R - 4), Math.cos(a - 0.1) * (R + 6), Math.sin(a - 0.1) * (R + 6), Math.cos(a - 0.18) * r1, Math.sin(a - 0.18) * r1, light, 2);
+        }
+        break;
+      }
+
+      case 'buns': {
+        // dva drdoly a ofina na stranu
+        const buns = [[-17, -40, 13], [14, -45, 12]];
+        for (const [bx, by, br] of buns) {
+          shape(() => {
+            circle(ctx, bx, by, br);
+          });
+          strand(bx - br * 0.5, by - br * 0.3, bx, by - br * 0.9, bx + br * 0.5, by - br * 0.4, light, 2);
+        }
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(-34, 20);
+          ctx.arc(0, -1, R + 2, Math.PI * 0.86, Math.PI * 1.8);
+          ctx.quadraticCurveTo(42, -22, 38, -14);
+          ctx.quadraticCurveTo(30, -22, 20, -20);
+          ctx.quadraticCurveTo(10, -30, -4, -27);
+          ctx.quadraticCurveTo(-14, -20, -17, -5);
+          ctx.quadraticCurveTo(-23, 10, -34, 20);
+          ctx.closePath();
+        });
+        strand(-14, -34, 6, -44, 28, -32, light, 2.2);
+        ctx.fillStyle = L.accent;
+        ctx.strokeStyle = OUTLINE;
+        ctx.lineWidth = 1.6;
+        for (const [bx, by, br] of buns) {
+          const a = Math.atan2(by, bx);
+          oval(ctx, bx - Math.cos(a) * br * 0.75, by - Math.sin(a) * br * 0.75, 5, 3, a + Math.PI / 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        break;
+      }
+
       case 'wavy': {
         // objemné vlny nahoře a dozadu
         const top = [];
@@ -1513,10 +1641,17 @@ const Renderer = {
     lx /= ln;
     ly /= ln;
 
-    // tváře
+    // tváře a pihy
     ctx.fillStyle = L.girl ? 'rgba(255,100,120,.3)' : 'rgba(235,110,90,.16)';
     oval(ctx, 16, 11, 6, 3.6);
     ctx.fill();
+    if (L.freckles) {
+      ctx.fillStyle = 'rgba(160,75,30,.55)';
+      for (const [fx, fy] of [[12, 8], [16, 6.5], [19.5, 9], [14.5, 11], [33, 7], [35.5, 10]]) {
+        circle(ctx, fx, fy, 1.1);
+        ctx.fill();
+      }
+    }
 
     // oči
     this.drawEye(ctx, p, L, 9, -3, 5.4, 6.8, lx, ly, false);

@@ -13,14 +13,16 @@ python3 -m http.server 8000
 
 ## Týmy a postavy
 
-Ve 2 v 2 hrají dva pevné týmy:
+Ve 2 v 2 se v lobby šipkami vybírají dvě ze čtyř dvojic:
 
-| Tým | Hráči |
+| Dvojice | Postavy |
 | --- | --- |
 | Nelcis & Majda (růžoví) | Nelcis (blond cop), Majda (dlouhé hnědé vlasy s mašlí) |
 | Marsal & Durcado (modří) | Marsal (blond patka), Durcado (vlnité hnědé vlasy) |
+| Tóma & Peli (zelení) | Tóma (střapaté hnědé vlasy), Peli (krátké černé vlasy) |
+| Bémič & Kiki (oranžoví) | Bémič (zrzavý ježek, pihy), Kiki (dva drdoly) |
 
-V 1 v 1 si každý vybere jednu z těchto čtyř postav. Postavy mají tělo s dresem a číslem, trenky, ruce a kopačky, běhají, při radosti mávají a po inkasovaném gólu se mračí.
+V 1 v 1 si každý vybere libovolnou z osmi postav. Dres má barvu její dvojice. Postavy mají tělo s dresem a číslem, trenky, ruce a kopačky, běhají, při radosti mávají a po inkasovaném gólu se mračí.
 
 ## Filmové scény a stadion
 
@@ -50,14 +52,24 @@ Když u zařízení hraje jen jeden člověk, fungují mu obě sady kláves. `Es
 
 ## Online hra: jak funguje
 
-Hostitel počítá celý zápas a asi 30× za sekundu posílá jeho stav ostatním. Ostatní posílají jen svoje ovládání. U kamarádů se pohyb vyhlazuje, takže jejich vlastní hráč reaguje s malým zpožděním (podle sítě zhruba 0,1–0,3 s). Když kamarád odejde, jeho hráče převezme počítač. Když odejde hostitel, hra skončí všem.
+Hostitel počítá celý zápas a asi 30× za sekundu posílá jeho stav ostatním. Ostatní posílají jen svoje ovládání. Když kamarád odejde, jeho hráče převezme počítač. Když odejde hostitel, hra skončí všem.
+
+V lobby se kamarádi připojují kódem nebo odkazem s kódem (tlačítko *Pozvat*, odkaz končí `#kod-ABCD`). Každý si vybere postavu a dá *Jsem připraven*. Hostitel vidí, kolik hráčů je připraveno, a spustí zápas.
 
 Přenos se volí podle toho, kde hra běží:
 
-- **Na claude.ai (artifact)**: používá se sdílená místnost artifactu. Kamarádi musí být přihlášení na claude.ai a mít k artifactu přístup (sdílení přes tlačítko Share). Kdo stránku otevře nepřihlášený nebo přes veřejný odkaz, online hrát nemůže.
-- **Na vlastním webu (např. GitHub Pages)**: používá se WebRTC přes knihovnu PeerJS a jejich veřejný server pro navázání spojení. Funguje pro kohokoli s odkazem. Na některých mobilních sítích se ale spojení nemusí podařit navázat. Pak pomůže být na stejné Wi-Fi.
+- **Na webu (GitHub Pages), pro kohokoli bez účtu**: WebRTC přes knihovnu PeerJS (přibalená v `js/vendor/`) a její veřejný server pro navázání spojení. Když přímé spojení nejde, PeerJS použije své veřejné TURN servery.
+- **Na claude.ai (artifact)**: sdílená místnost artifactu. Hrát online tam můžou jen přihlášení lidé, kterým je artifact nasdílený. Ostatním hra ukáže adresu webové verze.
 
-Pro testy lze v prohlížeči nastavit `window.HLAVOUNI_NET = 'bc'`. Online hra pak běží přes BroadcastChannel mezi panely jednoho prohlížeče.
+### Zveřejnění na GitHub Pages
+
+GitHub Pages zdarma funguje jen pro veřejný repozitář.
+
+1. *Settings → General → Danger Zone → Change visibility* → **Public**.
+2. *Settings → Pages → Build and deployment*: Source **Deploy from a branch**, větev `claude/tender-maxwell-a4f0g0` (nebo `main` po sloučení), složka **/ (root)** → **Save**.
+3. Za minutu až dvě hra poběží na `https://jenik864.github.io/moje-aplikace/`.
+
+Pro testy lze v prohlížeči nastavit `window.HLAVOUNI_NET = 'bc'` (BroadcastChannel mezi panely) nebo `window.HLAVOUNI_PEER = { host, port, path, secure }` (vlastní server PeerJS).
 
 ## Jak funguje hra
 
@@ -79,6 +91,7 @@ js/ai.js        počítačový hráč
 js/physics.js   míč, hráči, kolize, góly
 js/render.js    stadion, postavy, míč, efekty, výsledková tabule, portréty
 js/net.js       online přenos (artifact room, PeerJS, BroadcastChannel)
+js/vendor/      PeerJS 1.5.4 (licence MIT)
 js/lobby.js     výběr hráčů
 js/main.js      herní smyčka, průběh zápasu, obrazovky, hostitel a host
 ```

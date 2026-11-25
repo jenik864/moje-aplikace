@@ -89,7 +89,9 @@ const Game = {
 
   newDemo() {
     const two = Math.random() < 0.6;
-    const lobby = newLobby({ format: two ? '2v2' : '1v1' });
+    const da = Math.floor(Math.random() * DUO_TEAMS.length);
+    const db = (da + 1 + Math.floor(Math.random() * (DUO_TEAMS.length - 1))) % DUO_TEAMS.length;
+    const lobby = newLobby({ format: two ? '2v2' : '1v1', duos: [da, db] });
     if (!two) {
       lobby.slots[0].char = pick(ROSTER).id;
       lobby.slots[1].char = pick(ROSTER).id;
@@ -99,6 +101,7 @@ const Game = {
     const setup = this.buildSetup(lobby);
     setup.demo = true;
     this.match = new Match(setup, (t, d) => this.onEvent(t, d));
+    Renderer.setFans(setup.teams);
     this.stateT = 0;
     this.acc = 0;
   },
@@ -121,12 +124,17 @@ const Game = {
     UI.show('home');
   },
 
-  toOnline() {
+  toOnline(code) {
     this.screen = 'online';
     UI.show('online');
     UI.onlineStatus('');
+    UI.publicHint(false);
+    if (code) UI.el.code.value = cleanCode(code);
     Net.detect().then((kind) => {
-      if (kind === null) UI.onlineStatus('Online hra tady nejde. Na claude.ai musíš být přihlášený, jinak otevři hru z webu (třeba GitHub Pages).', true);
+      if (kind === null) {
+        UI.onlineStatus('Tady online nejde, protože hra běží na claude.ai bez přihlášení.', true);
+        UI.publicHint(true);
+      }
     });
   },
 
@@ -218,7 +226,7 @@ const Game = {
   savePrefs() {
     const l = this.lobby;
     if (!l) return;
-    this.prefs = { format: l.format, minutes: l.minutes, level: l.level, chars: l.format === '1v1' ? l.slots.map((s) => s.char) : this.prefs.chars };
+    this.prefs = { format: l.format, minutes: l.minutes, level: l.level, duos: l.duos.slice(), chars: l.format === '1v1' ? l.slots.map((s) => s.char) : this.prefs.chars };
     store.set(STORE_LOBBY, this.prefs);
   },
 
@@ -237,13 +245,14 @@ const Game = {
         const s = lobby.slots[a.slot];
         if (s && s.ctrl === Online.uid) Online.want(a.slot, cycleChar(s.char, a.d));
       }
+      this.renderLobby();
       return;
     }
     const l = this.lobby;
     if (a.type === 'setting') {
       if (a.key === 'format') {
         if (l.format === a.value) return;
-        l.slots = makeSlots(a.value, l);
+        l.slots = makeSlots(a.value, l, l.duos);
         l.format = a.value;
       } else {
         l[a.key] = a.value;
@@ -268,6 +277,8 @@ const Game = {
     } else if (a.type === 'char') {
       const s = l.slots[a.slot];
       if (s) s.char = cycleChar(s.char, a.d);
+    } else if (a.type === 'duo') {
+      cycleDuo(l, a.side, a.d);
     }
     this.savePrefs();
     if (this.mode === 'host') this.publishLobby();
@@ -279,7 +290,7 @@ const Game = {
     const l = this.lobby;
     Online.publish({
       phase: 'lobby',
-      lobby: { format: l.format, minutes: l.minutes, level: l.level, slots: l.slots.map((s) => ({ team: s.team, char: s.char, ctrl: s.ctrl })), members: Online.members() },
+      lobby: { format: l.format, minutes: l.minutes, level: l.level, duos: l.duos.slice(), slots: l.slots.map((s) => ({ team: s.team, char: s.char, ctrl: s.ctrl })), members: Online.members() },
       setup: null,
       g: null,
     });
@@ -360,6 +371,7 @@ const Game = {
     Input.shared = humans <= 1;
     Input.clear();
     this.match = new Match(setup, (t, d) => this.onEvent(t, d), (uid) => Online.remoteIntent(uid));
+    Renderer.setFans(setup.teams);
     this.match.players.forEach((p, i) => { p.label = this.labelFor(setup.players[i]); });
     this.screen = 'match';
     this.timeLeft = setup.minutes * 60;
@@ -975,6 +987,7 @@ const Game = {
     this.setupKey = '';
     // zrcadlo zápasu: stejní hráči, ale fyziku počítá hostitel
     this.match = new Match(setup, () => {}, null);
+    Renderer.setFans(setup.teams);
     this.match.players.forEach((p, i) => {
       p.brain = null;
       p.label = this.labelFor(setup.players[i]);
@@ -1120,12 +1133,13 @@ function sanitizeLobby(l) {
     format,
     minutes: [1, 2, 3].includes(l.minutes) ? l.minutes : 2,
     level: AI_LEVELS[l.level] ? l.level : 'medium',
+    duos: validDuos(l.duos),
     slots: l.slots.slice(0, 4).map((s) => ({
       team: s && s.team === 1 ? 1 : 0,
       char: charById(s && s.char).id,
       ctrl: s && typeof s.ctrl === 'string' ? s.ctrl.slice(0, 16) : 'cpu',
     })),
-    members: Array.isArray(l.members) ? l.members.slice(0, 8).map((m) => ({ uid: String(m && m.uid || '').slice(0, 16), name: cleanName(m && m.name) })) : [],
+    members: Array.isArray(l.members) ? l.members.slice(0, 8).map((m) => ({ uid: String(m && m.uid || '').slice(0, 16), name: cleanName(m && m.name), ready: !!(m && m.ready) })) : [],
   };
 }
 
@@ -1197,6 +1211,12 @@ const UI = {
     });
     click('btn-lobby-back', () => Game.toHome());
     click('btn-start', () => Game.start());
+    click('btn-ready', () => {
+      Online.setReady(!Online.ready);
+      Game.renderLobby();
+    });
+    click('btn-invite', () => this.invite());
+    click('btn-copy-public', () => this.copy(PUBLIC_URL, 'Adresa zkopírována'));
     click('btn-resume', () => Game.resume());
     click('btn-restart', () => Game.start());
     click('btn-quit', () => Game.backToLobby());
@@ -1216,6 +1236,7 @@ const UI = {
       this.setMuted(!Sound.muted);
     });
     this.el.nick.value = cleanName(store.get(STORE_NAME, ''));
+    $('public-url').textContent = PUBLIC_URL.replace(/^https:\/\//, '').replace(/\/$/, '');
     this.setMuted(store.get(STORE_MUTE, false) === true);
     this.renderHelp();
     this.orient();
@@ -1235,6 +1256,37 @@ const UI = {
       ? '<p>Levým palcem joystick: do stran běh, nahoru skok. Pravým palcem kop.</p>'
       : `<p>${k('A')}${k('D')} nebo ${k('←')}${k('→')} běh · ${k('W')} nebo ${k('↑')} skok · ${k('mezerník')} nebo ${k('↓')} kop</p>`
         + `<p class="dim">Dva hráči u jednoho počítače: hráč 1 ${k('W')}${k('A')}${k('S')}${k('D')} a ${k('mezerník')}, hráč 2 šipky · ${k('Esc')} pauza</p>`;
+  },
+
+  // Odkaz s kódem hry: kdo ho otevře, rovnou se připojuje.
+  inviteLink() {
+    const inViewer = !!(window.claude && typeof window.claude.use === 'function');
+    if (inViewer) return '';
+    return location.origin + location.pathname + '#kod-' + Online.code;
+  },
+
+  invite() {
+    const link = this.inviteLink();
+    const text = `Pojď hrát Hlavouni! Kód hry: ${Online.code}`;
+    if (link && navigator.share) {
+      navigator.share({ title: 'Hlavouni', text, url: link }).catch(() => {});
+      return;
+    }
+    this.copy(link ? `${text}\n${link}` : text, link ? 'Pozvánka s odkazem zkopírována' : 'Kód zkopírován');
+  },
+
+  copy(text, done) {
+    const fallback = () => this.toast(text.replace(/\n.*/, ''));
+    try {
+      navigator.clipboard.writeText(text).then(() => this.toast(done), fallback);
+    } catch (e) {
+      fallback();
+    }
+  },
+
+  publicHint(v) {
+    const el = document.getElementById('public-hint');
+    if (el) el.hidden = !v;
   },
 
   setSkip(v) {
@@ -1334,6 +1386,16 @@ function boot() {
   LobbyUI.init();
   UI.init();
   Game.init();
+  // odkaz s kódem hry (#kod-ABCD) rovnou otevře připojení
+  const joinFromHash = () => {
+    const hm = /^#kod-([A-Za-z0-9]{4})$/.exec(location.hash || '');
+    if (!hm || Online.active) return;
+    Game.toOnline(hm[1]);
+    if (UI.el.nick.value) Game.guestJoin(hm[1], UI.el.nick.value);
+    else UI.onlineStatus('Napiš své jméno a dej Připojit.');
+  };
+  joinFromHash();
+  window.addEventListener('hashchange', joinFromHash);
 
   window.addEventListener('resize', () => {
     Renderer.resize();
