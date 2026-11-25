@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Hlavouni</title>
+<title>FIFA67</title>
 <meta name="description" content="Fotbal velkých hlav: 1 v 1 nebo 2 v 2 proti počítači nebo online s kamarády, každý na svém telefonu.">
 <meta name="theme-color" content="#0b1324">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Hlavouni">
+<meta name="apple-mobile-web-app-title" content="FIFA67">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -51,7 +51,7 @@
     <canvas id="hero" class="hero" aria-hidden="true"></canvas>
     <div class="home-main">
       <header class="brand">
-        <h1 id="logo" class="logo" aria-label="Hlavouni">HLAV<svg class="logo-ball" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#f7f8fa" stroke="#0b1220" stroke-width="3"/><path d="M20 12.5l7 5.1-2.7 8.2h-8.6L13 17.6z" fill="#0b1220"/><path d="M20 12.5V3M27 17.6l8.6-3M24.3 25.8l5.3 7.4M15.7 25.8l-5.3 7.4M13 17.6l-8.6-3" stroke="#0b1220" stroke-width="2.4" fill="none"/></svg>UNI</h1>
+        <h1 id="logo" class="logo" aria-label="FIFA67">FIFA<span class="logo-67">67<svg class="logo-ball" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#f7f8fa" stroke="#0b1220" stroke-width="3"/><path d="M20 12.5l7 5.1-2.7 8.2h-8.6L13 17.6z" fill="#0b1220"/><path d="M20 12.5V3M27 17.6l8.6-3M24.3 25.8l5.3 7.4M15.7 25.8l-5.3 7.4M13 17.6l-8.6-3" stroke="#0b1220" stroke-width="2.4" fill="none"/></svg></span></h1>
         <p class="tagline">Fotbal velkých hlav</p>
       </header>
       <div class="home-buttons">
@@ -142,9 +142,12 @@
     </header>
     <div id="slots" class="arena"></div>
     <footer class="lobby-bottom">
-      <ul id="lobby-members" class="members" aria-label="Hráči ve hře" hidden></ul>
-      <p id="lobby-hint" class="hint"></p>
-      <p id="lobby-wait" class="status wait" hidden>Čeká se, až hostitel spustí zápas…</p>
+      <div class="lobby-info">
+        <ul id="lobby-members" class="members" aria-label="Hráči ve hře" hidden></ul>
+        <p id="lobby-power" class="lobby-power" hidden></p>
+        <p id="lobby-hint" class="hint"></p>
+        <p id="lobby-wait" class="status wait" hidden>Čeká se, až hostitel spustí zápas…</p>
+      </div>
       <div class="lobby-actions">
         <button id="btn-ready" class="btn-game green" type="button" hidden>Jsem připraven</button>
         <button id="btn-start" class="btn-play" type="button">Hrát</button>

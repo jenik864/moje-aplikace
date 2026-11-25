@@ -202,7 +202,7 @@ const LobbyUI = {
       arena: $('slots'), hint: $('lobby-hint'), code: $('lobby-code'), invite: $('lobby-invite'),
       kicker: $('lobby-kicker'), title: $('lobby-title'), members: $('lobby-members'),
       start: $('btn-start'), ready: $('btn-ready'), wait: $('lobby-wait'), levelRow: $('lobby-level'),
-      modeRow: $('lobby-mode'),
+      modeRow: $('lobby-mode'), power: $('lobby-power'),
     };
     document.querySelectorAll('#lobby .seg').forEach((seg) => {
       seg.addEventListener('click', (e) => {
@@ -245,6 +245,13 @@ const LobbyUI = {
     a.textContent = dir < 0 ? '‹' : '›';
     a.disabled = !!disabled;
     return a;
+  },
+
+  // Postavy v lobby jsou živé (volá se z herní smyčky).
+  animate(t) {
+    for (const o of this.portraits || []) {
+      if (o.cv.isConnected) Renderer.portrait(o.cv, o.char, o.T, o.facing, t, { happy: o.mine && (t - o.since) < 1.4 });
+    }
   },
 
   render(lobby, ctx) {
@@ -292,6 +299,9 @@ const LobbyUI = {
     // aréna: dva týmy a VS
     const teams = teamsFor(lobby);
     const two = lobby.format === '2v2';
+    const lob = document.getElementById('lobby');
+    lob.style.setProperty('--l0', teams[0].color);
+    lob.style.setProperty('--l1', cup ? '#ffc93c' : teams[1].color);
     el.arena.textContent = '';
     const key = lobby.format + lobby.duos.join('-') + (two ? '' : lobby.slots.map((s) => s.char).join('-')) + (cup ? 'cup' : '');
     el.arena.className = `arena fmt-${lobby.format}` + (key !== this.lastKey ? ' anim' : '');
@@ -322,12 +332,18 @@ const LobbyUI = {
       col.style.setProperty('--team-dark', T.dark);
       col.style.setProperty('--team-light', T.light);
       const head = this.el2('div', 'team-head');
+      const tt = this.el2('div', 'team-tt');
+      tt.appendChild(this.el2('span', 'team-title', two ? T.name : team === 0 ? 'Levá strana' : 'Pravá strana'));
+      // pokřik fanoušků dvojice
+      const duo = two ? lobby.duos[team] : duoOf(lobby.slots[team].char);
+      const chant = duo >= 0 && DUO_SHOUTS[duo] && DUO_SHOUTS[duo][0];
+      if (chant) tt.appendChild(this.el2('span', 'team-chant', `📣 ${chant}`));
       if (two) {
         head.appendChild(this.arrow(-1, { duo: team, d: -1 }, 'Předchozí dvojice', !ctx.canEdit));
-        head.appendChild(this.el2('span', 'team-title', T.name));
+        head.appendChild(tt);
         head.appendChild(this.arrow(1, { duo: team, d: 1 }, 'Další dvojice', !ctx.canEdit));
       } else {
-        head.appendChild(this.el2('span', 'team-title', team === 0 ? 'Levá strana' : 'Pravá strana'));
+        head.appendChild(tt);
       }
       col.appendChild(head);
       const row = this.el2('div', 'cards');
@@ -342,11 +358,14 @@ const LobbyUI = {
         main.dataset.slot = String(i);
         main.setAttribute('aria-label', `${c.name}, hraje ${b.text}`);
         const cv = this.el2('canvas', 'portrait');
-        main.append(cv, this.el2('span', 'card-name', c.name), this.el2('span', 'card-num', `#${c.num}`));
-        card.appendChild(main);
+        // štítek: kdo hraje + jméno (pod postavou, aby nezakrýval vlasy)
+        const plate = this.el2('span', 'plate');
         const chip = this.el2('span', `badge ${b.cls}`, b.text);
         if (b.cls === 'b-friend' && !b.ready) chip.classList.add('waiting');
-        card.appendChild(chip);
+        plate.append(chip, this.el2('span', 'card-name', c.name));
+        const pw = POWERS[powerOf(c.id)];
+        main.append(cv, plate, this.el2('span', 'card-power', `${pw.icon} ${pw.short}`));
+        card.appendChild(main);
         const canChar = !two && (ctx.mode === 'local' || s.ctrl === ctx.me || (ctx.mode === 'host' && s.ctrl === 'cpu'));
         if (!two) {
           const arrows = this.el2('div', 'arrows');
@@ -356,12 +375,25 @@ const LobbyUI = {
           card.appendChild(arrows);
         }
         row.appendChild(card);
-        portraits.push({ cv, char: s.char, T, facing: team === 0 ? 1 : -1 });
+        const key2 = `${i}:${s.char}:${s.ctrl}`;
+        const prev = (this.portraits || []).find((o) => o.key === key2);
+        portraits.push({ cv, char: s.char, T, facing: team === 0 ? 1 : -1, mine, key: key2, since: prev ? prev.since : performance.now() / 1000 });
       });
       col.appendChild(row);
       el.arena.appendChild(col);
     }
-    requestAnimationFrame(() => portraits.forEach((o) => Renderer.portrait(o.cv, o.char, o.T, o.facing)));
+    this.portraits = portraits;
+    requestAnimationFrame(() => this.animate(performance.now() / 1000));
+
+    // moje superschopnost
+    const me = lobby.slots.find((s) => s.ctrl === ctx.me || (ctx.mode === 'local' && s.ctrl === 'p1'));
+    if (me) {
+      const pw = POWERS[powerOf(me.char)];
+      el.power.textContent = '';
+      const b1 = this.el2('b', '', `${pw.icon} ${pw.name}`);
+      el.power.append(this.el2('span', 'lp-k', 'Tvoje superschopnost'), b1, this.el2('span', 'lp-d', pw.desc));
+    }
+    el.power.hidden = !me;
 
     // nápověda a tlačítka
     const meSlot = lobby.slots.find((s) => s.ctrl === ctx.me);

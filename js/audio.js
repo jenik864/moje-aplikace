@@ -232,6 +232,43 @@ const Sound = {
     this.tone('sine', 90, 50, 0.35, 0.3);
   },
 
+  // jásot tribuny (gól, SKIPER)
+  cheer() {
+    if (!this.live()) return;
+    this.hiss(1.2, 0.16, 'bandpass', 900, 0.6);
+    this.hiss(0.9, 0.08, 'bandpass', 1900, 1, 0.05);
+  },
+
+  // obří hermelín dopadne do brány
+  cheese() {
+    if (!this.live()) return;
+    this.tone('sine', 130, 45, 0.45, 0.6);
+    this.hiss(0.25, 0.3, 'lowpass', 600);
+    [523.25, 659.25, 783.99].forEach((f, i) => this.tone('triangle', f, f * 1.01, 0.14, 0.06, 0.18 + i * 0.09));
+  },
+
+  // brána zamrzne
+  freeze() {
+    if (!this.live()) return;
+    this.hiss(0.8, 0.14, 'highpass', 5000);
+    for (let i = 0; i < 10; i++) this.tone('sine', 1800 + Math.random() * 2400, 0, 0.12, 0.03, i * 0.05);
+    this.tone('triangle', 1400, 400, 0.5, 0.05);
+  },
+
+  // led praskne
+  crack() {
+    if (!this.live()) return;
+    for (let i = 0; i < 6; i++) this.hiss(0.05, 0.22, 'bandpass', 2500 + Math.random() * 3000, 3, i * 0.04);
+  },
+
+  // VO2max: nádech a rozběh
+  vo2() {
+    if (!this.live()) return;
+    this.hiss(0.5, 0.1, 'bandpass', 700, 0.8);
+    this.tone('sawtooth', 220, 880, 0.35, 0.05);
+    this.tone('square', 440, 1320, 0.25, 0.03, 0.12);
+  },
+
   // bublina s pokřikem
   blip() {
     if (!this.live()) return;

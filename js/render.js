@@ -50,6 +50,7 @@ const Effects = {
   flashes: [],
   pops: [],     // komiksové nápisy (BUM!, SUPER!)
   bubbles: [],  // pokřiky fanoušků v bublinách na tribuně
+  talks: [],    // bubliny nad hráči (MÁM VO2max 67)
   shakeAmt: 0,
   reduced: !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches),
 
@@ -59,7 +60,43 @@ const Effects = {
     this.flashes.length = 0;
     this.pops.length = 0;
     this.bubbles.length = 0;
+    this.talks.length = 0;
     this.shakeAmt = 0;
+  },
+  say(idx, text, color, dur) {
+    this.talks = this.talks.filter((t) => t.idx !== idx);
+    this.talks.push({ idx, text, color, t: 0, dur });
+  },
+  snow(x, y, n) {
+    for (let i = 0; i < (this.reduced ? n / 3 : n); i++) {
+      const a = rand(0, TAU), sp = rand(60, 300);
+      this.add({ x: x + rand(-20, 20), y: y + rand(-30, 30), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 80, g: 260, life: rand(0.6, 1.2), size: rand(2, 4), color: Math.random() < 0.5 ? '#ffffff' : '#bfefff' });
+    }
+  },
+  // Spousta malých bublin najednou na polovině tribun týmu (gól, SKIPER).
+  burst(text, team, color, rect, n) {
+    const r = rect || { x0: 0, x1: W, y0: 0, y1: H };
+    const half0 = team === 0 ? Math.max(r.x0, -400) : Math.max(r.x0, W / 2);
+    const half1 = team === 0 ? Math.min(r.x1, W / 2) : Math.min(r.x1, W + 400);
+    let lo = half0 + 50, hi = half1 - 50;
+    if (hi - lo < 160) {
+      // polovina týmu je mimo záběr – bubliny aspoň na kraji záběru u jeho strany
+      lo = team === 0 ? r.x0 + 50 : r.x1 - 330;
+      hi = lo + 280;
+    }
+    const ylo = Math.max(r.y0 + 95, STANDS_TOP + 45), yhi = Math.max(ylo + 20, Math.min(r.y1 - 140, STANDS_BOTTOM - 10));
+    this.bubbles = this.bubbles.filter((b) => !b.small);
+    const placed = [];
+    for (let i = 0; i < n; i++) {
+      let x = 0, y = 0;
+      for (let k = 0; k < 14; k++) {
+        x = rand(lo, hi);
+        y = rand(ylo, yhi);
+        if (!placed.some((q) => Math.abs(q.x - x) < 74 && Math.abs(q.y - y) < 36)) break;
+      }
+      placed.push({ x, y });
+      this.bubbles.push({ text, x, y, color, t: -rand(0, 0.55), dur: 2.4, tail: Math.random() < 0.5 ? -1 : 1, small: true });
+    }
   },
   pop(text, x, y, color, size = 46) {
     if (this.pops.length > 4) this.pops.shift();
@@ -175,7 +212,7 @@ const Effects = {
         p.vx *= 0.6;
       }
     }
-    for (const list of [this.rings, this.flashes, this.pops, this.bubbles]) {
+    for (const list of [this.rings, this.flashes, this.pops, this.bubbles, this.talks]) {
       for (let i = list.length - 1; i >= 0; i--) {
         list[i].t += dt;
         if (list[i].t >= list[i].dur) list.splice(i, 1);
@@ -268,14 +305,31 @@ const Effects = {
 
   drawBubbles(ctx) {
     for (const b of this.bubbles) {
+      if (b.t < 0) continue;
       const k = b.t / b.dur;
       const sc = b.t < 0.22 ? easeOutBack(b.t / 0.22) : 1;
       const a = k > 0.85 ? 1 - (k - 0.85) / 0.15 : 1;
       ctx.save();
       ctx.globalAlpha = a;
-      ctx.translate(b.x, b.y + Math.sin(b.t * 5) * 2.5);
+      ctx.translate(b.x, b.y + Math.sin(b.t * (b.small ? 9 : 5) + b.x) * (b.small ? 4 : 2.5));
       ctx.scale(sc, sc);
-      drawSpeech(ctx, b.text, 0, 0, b.color, 24, b.tail);
+      drawSpeech(ctx, b.text, 0, 0, b.color, b.small ? 19 : 24, b.tail);
+      ctx.restore();
+    }
+  },
+
+  // Bubliny nad hráči.
+  drawTalks(ctx, players) {
+    for (const k of this.talks) {
+      const p = players[k.idx];
+      if (!p) continue;
+      const sc = k.t < 0.2 ? easeOutBack(k.t / 0.2) : 1;
+      const a = k.t > k.dur - 0.2 ? (k.dur - k.t) / 0.2 : 1;
+      ctx.save();
+      ctx.globalAlpha = clamp(a, 0, 1);
+      ctx.translate(p.x + p.dir * 16, Math.max(70, p.y - p.R - (p.label ? 44 : 12)));
+      ctx.scale(sc, sc);
+      drawSpeech(ctx, k.text, 0, 0, k.color, 22, p.dir);
       ctx.restore();
     }
   },
@@ -314,7 +368,7 @@ function drawSpeech(ctx, text, x, y, color, size, tail) {
 /* ---------------- renderer ---------------- */
 
 const ADS = [
-  { t: 'HLAVOUNI', bg: '#0d1526', fg: '#ffc93c' },
+  { t: 'FIFA67', bg: '#0d1526', fg: '#ffc93c' },
   { t: 'KOPAČKY BLESK', bg: '#2f80ff', fg: '#ffffff' },
   { t: 'LIMO HLAVIČKA', bg: '#ffc93c', fg: '#0d1526' },
   { t: 'PEKÁRNA U MÍČE', bg: '#e8458f', fg: '#ffffff' },
@@ -539,7 +593,8 @@ const Renderer = {
       for (let cx = this.view.x0 - 10 + rng() * sp; cx < this.view.x1 + 10; cx += sp * (0.85 + rng() * 0.4)) {
         if (rng() < 0.06 || AISLES.some((a) => Math.abs(cx - a) < 12)) continue;
         const home = cx < W / 2, q = rng();
-        const shirt = q < 0.5 ? pick2(rng, home ? pinks : blues) : q < 0.62 ? pick2(rng, home ? blues : pinks) : pick2(rng, neutral);
+        // levá půlka tribun fandí týmu vlevo, pravá týmu vpravo
+        const shirt = q < 0.8 ? pick2(rng, home ? pinks : blues) : pick2(rng, neutral);
         const yy = y + rowH - 1 + (rng() - 0.5) * 2;
         x.fillStyle = shirt;
         rrect(x, cx - size, yy - size * 1.7, size * 2, size * 1.7, size * 0.6);
@@ -548,12 +603,12 @@ const Renderer = {
         circle(x, cx, yy - size * 2.2, size * 0.78);
         x.fill();
         const extra = rng();
-        if (extra < 0.03) {
+        if (extra < 0.05) {
           // vlajka
           x.fillStyle = home ? ca : cb;
           x.fillRect(cx - 1, yy - size * 5.4, 1.5, size * 3.2);
           x.fillRect(cx, yy - size * 5.4, size * 2.8, size * 1.6);
-        } else if (extra < 0.08) {
+        } else if (extra < 0.14) {
           // šála nad hlavou
           x.fillStyle = home ? shade(ca, 0.45) : shade(cb, 0.45);
           x.fillRect(cx - size * 1.6, yy - size * 3.6, size * 3.2, size * 0.7);
@@ -703,9 +758,11 @@ const Renderer = {
       Effects.drawFlashes(ctx);
       this.drawNet(ctx, 0, now);
       this.drawNet(ctx, 1, now);
+      this.drawBlocks(ctx, m, now);
       const b = m.ball;
       for (const p of m.players) this.drawShadow(ctx, p.x, p.standY - p.y, 36 * PS);
       this.drawShadow(ctx, b.x, GROUND_Y - b.r - b.y, b.r);
+      for (const p of m.players) if (p.boostT > 0) this.drawBoost(ctx, p, now);
       for (const p of m.players) this.drawPlayer(ctx, p, b, m.teams, now);
       const sp = b.superT > 0 && m.players[b.superBy];
       if (g.state !== 'intro') this.drawBall(ctx, b, sp ? superColor(sp.look.id) : null);
@@ -713,6 +770,7 @@ const Renderer = {
       this.drawGoalFront(ctx, 1);
       if (g.screen === 'match' && g.state === 'over') this.drawTrophy(ctx, g, now);
       Effects.draw(ctx);
+      Effects.drawTalks(ctx, m.players);
       for (const p of m.players) if (p.stunT > 0 && p.onGround) this.drawDizzy(ctx, p, now);
       if (g.screen === 'match' && g.state === 'intro') this.drawIntroTalk(ctx, g, now);
       Effects.drawPops(ctx);
@@ -736,7 +794,7 @@ const Renderer = {
       }
       if (g.state === 'intro') this.drawIntro(ctx, g, now);
       if (g.state === 'replay') this.drawReplayLabel(ctx, now);
-      if (!Touch.enabled && g.myCharge >= 0 && a > 0 && g.screen === 'match') this.drawSuperMeter(ctx, g.myCharge, g.myColor, now);
+      if (!Touch.enabled && g.myCharge >= 0 && a > 0 && g.screen === 'match') this.drawSuperMeter(ctx, g.myCharge, g.myColor, now, g.myPower);
     }
     if (g.state === 'paused' && g.mode === 'guest') {
       this.drawMsg(ctx, { text: 'PAUZA', sub: 'Hostitel hru pozastavil', t: 1, dur: 9, size: 110, color: '#f3f6ef' });
@@ -808,7 +866,7 @@ const Renderer = {
       ctx.fillRect(x, y, w, h);
       ctx.font = `38px ${FONT_D}`;
       ctx.fillStyle = '#ffc93c';
-      ctx.fillText('HLAVOUNI', cx, cy + 2 + Math.sin(now * 0.003) * 3);
+      ctx.fillText('FIFA67', cx, cy + 2 + Math.sin(now * 0.003) * 3);
     } else if (st === 'goal' && g.goalTeam >= 0) {
       const T = m.teams[g.goalTeam];
       ctx.fillStyle = Math.floor(now / 170) % 2 ? T.color : T.dark;
@@ -1156,8 +1214,11 @@ const Renderer = {
   },
 
   // Ukazatel superstřely pro hru na klávesnici (vlevo dole).
-  drawSuperMeter(ctx, c, col, now) {
-    const v = this.view, x = v.x0 + 28, y = v.y1 - 70, w = 230, h = 44;
+  drawSuperMeter(ctx, c, col, now, power) {
+    const name = ((POWERS[power] || POWERS.shot).short).toUpperCase();
+    ctx.font = `800 20px ${FONT_U}`;
+    const tw = ctx.measureText(name + '  E').width;
+    const v = this.view, x = v.x0 + 28, y = v.y1 - 70, bx = 14 + tw + 14, w = bx + 130, h = 44;
     const full = c >= 1;
     ctx.save();
     ctx.fillStyle = 'rgba(8,13,26,.78)';
@@ -1167,18 +1228,18 @@ const Renderer = {
     ctx.lineWidth = full ? 3 : 1.5;
     ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,.08)';
-    rrect(ctx, x + 98, y + 14, w - 110, 16, 8);
+    rrect(ctx, x + bx, y + 14, w - bx - 12, 16, 8);
     ctx.fill();
     ctx.fillStyle = col;
     ctx.globalAlpha = full ? 0.75 + Math.sin(now * 0.012) * 0.25 : 0.85;
-    rrect(ctx, x + 98, y + 14, (w - 110) * clamp(c, 0, 1), 16, 8);
+    rrect(ctx, x + bx, y + 14, (w - bx - 12) * clamp(c, 0, 1), 16, 8);
     ctx.fill();
     ctx.globalAlpha = 1;
     ctx.font = `800 20px ${FONT_U}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = full ? '#ffffff' : 'rgba(255,255,255,.7)';
-    ctx.fillText(full ? 'SUPER  E' : 'SUPER', x + 14, y + h / 2 + 1);
+    ctx.fillText(full ? name + '  E' : name, x + 14, y + h / 2 + 1);
     ctx.restore();
   },
 
@@ -1373,6 +1434,10 @@ const Renderer = {
       aFront = 0.12 + Math.sin(ph) * 0.8 * run;
     }
 
+    if (p.pengT > 0) {
+      this.drawPenguin(ctx, p, T, now, R, F);
+      return;
+    }
     ctx.save();
     ctx.translate(p.x, p.y);
     if (p.spin) {
@@ -1390,6 +1455,320 @@ const Renderer = {
     this.drawTorso(ctx, p, T, L);
     this.drawHead(ctx, p, ball, T, now);
     this.drawArm(ctx, 10, R + 1, aFront, T, L, false);
+    ctx.restore();
+  },
+
+  // Bémič jako tučňák (jen vzhled): velká černá hlava s bílým obličejem, zobák, šála v barvě týmu.
+  drawPenguin(ctx, p, T, now, R, F) {
+    const run = p.onGround ? Math.min(1, Math.abs(p.vx) / 260) : 0;
+    const ph = p.runPhase, waddle = Math.sin(ph) * 0.12 * run;
+    const flap = p.onGround ? Math.sin(now * 0.02) * 0.25 * run : 0.9 + Math.sin(now * 0.05) * 0.4;
+    const ink = '#15171d', belly = '#f4f6f8', beak = '#ff9a1f';
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    if (p.spin) {
+      const c = (p.R + p.F) * 0.5;
+      ctx.translate(0, c);
+      ctx.rotate(p.spin);
+      ctx.translate(0, -c);
+    }
+    ctx.scale(p.dir * PS, PS);
+    ctx.translate(0, R + F);
+    ctx.rotate(waddle);
+    ctx.translate(0, -(R + F));
+    ctx.lineJoin = 'round';
+    // nohy
+    ctx.fillStyle = beak;
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    for (const [fx, lift] of [[-10, Math.max(0, Math.sin(ph)) * 5 * run], [9, Math.max(0, -Math.sin(ph)) * 5 * run]]) {
+      oval(ctx, fx + 4, R + F - 4 - lift, 11, 4.5);
+      ctx.fill();
+      ctx.stroke();
+    }
+    // tělo
+    ctx.fillStyle = ink;
+    oval(ctx, 0, R + F * 0.45, 25, F * 0.62);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = belly;
+    oval(ctx, 6, R + F * 0.5, 16, F * 0.5);
+    ctx.fill();
+    // křídla
+    ctx.fillStyle = ink;
+    for (const [sx, a] of [[-18, -0.35 - flap], [16, 0.35 + flap]]) {
+      ctx.save();
+      ctx.translate(sx, R + 6);
+      ctx.rotate(a);
+      oval(ctx, 0, 14, 6.5, 17);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    // hlava
+    ctx.fillStyle = ink;
+    circle(ctx, 0, 0, R);
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    const g = ctx.createRadialGradient(10, -14, 3, 0, 0, R);
+    g.addColorStop(0, 'rgba(255,255,255,.18)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    circle(ctx, 0, 0, R);
+    ctx.fill();
+    // bílý obličej
+    ctx.fillStyle = belly;
+    ctx.beginPath();
+    ctx.ellipse(14, 4, 22, 25, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = ink;
+    ctx.beginPath();
+    ctx.moveTo(-6, -40);
+    ctx.quadraticCurveTo(18, -26, 16, -12);
+    ctx.quadraticCurveTo(18, -26, 40, -14);
+    ctx.lineTo(40, -44);
+    ctx.closePath();
+    ctx.fill();
+    // oči
+    for (const [ex, er] of [[8, 5.5], [25, 6.2]]) {
+      ctx.fillStyle = '#ffffff';
+      circle(ctx, ex, -6, er);
+      ctx.fill();
+      ctx.fillStyle = '#15110e';
+      circle(ctx, ex + 1.5, -5.5, er * 0.55);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      circle(ctx, ex + 2.6, -7, er * 0.2);
+      ctx.fill();
+    }
+    // zobák
+    ctx.fillStyle = beak;
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(30, 4);
+    ctx.quadraticCurveTo(52, 8, 56, 14);
+    ctx.quadraticCurveTo(46, 18, 30, 15);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // šála v barvě týmu
+    ctx.fillStyle = T.color;
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    rrect(ctx, -24, R - 8, 50, 11, 5);
+    ctx.fill();
+    ctx.stroke();
+    rrect(ctx, -22, R - 2, 10, 22, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = T.light;
+    ctx.fillRect(-21, R + 10, 8, 3);
+    ctx.restore();
+  },
+
+  // VO2max: rychlostní čáry za hráčem.
+  drawBoost(ctx, p, now) {
+    const col = hexRgb(superColor(p.look.id));
+    const back = -Math.sign(p.vx || p.dir);
+    const len = 40 + Math.min(1, Math.abs(p.vx) / 500) * 90;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 5; i++) {
+      const y = p.y - p.R * 0.6 + i * (p.R + p.F) * 0.33;
+      const off = ((now * 0.6 + i * 37) % 30);
+      ctx.strokeStyle = `rgba(${col},${0.55 - i * 0.06})`;
+      ctx.lineWidth = 5 - i * 0.5;
+      line(ctx, p.x + back * (p.R * 0.8 + off), y, p.x + back * (p.R * 0.8 + off + len), y);
+    }
+  },
+
+  // Zablokované brány: obří hermelín nebo ledový kráter.
+  drawBlocks(ctx, m, now) {
+    for (let t = 0; t < 2; t++) {
+      const left = m.blocks[t];
+      if (left <= 0) continue;
+      const age = BLOCK_TIME - left;
+      const outK = left < 0.25 ? left / 0.25 : 1;
+      if (m.blockKind[t] === 'ice') this.drawIce(ctx, t, age, outK, now);
+      else this.drawCheese(ctx, t, age, outK, now);
+    }
+  },
+
+  drawCheese(ctx, t, age, outK, now) {
+    const R = 112;
+    const cx = t === 0 ? GOAL_W * 0.5 + 4 : W - GOAL_W * 0.5 - 4;
+    const fall = clamp(age / 0.5, 0, 1);
+    const cy = GROUND_Y - R + 2 - (1 - easeOutBounce(fall)) * 520;
+    const s = t === 0 ? 1 : -1; // hrana sýra je vidět na straně od hřiště
+    ctx.save();
+    // stín
+    ctx.fillStyle = `rgba(0,0,0,${0.3 * fall})`;
+    oval(ctx, cx, GROUND_Y + 3, R * 0.95 * (0.4 + 0.6 * fall), 13);
+    ctx.fill();
+    ctx.translate(cx, cy + R);
+    ctx.scale(outK, outK);
+    ctx.translate(0, -R);
+    ctx.globalAlpha = 0.35 + 0.65 * outK;
+    // hrana (tloušťka bochníku)
+    ctx.fillStyle = '#e8dcc0';
+    ctx.strokeStyle = 'rgba(80,60,30,.7)';
+    ctx.lineWidth = 4;
+    circle(ctx, -s * 16, -4, R);
+    ctx.fill();
+    ctx.stroke();
+    // přední strana s bílou plísní
+    const g = ctx.createRadialGradient(-30, -40, 10, 0, 0, R);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.7, '#f6f1e4');
+    g.addColorStop(1, '#e6dcc4');
+    ctx.fillStyle = g;
+    circle(ctx, 0, 0, R);
+    ctx.fill();
+    // skvrnky a chlupatá kůrka
+    ctx.save();
+    circle(ctx, 0, 0, R);
+    ctx.clip();
+    const rng = mulberry32(67);
+    for (let i = 0; i < 70; i++) {
+      const a = rng() * TAU, d = Math.sqrt(rng()) * R;
+      ctx.fillStyle = `rgba(${190 + rng() * 30},${170 + rng() * 30},${120 + rng() * 40},${0.12 + rng() * 0.2})`;
+      oval(ctx, Math.cos(a) * d, Math.sin(a) * d, 3 + rng() * 9, 2 + rng() * 6, rng() * 3);
+      ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,.7)';
+    for (let i = 0; i < 160; i++) {
+      const a = rng() * TAU, d = Math.sqrt(rng()) * R;
+      ctx.fillRect(Math.cos(a) * d, Math.sin(a) * d, 1.6, 1.6);
+    }
+    // ukrojený dílek: krémový vnitřek
+    const a0 = -Math.PI * 0.42, a1 = -Math.PI * 0.12;
+    const ax = (a) => (s > 0 ? a : Math.PI - a);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, R + 2, ax(a0), ax(a1), s < 0);
+    ctx.closePath();
+    const gi = ctx.createRadialGradient(0, 0, 4, 0, 0, R);
+    gi.addColorStop(0, '#fff6cf');
+    gi.addColorStop(0.85, '#f5e1a0');
+    gi.addColorStop(1, '#efd382');
+    ctx.fillStyle = gi;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(150,110,40,.55)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // tenká bílá kůrka na řezu
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(0, 0, R - 3, ax(a0), ax(a1), s < 0);
+    ctx.stroke();
+    ctx.restore();
+    // vytékající sýr
+    const dx = Math.cos(ax(a1)) * R * 0.55, dy = Math.sin(ax(a1)) * R * 0.55;
+    ctx.fillStyle = '#f7e6a8';
+    ctx.beginPath();
+    ctx.ellipse(dx, dy + 8 + Math.sin(now * 0.004) * 1.5, 9, 14, 0, 0, TAU);
+    ctx.fill();
+    // obrys
+    ctx.strokeStyle = 'rgba(80,60,30,.75)';
+    ctx.lineWidth = 4;
+    circle(ctx, 0, 0, R);
+    ctx.stroke();
+    // nápis HERMELÍN na stuze
+    ctx.save();
+    ctx.rotate(-0.08 * s);
+    const bw = 196, bh = 40;
+    ctx.fillStyle = '#c8102e';
+    ctx.strokeStyle = '#7a0a1c';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-bw / 2 - 14, 14);
+    ctx.lineTo(-bw / 2, 14 + bh / 2);
+    ctx.lineTo(-bw / 2 - 14, 14 + bh);
+    ctx.lineTo(bw / 2 + 14, 14 + bh);
+    ctx.lineTo(bw / 2, 14 + bh / 2);
+    ctx.lineTo(bw / 2 + 14, 14);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = `30px ${FONT_D}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('HERMELÍN', 0, 15 + bh / 2);
+    ctx.restore();
+    ctx.restore();
+  },
+
+  drawIce(ctx, t, age, outK, now) {
+    const gx0 = t === 0 ? 0 : W - GOAL_W, cx = t === 0 ? GOAL_W * 0.5 : W - GOAL_W * 0.5;
+    const s = t === 0 ? 1 : -1;
+    const grow = easeOutBack(clamp(age / 0.35, 0, 1));
+    ctx.save();
+    ctx.globalAlpha = outK;
+    // zamrzlý trávník kolem brány
+    const gg = ctx.createRadialGradient(cx + s * 40, GROUND_Y + 4, 10, cx + s * 40, GROUND_Y + 4, 230);
+    gg.addColorStop(0, 'rgba(225,248,255,.85)');
+    gg.addColorStop(1, 'rgba(225,248,255,0)');
+    ctx.fillStyle = gg;
+    oval(ctx, cx + s * 40, GROUND_Y + 6, 230 * clamp(age / 0.4, 0, 1), 26);
+    ctx.fill();
+    // ledové krystaly vyrostou ze země
+    ctx.translate(0, GROUND_Y);
+    ctx.scale(1, grow * outK + (1 - outK) * 0.2);
+    ctx.translate(0, -GROUND_Y);
+    const shards = [
+      [0.02, 0.62, 0.2], [0.12, 0.95, 0.18], [0.26, 1.12, 0.17], [0.42, 1.04, 0.19], [0.58, 1.18, 0.16],
+      [0.72, 0.9, 0.18], [0.86, 1.02, 0.15], [1.0, 0.7, 0.16], [1.13, 0.46, 0.15], [1.24, 0.28, 0.12],
+    ];
+    for (let i = 0; i < shards.length; i++) {
+      const [u, hk, wk] = shards[i];
+      const bx = t === 0 ? gx0 + u * GOAL_W : W - u * GOAL_W;
+      const h = GOAL_H * hk, w = GOAL_W * wk * 1.4;
+      const lean = (i % 2 ? 1 : -1) * 6 + s * (u - 0.5) * 14;
+      ctx.beginPath();
+      ctx.moveTo(bx - w / 2, GROUND_Y);
+      ctx.lineTo(bx - w * 0.3 + lean * 0.4, GROUND_Y - h * 0.7);
+      ctx.lineTo(bx + lean, GROUND_Y - h);
+      ctx.lineTo(bx + w * 0.32 + lean * 0.4, GROUND_Y - h * 0.68);
+      ctx.lineTo(bx + w / 2, GROUND_Y);
+      ctx.closePath();
+      const g = ctx.createLinearGradient(bx - w / 2, GROUND_Y - h, bx + w / 2, GROUND_Y);
+      g.addColorStop(0, 'rgba(240,252,255,.95)');
+      g.addColorStop(0.5, 'rgba(150,220,250,.85)');
+      g.addColorStop(1, 'rgba(70,160,220,.85)');
+      ctx.fillStyle = g;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.9)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      // lesk
+      ctx.strokeStyle = 'rgba(255,255,255,.75)';
+      ctx.lineWidth = 2;
+      line(ctx, bx - w * 0.12 + lean * 0.3, GROUND_Y - h * 0.62, bx + lean * 0.85, GROUND_Y - h * 0.93);
+    }
+    ctx.restore();
+    // rampouchy na břevnu a třpyt
+    ctx.save();
+    ctx.globalAlpha = outK * clamp(age / 0.4, 0, 1);
+    ctx.fillStyle = 'rgba(210,245,255,.95)';
+    for (let i = 0; i < 7; i++) {
+      const x = gx0 + 8 + i * ((GOAL_W - 10) / 6), l = 10 + ((i * 37) % 17);
+      ctx.beginPath();
+      ctx.moveTo(x - 4, BAR_Y + BAR_T);
+      ctx.lineTo(x, BAR_Y + BAR_T + l);
+      ctx.lineTo(x + 4, BAR_Y + BAR_T);
+      ctx.closePath();
+      ctx.fill();
+    }
+    for (let i = 0; i < 6; i++) {
+      const k = (now * 0.002 + i * 0.37) % 1;
+      const x = gx0 + ((i * 53) % GOAL_W), y = GROUND_Y - 30 - ((i * 71) % 170);
+      ctx.fillStyle = `rgba(255,255,255,${Math.sin(k * Math.PI)})`;
+      star(ctx, x, y, 7 * Math.sin(k * Math.PI) + 1, 2);
+      ctx.fill();
+    }
     ctx.restore();
   },
 
@@ -1649,6 +2028,33 @@ const Renderer = {
         });
         strand(ax + dx * 8, ay + dy * 8, mx + nx * 6, my + ny * 6, ax + dx * len * 0.85 + nx * 4, ay + dy * len * 0.85 + ny * 4, light, 2.2);
         strand(ax + dx * 10 - nx * 2, ay + dy * 10 - ny * 2, mx - nx * 2, my - ny * 2, ax + dx * len * 0.7, ay + dy * len * 0.7, dark, 1.4);
+      } else if (L.hair === 'longhair') {
+        // dlouhé rozpuštěné vlasy až k lopatkám, vlají při běhu a skoku
+        const sw = clamp(p.vx * p.dir * 0.014, -5, 9) + clamp(-p.vy * 0.005, -6, 6) + Math.sin(now * 0.004 + p.homeX) * 1.2;
+        const len = 62;
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(20, -38);
+          ctx.quadraticCurveTo(-36, -58, -49, -12);
+          ctx.quadraticCurveTo(-57 - sw, 26, -52 - sw * 1.2, len - 8);
+          if (L.wavy) {
+            ctx.quadraticCurveTo(-50 - sw, len + 4, -42 - sw, len - 2);
+            ctx.quadraticCurveTo(-36 - sw * 0.8, len + 6, -28 - sw * 0.7, len - 4);
+            ctx.quadraticCurveTo(-20 - sw * 0.5, len + 2, -14 - sw * 0.4, len - 10);
+          } else {
+            ctx.lineTo(-44 - sw * 1.1, len);
+            ctx.lineTo(-36 - sw, len - 6);
+            ctx.lineTo(-28 - sw * 0.8, len + 1);
+            ctx.lineTo(-20 - sw * 0.6, len - 8);
+            ctx.lineTo(-13 - sw * 0.4, len - 3);
+          }
+          ctx.quadraticCurveTo(-8, 44, -6, 26);
+          ctx.lineTo(0, 0);
+          ctx.closePath();
+        });
+        strand(-40, -20, -52 - sw, 18, -46 - sw * 1.1, len - 10, light, 2.6);
+        strand(-30, -10, -40 - sw * 0.8, 30, -32 - sw * 0.8, len - 6, dark, 1.6);
+        strand(-20, 4, -26 - sw * 0.6, 36, -20 - sw * 0.5, len - 12, light, 1.8);
       } else if (L.hair === 'long') {
         const sw = clamp(p.vx * p.dir * 0.012, -4, 7) + clamp(-p.vy * 0.004, -4, 4);
         shape(() => {
@@ -1955,6 +2361,105 @@ const Renderer = {
         ctx.stroke();
         strand(-2, -40, 22, -44, 40, -22, light, 2.4);
         strand(-24, -30, -30, -12, -30, 4, light, 1.6);
+        break;
+      }
+
+      case 'longhair': {
+        if (L.fringe === 'side') {
+          // ofina sčesaná na stranu a růžová sponka
+          shape(() => {
+            ctx.beginPath();
+            ctx.moveTo(-18, -34);
+            ctx.quadraticCurveTo(10, -52, 42, -25);
+            ctx.quadraticCurveTo(38, -16, 33, -12);
+            ctx.quadraticCurveTo(24, -26, 8, -27);
+            ctx.quadraticCurveTo(-6, -27, -18, -34);
+            ctx.closePath();
+          });
+          strand(-6, -41, 14, -48, 34, -30, light, 2.6);
+          strand(-26, -30, -26, -42, -12, -44, light, 2);
+          ctx.save();
+          ctx.translate(-10, -40);
+          ctx.rotate(-0.5);
+          ctx.fillStyle = L.accent;
+          ctx.strokeStyle = OUTLINE;
+          ctx.lineWidth = 1.8;
+          rrect(ctx, -9, -3.5, 18, 7, 3.5);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        } else if (L.fringe === 'bangs') {
+          // rovná ofina a čelenka
+          shape(() => {
+            ctx.beginPath();
+            ctx.moveTo(-20, -32);
+            ctx.quadraticCurveTo(6, -52, 41, -26);
+            ctx.lineTo(39, -15);
+            ctx.lineTo(33, -18);
+            ctx.lineTo(27, -14);
+            ctx.lineTo(21, -18);
+            ctx.lineTo(15, -14);
+            ctx.lineTo(9, -18);
+            ctx.lineTo(3, -15);
+            ctx.quadraticCurveTo(-6, -22, -20, -32);
+            ctx.closePath();
+          });
+          strand(-4, -40, 14, -47, 32, -32, light, 2.4);
+          ctx.strokeStyle = L.accent;
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.arc(0, -1, R + 1, Math.PI * 1.13, Math.PI * 1.62);
+          ctx.stroke();
+          ctx.strokeStyle = 'rgba(255,255,255,.6)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(0, -1, R + 2, Math.PI * 1.18, Math.PI * 1.5);
+          ctx.stroke();
+        } else {
+          // pěšinka uprostřed, mašle
+          shape(() => {
+            ctx.beginPath();
+            ctx.moveTo(-12, -36);
+            ctx.quadraticCurveTo(18, -50, 41, -24);
+            ctx.lineTo(37, -17);
+            ctx.lineTo(31, -23);
+            ctx.lineTo(25, -16);
+            ctx.lineTo(19, -23);
+            ctx.lineTo(12, -18);
+            ctx.lineTo(6, -25);
+            ctx.quadraticCurveTo(-4, -26, -12, -36);
+            ctx.closePath();
+          });
+          strand(-2, -41, 16, -48, 34, -32, light, 2.4);
+          ctx.save();
+          ctx.translate(-15, -39);
+          ctx.rotate(-0.45);
+          ctx.fillStyle = L.accent;
+          ctx.strokeStyle = OUTLINE;
+          ctx.lineWidth = 1.8;
+          for (const sd of [-1, 1]) {
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(13 * sd, -8);
+            ctx.quadraticCurveTo(16 * sd, 0, 13 * sd, 8);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          }
+          circle(ctx, 0, 0, 4);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+        // pramen vlasů před uchem dolů na rameno
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(-22, -22);
+          ctx.quadraticCurveTo(-30, 0, -26, 30);
+          ctx.quadraticCurveTo(-24, 40, -18, 36);
+          ctx.quadraticCurveTo(-20, 10, -14, -14);
+          ctx.closePath();
+        });
         break;
       }
 
@@ -2371,21 +2876,37 @@ const Renderer = {
   },
 
   // Portrét postavy pro výběr hráčů.
-  portrait(canvas, charId, team, facing) {
+  // Portrét postavy. S časem `t` (sekundy) je živý: dýchá, mrká a rozhlíží se.
+  portrait(canvas, charId, team, facing, t, opts) {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = canvas.clientWidth || 80, h = canvas.clientHeight || 100;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
+    const cw = Math.round(w * dpr), ch = Math.round(h * dpr);
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width = cw;
+      canvas.height = ch;
+    }
     const ctx = canvas.getContext('2d');
-    const p = new Player({ team: 0, x: 0, look: charById(charId), role: 'attacker', ctrl: 'cpu' });
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cw, ch);
+    let p = canvas._pl;
+    if (!p || p.look.id !== charId) {
+      p = canvas._pl = new Player({ team: 0, x: 0, look: charById(charId), role: 'attacker', ctrl: 'cpu' });
+      canvas._ph = Math.random() * 10;
+    }
     const extra = (p.F - PHYS.footH) / PS; // vysoký hráč má delší nohy
-    const k = (Math.min(w / 126, h / (156 + extra)) * dpr) / PS;
-    ctx.setTransform(k, 0, 0, k, canvas.width / 2, canvas.height / 2 - (12 + extra / 2) * k * PS);
+    const k = (Math.min(w / 126, h / (170 + extra)) * dpr) / PS;
+    const live = typeof t === 'number';
+    const ph = canvas._ph || 0;
+    const bob = live ? Math.sin(t * 2.2 + ph) * 1.6 : 0;
+    ctx.setTransform(k, 0, 0, k, canvas.width / 2, canvas.height / 2 - (8 + extra / 2 - bob) * k * PS);
     p.x = 0;
     p.y = 0;
     p.dir = facing;
-    p.blink = 0;
-    this.drawPlayer(ctx, p, { x: facing * 300, y: -20 }, [team], 0);
+    p.blink = live && (t + ph) % 3.4 < 0.13 ? 0.1 : 0;
+    p.mood = opts && opts.happy ? 1 : 0;
+    p.homeX = ph * 100;
+    const look = live ? { x: facing * 300, y: -20 + Math.sin(t * 0.7 + ph) * 60 } : { x: facing * 300, y: -20 };
+    this.drawPlayer(ctx, p, look, [team], live ? t * 1000 : 0);
   },
 
   /* ---- míč ---- */

@@ -1,6 +1,6 @@
-# Hlavouni
+# FIFA67
 
-Fotbal velkých hlav v prohlížeči. Panáčci s velkými hlavami hlavičkují a kopou na nočním stadionu. Hraje se 1 v 1 nebo 2 v 2 proti počítači, nebo online s kamarády. Na jednom zařízení hraje vždy jen jeden člověk: spoluhráči i soupeři mají každý svůj telefon. Hra běží přes celou obrazovku na šířku, v obyčejném HTML5 canvasu, a nic se neinstaluje.
+Fotbal velkých hlav v prohlížeči (neoficiální hra kamarádů, nemá nic společného s organizací FIFA ani se sérií her FIFA). Panáčci s velkými hlavami hlavičkují a kopou na nočním stadionu. Hraje se 1 v 1 nebo 2 v 2 proti počítači, nebo online s kamarády. Na jednom zařízení hraje vždy jen jeden člověk: spoluhráči i soupeři mají každý svůj telefon. Hra běží přes celou obrazovku na šířku, v obyčejném HTML5 canvasu, a nic se neinstaluje.
 
 ## Spuštění
 
@@ -17,20 +17,20 @@ Ve 2 v 2 se v lobby šipkami vybírají dvě z pěti dvojic:
 
 | Dvojice | Postavy |
 | --- | --- |
-| Nelcis & Majda (růžoví) | Nelcis (blond cop), Majda (dlouhé hnědé vlasy s mašlí, piercing v nose) |
+| Nelcis & Majda (růžoví) | Nelcis (dlouhé blond vlasy, ofina na stranu, růžová sponka), Majda (dlouhé hnědé vlasy s mašlí, piercing v nose) |
 | Marsal & Durcado (modří) | Marsal (blond vlny, vysoký – má delší nohy), Durcado (objemné vlny vyčesané nahoru, kudrna do čela, modrošedé oči) |
 | Tóma & Peli (zelení) | Tóma (střapaté hnědé vlasy), Peli (tmavé vlasy s pěšinkou) |
-| Bémič & Kiki (oranžoví) | Bémič (černý buzzcut), Kiki (špinavý blond, dva drdoly) |
+| Bémič & Kiki (oranžoví) | Bémič (černý buzzcut), Kiki (dlouhé vlnité vlasy, špinavý blond, ofina a čelenka) |
 | Šimša & Jenda (fialoví) | Šimša (krátké tmavé kudrny, vystříhané strany, číslo 87), Jenda (střapaté hnědé vlasy s ofinou) |
 
-Postavy se liší i obličejem: přivřená víčka a vážný pohled, síla obočí a výraz pusy (úsměv, klidný, úšklebek).
+Všechny holky mají dlouhé rozpuštěné vlasy až k lopatkám, které vlají při běhu a skoku. Postavy se liší i obličejem: přivřená víčka a vážný pohled, síla obočí a výraz pusy (úsměv, klidný, úšklebek).
 
 V 1 v 1 si každý vybere libovolnou z deseti postav. Dres má barvu její dvojice. Postavy mají tělo s dresem a číslem, trenky, ruce a kopačky, běhají, při radosti mávají a po inkasovaném gólu se mračí.
 
 ## Filmové scény a stadion
 
 - **Úvod zápasu**: kamera sjede z velké obrazovky na hřiště, hráči vyběhnou a vyjedou plakáty obou týmů s VS. Pak vybuchne ohňostroj a z každého týmu jeden hráč v bublině hecuje soupeře (každá postava má své hlášky). Kamera se na něj přiblíží.
-- **Fanoušci**: během zápasu pokřikují v bublinách na tribunách, tleskají do rytmu bubnu, při tyčce zklamaně zahučí a reagují na góly, superstřely i odstřelení. Pokřiky z tribun v každém zápase: KIKI KIKI, VIKY VIKY, SULI SULI, SLAJZNUL DO BAHNA, SULI TI DÁ, MAGDI MAGDI. Fanoušci jednotlivých dvojic: Marsal & Durcado – JIŽNÍ SUPY, CP COMPANY; Tóma & Peli – TÓMA ŽLOUTEK; Bémič & Kiki – JONY, KIKI TĚ CHCE, SKIPER; Šimša & Jenda – MÁ VO2max 67. Občas zazní i jméno hráče („Do toho, Šimšo!“).
+- **Fanoušci**: levá polovina tribun fandí týmu vlevo (má jeho barvy), pravá týmu vpravo. Každá polovina pokřikuje v bublinách jen tyhle pokřiky: KIKI KIKI, VIKY VIKY, SULI SULI, SULI TI DÁ, MAGDI MAGDI, pokřiky své dvojice (Marsal & Durcado – JIŽNÍ SUPY, CP COMPANY; Tóma & Peli – TÓMA ŽLOUTEK; Bémič & Kiki – JONY, KIKI TĚ CHCE, SKIPER; Šimša & Jenda – MÁ VO2max 67) a jména svých hráčů (ŠIMŠA ŠIMŠA). Když je někdo omráčený míčem, zazní SLAJZNUL DO BAHNA. Po gólu má 15 fanoušků týmu, který skóroval, bublinu GÓL. Tleskají do rytmu bubnu a při tyčce zklamaně zahučí.
 - **Gól**: kamera se přiblíží k brance, síť se zavlní, publikum vyskakuje, reklamní tabule i velká obrazovka blikají GÓL a ukazují střelce.
 - **Záznam gólu**: zpomalené opakování posledních vteřin se zoomem na míč.
 - **Konec zápasu**: vítězové doběhnou doprostřed, nad nimi vyjede zlatý pohár, poražení odejdou ke své brance.
@@ -39,7 +39,7 @@ Scény jdou přeskočit tlačítkem *Přeskočit* (nebo klávesou Enter). Online
 
 ## Lobby (výběr hráčů)
 
-- **Hrát** (proti počítači): vyber 1 v 1 nebo 2 v 2, délku zápasu a obtížnost počítače. Klepnutím na postavu si vybereš, za koho hraješ, ostatní hraje počítač. V 1 v 1 se šipkami mění postava.
+- **Hrát** (proti počítači): vyber 1 v 1 nebo 2 v 2, délku zápasu a obtížnost počítače. Klepnutím na postavu si vybereš, za koho hraješ, ostatní hraje počítač. V 1 v 1 se šipkami mění postava. Postavy v lobby jsou živé (dýchají, mrkají, rozhlížejí se, vybraná zamává), stojí na osvětleném pódiu, pod každou je štítek kdo za ni hraje a její superschopnost. U dvojice je její pokřik a dole popis tvé superschopnosti.
 - **Turnaj** (přepínač *Zápas / Turnaj* v lobby, jen proti počítači): vybereš svůj tým, pavouk vylosuje tři soupeře. Hraje se semifinále a finále, druhé semifinále se odehraje mezi počítači. Ve finále je soupeř o stupeň těžší. Za vítězství v turnaji je +15 pohárů navíc a počítá se do profilu (Vyhrané turnaje).
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
@@ -48,7 +48,7 @@ Scény jdou přeskočit tlačítkem *Přeskočit* (nebo klávesou Enter). Online
 **Na telefonu** (na šířku, přes celou obrazovku):
 
 - **Joystick vlevo** pro levý palec: kam sáhneš, tam se objeví. Do stran se běží (čím víc vychýlíš, tím rychleji), zatlačením nahoru se skáče.
-- **Vpravo tlačítko Střela** (velké zlaté) a nad ním **Super**. Kolem tlačítka Super se plní kroužek v barvě tvé postavy. Když je plný, tlačítko svítí a superstřela je připravená.
+- **Vpravo tlačítko Střela** (velké zlaté) a nad ním **Super** s ikonou a názvem superschopnosti tvé postavy. Kolem tlačítka Super se plní kroužek v barvě tvé postavy. Když je plný, tlačítko svítí a superschopnost je připravená.
 - Tlačítkem *Joystick vlevo / vpravo* v menu (nebo v pauze) se strany prohodí.
 
 **Na počítači:**
@@ -58,12 +58,23 @@ Scény jdou přeskočit tlačítkem *Přeskočit* (nebo klávesou Enter). Online
 | Běh | `A` `D` nebo `←` `→` |
 | Skok | `W` nebo `↑` |
 | Střela | `mezerník`, `S`, `↓` nebo `Enter` |
-| Superstřela | `E`, `Q` nebo `Shift` |
+| Superschopnost | `E`, `Q` nebo `Shift` |
 | Pauza | `Esc` nebo `P` |
 
-### Superstřela
+### Superschopnosti
 
-Nabíjí se časem (asi 15 s) a každým kopem do míče. Nabitá superstřela vystřelí míč skoro dvakrát rychleji s ohnivou stopou v barvě postavy. Soupeře, kterého trefí, odstřelí: s výbuchem „BUM!“ odletí točící se kus dál, po dopadu je chvíli omámený (spirálové oči, hvězdičky kolem hlavy) a nemůže hrát. Míč letí dál a může odstřelit i dalšího. Když švih mine míč, nabití zůstane. Každá postava má zatím stejnou superstřelu, jen v jiné barvě. Vlastní superschopnosti pro jednotlivé hráče přijdou později. Počítač superstřelu používá taky.
+Nabíjí se časem (asi 15 s) a každým kopem do míče. Každá postava má svou:
+
+| Postava | Superschopnost |
+| --- | --- |
+| Nelcis | **Obří hermelín**: do brány jejího týmu spadne obří hermelín s nápisem HERMELÍN a na 3 s ji úplně zablokuje, gól nejde dát. |
+| Šimša | **VO2max 67**: nad hlavou se mu objeví bublina „MÁM VO2max 67“ a 5 s běhá 1,7× rychleji. |
+| Bémič | **Tučňák**: na 3 s se promění v tučňáka (jen vzhled), brána jeho týmu zamrzne ve velkém ledovém kráteru (nejde dát gól) a fanoušci řvou SKIPER. |
+| ostatní | **Superstřela** (viz dál). Vlastní schopnosti přijdou v dalších verzích. |
+
+Počítač superschopnosti používá taky: hermelín a led, když letí míč na jeho bránu, VO2max, když je míč daleko.
+
+Superstřela vystřelí míč skoro dvakrát rychleji s ohnivou stopou v barvě postavy. Soupeře, kterého trefí, odstřelí: s výbuchem „BUM!“ odletí točící se kus dál, po dopadu je chvíli omámený (spirálové oči, hvězdičky kolem hlavy) a nemůže hrát. Míč letí dál a může odstřelit i dalšího. Když švih mine míč, nabití zůstane.
 
 ### Poháry a ligy
 
@@ -73,7 +84,7 @@ Za každý zápas dostane hráč na svém zařízení poháry: za výhru +8 (pro
 
 Hra vyplní celý displej bez černých pruhů. Na širokém telefonu je vidět víc stadionu do stran a kamera hřiště přiblíží na celou šířku. Tlačítko vpravo nahoře zapne celou obrazovku prohlížeče. Úplně bez lišt prohlížeče hra běží po *Přidat na plochu* (manifest `manifest.webmanifest` s režimem fullscreen a orientací na šířku). Na výšku hra ukáže výzvu k otočení telefonu.
 
-V aplikaci Claude (artifact) zůstane kolem hry rámeček aplikace: horní lišta s křížkem a okraje po stranách. Ten hra odstranit nemůže. Bez jakýchkoli lišt hra běží jen jako webová verze přidaná na plochu (viz Zveřejnění na GitHub Pages).
+V aplikaci Claude (artifact) zůstane kolem hry rámeček aplikace: horní lišta s křížkem a okraje po stranách. Ten hra odstranit nemůže. Hra si ale změří, kolik místa je opravdu vidět (bezpečné okraje displeje a případně oříznutou část okna) a podle toho zmenší rozložení obrazovek, aby nic nebylo uříznuté. Dialogy, které by se přesto nevešly, jdou posunout prstem. Bez jakýchkoli lišt hra běží jen jako webová verze přidaná na plochu (viz Zveřejnění na GitHub Pages).
 
 ## Online hra: jak funguje
 

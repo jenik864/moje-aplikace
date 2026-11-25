@@ -56,8 +56,11 @@ class Player {
     this.blinkT = rand(1, 4);
     this.blink = 0;
     this.runPhase = 0;
-    this.superCharge = 0; // 0..1, při 1 lze vystřelit superstřelu
+    this.superCharge = 0; // 0..1, při 1 lze použít superschopnost
     this.superKick = false;
+    this.power = powerOf(o.look && o.look.id);
+    this.boostT = 0;      // VO2max: zrychlení
+    this.pengT = 0;       // proměna v tučňáka
     this.place(o.x);
   }
 
@@ -81,6 +84,8 @@ class Player {
     this.kickCd = 0;
     this.mood = 0; // 1 radost, -1 smutek
     this.stunT = 0; // omámení po zásahu superstřelou
+    this.boostT = 0;
+    this.pengT = 0;
     this.spin = 0;  // otočení při letu vzduchem
     this.knockDir = 0;
   }
@@ -180,6 +185,8 @@ class Match {
     this.touchAt = [-9, -9]; // kdy se míče naposledy dotkl každý tým
     this.lowT = 0;
     this.pinchT = 0;
+    this.blocks = [0, 0]; // jak dlouho je ještě zablokovaná brána týmu 0 / 1
+    this.blockKind = ['', '']; // čím: 'cheese' (hermelín) nebo 'ice' (led)
     this._f = { x: 0, y: 0 };
     this.build();
     this.kickoff();
@@ -244,6 +251,7 @@ class Match {
     this.ball.reset(W / 2, KICKOFF_Y);
     this.goalTeam = -1;
     this.celebrate = -1;
+    this.blocks[0] = this.blocks[1] = 0;
   }
 
   release() {
@@ -274,7 +282,15 @@ class Match {
       }
       p.mood = (mode === 'celebrate' || mode === 'ceremony') && this.celebrate >= 0 ? (p.team === this.celebrate ? 1 : -1) : 0;
       if (mode === 'play') p.superCharge = Math.min(1, p.superCharge + dt / PHYS.superCharge);
+      if (p.boostT > 0) p.boostT = Math.max(0, p.boostT - dt);
+      if (p.pengT > 0) p.pengT = Math.max(0, p.pengT - dt);
       this.movePlayer(p, it, dt);
+    }
+    for (let t = 0; t < 2; t++) {
+      if (this.blocks[t] > 0) {
+        this.blocks[t] = Math.max(0, this.blocks[t] - dt);
+        if (this.blocks[t] === 0) this.onEvent('unblock', { team: t, kind: this.blockKind[t] });
+      }
     }
     this.collidePlayers();
 
@@ -341,8 +357,9 @@ class Match {
       if (!p.onGround) p.spin += p.knockDir * 13 * dt;
     }
     const input = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
-    const max = PHYS.moveSpeed * p.speedMul;
-    if (!stunned) p.vx = approach(p.vx, input * max, (p.onGround ? PHYS.accelGround : PHYS.accelAir) * dt);
+    const boost = p.boostT > 0 ? BOOST_MUL : 1;
+    const max = PHYS.moveSpeed * p.speedMul * boost;
+    if (!stunned) p.vx = approach(p.vx, input * max, (p.onGround ? PHYS.accelGround : PHYS.accelAir) * boost * dt);
     else if (p.onGround) p.vx = approach(p.vx, 0, 1700 * dt);
 
     if (it.jump && p.onGround) {
@@ -350,7 +367,9 @@ class Match {
       p.onGround = false;
       this.onEvent('jump', { human: p.isHuman });
     }
-    if (it.super && p.superCharge >= 1 && p.kickT < 0) {
+    if (it.super && p.superCharge >= 1 && p.power !== 'shot' && !stunned) {
+      this.usePower(p);
+    } else if (it.super && p.superCharge >= 1 && p.kickT < 0) {
       // superstřela: švih nohou, další zásah míče je superstřela
       p.superCharge = 0;
       p.superKick = true;
@@ -397,9 +416,48 @@ class Match {
     if (p.blink > 0) p.blink -= dt;
   }
 
+  // Superschopnost postavy (kromě superstřely, ta se spouští švihem).
+  usePower(p) {
+    p.superCharge = 0;
+    const idx = this.players.indexOf(p);
+    if (p.power === 'cheese' || p.power === 'penguin') {
+      const t = p.team;
+      this.blocks[t] = BLOCK_TIME;
+      this.blockKind[t] = p.power === 'cheese' ? 'cheese' : 'ice';
+      if (p.power === 'penguin') p.pengT = PENGUIN_TIME;
+      this.clearGoal(t);
+    } else if (p.power === 'vo2') {
+      p.boostT = BOOST_TIME;
+    }
+    this.onEvent('power', { idx, kind: p.power, team: p.team });
+  }
+
+  // Zablokovaná brána: míč i hráči z ní musí ven.
+  clearGoal(t) {
+    const b = this.ball, line = t === 0 ? GOAL_W : W - GOAL_W, s = t === 0 ? 1 : -1;
+    if (b.y + b.r > BAR_Y && (b.x - line) * s < b.r) {
+      b.x = line + s * (b.r + 2);
+      b.vx = s * Math.max(Math.abs(b.vx) * 0.5, 200);
+    }
+  }
+
+  // Hráč nesmí do zablokované brány (pod břevnem).
+  blockPlayer(p) {
+    for (let t = 0; t < 2; t++) {
+      if (this.blocks[t] <= 0 || p.y + p.R < BAR_Y) continue;
+      const line = t === 0 ? GOAL_W : W - GOAL_W, s = t === 0 ? 1 : -1;
+      const min = p.R * 0.7;
+      if ((p.x - line) * s < min) {
+        p.x = line + s * min;
+        if (p.vx * s < 0) p.vx = 0;
+      }
+    }
+  }
+
   playerWorld(p) {
     const R = p.R, foot = p.F;
     this.clampPlayer(p);
+    this.blockPlayer(p);
     for (let side = 0; side < 2; side++) {
       const [x0, x1] = goalRect(side);
       // na břevno se dá doskočit
@@ -523,6 +581,19 @@ class Match {
       if (b.vx > 0) {
         if (inNet && b.vx > 90) this.onEvent('net', { side: 1, y: b.y, impact: b.vx });
         b.vx = -b.vx * (inNet ? 0.2 : PHYS.wallBounce);
+      }
+    }
+    // zablokovaná brána (hermelín, led) je pevná stěna na brankové čáře
+    for (let t = 0; t < 2; t++) {
+      if (this.blocks[t] <= 0 || b.y + r <= BAR_Y) continue;
+      const line = t === 0 ? GOAL_W : W - GOAL_W, s = t === 0 ? 1 : -1;
+      if ((b.x - line) * s < r) {
+        b.x = line + s * r;
+        if (b.vx * s < 0) {
+          const imp = Math.abs(b.vx);
+          b.vx = s * imp * 0.62;
+          if (imp > 150) this.onEvent('blockhit', { team: t, x: line, y: b.y, impact: imp, kind: this.blockKind[t] });
+        }
       }
     }
     for (let side = 0; side < 2; side++) {
@@ -678,7 +749,7 @@ class Match {
     let team = -1;
     if (b.x + b.r < GOAL_W) team = 1; // celý míč za čarou levé branky – skóruje pravý tým
     else if (b.x - b.r > W - GOAL_W) team = 0;
-    if (team < 0) return;
+    if (team < 0 || this.blocks[1 - team] > 0) return;
     this.goalTeam = team;
     this.celebrate = team;
     this.score[team]++;

@@ -191,11 +191,22 @@ class AIBrain {
     const inZone = (q) => (q.x - p.x) * dir > 0 && Math.hypot(q.x - zx, q.y - zy) < 46 * PS;
     if ((inZone(b) || inZone(predAt(pred, 0.06))) && Math.random() < L.kick) kick = true;
 
-    // superstřela, když je nabitá a branka soupeře není daleko
+    // superschopnost, když je nabitá
     const oppGoal = p.team === 0 ? W - GOAL_W : GOAL_W;
-    if (kick && p.superCharge >= 1 && Math.abs(oppGoal - p.x) < 760 && Math.random() < L.kick) {
-      this.out.super = true;
-      kick = false;
+    if (p.superCharge >= 1) {
+      if (p.power === 'shot') {
+        if (kick && Math.abs(oppGoal - p.x) < 760 && Math.random() < L.kick) {
+          this.out.super = true;
+          kick = false;
+        }
+      } else if (p.power === 'vo2') {
+        // zrychlení, když je míč daleko nebo jde o závod
+        if (Math.abs(b.x - p.x) > 320 && Math.random() < L.kick) this.out.super = true;
+      } else {
+        // hermelín / led: míč letí na naši bránu a je blízko
+        const dist = (b.x - ownLine) * dir;
+        if (dist < 300 && toOwnGoal > 150 && m.blocks[p.team] <= 0 && Math.random() < L.kick) this.out.super = true;
+      }
     }
 
     const dx = tx - p.x;

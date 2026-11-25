@@ -1,4 +1,4 @@
-/* Hlavouni – celoobrazovková hra na šířku. Hřiště je vždy pod vším, obrazovky leží přes něj. */
+/* FIFA67 – celoobrazovková hra na šířku. Hřiště je vždy pod vším, obrazovky leží přes něj. */
 :root {
   --night: #0b1324;
   --deep: rgba(5, 9, 20, 0.9);
@@ -68,7 +68,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--chalk); out
   box-shadow: 0 5px 0 var(--ink), inset 0 2px 0 rgba(255, 255, 255, 0.6);
 }
 .btn-play svg { width: 0.9em; height: 0.9em; fill: currentColor; }
-.btn-play.big { font-size: clamp(30px, 8.5vh, 46px); padding: 0.28em 0.9em 0.2em; }
+.btn-play.big { font-size: clamp(30px, calc(var(--vh, 1vh) * 8.5), 46px); padding: 0.28em 0.9em 0.2em; }
 .btn-game {
   padding: 10px 20px;
   font-family: var(--font-display);
@@ -154,11 +154,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--chalk); out
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(26px, 7vh, 42px);
+  font-size: clamp(26px, calc(var(--vh, 1vh) * 7), 42px);
   line-height: 1;
   text-shadow: 0 3px 0 var(--ink);
 }
-.screen-title.big { font-size: clamp(40px, 12vh, 64px); }
+.screen-title.big { font-size: clamp(40px, calc(var(--vh, 1vh) * 12), 64px); }
 
 /* úvod */
 .home {
@@ -169,14 +169,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--chalk); out
     linear-gradient(90deg, rgba(5, 9, 20, 0.95) 0%, rgba(5, 9, 20, 0.78) 38%, rgba(5, 9, 20, 0.2) 70%, rgba(5, 9, 20, 0.45) 100%),
     radial-gradient(ellipse at 75% 100%, rgba(255, 201, 60, 0.12), transparent 60%);
 }
-.hero { position: absolute; right: 0; bottom: 0; width: 56%; height: 100%; pointer-events: none; }
-.home-main { position: relative; display: grid; gap: clamp(10px, 4vh, 26px); justify-items: start; padding-left: clamp(0px, 3vw, 40px); }
+.hero { position: absolute; right: 0; bottom: var(--safe-b, 0px); width: 56%; height: calc(100% - var(--safe-b, 0px) - var(--safe-t, 0px)); pointer-events: none; }
+.home-main { position: relative; display: grid; gap: clamp(10px, calc(var(--vh, 1vh) * 4), 26px); justify-items: start; padding-left: clamp(0px, 3vw, 40px); }
 .brand { display: grid; gap: 4px; justify-items: start; }
 .logo {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(46px, 14vh, 96px);
+  font-size: clamp(46px, calc(var(--vh, 1vh) * 14), 96px);
   line-height: 0.9;
   letter-spacing: 0.01em;
   color: var(--chalk);
@@ -184,25 +184,40 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--chalk); out
   display: flex;
   align-items: center;
 }
+.logo-67 {
+  position: relative;
+  display: inline-block;
+  margin-left: 0.12em;
+  padding: 0.02em 0.16em 0;
+  border: 0.06em solid var(--ink);
+  border-radius: 0.18em;
+  background: linear-gradient(180deg, #ffe07a, var(--gold) 55%, #f2a81c);
+  color: var(--ink);
+  text-shadow: 0 0.04em 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0.07em 0 var(--ink);
+  transform: rotate(-6deg) translateY(-0.02em);
+}
 .logo-ball {
-  width: 0.74em;
-  height: 0.74em;
-  margin: 0 0.02em 0.04em;
-  filter: drop-shadow(0 5px 0 var(--ink));
+  position: absolute;
+  right: -0.28em;
+  bottom: -0.2em;
+  width: 0.46em;
+  height: 0.46em;
+  filter: drop-shadow(0 3px 0 var(--ink));
   animation: roll 6s linear infinite;
 }
 @keyframes roll { to { transform: rotate(360deg); } }
 .tagline {
   margin: 0;
-  font-size: clamp(13px, 3.4vh, 18px);
+  font-size: clamp(13px, calc(var(--vh, 1vh) * 3.4), 18px);
   font-weight: 800;
   letter-spacing: 0.32em;
   text-transform: uppercase;
   color: var(--gold);
 }
-.home-buttons { display: grid; gap: clamp(10px, 2.6vh, 16px); justify-items: start; width: min(400px, 100%); }
+.home-buttons { display: grid; gap: clamp(10px, calc(var(--vh, 1vh) * 2.6), 16px); justify-items: start; width: min(400px, 100%); }
 .home-buttons .btn-play, .home-buttons .btn-game { width: 100%; }
-.home-buttons .btn-game { font-size: clamp(18px, 5vh, 26px); }
+.home-buttons .btn-game { font-size: clamp(18px, calc(var(--vh, 1vh) * 5), 26px); }
 .home-help { margin: 0; max-width: 420px; font-size: 15px; line-height: 1.45; color: var(--mute); }
 .home-help:empty { display: none; }
 kbd {
@@ -237,7 +252,7 @@ kbd {
 .online-card {
   display: grid;
   gap: 12px;
-  padding: clamp(12px, 3vh, 22px);
+  padding: clamp(12px, calc(var(--vh, 1vh) * 3), 22px);
   border-radius: 22px;
   border: 3px solid var(--ink);
   box-shadow: 0 6px 0 var(--ink);
@@ -274,12 +289,15 @@ kbd {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 8px;
-  background: linear-gradient(180deg, rgba(5, 9, 20, 0.92), rgba(5, 9, 20, 0.6) 30%, rgba(5, 9, 20, 0.6) 70%, rgba(5, 9, 20, 0.92));
+  background:
+    radial-gradient(ellipse 60% 70% at 25% 60%, color-mix(in srgb, var(--l0, #e8458f) 26%, transparent), transparent 70%),
+    radial-gradient(ellipse 60% 70% at 75% 60%, color-mix(in srgb, var(--l1, #2f80ff) 26%, transparent), transparent 70%),
+    linear-gradient(180deg, rgba(5, 9, 20, 0.94), rgba(5, 9, 20, 0.72) 30%, rgba(5, 9, 20, 0.72) 70%, rgba(5, 9, 20, 0.94));
 }
 .lobby-top { display: flex; align-items: center; gap: 12px; padding-right: calc(var(--hud-w, 140px) + 10px); }
 .lobby-heading { min-width: 0; flex: none; }
 .lobby-kicker { margin: 0; font-size: 12px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mute); }
-.lobby-title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(20px, 5.5vh, 30px); line-height: 1; white-space: nowrap; }
+.lobby-title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(20px, calc(var(--vh, 1vh) * 5.5), 30px); line-height: 1; white-space: nowrap; }
 .lobby-settings { display: flex; gap: 6px 10px; flex-wrap: wrap; justify-content: center; flex: 1; min-width: 0; }
 .seg { display: flex; gap: 3px; padding: 3px; border-radius: 12px; background: rgba(0, 0, 0, 0.35); border: 2px solid var(--line); }
 .seg button {
@@ -339,16 +357,44 @@ kbd {
   inset: 0;
   z-index: -1;
   background:
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(255, 255, 255, 0.28), transparent 70%),
     radial-gradient(ellipse at 50% 100%, var(--team-light), transparent 55%),
     repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.06) 0 16px, transparent 16px 38px),
     linear-gradient(170deg, var(--team), var(--team-dark));
-  opacity: 0.75;
+  opacity: 0.8;
+}
+.team-col::after {
+  /* pódium pod postavami */
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 11%;
+  height: 16%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08) 60%, transparent 72%);
 }
 .arena.anim .team-col { animation: slide-in 0.35s ease-out both; }
 .arena.anim .team-col.side-1 { animation-name: slide-in-r; }
 @keyframes slide-in { from { transform: translateX(-30px); opacity: 0; } }
 @keyframes slide-in-r { from { transform: translateX(30px); opacity: 0; } }
 .team-head { display: flex; align-items: center; gap: 8px; max-width: 100%; }
+.team-tt { display: grid; justify-items: center; gap: 2px; min-width: 0; }
+.team-chant {
+  max-width: 100%;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: rgba(5, 9, 20, 0.55);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff7dc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform: rotate(-2deg);
+}
 .team-title {
   padding: 3px 14px;
   border: 3px solid var(--ink);
@@ -364,28 +410,44 @@ kbd {
 }
 .cards { display: flex; gap: 10px; justify-content: center; align-items: center; min-height: 0; }
 .card { position: relative; display: grid; justify-items: center; gap: 3px; min-height: 0; }
-.card-main { display: grid; justify-items: center; gap: 0; padding: 0; border: 0; background: none; transition: transform 0.12s; }
+.card-main { display: grid; justify-items: center; gap: 2px; padding: 0; border: 0; background: none; transition: transform 0.12s; }
 .card-main:active { transform: scale(0.96); }
 .cards { container-type: size; width: 100%; }
 .portrait {
-  width: clamp(84px, 27vh, 190px);
-  height: clamp(104px, 33vh, 235px);
+  width: clamp(84px, calc(var(--vh, 1vh) * 27), 190px);
+  height: clamp(104px, calc(var(--vh, 1vh) * 34), 240px);
   display: block;
   filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.35));
 }
 @supports (height: 1cqh) {
-  .portrait { height: clamp(46px, min(36vh, 100cqh - 26px), 235px); width: auto; aspect-ratio: 126 / 156; }
+  .portrait { height: clamp(46px, min(calc(var(--vh, 1vh) * 40), 100cqh - 44px), 250px); width: auto; aspect-ratio: 126 / 168; }
 }
 .card.mine .portrait { filter: drop-shadow(0 0 10px rgba(255, 201, 60, 0.75)) drop-shadow(0 6px 4px rgba(0, 0, 0, 0.35)); }
-.card-name {
-  padding: 1px 12px;
-  border-radius: 10px;
-  background: rgba(5, 9, 20, 0.7);
-  font-family: var(--font-display);
-  font-size: clamp(16px, 4.6vh, 24px);
-  line-height: 1.1;
+.plate {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 2px 10px 2px 3px;
+  border-radius: 999px;
+  background: rgba(5, 9, 20, 0.78);
+  border: 2px solid rgba(255, 255, 255, 0.14);
 }
-.card.mine .card-name { background: var(--gold); color: var(--ink); }
+.card.mine .plate { background: var(--gold); border-color: #fff3c4; color: var(--ink); box-shadow: 0 0 14px rgba(255, 201, 60, 0.6); }
+.card-name {
+  font-family: var(--font-display);
+  font-size: clamp(15px, calc(var(--vh, 1vh) * 4.4), 23px);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.card-power {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff7dc;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+}
 .card-num { display: none; }
 .badge {
   max-width: 100%;
@@ -403,7 +465,8 @@ kbd {
 .b-me, .b-p1 { background: var(--gold); color: var(--ink); }
 .b-friend { background: var(--team-dark); color: #fff; border: 1.5px solid var(--team-light); }
 .badge.waiting { opacity: 0.7; }
-.card .badge { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); }
+.plate .badge { padding: 1px 7px; font-size: 11px; }
+.card.mine .plate .badge { background: var(--ink); color: var(--gold); }
 .arrows { position: absolute; inset: 36% -42px auto; display: flex; justify-content: space-between; pointer-events: none; }
 .arrows .arr { pointer-events: auto; }
 .pick-hint { display: none; }
@@ -424,6 +487,7 @@ kbd {
 .arr:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
 .team-head .arr { width: 32px; height: 32px; font-size: 24px; }
 .vs-badge {
+  position: relative;
   align-self: center;
   width: 62px;
   height: 62px;
@@ -440,30 +504,65 @@ kbd {
   animation: vs-pulse 1.6s ease-in-out infinite;
 }
 @keyframes vs-pulse { 50% { transform: rotate(-8deg) scale(1.1); } }
-.lobby-bottom { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "members actions" "hint actions"; align-items: center; column-gap: 14px; row-gap: 2px; }
-.members { grid-area: members; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.vs-badge::before {
+  content: "";
+  position: absolute;
+  inset: -16px;
+  z-index: -1;
+  background: conic-gradient(from 0deg, transparent 0 10%, rgba(255, 201, 60, 0.55) 12% 14%, transparent 16% 35%, rgba(255, 201, 60, 0.55) 37% 39%, transparent 41% 60%, rgba(255, 201, 60, 0.55) 62% 64%, transparent 66% 85%, rgba(255, 201, 60, 0.55) 87% 89%, transparent 91%);
+  border-radius: 50%;
+  animation: spin 6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.lobby-bottom { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 14px; }
+.lobby-info { display: grid; gap: 3px; min-width: 0; }
+.lobby-power {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lobby-power .lp-k { font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+.lobby-power b { font-family: var(--font-display); font-weight: 400; font-size: 17px; }
+.lobby-power .lp-d { color: var(--mute); overflow: hidden; text-overflow: ellipsis; }
+.members { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .member { display: flex; align-items: center; gap: 6px; padding: 3px 10px 3px 7px; border-radius: 999px; border: 2px solid var(--line); background: rgba(5, 9, 20, 0.6); font-size: 15px; }
 .member.me { border-color: rgba(255, 201, 60, 0.6); }
 .member .dot { width: 10px; height: 10px; border-radius: 50%; background: #64748b; }
 .member .dot.ok { background: #3ee08f; box-shadow: 0 0 8px rgba(62, 224, 143, 0.7); }
 .m-name { font-weight: 800; }
 .m-state { color: var(--mute); font-size: 13px; }
-.hint, #lobby-wait { grid-area: hint; margin: 0; font-size: 15px; line-height: 1.3; color: var(--mute); text-align: left; }
+.hint, #lobby-wait { margin: 0; font-size: 15px; line-height: 1.3; color: var(--mute); text-align: left; }
 #lobby-wait { color: var(--gold); }
-.lobby-actions { grid-area: actions; display: flex; gap: 10px; }
-.lobby-actions .btn-play { font-size: clamp(24px, 7vh, 34px); padding: 6px 30px 4px; }
+.lobby-actions { display: flex; gap: 10px; }
+.lobby-actions .btn-play { font-size: clamp(24px, calc(var(--vh, 1vh) * 7), 34px); padding: 6px 30px 4px; }
 
 /* pauza a výsledek */
-.screen.dim { display: grid; place-items: center; background: rgba(4, 8, 18, 0.74); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
-.dialog { display: grid; gap: clamp(8px, 2.5vh, 14px); justify-items: center; text-align: center; width: min(620px, 100%); }
+.screen.dim {
+  display: flex;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: rgba(4, 8, 18, 0.74);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+/* margin:auto vycentruje, ale když se dialog nevejde, dá se posunout (nic se neuřízne) */
+.screen.dim > .dialog { margin: auto; flex: none; }
+.dialog { display: grid; gap: clamp(8px, calc(var(--vh, 1vh) * 2.5), 14px); justify-items: center; text-align: center; width: min(620px, 100%); }
 .dialog-buttons { display: grid; gap: 12px; width: min(340px, 100%); }
 .dialog-buttons .btn-play, .dialog-buttons .btn-game { width: 100%; }
 .dialog-buttons.row { display: flex; flex-wrap: wrap; justify-content: center; width: auto; }
 .dialog-buttons.row .btn-play, .dialog-buttons.row .btn-game { width: auto; }
 .dialog-buttons .btn-chip { justify-self: center; }
 .res-kicker { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: 0.24em; text-transform: uppercase; color: var(--mute); }
-.res-title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(40px, 13vh, 72px); line-height: 1; text-shadow: 0 5px 0 var(--ink); }
-.res-score { margin: 0; display: flex; justify-content: center; align-items: baseline; gap: 14px; font-family: var(--font-display); font-size: clamp(46px, 15vh, 84px); line-height: 1; text-shadow: 0 5px 0 var(--ink); font-variant-numeric: tabular-nums; }
+.res-title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(40px, calc(var(--vh, 1vh) * 13), 72px); line-height: 1; text-shadow: 0 5px 0 var(--ink); }
+.res-score { margin: 0; display: flex; justify-content: center; align-items: baseline; gap: 14px; font-family: var(--font-display); font-size: clamp(46px, calc(var(--vh, 1vh) * 15), 84px); line-height: 1; text-shadow: 0 5px 0 var(--ink); font-variant-numeric: tabular-nums; }
 .res-score .colon { color: var(--mute); font-size: 0.7em; }
 .res-sub { margin: 0; font-size: 18px; color: var(--mute); }
 .dialog.result {
@@ -474,7 +573,7 @@ kbd {
   column-gap: clamp(14px, 4vw, 40px);
 }
 .dialog.result:has(.res-side .res-card:not([hidden])) .res-main { justify-self: end; }
-.res-main { grid-area: main; display: grid; gap: clamp(4px, 1.6vh, 10px); justify-items: center; }
+.res-main { grid-area: main; display: grid; gap: clamp(4px, calc(var(--vh, 1vh) * 1.6), 10px); justify-items: center; }
 .res-side { grid-area: side; display: grid; gap: 10px; justify-items: start; width: 100%; }
 .dialog.result > .dialog-buttons { grid-area: btns; }
 .dialog.result:not(:has(.res-card:not([hidden]))) { grid-template-columns: 1fr; grid-template-areas: "main" "btns"; }
@@ -516,7 +615,7 @@ kbd {
 .rank-emblem svg { width: 100%; height: 100%; overflow: visible; }
 .rank-emblem svg path:first-child { fill: var(--rank); stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
 .rank-emblem svg .st { fill: rgba(255, 255, 255, 0.92); stroke: rgba(11, 18, 32, 0.5); stroke-width: 0.8; }
-.rank-emblem.big { width: clamp(64px, 22vh, 110px); height: clamp(64px, 22vh, 110px); filter: drop-shadow(0 4px 0 var(--ink)) drop-shadow(0 0 18px color-mix(in srgb, var(--rank) 60%, transparent)); }
+.rank-emblem.big { width: clamp(64px, calc(var(--vh, 1vh) * 22), 110px); height: clamp(64px, calc(var(--vh, 1vh) * 22), 110px); filter: drop-shadow(0 4px 0 var(--ink)) drop-shadow(0 0 18px color-mix(in srgb, var(--rank) 60%, transparent)); }
 
 /* profil v rohu menu */
 .profile-chip {
@@ -544,7 +643,7 @@ kbd {
   grid-template-areas: "head head" "left right";
   align-items: center;
   gap: 10px 24px;
-  padding: clamp(10px, 2.5vh, 18px) clamp(12px, 3vw, 24px);
+  padding: clamp(10px, calc(var(--vh, 1vh) * 2.5), 18px) clamp(12px, 3vw, 24px);
   border-radius: 24px;
   border: 3px solid var(--ink);
   background: linear-gradient(160deg, #22304c, #121a2c);
@@ -553,7 +652,7 @@ kbd {
 .profile-head { grid-area: head; display: flex; align-items: center; justify-content: space-between; width: 100%; }
 .profile-left { grid-area: left; display: grid; justify-items: center; gap: 4px; }
 .profile-right { grid-area: right; display: grid; gap: 10px; width: 100%; }
-.pf-rank { margin: 0; font-family: var(--font-display); font-size: clamp(22px, 7vh, 32px); line-height: 1; text-shadow: 0 3px 0 var(--ink); }
+.pf-rank { margin: 0; font-family: var(--font-display); font-size: clamp(22px, calc(var(--vh, 1vh) * 7), 32px); line-height: 1; text-shadow: 0 3px 0 var(--ink); }
 .pf-tro { margin: 0; display: flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: 24px; color: var(--gold); }
 .pf-tro b { font-weight: 400; }
 .pf-next { margin: 0; font-size: 14px; color: var(--mute); }
@@ -571,15 +670,15 @@ kbd {
 /* turnaj v lobby */
 .cup-col { place-items: center; grid-template-rows: 1fr; }
 .cup-info { display: grid; justify-items: center; gap: 4px; text-align: center; padding: 6px; }
-.cup-icon .cup { width: clamp(44px, 18vh, 96px); height: clamp(44px, 18vh, 96px); fill: var(--gold); filter: drop-shadow(0 4px 0 var(--ink)) drop-shadow(0 0 16px rgba(255, 201, 60, 0.6)); animation: cup-bob 2.4s ease-in-out infinite; }
+.cup-icon .cup { width: clamp(44px, calc(var(--vh, 1vh) * 18), 96px); height: clamp(44px, calc(var(--vh, 1vh) * 18), 96px); fill: var(--gold); filter: drop-shadow(0 4px 0 var(--ink)) drop-shadow(0 0 16px rgba(255, 201, 60, 0.6)); animation: cup-bob 2.4s ease-in-out infinite; }
 @keyframes cup-bob { 50% { transform: translateY(-5px) rotate(-3deg); } }
-.cup-name { font-family: var(--font-display); font-weight: 400; font-size: clamp(20px, 7vh, 34px); line-height: 1; text-shadow: 0 3px 0 var(--ink); }
+.cup-name { font-family: var(--font-display); font-weight: 400; font-size: clamp(20px, calc(var(--vh, 1vh) * 7), 34px); line-height: 1; text-shadow: 0 3px 0 var(--ink); }
 .cup-line { font-size: 14px; font-weight: 700; color: #fff7dc; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
 
 /* pavouk turnaje */
 .dialog.cup {
   width: min(820px, 100%);
-  padding: clamp(10px, 2.5vh, 18px) clamp(12px, 3vw, 24px);
+  padding: clamp(10px, calc(var(--vh, 1vh) * 2.5), 18px) clamp(12px, 3vw, 24px);
   border-radius: 24px;
   border: 3px solid var(--ink);
   background: linear-gradient(160deg, #2a2a52, #121a2c);
@@ -602,7 +701,7 @@ kbd {
 .br-pics .br-pic + .br-pic { margin-left: -8px; }
 .br-name { font-family: var(--font-display); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
 .br-score { font-family: var(--font-display); font-weight: 400; font-size: 20px; min-width: 16px; text-align: right; }
-.br-cup .cup { width: clamp(48px, 18vh, 92px); height: clamp(48px, 18vh, 92px); fill: rgba(255, 255, 255, 0.18); transition: fill 0.3s; }
+.br-cup .cup { width: clamp(48px, calc(var(--vh, 1vh) * 18), 92px); height: clamp(48px, calc(var(--vh, 1vh) * 18), 92px); fill: rgba(255, 255, 255, 0.18); transition: fill 0.3s; }
 .br-cup.won .cup { fill: var(--gold); filter: drop-shadow(0 4px 0 var(--ink)) drop-shadow(0 0 22px rgba(255, 201, 60, 0.9)); animation: cup-bob 1.6s ease-in-out infinite; }
 
 /* lesk na hlavním tlačítku */
@@ -788,118 +887,148 @@ kbd {
 .noscript { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; font-size: 22px; }
 
 /* nízké displeje (telefon na šířku) */
-@media (max-height: 460px) {
-  .btn-play { font-size: 22px; padding: 7px 20px 5px; }
-  .btn-game { font-size: 18px; padding: 7px 14px; }
-  .btn-mini { width: 38px; height: 38px; border-radius: 12px; }
-  .lobby { gap: 5px; }
-  .lobby-kicker { display: none; }
-  .seg button { padding: 3px 7px; font-size: 14px; }
-  .code-box strong { font-size: 24px; }
-  .btn-invite { padding: 5px 9px; font-size: 14px; }
-  .team-col { padding: 5px 6px 6px; gap: 3px; border-radius: 18px; }
-  .team-title { font-size: 15px; padding: 1px 10px; }
-  .team-head .arr { width: 28px; height: 28px; font-size: 20px; }
-  .arr { width: 30px; height: 32px; font-size: 22px; }
-  .vs-badge { width: 46px; height: 46px; font-size: 21px; border-width: 3px; }
-  .member { font-size: 13px; padding: 1px 8px 1px 6px; }
-  .hint, #lobby-wait { font-size: 13px; }
-  .online-card { gap: 8px; }
-  .card-kicker { font-size: 20px; }
-  .field input { padding: 6px 10px; font-size: 19px; }
-  .tbtn.kick { width: 100px; height: 100px; }
-  .tbtn.super { width: 80px; height: 80px; }
-  .action-pad { width: 196px; height: 172px; }
-  .stick-base { width: 124px; height: 124px; left: calc(112px + var(--safe-l)); top: calc(100% - 100px - var(--safe-b)); }
-  #touch.swap .stick-base { left: calc(100% - 112px - var(--safe-r)); }
-}
-@media (max-height: 380px) {
-  .hint { display: none; }
-  .badge { line-height: 1.45; }
-  .res-title { font-size: clamp(30px, 11vh, 48px); }
-  .res-score { font-size: clamp(34px, 12vh, 56px); }
-  .res-sub { font-size: 15px; }
-  .res-card { padding: 7px 12px; }
-  .mvp-pic { width: 50px; height: 62px; }
-  .mvp-name { font-size: 20px; }
-  .rw-top b { font-size: 24px; }
-  .pf-stat b { font-size: 18px; }
-  .dialog.profile { gap: 6px 18px; }
-  .home-main { gap: 8px; }
-  .home-help { font-size: 13px; }
-  .tagline { letter-spacing: 0.22em; }
-}
+/* dříve @media (max-height: 460px) */
+:root.h460 .btn-play { font-size: 22px; padding: 7px 20px 5px; }
+:root.h460 .btn-game { font-size: 18px; padding: 7px 14px; }
+:root.h460 .btn-mini { width: 38px; height: 38px; border-radius: 12px; }
+:root.h460 .lobby { gap: 5px; }
+:root.h460 .lobby-kicker { display: none; }
+:root.h460 .seg button { padding: 3px 7px; font-size: 14px; }
+:root.h460 .code-box strong { font-size: 24px; }
+:root.h460 .btn-invite { padding: 5px 9px; font-size: 14px; }
+:root.h460 .team-col { padding: 5px 6px 6px; gap: 3px; border-radius: 18px; }
+:root.h460 .team-title { font-size: 15px; padding: 1px 10px; }
+:root.h460 .team-head .arr { width: 28px; height: 28px; font-size: 20px; }
+:root.h460 .arr { width: 30px; height: 32px; font-size: 22px; }
+:root.h460 .vs-badge { width: 46px; height: 46px; font-size: 21px; border-width: 3px; }
+:root.h460 .member { font-size: 13px; padding: 1px 8px 1px 6px; }
+:root.h460 .hint, :root.h460 #lobby-wait { font-size: 13px; }
+:root.h460 .online-card { gap: 8px; }
+:root.h460 .card-kicker { font-size: 20px; }
+:root.h460 .field input { padding: 6px 10px; font-size: 19px; }
+:root.h460 .tbtn.kick { width: 100px; height: 100px; }
+:root.h460 .tbtn.super { width: 80px; height: 80px; }
+:root.h460 .action-pad { width: 196px; height: 172px; }
+:root.h460 .stick-base { width: 124px; height: 124px; left: calc(112px + var(--safe-l)); top: calc(100% - 100px - var(--safe-b)); }
+:root.h460 #touch.swap .stick-base { left: calc(100% - 112px - var(--safe-r)); }
+
+/* dříve @media (max-height: 380px) */
+:root.h380 .hint { display: none; }
+:root.h380 .team-chant { font-size: 11px; }
+:root.h380 .card-power { font-size: 11px; }
+:root.h380 .cup-line + .cup-line { display: none; }
+:root.h380 .lobby-power { font-size: 13px; }
+:root.h380 .lobby-power b { font-size: 15px; }
+:root.h380 .dialog.cup { gap: 6px; padding: 8px 14px; }
+:root.h380 .cup-head { display: flex; align-items: baseline; gap: 12px; }
+:root.h380 .dialog.cup .screen-title { font-size: 24px; }
+:root.h380 .br-pic { width: 22px; height: 27px; }
+:root.h380 .br-team { padding: 1px 8px 1px 4px; }
+:root.h380 .br-name { font-size: 14px; }
+:root.h380 .br-score { font-size: 18px; }
+:root.h380 .br-semis { gap: 6px; }
+:root.h380 .br-match { padding: 3px; gap: 2px; }
+:root.h380 .br-cup .cup { width: 54px; height: 54px; }
+:root.h380 .dialog.cup .dialog-buttons.row .btn-play { font-size: 19px; padding: 5px 18px 3px; }
+:root.h380 .dialog.cup .dialog-buttons.row .btn-game { font-size: 15px; padding: 5px 12px; }
+:root.h380 .badge { line-height: 1.45; }
+:root.h380 .res-title { font-size: clamp(30px, calc(var(--vh, 1vh) * 11), 48px); }
+:root.h380 .res-score { font-size: clamp(34px, calc(var(--vh, 1vh) * 12), 56px); }
+:root.h380 .res-sub { font-size: 15px; }
+:root.h380 .res-card { padding: 7px 12px; }
+:root.h380 .mvp-pic { width: 50px; height: 62px; }
+:root.h380 .mvp-name { font-size: 20px; }
+:root.h380 .rw-top b { font-size: 24px; }
+:root.h380 .pf-stat b { font-size: 18px; }
+:root.h380 .dialog.profile { gap: 6px 18px; }
+:root.h380 .home-main { gap: 8px; }
+:root.h380 .home-help { font-size: 13px; }
+:root.h380 .tagline { letter-spacing: 0.22em; }
+
 /* okno aplikace Claude na telefonu (~300 px na výšku) */
-@media (max-height: 320px) {
-  .screen { padding-top: max(8px, var(--safe-t)); padding-bottom: max(8px, var(--safe-b)); }
-  .lobby { gap: 5px; }
-  .lobby-heading { display: none; }
-  .lobby-top { gap: 8px; flex-wrap: nowrap; }
-  .lobby-settings { flex-wrap: nowrap; justify-content: flex-start; gap: 5px; }
-  .seg { padding: 2px; border-width: 1.5px; }
-  .seg button { padding: 3px 6px; font-size: 13px; }
-  .code-box strong { font-size: 20px; }
-  .code-box span { display: none; }
-  .btn-invite { padding: 4px 8px; font-size: 13px; }
-  .team-col { padding: 4px 6px 5px; border-radius: 16px; gap: 2px; }
-  .team-title { font-size: 14px; padding: 0 9px; border-width: 2px; }
-  .team-head .arr { width: 26px; height: 26px; font-size: 18px; border-width: 2px; }
-  .arr { width: 28px; height: 30px; font-size: 20px; border-width: 2px; }
-  .card-name { font-size: 15px; padding: 0 8px; }
-  .badge { font-size: 10px; padding: 1px 7px; }
-  .vs-badge { width: 40px; height: 40px; font-size: 18px; }
-  .member { font-size: 12px; }
-  .lobby-actions .btn-play { font-size: 20px; padding: 4px 22px 2px; }
-  .lobby-actions .btn-game { font-size: 15px; padding: 5px 12px; }
-  #lobby-wait { font-size: 12px; }
-  .res-kicker { font-size: 12px; }
-  .res-title { font-size: 30px; }
-  .res-score { font-size: 38px; gap: 10px; }
-  .res-sub { font-size: 14px; }
-  .dialog { gap: 6px; }
-  .res-side { gap: 6px; }
-  .res-card { padding: 5px 10px; border-radius: 14px; }
-  .mvp-pic { width: 42px; height: 52px; }
-  .mvp-name { font-size: 18px; }
-  .mvp-stats, .rw-note { font-size: 12px; }
-  .rw-top .cup { width: 22px; height: 22px; }
-  .rw-top b { font-size: 21px; }
-  .rw-total { font-size: 18px; }
-  .rw-name { font-size: 15px; min-width: 64px; }
-  .dialog-buttons.row { gap: 8px; }
-  .dialog-buttons.row .btn-play { font-size: 18px; padding: 5px 16px 3px; }
-  .dialog-buttons.row .btn-game { font-size: 15px; padding: 5px 12px; }
-  .screen-title.big { font-size: 34px; }
-  .dialog-buttons { gap: 8px; }
-  .dialog-buttons .btn-play { font-size: 20px; padding: 5px 16px 3px; }
-  .dialog-buttons .btn-game { font-size: 16px; padding: 5px 12px; }
-  .profile-head .screen-title { font-size: 24px; }
-  .pf-stat { padding: 3px; }
-  .pf-stat b { font-size: 16px; }
-  .pf-stat span, .pf-step span, .pf-step small { font-size: 10px; }
-  .pf-ladder .rank-emblem { width: 24px; height: 24px; }
-  .online-card { padding: 10px; gap: 6px; }
-  .lobby-settings { flex-wrap: wrap; row-gap: 3px; }
-  .cup-line { font-size: 12px; }
-  .cup-sub { font-size: 13px; }
-  .br-pic { width: 20px; height: 25px; }
-  .br-name { font-size: 13px; }
-  .br-score { font-size: 17px; }
-  .br-semis { gap: 6px; }
-  .br-match { padding: 3px; }
-  .dialog.cup .screen-title { font-size: 22px; }
-  .card-kicker { font-size: 17px; }
-  .field span { display: none; }
-  .screen-title { font-size: 24px; }
-}
-@media (max-width: 700px) and (min-height: 321px) {
-  .lobby-top { flex-wrap: wrap; }
-  .lobby-settings { order: 3; flex-basis: 100%; justify-content: flex-start; }
-  .online-grid { grid-template-columns: 1fr; }
-  .online-or { display: none; }
-}
+/* dříve @media (max-height: 320px) */
+:root.h320 .screen { padding-top: max(8px, var(--safe-t)); padding-bottom: max(8px, var(--safe-b)); }
+:root.h320 .lobby { gap: 5px; }
+:root.h320 .lobby-heading { display: none; }
+:root.h320 .team-chant { display: none; }
+:root.h320 .card-power { font-size: 10px; }
+:root.h320 .plate { padding: 1px 8px 1px 2px; gap: 4px; }
+:root.h320 .plate .badge { font-size: 9px; padding: 0 5px; }
+:root.h320 .lobby-power .lp-k { display: none; }
+:root.h320 .lobby-power { font-size: 12px; }
+:root.h320 .lobby-power b { font-size: 14px; }
+:root.h320 .br-pic { width: 18px; height: 22px; }
+:root.h320 .br-team { padding: 0 6px 0 3px; }
+:root.h320 .dialog.cup { gap: 4px; padding: 6px 12px; }
+:root.h320 .cup-sub { font-size: 12px; }
+:root.h320 .lobby-top { gap: 8px; flex-wrap: nowrap; }
+:root.h320 .lobby-settings { flex-wrap: nowrap; justify-content: flex-start; gap: 5px; }
+:root.h320 .seg { padding: 2px; border-width: 1.5px; }
+:root.h320 .seg button { padding: 3px 6px; font-size: 13px; }
+:root.h320 .code-box strong { font-size: 20px; }
+:root.h320 .code-box span { display: none; }
+:root.h320 .btn-invite { padding: 4px 8px; font-size: 13px; }
+:root.h320 .team-col { padding: 4px 6px 5px; border-radius: 16px; gap: 2px; }
+:root.h320 .team-title { font-size: 14px; padding: 0 9px; border-width: 2px; }
+:root.h320 .team-head .arr { width: 26px; height: 26px; font-size: 18px; border-width: 2px; }
+:root.h320 .arr { width: 28px; height: 30px; font-size: 20px; border-width: 2px; }
+:root.h320 .card-name { font-size: 15px; padding: 0 8px; }
+:root.h320 .badge { font-size: 10px; padding: 1px 7px; }
+:root.h320 .vs-badge { width: 40px; height: 40px; font-size: 18px; }
+:root.h320 .member { font-size: 12px; }
+:root.h320 .lobby-actions .btn-play { font-size: 20px; padding: 4px 22px 2px; }
+:root.h320 .lobby-actions .btn-game { font-size: 15px; padding: 5px 12px; }
+:root.h320 #lobby-wait { font-size: 12px; }
+:root.h320 .res-kicker { font-size: 12px; }
+:root.h320 .res-title { font-size: 30px; }
+:root.h320 .res-score { font-size: 38px; gap: 10px; }
+:root.h320 .res-sub { font-size: 14px; }
+:root.h320 .dialog { gap: 6px; }
+:root.h320 .res-side { gap: 6px; }
+:root.h320 .res-card { padding: 5px 10px; border-radius: 14px; }
+:root.h320 .mvp-pic { width: 42px; height: 52px; }
+:root.h320 .mvp-name { font-size: 18px; }
+:root.h320 .mvp-stats, :root.h320 .rw-note { font-size: 12px; }
+:root.h320 .rw-top .cup { width: 22px; height: 22px; }
+:root.h320 .rw-top b { font-size: 21px; }
+:root.h320 .rw-total { font-size: 18px; }
+:root.h320 .rw-name { font-size: 15px; min-width: 64px; }
+:root.h320 .dialog-buttons.row { gap: 8px; }
+:root.h320 .dialog-buttons.row .btn-play { font-size: 18px; padding: 5px 16px 3px; }
+:root.h320 .dialog-buttons.row .btn-game { font-size: 15px; padding: 5px 12px; }
+:root.h320 .screen-title.big { font-size: 34px; }
+:root.h320 .dialog-buttons { gap: 8px; }
+:root.h320 .dialog-buttons .btn-play { font-size: 20px; padding: 5px 16px 3px; }
+:root.h320 .dialog-buttons .btn-game { font-size: 16px; padding: 5px 12px; }
+:root.h320 .profile-head .screen-title { font-size: 24px; }
+:root.h320 .pf-stat { padding: 3px; }
+:root.h320 .pf-stat b { font-size: 16px; }
+:root.h320 .pf-stat span, :root.h320 .pf-step span, :root.h320 .pf-step small { font-size: 10px; }
+:root.h320 .pf-ladder .rank-emblem { width: 24px; height: 24px; }
+:root.h320 .online-card { padding: 10px; gap: 6px; }
+:root.h320 .lobby-settings { flex-wrap: wrap; row-gap: 3px; }
+:root.h320 .cup-line { font-size: 12px; }
+:root.h320 .cup-sub { font-size: 13px; }
+:root.h320 .br-pic { width: 20px; height: 25px; }
+:root.h320 .br-name { font-size: 13px; }
+:root.h320 .br-score { font-size: 17px; }
+:root.h320 .br-semis { gap: 6px; }
+:root.h320 .br-match { padding: 3px; }
+:root.h320 .dialog.cup .screen-title { font-size: 22px; }
+:root.h320 .card-kicker { font-size: 17px; }
+:root.h320 .field span { display: none; }
+:root.h320 .screen-title { font-size: 24px; }
+
+/* dříve @media (max-width: 700px) and (min-height: 321px) */
+:root.w700:not(.h320) .lobby-top { flex-wrap: wrap; }
+:root.w700:not(.h320) .lobby-settings { order: 3; flex-basis: 100%; justify-content: flex-start; }
+:root.w700:not(.h320) .online-grid { grid-template-columns: 1fr; }
+:root.w700:not(.h320) .online-or { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
   .logo-ball, .vs-badge, .tbtn.super.full, .rotate-screen svg, .btn-play.big::after, .logo, .res-card.rankup, .cup-icon .cup, .br-cup.won .cup { animation: none; }
   .arena.anim .team-col { animation: none; }
 }
-@media (max-height: 320px) { .home-help { display: none; } }
+/* dříve @media (max-height: 320px) */
+:root.h320 .home-help { display: none; }
+

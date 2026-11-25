@@ -633,10 +633,68 @@ const Game = {
       case 'shout': {
         const team = a[1] === 1 ? 1 : 0;
         const col = m ? m.teams[team].color : '#ffc93c';
-        const c = this.cam, v = Renderer.view;
-        const hw = (v.x1 - v.x0) / (2 * c.z), hh = (v.y1 - v.y0) / (2 * c.z);
-        Effects.shout(String(a[0] || '').slice(0, 30), team, col, { x0: c.x - hw, x1: c.x + hw, y0: c.y - hh, y1: c.y + hh });
+        Effects.shout(String(a[0] || '').slice(0, 30), team, col, this.camRectFor(this.cam.x, this.cam.y, this.cam.z));
         if (live) Sound.blip();
+        break;
+      }
+      case 'burst': {
+        // hodně bublin najednou (gól): kamera se může zrovna dívat k bráně
+        const team = a[1] === 1 ? 1 : 0;
+        const col = m ? m.teams[team].color : '#ffc93c';
+        const goalCam = a[3] === 1 && this.goalTeam >= 0;
+        const rect = goalCam ? this.camRectFor(this.goalTeam === 0 ? W - 260 : 260, 470, Math.max(1.3, this.cam.z)) : this.camRectFor(this.cam.x, this.cam.y, this.cam.z);
+        Effects.burst(String(a[0] || '').slice(0, 20), team, col, rect, clamp(Number(a[2]) || 5, 1, 18));
+        if (live) Sound.cheer();
+        break;
+      }
+      case 'power': {
+        const p = m && m.players[a[0]];
+        if (!p) break;
+        const kind = a[1];
+        const col = superColor(p.look.id);
+        if (live) this.stat(a[0], 'supers');
+        if (kind === 'cheese') {
+          if (live) {
+            Sound.cheese();
+            Effects.pop('HERMELÍN!', p.team === 0 ? 200 : W - 200, 300, '#f2c14e', 40);
+          }
+        } else if (kind === 'penguin') {
+          Effects.puff(p.x, p.y);
+          Effects.snow(p.x, p.y, 26);
+          Effects.snow(p.team === 0 ? GOAL_W / 2 : W - GOAL_W / 2, BAR_Y + 80, 40);
+          if (live) {
+            Sound.freeze();
+            Effects.pop('TUČŇÁK!', p.x, p.y - 110, '#53d2ff', 38);
+            Effects.shake(6);
+          }
+        } else if (kind === 'vo2') {
+          Effects.say(a[0], 'MÁM VO2max 67', col, 2.6);
+          Effects.rings.push({ x: p.x, y: p.y, t: 0, dur: 0.45, r0: 20, r1: 110, rgb: hexRgb(col) });
+          if (live) Sound.vo2();
+        }
+        break;
+      }
+      case 'blockhit': {
+        const x = a[0] === 0 ? GOAL_W : W - GOAL_W;
+        if (a[2]) Effects.snow(x, a[1], 10);
+        else Effects.puff(x, a[1]);
+        if (live) {
+          Sound.thud();
+          Effects.shake(4 * (a[3] || 0.5));
+        }
+        break;
+      }
+      case 'unblock': {
+        const x = a[0] === 0 ? GOAL_W / 2 : W - GOAL_W / 2;
+        if (a[1]) {
+          Effects.snow(x, BAR_Y + 100, 30);
+          if (m) for (const p of m.players) if (p.power === 'penguin' && p.team === a[0]) Effects.puff(p.x, p.y);
+          if (live) Sound.crack();
+        } else {
+          Effects.puff(x, BAR_Y + 100);
+          Effects.rings.push({ x, y: BAR_Y + 110, t: 0, dur: 0.35, r0: 30, r1: 140, rgb: '255,246,220' });
+          if (live) Sound.whoosh();
+        }
         break;
       }
       case 'chant':
@@ -665,20 +723,13 @@ const Game = {
         break;
       case 'head':
         this.fx('head', d.x, d.y, Math.min(1, d.impact / 700));
-        if (this.state === 'play' && d.impact > 500 && Math.random() < 0.25 && this.gameT - (this.lastShout || 0) > 2.5) {
-          const b = this.match.ball;
-          this.shout('head', b.lastTouch ? b.lastTouch.team : 0, b.lastTouch);
-        }
         break;
       case 'bounce':
         this.fx('bounce', d.x, Math.min(1, d.impact / 900));
         break;
       case 'post':
         this.fx('post', d.x, d.y);
-        if (this.state === 'play' && this.gameT - (this.lastShout || 0) > 1) {
-          this.fx('ooh');
-          this.shout('post', this.ballSide());
-        }
+        if (this.state === 'play') this.fx('ooh');
         break;
       case 'swing':
         this.fx('swing');
@@ -697,19 +748,25 @@ const Game = {
         break;
       case 'super':
         this.fx('super', d.x, d.y, d.dir, d.idx);
-        if (this.state === 'play' && Math.random() < 0.6) {
-          const p = this.match.players[d.idx];
-          if (p) this.shout('super', p.team, p);
-        }
         break;
       case 'knock': {
         const b = this.match.ball, by = this.match.players[b.superBy];
         this.fx('knock', d.x, d.y, by ? b.superBy : -1);
-        if (this.state === 'play') this.shout('knock', by ? by.team : 0, by);
+        if (this.state === 'play') this.shout('knock', by ? by.team : 1 - this.match.players[d.idx].team);
         break;
       }
       case 'thud':
         this.fx('thud', d.x, d.y);
+        break;
+      case 'power':
+        this.fx('power', d.idx, d.kind);
+        if (d.kind === 'penguin') this.shout('skiper', d.team);
+        break;
+      case 'blockhit':
+        this.fx('blockhit', d.team, d.y, d.kind === 'ice' ? 1 : 0, Math.min(1, d.impact / 900));
+        break;
+      case 'unblock':
+        this.fx('unblock', d.team, d.kind === 'ice' ? 1 : 0);
         break;
     }
   },
@@ -730,10 +787,7 @@ const Game = {
       const how = d.how === 'super' ? ' superstřelou' : d.how === 'head' ? ' hlavou' : '';
       sub = d.own ? `Vlastní gól: ${who}` : `Skóruje ${who}${how}`;
     }
-    this.shout('goal', d.team, s && !d.own ? s : null);
-    setTimeout(() => {
-      if (this.match && this.state === 'goal') this.shout(Math.random() < 0.5 ? 'goal' : 'sad', Math.random() < 0.5 ? d.team : 1 - d.team);
-    }, 700);
+    this.shout('goal', d.team);
     this.showMsg('GÓL!', sub, 2.5, this.match.teams[d.team].color, 150);
     this.scorePop[d.team] = performance.now();
     this.fx('goal', d.team, d.scorerIdx, d.own ? 1 : 0);
@@ -891,10 +945,6 @@ const Game = {
           this.shout('chant', Math.random() < 0.65 ? lead : 1 - lead);
           if (Math.random() < 0.5) this.fx('chant');
         }
-        if (!this.golden && !this.lateShout && this.timeLeft < 10.5) {
-          this.lateShout = true;
-          this.shout('late', m.score[0] <= m.score[1] ? 0 : 1);
-        }
         break;
       }
 
@@ -947,6 +997,8 @@ const Game = {
     this.myColor = me ? superColor(me.look.id) : '#ffc93c';
     Touch.setCharge(c);
     Touch.setColor(this.myColor);
+    Touch.setPower(me ? me.power : 'shot');
+    this.myPower = me ? me.power : 'shot';
     if (me && c >= 1 && (this._lastCharge || 0) < 1 && this.state === 'play') Sound.charged();
     this._lastCharge = c;
   },
@@ -987,29 +1039,47 @@ const Game = {
   },
 
   // Pokřik z tribuny (hostitel ho rozešle i kamarádům).
-  shout(kind, team, who) {
+  // Pokřik fanoušků týmu `team` (sedí na jeho polovině tribun).
+  //  chant – pokřik z tribun, pokřik dvojice nebo jméno hráče
+  //  knock – SLAJZNUL DO BAHNA, goal – 15 bublin GÓL, skiper – SKIPER (Bémič tučňák)
+  shout(kind, team) {
     if (!this.match || this.state === 'menu') return;
-    const list = SHOUTS[kind];
-    if (!list) return;
-    const T = this.match.teams[team];
     const ps = this.match.players.filter((p) => p.team === team);
-    const p = who || pick(ps);
-    let text = pick(list);
-    if (kind === 'chant') {
-      // pokřiky fanoušků: dvojice, která hraje, obecné z tribun, nebo jméno hráče
+    if (kind === 'goal') {
+      this.fx('burst', SHOUTS.goal, team, 15, 1);
+      return;
+    }
+    if (kind === 'skiper') {
+      this.fx('burst', 'SKIPER', team, 7, 0);
+      return;
+    }
+    let text;
+    if (kind === 'knock') {
+      text = SHOUTS.knock;
+    } else {
       const own = [];
       for (const q of ps) {
         const d = duoOf(q.look.id);
         if (d >= 0) for (const t of DUO_SHOUTS[d] || []) if (!own.includes(t)) own.push(t);
       }
       const r = Math.random();
-      if (own.length && r < 0.4) text = pick(own);
-      else if (r < 0.8) text = pick(SHOUTS.crowd);
+      if (own.length && r < 0.38) text = pick(own);
+      else if (r < 0.72 || !ps.length) text = pick(SHOUTS.crowd);
+      else {
+        const n = pick(ps).look.name.toUpperCase();
+        text = `${n} ${n}`;
+      }
     }
-    text = text.replace(/\{V\}/g, p ? VOCATIVE[p.look.id] || p.look.name : 'kluci');
-    text = text.replace(/\{T\}/g, p ? p.look.name.toUpperCase() : T.name);
     this.lastShout = this.gameT;
     this.fx('shout', text.slice(0, 30), team);
+  },
+
+  // Výřez světa, který kamera ukáže s cílem (tx, ty, tz).
+  camRectFor(tx, ty, tz) {
+    const v = Renderer.view;
+    const hw = (v.x1 - v.x0) / (2 * tz), hh = (v.y1 - v.y0) / (2 * tz);
+    const x = clamp(tx, v.x0 + hw, v.x1 - hw), y = clamp(ty, v.y0 + hh, v.y1 - hh);
+    return { x0: x - hw, x1: x + hw, y0: y - hh, y1: y + hh };
   },
 
   // Na které půlce je míč (fanoušci toho týmu reagují).
@@ -1130,7 +1200,8 @@ const Game = {
     this.rec.push({
       t: this.gameT,
       b: [b.x, b.y, b.rot, b.superT, b.superBy],
-      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin]),
+      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin, p.boostT, p.pengT]),
+      bk: [m.blocks[0], m.blocks[1]],
     });
     while (this.rec.length && this.rec[0].t < this.gameT - 5) this.rec.shift();
   },
@@ -1170,6 +1241,8 @@ const Game = {
       p.vx = b[4];
       p.vy = b[5];
       p.stunT = b[6] || 0;
+      p.boostT = b[8] || 0;
+      p.pengT = b[9] || 0;
       p.spin = b[7] && a[7] && Math.sign(a[7]) === Math.sign(b[7]) ? lerp(a[7], b[7], k) : b[7] || 0;
       p.mood = 0;
       if (p.onGround) p.runPhase += p.vx * p.dir * 0.016 * 0.05 * REPLAY_SPEED;
@@ -1178,6 +1251,10 @@ const Game = {
     m.ball.y = lerp(A.b[1], B.b[1], k);
     m.ball.rot = lerp(A.b[2], B.b[2], k);
     m.ball.superT = B.b[3] || 0;
+    if (B.bk) {
+      m.blocks[0] = B.bk[0];
+      m.blocks[1] = B.bk[1];
+    }
     m.ball.superBy = B.b[4] === undefined ? -1 : B.b[4];
     m.ball.vx = (B.b[0] - A.b[0]) / Math.max(0.001, B.t - A.t);
     m.ball.vy = (B.b[1] - A.b[1]) / Math.max(0.001, B.t - A.t);
@@ -1309,7 +1386,8 @@ const Game = {
       gd: this.golden ? 1 : 0,
       sc: [m.score[0], m.score[1]],
       b: [r(b.x), r(b.y), r(b.rot * 100), r(b.superT * 100), b.superBy],
-      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100)]),
+      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100)]),
+      bk: [r(m.blocks[0] * 100), r(m.blocks[1] * 100), m.blockKind[0] === 'ice' ? 1 : 0, m.blockKind[1] === 'ice' ? 1 : 0],
       m: msg ? [msg.id, msg.text, msg.sub || '', msg.color, msg.size, Math.round(msg.dur * 10)] : 0,
       e: this.evq,
       rs: this.resultShown ? 1 : 0,
@@ -1477,6 +1555,8 @@ const Game = {
       p.vy = pb[6] * 10;
       p.superCharge = (Number(pb[7]) || 0) / 100;
       p.stunT = (Number(pb[8]) || 0) / 100;
+      p.boostT = (Number(pb[10]) || 0) / 100;
+      p.pengT = (Number(pb[11]) || 0) / 100;
       const sa = Number(pa[9]) || 0, sb = Number(pb[9]) || 0;
       p.spin = sb === 0 || Math.sign(sa) !== Math.sign(sb) ? sb / 100 : lerp(sa, sb, k) / 100;
       if (p.onGround) p.runPhase += p.vx * p.dir * dt * 0.05;
@@ -1487,6 +1567,14 @@ const Game = {
       }
       if (p.blink > 0) p.blink -= dt;
     });
+    // zablokované brány (hermelín, led)
+    const bk = B.g.bk;
+    if (Array.isArray(bk)) {
+      for (let t = 0; t < 2; t++) {
+        m.blocks[t] = (Number(bk[t]) || 0) / 100;
+        m.blockKind[t] = bk[t + 2] ? 'ice' : 'cheese';
+      }
+    }
     const ba = a.g.b, bb = B.g.b;
     if (Array.isArray(ba) && Array.isArray(bb)) {
       m.ball.x = lerp(ba[0], bb[0], k);
@@ -1866,9 +1954,9 @@ const UI = {
 
   invite() {
     const link = this.inviteLink();
-    const text = `Pojď hrát Hlavouni! Kód hry: ${Online.code}`;
+    const text = `Pojď hrát FIFA67! Kód hry: ${Online.code}`;
     if (link && navigator.share) {
-      navigator.share({ title: 'Hlavouni', text, url: link }).catch(() => {});
+      navigator.share({ title: 'FIFA67', text, url: link }).catch(() => {});
       return;
     }
     this.copy(link ? `${text}\n${link}` : text, link ? 'Pozvánka s odkazem zkopírována' : 'Kód zkopírován');
@@ -1988,9 +2076,83 @@ const UI = {
 
 /* ---------------- start ---------------- */
 
+/*
+ * Kolik místa je opravdu vidět. Některé prohlížeče (třeba okno s hrou v aplikaci)
+ * hlásí větší okno, než ukážou, nebo mají dole lištu přes obsah. Hra si proto
+ * změří bezpečné okraje a viditelnou část a podle toho zmenší rozložení.
+ */
+const Fit = {
+  cutT: 0,
+  cutB: 0,
+  probe: null,
+
+  init() {
+    const pr = document.createElement('div');
+    pr.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;'
+      + 'padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
+    document.body.appendChild(pr);
+    this.probe = pr;
+    // viditelná část stránky (když ji okolní aplikace ořízne)
+    if ('IntersectionObserver' in window) {
+      const sentinel = document.createElement('div');
+      sentinel.style.cssText = 'position:fixed;inset:0;pointer-events:none;opacity:0;z-index:-1';
+      document.body.appendChild(sentinel);
+      const th = [];
+      for (let i = 0; i <= 100; i++) th.push(i / 100);
+      new IntersectionObserver((list) => {
+        const e = list[list.length - 1];
+        const r = e.intersectionRect, h = window.innerHeight;
+        if (!e.isIntersecting || r.height < 150 || r.height > h - 2) {
+          this.setCut(0, 0);
+          return;
+        }
+        this.setCut(Math.max(0, r.top), Math.max(0, h - r.bottom));
+      }, { threshold: th }).observe(sentinel);
+    }
+    this.apply();
+  },
+
+  setCut(t, b) {
+    t = Math.round(t);
+    b = Math.round(b);
+    if (t === this.cutT && b === this.cutB) return;
+    this.cutT = t;
+    this.cutB = b;
+    this.apply();
+    Renderer.resize();
+    UI.orient();
+    if (Game.screen === 'lobby') Game.renderLobby();
+  },
+
+  apply() {
+    const root = document.documentElement, app = document.getElementById('app');
+    const cs = getComputedStyle(this.probe);
+    const test = window.HLAVOUNI_INSETS || {};
+    const env = (k, side) => (test[side] !== undefined ? test[side] : parseFloat(cs[k]) || 0);
+    const st = env('paddingTop', 't'), sb = env('paddingBottom', 'b');
+    const sl = env('paddingLeft', 'l'), sr = env('paddingRight', 'r');
+    // ořezaná část: #app jen na viditelný výřez
+    const visH = window.innerHeight - this.cutT - this.cutB;
+    app.style.marginTop = this.cutT ? `${this.cutT}px` : '';
+    app.style.height = this.cutT || this.cutB ? `${visH}px` : '';
+    const eff = Math.max(200, visH - st - sb), effW = window.innerWidth - sl - sr;
+    root.style.setProperty('--vh', `${eff / 100}px`);
+    root.style.setProperty('--safe-t', `${st}px`);
+    root.style.setProperty('--safe-b', `${sb}px`);
+    root.style.setProperty('--safe-l', `${sl}px`);
+    root.style.setProperty('--safe-r', `${sr}px`);
+    const cl = root.classList;
+    cl.toggle('h460', eff <= 460);
+    cl.toggle('h380', eff <= 380);
+    cl.toggle('h320', eff <= 320);
+    cl.toggle('w700', effW <= 700);
+  },
+};
+
 function boot() {
   const canvas = document.getElementById('game');
   const heroCanvas = document.getElementById('hero');
+  Fit.init();
   Renderer.init(canvas);
   Touch.init(document.getElementById('touch'));
   Touch.onEnable = () => {
@@ -2016,6 +2178,7 @@ function boot() {
   window.addEventListener('hashchange', joinFromHash);
 
   window.addEventListener('resize', () => {
+    Fit.apply();
     Renderer.resize();
     UI.orient();
     if (Game.screen === 'lobby') Game.renderLobby();
@@ -2072,6 +2235,7 @@ function boot() {
     Game.update(dt);
     Renderer.draw(Game);
     if (Game.screen === 'home') Renderer.drawHero(heroCanvas, now);
+    else if (Game.screen === 'lobby' && !UI.el.lobby.hidden) LobbyUI.animate(now / 1000);
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);

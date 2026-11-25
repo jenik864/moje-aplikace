@@ -1,6 +1,6 @@
 'use strict';
 /*
- * Hlavouni – společné konstanty a pomocné funkce.
+ * FIFA67 – společné konstanty a pomocné funkce.
  * Hřiště má virtuální rozměr 1280 × 720 px, vykreslení se škáluje na velikost okna.
  */
 
@@ -69,14 +69,14 @@ const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
 // Postavy. hair = účes, accent = doplněk (gumička, mašle, náušnice).
 const ROSTER = [
   // lid = jak moc víčko zakrývá oko (vážný pohled), browW = síla obočí, mouth = smile | flat | smirk
-  { id: 'nelcis', name: 'Nelcis', girl: true, num: 7, skin: '#f7d6bf', hair: 'ponytail', hairColor: '#f1cd6c', hairDark: '#b2832a', hairLight: '#fff1b8', eyes: '#3d8f6c', brow: '#a8833f', accent: '#ff6fb0' },
-  { id: 'majda', name: 'Majda', girl: true, num: 10, skin: '#f4d1b6', hair: 'long', hairColor: '#6d3f22', hairDark: '#3d2211', hairLight: '#a86f43', eyes: '#6a4426', brow: '#4a2a16', accent: '#ffd23f', pierce: '#e9edf3' },
+  { id: 'nelcis', name: 'Nelcis', girl: true, num: 7, skin: '#f7d6bf', hair: 'longhair', fringe: 'side', hairColor: '#f1cd6c', hairDark: '#b2832a', hairLight: '#fff1b8', eyes: '#3d8f6c', brow: '#a8833f', accent: '#ff6fb0' },
+  { id: 'majda', name: 'Majda', girl: true, num: 10, skin: '#f4d1b6', hair: 'longhair', fringe: 'curtain', hairColor: '#6d3f22', hairDark: '#3d2211', hairLight: '#a86f43', eyes: '#6a4426', brow: '#4a2a16', accent: '#ffd23f', pierce: '#e9edf3' },
   { id: 'marsal', name: 'Marsal', num: 9, skin: '#f3cdac', hair: 'wavyshort', hairColor: '#e4bf63', hairDark: '#a07a26', hairLight: '#fff0b4', eyes: '#3a78d6', brow: '#b08b3c', tall: 1.2, lid: 0.12 },
   { id: 'durcado', name: 'Durcado', num: 11, skin: '#f2c8a8', hair: 'curlytop', hairColor: '#a2703d', hairDark: '#5a3818', hairLight: '#d6a564', eyes: '#7c95a9', brow: '#5d3c1e', freckles: 'light', lid: 0.3, browW: 4, browFlat: true, mouth: 'flat' },
   { id: 'toma', name: 'Tóma', num: 5, skin: '#f2c9a6', hair: 'messy', hairColor: '#5b3a21', hairDark: '#2e1b0e', hairLight: '#946642', eyes: '#5b4632', brow: '#3e2814' },
   { id: 'peli', name: 'Peli', num: 8, skin: '#eebf98', hair: 'side', hairColor: '#3b2a1c', hairDark: '#1a110a', hairLight: '#6a4d34', eyes: '#3c2a1c', brow: '#1d1814' },
   { id: 'bemic', name: 'Bémič', num: 14, skin: '#f1c9a8', hair: 'buzz', hairColor: '#1c1a1f', hairDark: '#050506', hairLight: '#4a4652', eyes: '#3b2718', brow: '#16110e', lid: 0.15, browW: 3.8 },
-  { id: 'kiki', name: 'Kiki', girl: true, num: 3, skin: '#f5d2b6', hair: 'buns', hairColor: '#b8975c', hairDark: '#6f5428', hairLight: '#e6cd96', eyes: '#5a4126', brow: '#8a6a3a', accent: '#53d2ff' },
+  { id: 'kiki', name: 'Kiki', girl: true, num: 3, skin: '#f5d2b6', hair: 'longhair', fringe: 'bangs', wavy: true, hairColor: '#b8975c', hairDark: '#6f5428', hairLight: '#e6cd96', eyes: '#5a4126', brow: '#8a6a3a', accent: '#53d2ff' },
   { id: 'simsa', name: 'Šimša', num: 87, skin: '#f3caa8', hair: 'curlyshort', hairColor: '#4a2e19', hairDark: '#22130a', hairLight: '#7a5436', eyes: '#4a3020', brow: '#2c1a0f', lid: 0.34, browW: 4.4, browFlat: true, mouth: 'flat' },
   { id: 'jenda', name: 'Jenda', num: 21, skin: '#f0c7a6', hair: 'shaggy', hairColor: '#5c3d22', hairDark: '#2b190b', hairLight: '#8f6844', eyes: '#5e4a33', brow: '#3a2614', lid: 0.32, browW: 3.4, mouth: 'smirk' },
 ];
@@ -101,17 +101,11 @@ const QUIPS = {
 };
 const QUIPS_ANY = ['Dneska padne gól za gólem!', 'Na tohle jsem čekal!', 'Pojďte na to!', 'Vy jste ty soupeři? Haha!'];
 // Pokřiky z tribun ({V} = oslovení hráče, {T} = jméno dvojice).
+// Fanoušci volají jen tyhle pokřiky (a jména hráčů svého týmu).
 const SHOUTS = {
-  // pokřiky, které tribuny volají v každém zápase
-  crowd: ['KIKI KIKI', 'VIKY VIKY', 'SULI SULI', 'SLAJZNUL DO BAHNA', 'SULI TI DÁ', 'MAGDI MAGDI'],
-  chant: ['Do toho, {V}!', '{T}! {T}!', 'Dej gól!', 'Pojď, {V}!', 'Střílej, {V}!'],
-  goal: ['GÓÓÓL!', 'Jóóó!', 'To byla pecka!', '{V}! {V}!', 'Krása!', 'Ten sedl!'],
-  sad: ['Néé!', 'To snad ne…', 'Probuďte se!', 'Ještě to otočíme!'],
-  super: ['BOMBA!', 'Superstřela!', 'Wow!', 'To je dělo!'],
-  knock: ['Au!', 'To bolelo!', 'Ten letěl!', 'Strike!', 'Ajaj!'],
-  post: ['Tyčka!', 'Těsně!', 'Uáá!', 'Skoro!'],
-  head: ['Hlavička!', 'Hezká hlava!', 'Hlavou!'],
-  late: ['Posledních 10 vteřin!', 'Ještě to dáme!', 'Rychle!'],
+  crowd: ['KIKI KIKI', 'VIKY VIKY', 'SULI SULI', 'SULI TI DÁ', 'MAGDI MAGDI'],
+  knock: 'SLAJZNUL DO BAHNA', // když je někdo omráčený míčem
+  goal: 'GÓL',
 };
 
 // Pokřiky fanoušků konkrétních dvojic (index jako v DUO_TEAMS).
@@ -156,6 +150,23 @@ const SUPER_COLORS = {
   peli: '#b07bff', bemic: '#ff7a1f', kiki: '#53d2ff', simsa: '#c6ff3d', jenda: '#ff4d4d',
 };
 const superColor = (id) => SUPER_COLORS[id] || '#ffc93c';
+
+// Superschopnosti postav (ostatní mají superstřelu).
+//  cheese  – v bráně jejich týmu se objeví obří hermelín a na 3 s ji zablokuje
+//  vo2     – „MÁM VO2max 67“: 5 s běhá 1,7× rychleji
+//  penguin – na 3 s se promění v tučňáka a jejich brána zamrzne
+const POWERS = {
+  shot: { name: 'Superstřela', short: 'Super', icon: '⚡', desc: 'Dělová rána s ohněm, odstřelí soupeře' },
+  cheese: { name: 'Obří hermelín', short: 'Hermelín', icon: '🧀', desc: 'Na 3 s zablokuje vaši bránu' },
+  vo2: { name: 'VO2max 67', short: 'VO2max', icon: '💨', desc: '5 s běhá 1,7× rychleji' },
+  penguin: { name: 'Tučňák', short: 'Tučňák', icon: '🐧', desc: 'Promění se v tučňáka, brána zamrzne na 3 s' },
+};
+const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin' };
+const powerOf = (id) => CHAR_POWER[id] || 'shot';
+const BLOCK_TIME = 3;    // jak dlouho hermelín / led blokuje bránu
+const BOOST_TIME = 5;    // VO2max
+const BOOST_MUL = 1.7;
+const PENGUIN_TIME = 3;
 // Do které dvojice postava patří (kvůli barvě dresu v 1 v 1).
 const duoOf = (id) => DUO_TEAMS.findIndex((d) => d.chars.includes(id));
 const charById = (id) => ROSTER.find((c) => c.id === id) || ROSTER[0];
@@ -175,6 +186,13 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const approach = (v, target, d) => (v < target ? Math.min(v + d, target) : Math.max(v - d, target));
 const easeOutQuad = (t) => 1 - (1 - t) * (1 - t);
 const easeInOutQuad = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+const easeOutBounce = (t) => {
+  const n = 7.5625, d = 2.75;
+  if (t < 1 / d) return n * t * t;
+  if (t < 2 / d) return n * (t -= 1.5 / d) * t + 0.75;
+  if (t < 2.5 / d) return n * (t -= 2.25 / d) * t + 0.9375;
+  return n * (t -= 2.625 / d) * t + 0.984375;
+};
 const easeOutBack = (t) => {
   const c1 = 1.70158, c3 = c1 + 1;
   return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
