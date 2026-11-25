@@ -1,7 +1,7 @@
 'use strict';
 /*
  * Lobby: výběr hráčů. Každé místo v zápase (slot) má tým, postavu a kdo ho ovládá:
- *   'cpu' – počítač, 'p1'/'p2' – hráč 1/2 na tomto zařízení,
+ *   'cpu' – počítač, 'p1' – hráč na tomto zařízení,
  *   'host' – hostitel online hry, jinak id kamaráda online.
  * Ve 2 v 2 se vybírají dvě dvojice (lobby.duos), v 1 v 1 libovolné postavy.
  */
@@ -164,7 +164,7 @@ const LobbyUI = {
 
   badge(ctrl, ctx) {
     if (ctrl === 'cpu') return { text: 'Počítač', cls: 'b-cpu' };
-    if (ctx.mode === 'local') return ctrl === 'p1' ? { text: 'Hráč 1', cls: 'b-p1' } : { text: 'Hráč 2', cls: 'b-p2' };
+    if (ctx.mode === 'local') return { text: 'Ty', cls: 'b-me' };
     if (ctrl === ctx.me) return { text: 'Ty', cls: 'b-me' };
     const m = ctx.members.find((x) => x.uid === ctrl);
     return { text: (m && m.name) || (ctrl === 'host' ? 'Hostitel' : 'Kamarád'), cls: 'b-friend', ready: !!(m && (m.ready || ctrl === 'host')) };
@@ -202,8 +202,8 @@ const LobbyUI = {
 
     // hlavička
     if (ctx.mode === 'local') {
-      el.kicker.textContent = 'Výběr hráčů';
-      el.title.textContent = 'Na tomto zařízení';
+      el.kicker.textContent = 'Hra proti počítači';
+      el.title.textContent = 'Výběr hráčů';
       el.invite.hidden = true;
     } else {
       el.kicker.textContent = ctx.mode === 'host' ? 'Online hra · jsi hostitel' : 'Online hra';
@@ -291,8 +291,8 @@ const LobbyUI = {
     const meSlot = lobby.slots.find((s) => s.ctrl === ctx.me);
     if (ctx.mode === 'local') {
       el.hint.textContent = two
-        ? 'Šipkami vyber dvojice. Klepni na postavu, kterou má hrát druhý hráč; další klepnutí ji vrátí počítači.'
-        : 'Šipkami vyber postavy. Klepni na soupeře, když má hrát druhý hráč.';
+        ? 'Šipkami vyber dvojice a klepni na postavu, za kterou chceš hrát. Ostatní hraje počítač. Spoluhráče na svém telefonu přidáš přes Online.'
+        : 'Šipkami vyber postavy a klepni na tu, za kterou chceš hrát.';
     } else if (ctx.mode === 'host') {
       el.hint.textContent = 'Klepni na postavu, za kterou chceš hrát. Kamarádi si vyberou u sebe, volná místa hraje počítač.';
     } else {
@@ -302,7 +302,7 @@ const LobbyUI = {
     if (ctx.mode === 'host') {
       const guests = ctx.members.filter((m) => m.uid !== 'host');
       const ready = guests.filter((m) => m.ready).length;
-      el.start.textContent = guests.length ? `Spustit zápas (${ready}/${guests.length} připraveno)` : 'Spustit zápas';
+      el.start.textContent = guests.length ? `Hrát (${ready}/${guests.length} připraveno)` : 'Hrát';
     } else {
       el.start.textContent = 'Hrát';
     }

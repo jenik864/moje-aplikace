@@ -4,6 +4,7 @@
 const STORE_LOBBY = 'hlavouni.lobby';
 const STORE_MUTE = 'hlavouni.ztlumeno';
 const STORE_NAME = 'hlavouni.jmeno';
+const STORE_SWAP = 'hlavouni.prohodit';
 
 const store = {
   get(key, fallback) {
@@ -261,14 +262,8 @@ const Game = {
       const s = l.slots[a.slot];
       if (!s) return;
       if (this.mode === 'local') {
-        // volná postava dostane prvního volného hráče, jinak hráč 1 → hráč 2 → počítač
-        const used = (c) => l.slots.some((o, j) => j !== a.slot && o.ctrl === c);
-        let next;
-        if (s.ctrl === 'cpu') next = !used('p1') ? 'p1' : !used('p2') ? 'p2' : 'p1';
-        else if (s.ctrl === 'p1') next = !used('p2') ? 'p2' : 'cpu';
-        else next = 'cpu';
-        if (next !== 'cpu') releaseCtrl(l, next);
-        s.ctrl = next;
+        // na jednom zařízení hraje jeden hráč: klepnutím si vybere postavu
+        claimSlot(l, 'p1', a.slot);
       } else if (s.ctrl === 'host') {
         s.ctrl = 'cpu';
       } else {
@@ -345,14 +340,14 @@ const Game = {
   // Popisek nad hlavou hráče z pohledu tohoto zařízení.
   labelFor(sp) {
     if (sp.ctrl === 'cpu') return 'CPU';
-    if (this.mode === 'local') return sp.ctrl === 'p1' ? 'P1' : 'P2';
+    if (this.mode === 'local') return 'TY';
     const me = this.mode === 'host' ? 'host' : Online.uid;
     if (sp.ctrl === me) return 'TY';
     return sp.name || (sp.ctrl === 'host' ? 'Hostitel' : 'Kamarád');
   },
 
   localHumans(setup) {
-    const mine = this.mode === 'host' ? ['host'] : ['p1', 'p2'];
+    const mine = this.mode === 'host' ? ['host'] : ['p1'];
     return setup.players.filter((sp) => mine.includes(sp.ctrl)).length;
   },
 
@@ -368,7 +363,6 @@ const Game = {
     Sound.quiet = false;
     this.setup = setup;
     const humans = this.localHumans(setup);
-    Input.shared = humans <= 1;
     Input.clear();
     this.match = new Match(setup, (t, d) => this.onEvent(t, d), (uid) => Online.remoteIntent(uid));
     Renderer.setFans(setup.teams);
@@ -395,7 +389,7 @@ const Game = {
     this.startIntro();
     Effects.clear();
     UI.show(null);
-    Touch.build(humans >= 2);
+    Touch.build();
     Touch.show(humans >= 1);
     Sound.crowdLevel(0.05);
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -504,6 +498,28 @@ const Game = {
       case 'whoosh':
         if (live) Sound.whoosh();
         break;
+      case 'superswing':
+        if (live) Sound.whoosh();
+        break;
+      case 'super': {
+        const sp = m && m.players[a[3]];
+        const col = sp ? superColor(sp.look.id) : '#ffc93c';
+        Effects.rings.push({ x: a[0], y: a[1], t: 0, dur: 0.45, r0: 10, r1: 90, rgb: hexRgb(col) });
+        Effects.spark(a[0], a[1]);
+        if (live) {
+          Sound.superShot();
+          Effects.shake(10);
+        }
+        break;
+      }
+      case 'knock':
+        Effects.puff(a[0], a[1]);
+        Effects.spark(a[0], a[1]);
+        if (live) {
+          Sound.knock();
+          Effects.shake(8);
+        }
+        break;
       case 'whistle':
         if (live) Sound.whistle(a[0]);
         break;
@@ -541,6 +557,15 @@ const Game = {
         break;
       case 'net':
         this.fx('net', d.side, d.y, d.impact);
+        break;
+      case 'superswing':
+        this.fx('superswing');
+        break;
+      case 'super':
+        this.fx('super', d.x, d.y, d.dir, d.idx);
+        break;
+      case 'knock':
+        this.fx('knock', d.x, d.y);
         break;
     }
   },
@@ -730,6 +755,7 @@ const Game = {
     }
     if (this.screen === 'match' && (this.state === 'play' || this.state === 'goal')) this.record();
     this.updateCam(dt);
+    this.updateSuperUI();
     UI.setSkip(this.canSkip());
 
     if (this.mode === 'host' && this.screen === 'match') {
@@ -739,6 +765,29 @@ const Game = {
       }
       Online.publish({ g: this.snapshot() });
     }
+  },
+
+  // Hráč ovládaný na tomto zařízení.
+  myPlayer() {
+    const m = this.match;
+    if (!m || this.screen !== 'match' || !this.setup) return null;
+    if (this.mode === 'guest') {
+      const i = this.setup.players.findIndex((sp) => sp.ctrl === Online.uid);
+      return i >= 0 ? m.players[i] : null;
+    }
+    return m.players.find((p) => p.slot === 0) || null;
+  },
+
+  // Nabití superstřely na tlačítku a v rohu obrazovky.
+  updateSuperUI() {
+    const me = this.myPlayer();
+    const c = me ? me.superCharge : 0;
+    this.myCharge = me ? c : -1;
+    this.myColor = me ? superColor(me.look.id) : '#ffc93c';
+    Touch.setCharge(c);
+    Touch.setColor(this.myColor);
+    if (me && c >= 1 && (this._lastCharge || 0) < 1 && this.state === 'play') Sound.charged();
+    this._lastCharge = c;
   },
 
   /* ---------------- filmové scény ---------------- */
@@ -877,8 +926,20 @@ const Game = {
   // Kamera: při scénách přibližuje, jinak ukazuje celé hřiště.
   updateCam(dt) {
     const c = this.cam, m = this.match, st = this.state, t = this.stateT;
-    let tx = W / 2, ty = H / 2, tz = 1, bars = 0, speed = 2.4;
+    const vc = Renderer.viewCenter(), v = Renderer.view;
+    let tx = vc.x, ty = vc.y, tz = 1, bars = 0, speed = 2.4;
     if (this.screen === 'match' && m) {
+      // široký displej (telefon na šířku): přiblížit tak, aby hřiště vyplnilo
+      // šířku, a výšku dorovnat podle míče (vysoký míč = kamera nahoru)
+      const vw = v.x1 - v.x0, vh = v.y1 - v.y0;
+      const fit = vw / (W + 70);
+      if (fit > 1.02) {
+        tz = Math.min(fit, 1.3);
+        const hh = vh / (2 * tz);
+        tx = W / 2;
+        ty = clamp(m.ball.y + hh - 90, v.y0 + hh, v.y1 - hh);
+        speed = 3.2;
+      }
       if (st === 'intro') {
         bars = 1;
         if (t < 1.0) {
@@ -913,9 +974,9 @@ const Game = {
     c.y += (ty - c.y) * k;
     c.z += (tz - c.z) * k;
     c.bars += (bars - c.bars) * (1 - Math.exp(-dt * 5));
-    const hw = W / (2 * c.z), hh = H / (2 * c.z);
-    c.x = clamp(c.x, hw, W - hw);
-    c.y = clamp(c.y, hh, H - hh);
+    const hw = (v.x1 - v.x0) / (2 * c.z), hh = (v.y1 - v.y0) / (2 * c.z);
+    c.x = clamp(c.x, v.x0 + hw, v.x1 - hw);
+    c.y = clamp(c.y, v.y0 + hh, v.y1 - hh);
     // nadšení publika
     let ex = 0.12;
     if (this.screen === 'match') {
@@ -940,8 +1001,8 @@ const Game = {
       t: r(this.timeLeft * 10),
       gd: this.golden ? 1 : 0,
       sc: [m.score[0], m.score[1]],
-      b: [r(b.x), r(b.y), r(b.rot * 100)],
-      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10)]),
+      b: [r(b.x), r(b.y), r(b.rot * 100), r(b.superT * 100), b.superBy],
+      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100)]),
       m: msg ? [msg.id, msg.text, msg.sub || '', msg.color, msg.size, Math.round(msg.dur * 10)] : 0,
       e: this.evq,
       rs: this.resultShown ? 1 : 0,
@@ -1004,11 +1065,10 @@ const Game = {
     this.resultShown = false;
     this.scorePop = [0, 0];
     this.timeLeft = setup.minutes * 60;
-    Input.shared = true;
     Input.clear();
     Effects.clear();
     UI.show(null);
-    Touch.build(false);
+    Touch.build();
     Touch.show(true);
     Sound.crowdLevel(0.05);
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -1078,6 +1138,7 @@ const Game = {
     if (!m) return;
     if (m.celebrate < 0 && this.state === 'over') m.celebrate = m.score[0] > m.score[1] ? 0 : 1;
     this.updateCam(dt);
+    this.updateSuperUI();
     UI.setSkip(false);
     if ((this.state === 'goal' && Math.random() < dt * 22) || (this.state === 'over' && Math.random() < dt * 10)) Effects.flash();
     // vlastní ovládání hostiteli
@@ -1105,6 +1166,7 @@ const Game = {
       p.onGround = !!pb[4];
       p.vx = pb[5] * 10;
       p.vy = pb[6] * 10;
+      p.superCharge = (Number(pb[7]) || 0) / 100;
       if (p.onGround) p.runPhase += p.vx * p.dir * dt * 0.05;
       p.blinkT -= dt;
       if (p.blinkT <= 0) {
@@ -1118,6 +1180,8 @@ const Game = {
       m.ball.x = lerp(ba[0], bb[0], k);
       m.ball.y = lerp(ba[1], bb[1], k);
       m.ball.rot = lerp(ba[2], bb[2], k) / 100;
+      m.ball.superT = (Number(bb[3]) || 0) / 100;
+      m.ball.superBy = Number.isInteger(bb[4]) ? bb[4] : -1;
       const span = Math.max(1, B.ht - a.ht) / 1000;
       m.ball.vx = b ? (bb[0] - ba[0]) / span : 0;
       m.ball.vy = b ? (bb[1] - ba[1]) / span : 0;
@@ -1191,8 +1255,23 @@ const UI = {
       Sound.init();
       fn();
     });
-    click('btn-local', () => Game.openLocalLobby());
-    click('btn-online', () => Game.toOnline());
+    click('btn-local', () => {
+      this.goFullscreen();
+      Game.openLocalLobby();
+    });
+    click('btn-online', () => {
+      this.goFullscreen();
+      Game.toOnline();
+    });
+    click('btn-swap', () => this.setSwap(!Touch.swap));
+    click('btn-swap2', () => this.setSwap(!Touch.swap));
+    const fs = $('btn-fs');
+    const standalone = window.matchMedia && window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+    fs.hidden = !(document.fullscreenEnabled && !standalone);
+    fs.addEventListener('click', () => {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      else this.goFullscreen(true);
+    });
     click('btn-online-back', () => Game.toHome());
     click('btn-create', () => {
       store.set(STORE_NAME, this.el.nick.value);
@@ -1236,6 +1315,7 @@ const UI = {
       this.setMuted(!Sound.muted);
     });
     this.el.nick.value = cleanName(store.get(STORE_NAME, ''));
+    this.setSwap(store.get(STORE_SWAP, false) === true);
     $('public-url').textContent = PUBLIC_URL.replace(/^https:\/\//, '').replace(/\/$/, '');
     this.setMuted(store.get(STORE_MUTE, false) === true);
     this.renderHelp();
@@ -1252,10 +1332,37 @@ const UI = {
 
   renderHelp() {
     const k = (s) => `<kbd>${s}</kbd>`;
+    const standalone = window.matchMedia && window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+    const inViewer = !!(window.claude && typeof window.claude.use === 'function');
     this.el.help.innerHTML = Touch.enabled
-      ? '<p>Levým palcem joystick: do stran běh, nahoru skok. Pravým palcem kop.</p>'
-      : `<p>${k('A')}${k('D')} nebo ${k('←')}${k('→')} běh · ${k('W')} nebo ${k('↑')} skok · ${k('mezerník')} nebo ${k('↓')} kop</p>`
-        + `<p class="dim">Dva hráči u jednoho počítače: hráč 1 ${k('W')}${k('A')}${k('S')}${k('D')} a ${k('mezerník')}, hráč 2 šipky · ${k('Esc')} pauza</p>`;
+      ? (standalone || inViewer ? '' : 'Tip: v menu prohlížeče dej <b>Přidat na plochu</b> a hra poběží přes celou obrazovku jako aplikace.')
+      : `${k('A')}${k('D')} běh · ${k('W')} skok · ${k('mezerník')} střela · ${k('E')} super · ${k('Esc')} pauza`;
+  },
+
+  // Strany ovládání: joystick vlevo (výchozí) nebo vpravo.
+  setSwap(v) {
+    Touch.swap = !!v;
+    store.set(STORE_SWAP, Touch.swap);
+    const txt = Touch.swap ? 'Joystick vpravo' : 'Joystick vlevo';
+    for (const id of ['swap-label', 'swap-label2']) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = txt;
+    }
+    if (Game.screen === 'match') Touch.build();
+  },
+
+  // Celá obrazovka (kde to prohlížeč dovolí) a otočení na šířku.
+  goFullscreen(force) {
+    const d = document.documentElement;
+    if (!d.requestFullscreen || document.fullscreenElement) return;
+    if (!force && !Touch.enabled) return;
+    try {
+      d.requestFullscreen({ navigationUI: 'hide' }).then(() => {
+        try {
+          if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
+        } catch (e) { /* nevadí */ }
+      }).catch(() => {});
+    } catch (e) { /* nevadí */ }
   },
 
   // Odkaz s kódem hry: kdo ho otevře, rovnou se připojuje.
@@ -1332,7 +1439,7 @@ const UI = {
     const win = a > b ? 0 : 1;
     const T = m.teams[win];
     // můj tým: kde hraje člověk z tohoto zařízení (když jsou všichni v jednom týmu)
-    const mine = Game.mode === 'local' ? ['p1', 'p2'] : [Game.mode === 'host' ? 'host' : Online.uid];
+    const mine = Game.mode === 'local' ? ['p1'] : [Game.mode === 'host' ? 'host' : Online.uid];
     const myTeams = new Set(setup.players.filter((sp) => mine.includes(sp.ctrl)).map((sp) => sp.team));
     let title, sub;
     const winners = setup.format === '1v1' ? charById(setup.players.find((sp) => sp.team === win).char) : null;
@@ -1365,7 +1472,9 @@ const UI = {
 
   orient() {
     const portrait = window.innerHeight > window.innerWidth;
-    this.el.rotate.hidden = !(Touch.enabled && portrait);
+    const show = Touch.enabled && portrait;
+    this.el.rotate.hidden = !show;
+    if (show && Game.mode === 'local' && Game.inMatch()) Game.pause();
   },
 };
 
@@ -1373,13 +1482,14 @@ const UI = {
 
 function boot() {
   const canvas = document.getElementById('game');
+  const heroCanvas = document.getElementById('hero');
   Renderer.init(canvas);
   Touch.init(document.getElementById('touch'));
   Touch.onEnable = () => {
     UI.renderHelp();
     UI.orient();
     if (Game.inMatch()) {
-      Touch.build(Game.mode !== 'guest' && Game.localHumans(Game.setup) >= 2);
+      Touch.build();
       Touch.show(true);
     }
   };
@@ -1404,8 +1514,10 @@ function boot() {
   });
   if (document.fonts && document.fonts.load) {
     Promise.all([
-      document.fonts.load(`40px ${FONT_D}`),
-      document.fonts.load(`800 24px ${FONT_U}`),
+      // i s českými znaky (jsou v samostatném souboru písma)
+      document.fonts.load(`40px ${FONT_D}`, 'AÁěščřžýíéůúĚŠČŘŽÝÍÉŮÚ'),
+      document.fonts.load(`800 24px ${FONT_U}`, 'AÁěščřžýíéůúĚŠČŘŽÝÍÉŮÚ'),
+      document.fonts.load(`700 24px ${FONT_U}`, 'AÁěščřžýíéůúĚŠČŘŽÝÍÉŮÚ'),
     ]).then(() => {
       Renderer.buildBg();
       if (Game.screen === 'lobby') Game.renderLobby();
@@ -1451,6 +1563,7 @@ function boot() {
     last = now;
     Game.update(dt);
     Renderer.draw(Game);
+    if (Game.screen === 'home') Renderer.drawHero(heroCanvas, now);
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);

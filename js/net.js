@@ -304,6 +304,7 @@ const Online = {
     this.wantN = 0;
     this.ready = false;
     this.kickSeq = 0;
+    this.superSeq = 0;
     this.lastIn = '';
     this.unsub = this.t.onPeers((l) => this.guestPeers(l));
     this.t.setPresence({ v: NET_V, role: 'guest', uid: this.uid, name: this.name, want: null, in: null, ready: false });
@@ -371,7 +372,7 @@ const Online = {
       let g = this.guests.get(uid);
       const isNew = !g;
       if (!g) {
-        g = { uid, name: '', wantN: 0, in: null, ready: false, kick: pr.in && Number(pr.in.k) || 0, seen: now };
+        g = { uid, name: '', wantN: 0, in: null, ready: false, kick: pr.in && Number(pr.in.k) || 0, sup: pr.in && Number(pr.in.s) || 0, seen: now };
         this.guests.set(uid, g);
       }
       g.seen = now;
@@ -391,7 +392,7 @@ const Online = {
 
   // Ovládání kamaráda pro fyziku na hostiteli.
   remoteIntent(uid) {
-    const o = this._intent || (this._intent = { left: false, right: false, jump: false, kick: false, move: 0 });
+    const o = this._intent || (this._intent = { left: false, right: false, jump: false, kick: false, super: false, move: 0 });
     const g = this.guests.get(uid);
     const i = g && g.in;
     o.move = i ? clamp(Number(i.m) || 0, -1, 1) : 0;
@@ -401,6 +402,9 @@ const Online = {
     const k = i ? Number(i.k) || 0 : 0;
     o.kick = !!g && k > g.kick;
     if (g && k > g.kick) g.kick = k;
+    const sp = i ? Number(i.s) || 0 : 0;
+    o.super = !!g && sp > g.sup;
+    if (g && sp > g.sup) g.sup = sp;
     return o;
   },
 
@@ -438,11 +442,13 @@ const Online = {
   // Poslat vlastní ovládání hostiteli (jen když se změní).
   sendInput(it) {
     if (it.kick) this.kickSeq++;
+    if (it.super) this.superSeq = (this.superSeq || 0) + 1;
     const m = Math.round(clamp(it.move || 0, -1, 1) * 4) / 4;
     const j = it.jump ? 1 : 0;
-    const key = m + ':' + j + ':' + this.kickSeq;
+    const sp = this.superSeq || 0;
+    const key = m + ':' + j + ':' + this.kickSeq + ':' + sp;
     if (key === this.lastIn) return;
     this.lastIn = key;
-    this.publish({ in: { m, j, k: this.kickSeq } });
+    this.publish({ in: { m, j, k: this.kickSeq, s: sp } });
   },
 };

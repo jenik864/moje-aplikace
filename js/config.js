@@ -36,6 +36,8 @@ const PHYS = {
   headMaxSpeed: 820,   // hlavička sama nezrychlí míč nad tuto hodnotu
   groundGrip: 0.88,    // část vodorovné rychlosti, která zůstane po dopadu
   ballMaxSpeed: 1500,
+  superCharge: 15,     // za kolik sekund se nabije superstřela
+  superSpeed: 1450,    // rychlost superstřely
   kickSpeed: 880,
   airDrag: 0.12,
   rollFriction: 1.1,
@@ -53,6 +55,7 @@ const DUO_TEAMS = [
   { name: 'MARSAL & DURCADO', short: 'Marsal a Durcado', girls: false, color: '#2f80ff', dark: '#1a4fb0', light: '#9cc2ff', chars: ['marsal', 'durcado'] },
   { name: 'TÓMA & PELI', short: 'Tóma a Peli', girls: false, color: '#1fae66', dark: '#0d7040', light: '#a5f0c8', chars: ['toma', 'peli'] },
   { name: 'BÉMIČ & KIKI', short: 'Bémič a Kiki', girls: false, color: '#ff8a1f', dark: '#b85400', light: '#ffd3a6', chars: ['bemic', 'kiki'] },
+  { name: 'ŠIMŠA & JENDA', short: 'Šimša a Jenda', girls: false, color: '#8b5cf6', dark: '#5527c4', light: '#d6c6ff', chars: ['simsa', 'jenda'] },
 ];
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
@@ -68,7 +71,16 @@ const ROSTER = [
   { id: 'peli', name: 'Peli', num: 8, skin: '#eebf98', hair: 'buzz', hairColor: '#24212a', hairDark: '#08070a', hairLight: '#5d5869', eyes: '#3c2a1c', brow: '#1d1814' },
   { id: 'bemic', name: 'Bémič', num: 14, skin: '#f6d2b8', hair: 'spiky', hairColor: '#d8642a', hairDark: '#87340f', hairLight: '#ffb37c', eyes: '#3e8a5e', brow: '#9a4518', freckles: true },
   { id: 'kiki', name: 'Kiki', girl: true, num: 3, skin: '#f3cdb0', hair: 'buns', hairColor: '#3b2519', hairDark: '#1b0f08', hairLight: '#7b5238', eyes: '#5a3a22', brow: '#2e1a10', accent: '#53d2ff' },
+  { id: 'simsa', name: 'Šimša', num: 17, skin: '#f4caa7', hair: 'fade', hairColor: '#c9a15a', hairDark: '#7d5b22', hairLight: '#f3d998', eyes: '#4b7fb8', brow: '#8a6a32' },
+  { id: 'jenda', name: 'Jenda', num: 21, skin: '#efc19c', hair: 'side', hairColor: '#3a2416', hairDark: '#1a0f08', hairLight: '#77513a', eyes: '#5b4632', brow: '#2b1a10' },
 ];
+
+// Superschopnost postavy (zatím superstřela v barvě postavy; schopnosti doladíme).
+const SUPER_COLORS = {
+  nelcis: '#ff5fb0', majda: '#e86bff', marsal: '#3fa2ff', durcado: '#4fe0c0', toma: '#5fe36b',
+  peli: '#b07bff', bemic: '#ff7a1f', kiki: '#53d2ff', simsa: '#c6ff3d', jenda: '#ff4d4d',
+};
+const superColor = (id) => SUPER_COLORS[id] || '#ffc93c';
 // Do které dvojice postava patří (kvůli barvě dresu v 1 v 1).
 const duoOf = (id) => DUO_TEAMS.findIndex((d) => d.chars.includes(id));
 const charById = (id) => ROSTER.find((c) => c.id === id) || ROSTER[0];

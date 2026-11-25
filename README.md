@@ -1,6 +1,6 @@
 # Hlavouni
 
-Fotbal velkých hlav v prohlížeči. Panáčci s velkými hlavami hlavičkují a kopou na nočním stadionu. Hraje se 1 v 1 nebo 2 v 2: proti počítači, ve dvou na jednom zařízení, nebo online, kdy má každý svůj telefon. Hra běží v obyčejném HTML5 canvasu a nic se neinstaluje.
+Fotbal velkých hlav v prohlížeči. Panáčci s velkými hlavami hlavičkují a kopou na nočním stadionu. Hraje se 1 v 1 nebo 2 v 2 proti počítači, nebo online s kamarády. Na jednom zařízení hraje vždy jen jeden člověk: spoluhráči i soupeři mají každý svůj telefon. Hra běží přes celou obrazovku na šířku, v obyčejném HTML5 canvasu, a nic se neinstaluje.
 
 ## Spuštění
 
@@ -13,7 +13,7 @@ python3 -m http.server 8000
 
 ## Týmy a postavy
 
-Ve 2 v 2 se v lobby šipkami vybírají dvě ze čtyř dvojic:
+Ve 2 v 2 se v lobby šipkami vybírají dvě z pěti dvojic:
 
 | Dvojice | Postavy |
 | --- | --- |
@@ -21,8 +21,9 @@ Ve 2 v 2 se v lobby šipkami vybírají dvě ze čtyř dvojic:
 | Marsal & Durcado (modří) | Marsal (blond patka), Durcado (vlnité hnědé vlasy) |
 | Tóma & Peli (zelení) | Tóma (střapaté hnědé vlasy), Peli (krátké černé vlasy) |
 | Bémič & Kiki (oranžoví) | Bémič (zrzavý ježek, pihy), Kiki (dva drdoly) |
+| Šimša & Jenda (fialoví) | Šimša (světlý sestřih do strany), Jenda (tmavé vlasy s pěšinkou) |
 
-V 1 v 1 si každý vybere libovolnou z osmi postav. Dres má barvu její dvojice. Postavy mají tělo s dresem a číslem, trenky, ruce a kopačky, běhají, při radosti mávají a po inkasovaném gólu se mračí.
+V 1 v 1 si každý vybere libovolnou z deseti postav. Dres má barvu její dvojice. Postavy mají tělo s dresem a číslem, trenky, ruce a kopačky, běhají, při radosti mávají a po inkasovaném gólu se mračí.
 
 ## Filmové scény a stadion
 
@@ -35,20 +36,34 @@ Scény jdou přeskočit tlačítkem *Přeskočit* (nebo klávesou Enter). Online
 
 ## Lobby (výběr hráčů)
 
-- **Hrát** (na tomto zařízení): vyber 1 v 1 nebo 2 v 2, délku zápasu a obtížnost počítače. Klepnutím na postavu ji dáš druhému hráči na stejném zařízení, dalším klepnutím ji vrátíš počítači. V 1 v 1 se šipkami mění postava.
+- **Hrát** (proti počítači): vyber 1 v 1 nebo 2 v 2, délku zápasu a obtížnost počítače. Klepnutím na postavu si vybereš, za koho hraješ, ostatní hraje počítač. V 1 v 1 se šipkami mění postava.
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
 ## Ovládání
 
-| | Hráč 1 | Hráč 2 (na stejném počítači) |
-| --- | --- | --- |
-| Běh | `A` `D` | `←` `→` |
-| Skok | `W` | `↑` |
-| Kop | `mezerník` nebo `S` | `↓` nebo `Enter` |
+**Na telefonu** (na šířku, přes celou obrazovku):
 
-Když u zařízení hraje jen jeden člověk, fungují mu obě sady kláves. `Esc` nebo `P` pozastaví hru.
+- **Joystick vlevo** pro levý palec: kam sáhneš, tam se objeví. Do stran se běží (čím víc vychýlíš, tím rychleji), zatlačením nahoru se skáče.
+- **Vpravo tlačítko Střela** (velké zlaté) a nad ním **Super**. Kolem tlačítka Super se plní kroužek v barvě tvé postavy. Když je plný, tlačítko svítí a superstřela je připravená.
+- Tlačítkem *Joystick vlevo / vpravo* v menu (nebo v pauze) se strany prohodí.
 
-**Na dotykovém displeji** je joystick: kam levým palcem sáhneš, tam se objeví. Do stran se běží (čím víc vychýlíš, tím rychleji), zatlačením nahoru se skáče. Vpravo jsou tlačítka KOP a SKOK. Když hrají dva na jednom telefonu, má každý svůj joystick a kop na své straně displeje.
+**Na počítači:**
+
+| | Klávesy |
+| --- | --- |
+| Běh | `A` `D` nebo `←` `→` |
+| Skok | `W` nebo `↑` |
+| Střela | `mezerník`, `S`, `↓` nebo `Enter` |
+| Superstřela | `E`, `Q` nebo `Shift` |
+| Pauza | `Esc` nebo `P` |
+
+### Superstřela
+
+Nabíjí se časem (asi 15 s) a každým kopem do míče. Nabitá superstřela vystřelí míč skoro dvakrát rychleji s ohnivou stopou v barvě postavy a soupeře, kterého trefí, odhodí. Když švih mine míč, nabití zůstane. Každá postava má zatím stejnou superstřelu, jen v jiné barvě. Vlastní superschopnosti pro jednotlivé hráče přijdou později. Počítač superstřelu používá taky.
+
+### Celá obrazovka
+
+Hra vyplní celý displej bez černých pruhů. Na širokém telefonu je vidět víc stadionu do stran a kamera hřiště přiblíží na celou šířku. Tlačítko vpravo nahoře zapne celou obrazovku prohlížeče. Úplně bez lišt prohlížeče hra běží po *Přidat na plochu* (manifest `manifest.webmanifest` s režimem fullscreen a orientací na šířku). Na výšku hra ukáže výzvu k otočení telefonu.
 
 ## Online hra: jak funguje
 
@@ -83,7 +98,8 @@ Pro testy lze v prohlížeči nastavit `window.HLAVOUNI_NET = 'bc'` (BroadcastCh
 
 ```
 index.html      stránka, obrazovky a panely
-style.css       vzhled menu, lobby, joysticku
+style.css       vzhled menu, lobby, dialogů, joysticku a tlačítek
+manifest.webmanifest, icons/   instalace na plochu (fullscreen, na šířku)
 js/config.js    rozměry hřiště, fyzika, týmy, postavy, obtížnosti
 js/audio.js     zvuky skládané ve Web Audio (bez souborů)
 js/input.js     klávesnice, joystick a dotyková tlačítka
@@ -96,4 +112,4 @@ js/lobby.js     výběr hráčů
 js/main.js      herní smyčka, průběh zápasu, obrazovky, hostitel a host
 ```
 
-Hřiště má virtuální rozměr 1280 × 720 a škáluje se na velikost okna. Fyzika běží v pevném kroku 1/120 s.
+Hřiště má virtuální rozměr 1280 × 720. Na displeji jiného poměru stran se zobrazí víc okolí, takže nikde nejsou černé pruhy. Fyzika běží v pevném kroku 1/120 s.

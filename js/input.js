@@ -1,35 +1,30 @@
 'use strict';
 /*
- * Ovládání. Každý člověk u zařízení má svůj slot: 0 = hráč 1, 1 = hráč 2.
- * Když na zařízení hraje jen jeden člověk, fungují mu obě sady kláves.
+ * Ovládání jednoho hráče na zařízení.
+ * Klávesnice: A/D nebo šipky běh, W/↑ skok, mezerník/S/↓ střela, E/Shift superstřela.
+ * Dotyk: joystick (do stran běh, nahoru skok), tlačítka Střela a Super.
  */
 
 const KEYMAP = {
-  KeyA: [0, 'left'], KeyD: [0, 'right'], KeyW: [0, 'jump'], KeyS: [0, 'kick'], Space: [0, 'kick'],
-  ArrowLeft: [1, 'left'], ArrowRight: [1, 'right'], ArrowUp: [1, 'jump'], ArrowDown: [1, 'kick'],
-  Enter: [1, 'kick'], NumpadEnter: [1, 'kick'], Numpad0: [1, 'kick'],
+  KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
+  KeyW: 'jump', ArrowUp: 'jump',
+  Space: 'kick', KeyS: 'kick', ArrowDown: 'kick', Enter: 'kick', NumpadEnter: 'kick',
+  KeyE: 'super', KeyQ: 'super', ShiftLeft: 'super', ShiftRight: 'super',
 };
 
-const mkPad = () => ({ left: false, right: false, jump: false, kick: false, move: 0 });
-
 const Input = {
-  shared: true,
   held: new Set(),
-  queued: [false, false],
-  touch: [mkPad(), mkPad()],
-  out: [mkPad(), mkPad()],
-
-  map(code) {
-    const m = KEYMAP[code];
-    if (!m) return null;
-    return this.shared ? [0, m[1]] : m;
-  },
+  kickQ: false,
+  superQ: false,
+  touch: { move: 0, jump: false },
+  out: { left: false, right: false, jump: false, kick: false, super: false, move: 0 },
 
   down(code, repeat) {
-    const m = this.map(code);
-    if (!m) return false;
+    const a = KEYMAP[code];
+    if (!a) return false;
     this.held.add(code);
-    if (m[1] === 'kick' && !repeat) this.queued[m[0]] = true;
+    if (!repeat && a === 'kick') this.kickQ = true;
+    if (!repeat && a === 'super') this.superQ = true;
     return true;
   },
 
@@ -37,56 +32,55 @@ const Input = {
     this.held.delete(code);
   },
 
-  // Stav ovládání pro jeden slot. Kop je jednorázový (zmáčknutí), ostatní se drží.
-  intent(slot) {
-    const o = this.out[slot];
+  // Stav ovládání. Střela a super jsou jednorázová zmáčknutí, ostatní se drží.
+  intent() {
+    const o = this.out;
     let l = false, r = false, j = false;
     for (const code of this.held) {
-      const m = this.map(code);
-      if (!m || m[0] !== slot) continue;
-      if (m[1] === 'left') l = true;
-      else if (m[1] === 'right') r = true;
-      else if (m[1] === 'jump') j = true;
+      const a = KEYMAP[code];
+      if (a === 'left') l = true;
+      else if (a === 'right') r = true;
+      else if (a === 'jump') j = true;
     }
-    const t = this.touch[slot];
+    const t = this.touch;
     o.move = Math.abs(t.move) > 0.01 ? t.move : (r ? 1 : 0) - (l ? 1 : 0);
     o.left = o.move < -0.01;
     o.right = o.move > 0.01;
     o.jump = j || t.jump;
-    o.kick = this.queued[slot];
-    this.queued[slot] = false;
+    o.kick = this.kickQ;
+    o.super = this.superQ;
+    this.kickQ = false;
+    this.superQ = false;
     return o;
   },
 
   clear() {
     this.held.clear();
-    this.queued[0] = this.queued[1] = false;
-    for (const t of this.touch) {
-      t.left = t.right = t.jump = t.kick = false;
-      t.move = 0;
-    }
+    this.kickQ = this.superQ = false;
+    this.touch.move = 0;
+    this.touch.jump = false;
   },
 };
 
 const TOUCH_ICONS = {
-  jump: '<svg viewBox="0 0 24 24"><path d="M12 20V6M6 11l6-6 6 6"/></svg>',
-  kick: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m12 8.2 3.6 2.6-1.4 4.2H9.8l-1.4-4.2z"/></svg>',
+  kick: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="15"/><path d="m24 15.5 7.2 5.2-2.8 8.4h-8.8l-2.8-8.4z" class="f"/><path d="M24 9v6.5M38.3 19.4l-7.1 1.3M33 36.2l-4.6-7.1M15 36.2l4.6-7.1M9.7 19.4l7.1 1.3"/></svg>',
+  super: '<svg viewBox="0 0 48 48"><path d="M27 5 11 27h11l-3 16 17-23H25z" class="f"/></svg>',
 };
 
-const STICK_R = 54;      // jak daleko jde páčka od středu (CSS px)
+const STICK_R = 56;      // jak daleko jde páčka od středu (CSS px)
 const STICK_DEAD = 0.18; // mrtvá zóna pro běh
-const STICK_JUMP = 0.6;  // páčka nahoru = skok
+const STICK_JUMP = 0.58; // páčka nahoru = skok
 
 /*
- * Dotykové ovládání: plovoucí joystick (kde se prst dotkne, tam se objeví)
- * a tlačítka KOP a SKOK. Při dvou hráčích na jednom telefonu má každý
- * joystick a kop na své polovině displeje.
+ * Dotykové ovládání: plovoucí joystick (kde se palec dotkne, tam se objeví)
+ * a tlačítka Střela a Super. Strany lze prohodit (Touch.swap).
  */
 const Touch = {
   root: null,
   enabled: false,
+  swap: false,
   ptrs: new Map(), // pointerId -> { kind: 'stick'|'btn', ref }
-  sticks: [],
+  stick: null,
   btns: [],
   onEnable: null,
 
@@ -108,56 +102,67 @@ const Touch = {
     root.addEventListener('contextmenu', (e) => e.preventDefault());
   },
 
-  build(dual) {
+  build() {
     this.root.textContent = '';
-    this.sticks = [];
     this.btns = [];
     this.ptrs.clear();
-    this.root.classList.toggle('dual', dual);
+    this.root.classList.toggle('swap', this.swap);
     const mk = (cls, parent = this.root) => {
       const el = document.createElement('div');
       el.className = cls;
       parent.appendChild(el);
       return el;
     };
-    const addStick = (slot, side) => {
-      const zone = mk(`stick-zone ${side}`);
-      const base = mk('stick-base', zone);
-      const knob = mk('stick-knob', base);
-      const st = { slot, side, zone, base, knob, active: false, ox: 0, oy: 0 };
-      zone.dataset.stick = String(this.sticks.length);
-      this.sticks.push(st);
-      this.restStick(st);
-    };
-    const addBtn = (slot, act, cls) => {
-      const el = mk(`tbtn ${act} ${cls}`);
-      el.innerHTML = TOUCH_ICONS[act];
-      el.title = act === 'kick' ? 'Kop' : 'Skok';
+    const zone = mk('stick-zone');
+    const base = mk('stick-base', zone);
+    const knob = mk('stick-knob', base);
+    mk('stick-arrow up', base);
+    mk('stick-arrow left', base);
+    mk('stick-arrow right', base);
+    zone.dataset.stick = '1';
+    this.stick = { zone, base, knob, active: false, ox: 0, oy: 0 };
+    const pad = mk('action-pad');
+    const addBtn = (act, label) => {
+      const el = mk(`tbtn ${act}`, pad);
+      el.innerHTML = TOUCH_ICONS[act] + `<span class="lbl">${label}</span>`;
       el.dataset.btn = String(this.btns.length);
-      this.btns.push({ el, slot, act, on: false });
+      this.btns.push({ el, act, on: false });
+      return el;
     };
-    if (dual) {
-      addStick(0, 'l');
-      addStick(1, 'r');
-      addBtn(0, 'kick', 'p1k');
-      addBtn(1, 'kick', 'p2k');
-    } else {
-      addStick(0, 'l');
-      addBtn(0, 'jump', 'single-jump');
-      addBtn(0, 'kick', 'single-kick');
-    }
+    this._charge = this._color = null;
+    this.superEl = addBtn('super', 'Super');
+    addBtn('kick', 'Střela');
+    this.restStick();
     Input.clear();
   },
 
-  restStick(st) {
+  // Nabití superstřely (0..1) – kroužek kolem tlačítka.
+  setCharge(c) {
+    if (!this.superEl) return;
+    const v = Math.round(clamp(c, 0, 1) * 100);
+    if (v === this._charge) return;
+    this._charge = v;
+    this.superEl.style.setProperty('--charge', `${v}%`);
+    this.superEl.classList.toggle('full', v >= 100);
+  },
+
+  // Barva superstřely podle postavy, za kterou hraju.
+  setColor(col) {
+    if (!this.superEl || col === this._color) return;
+    this._color = col;
+    this.superEl.style.setProperty('--sc', col);
+  },
+
+  restStick() {
+    const st = this.stick;
+    if (!st) return;
     st.active = false;
     st.base.classList.remove('on');
     st.base.style.left = '';
     st.base.style.top = '';
     st.knob.style.transform = 'translate(-50%, -50%)';
-    const pad = Input.touch[st.slot];
-    pad.move = 0;
-    pad.jump = this.btns.some((b) => b.on && b.slot === st.slot && b.act === 'jump');
+    Input.touch.move = 0;
+    Input.touch.jump = false;
   },
 
   down(e) {
@@ -172,10 +177,9 @@ const Touch = {
       this.setBtn(b, true);
       return;
     }
-    const st = this.sticks[Number(stickEl.dataset.stick)];
+    const st = this.stick;
     if (st.active) return;
     const zr = st.zone.getBoundingClientRect();
-    // střed joysticku tam, kam se prst dotkl (ale ne přes okraj)
     st.ox = clamp(e.clientX, zr.left + STICK_R + 6, zr.right - STICK_R - 6);
     st.oy = clamp(e.clientY, zr.top + STICK_R + 6, zr.bottom - STICK_R - 6);
     st.active = true;
@@ -183,30 +187,25 @@ const Touch = {
     st.base.style.left = `${st.ox - zr.left}px`;
     st.base.style.top = `${st.oy - zr.top}px`;
     this.ptrs.set(e.pointerId, { kind: 'stick', ref: st });
-    this.moveStick(st, e.clientX, e.clientY);
+    this.moveStick(e.clientX, e.clientY);
   },
 
   move(e) {
     const p = this.ptrs.get(e.pointerId);
     if (!p) return;
-    if (p.kind === 'stick') {
-      this.moveStick(p.ref, e.clientX, e.clientY);
-    } else {
-      const r = p.ref.el.getBoundingClientRect();
-      const inside = e.clientX >= r.left - 14 && e.clientX <= r.right + 14 && e.clientY >= r.top - 14 && e.clientY <= r.bottom + 14;
-      this.setBtn(p.ref, inside);
-    }
+    if (p.kind === 'stick') this.moveStick(e.clientX, e.clientY);
   },
 
   up(e) {
     const p = this.ptrs.get(e.pointerId);
     if (!p) return;
     this.ptrs.delete(e.pointerId);
-    if (p.kind === 'stick') this.restStick(p.ref);
+    if (p.kind === 'stick') this.restStick();
     else this.setBtn(p.ref, false);
   },
 
-  moveStick(st, x, y) {
+  moveStick(x, y) {
+    const st = this.stick;
     let dx = x - st.ox, dy = y - st.oy;
     const d = Math.hypot(dx, dy);
     if (d > STICK_R) {
@@ -214,30 +213,28 @@ const Touch = {
       dy *= STICK_R / d;
     }
     st.knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-    const pad = Input.touch[st.slot];
     let mx = dx / STICK_R;
     mx = Math.abs(mx) < STICK_DEAD ? 0 : (mx - Math.sign(mx) * STICK_DEAD) / (1 - STICK_DEAD);
-    pad.move = clamp(mx * 1.15, -1, 1);
-    const jumpBtn = this.btns.some((b) => b.on && b.slot === st.slot && b.act === 'jump');
-    pad.jump = dy / STICK_R < -STICK_JUMP || jumpBtn;
+    Input.touch.move = clamp(mx * 1.15, -1, 1);
+    Input.touch.jump = dy / STICK_R < -STICK_JUMP;
+    st.base.classList.toggle('jump', Input.touch.jump);
   },
 
   setBtn(b, on) {
     if (b.on === on) return;
     b.on = on;
     b.el.classList.toggle('on', on);
-    const pad = Input.touch[b.slot];
-    if (b.act === 'kick') {
-      pad.kick = on;
-      if (on) Input.queued[b.slot] = true;
-    } else {
-      pad.jump = on;
+    if (!on) return;
+    if (b.act === 'kick') Input.kickQ = true;
+    else Input.superQ = true;
+    if (navigator.vibrate) {
+      try { navigator.vibrate(b.act === 'super' ? 25 : 10); } catch (err) { /* nevadí */ }
     }
   },
 
   reset() {
     this.ptrs.clear();
-    for (const st of this.sticks) this.restStick(st);
+    this.restStick();
     for (const b of this.btns) this.setBtn(b, false);
   },
 

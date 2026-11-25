@@ -2,13 +2,20 @@
 <html lang="cs">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Hlavouni</title>
-<meta name="description" content="Fotbal velkých hlav: 1 v 1 nebo 2 v 2, proti počítači, na jednom zařízení nebo online, každý na svém telefonu.">
+<meta name="description" content="Fotbal velkých hlav: 1 v 1 nebo 2 v 2 proti počítači nebo online s kamarády, každý na svém telefonu.">
 <meta name="theme-color" content="#0b1324">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hlavouni">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Lilita+One&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,7 +25,10 @@
 
   <div id="hud">
     <button id="btn-pause" class="icon-btn" type="button" aria-label="Pauza" hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>
+    </button>
+    <button id="btn-fs" class="icon-btn" type="button" aria-label="Celá obrazovka" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path class="w" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
     </button>
     <button id="btn-mute" class="icon-btn" type="button" aria-label="Vypnout zvuk" aria-pressed="false">
       <svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
@@ -31,62 +41,72 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 5 7 7-7 7M13 5l7 7-7 7"/></svg>
   </button>
 
-  <section id="home" class="overlay" aria-labelledby="logo">
-    <div class="panel home-panel">
+  <!-- hlavní menu -->
+  <section id="home" class="screen home" aria-labelledby="logo">
+    <canvas id="hero" class="hero" aria-hidden="true"></canvas>
+    <div class="home-main">
       <header class="brand">
         <h1 id="logo" class="logo" aria-label="Hlavouni">HLAV<svg class="logo-ball" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#f7f8fa" stroke="#0b1220" stroke-width="3"/><path d="M20 12.5l7 5.1-2.7 8.2h-8.6L13 17.6z" fill="#0b1220"/><path d="M20 12.5V3M27 17.6l8.6-3M24.3 25.8l5.3 7.4M15.7 25.8l-5.3 7.4M13 17.6l-8.6-3" stroke="#0b1220" stroke-width="2.4" fill="none"/></svg>UNI</h1>
         <p class="tagline">Fotbal velkých hlav</p>
       </header>
-      <div class="stack">
-        <button id="btn-local" class="btn-play" type="button">Hrát</button>
-        <button id="btn-online" class="btn btn-online" type="button">
+      <div class="home-buttons">
+        <button id="btn-local" class="btn-play big" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>
+          Hrát
+        </button>
+        <button id="btn-online" class="btn-game blue" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="13" rx="1.6"/><rect x="14" y="7" width="7" height="13" rx="1.6"/><path d="M10 10.5h4M12 8.5l2 2-2 2"/></svg>
           Online s kamarády
         </button>
-      </div>
-      <div id="home-help" class="help"></div>
-    </div>
-  </section>
-
-  <section id="online" class="overlay" aria-labelledby="online-title" hidden>
-    <div class="panel small-panel online-panel">
-      <h2 id="online-title" class="panel-title">Online</h2>
-      <p class="lead">Každý hraje na svém telefonu. Jeden hru založí, ostatní se připojí kódem.</p>
-      <label class="field" for="nick"><span>Tvoje jméno</span><input id="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="např. Honza"></label>
-      <button id="btn-create" class="btn-play" type="button">Založit hru</button>
-      <div class="join">
-        <label class="field" for="join-code"><span>Kód hry od kamaráda</span>
-          <input id="join-code" type="text" maxlength="4" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="ABCD"></label>
-        <button id="btn-join" class="btn" type="button">Připojit</button>
-      </div>
-      <p id="online-status" class="status" role="status"></p>
-      <div id="public-hint" class="public-hint" hidden>
-        <p>Bez účtu na Claude hrajte online na webu:</p>
-        <p class="url" id="public-url"></p>
-        <button id="btn-copy-public" class="btn" type="button">Kopírovat adresu</button>
-      </div>
-      <button id="btn-online-back" class="btn ghost" type="button">Zpět</button>
-    </div>
-  </section>
-
-  <section id="lobby" class="overlay" aria-labelledby="lobby-title" hidden>
-    <div class="lobby">
-      <header class="lobby-top">
-        <button id="btn-lobby-back" class="btn-mini" type="button" aria-label="Zpět do menu">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+        <button id="btn-swap" class="btn-chip" type="button" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>
+          <span id="swap-label">Joystick vlevo</span>
         </button>
-        <div class="lobby-heading">
-          <p id="lobby-kicker" class="lobby-kicker">Výběr hráčů</p>
-          <h2 id="lobby-title" class="lobby-title">Na tomto zařízení</h2>
-        </div>
-        <div id="lobby-invite" class="invite" hidden>
-          <div class="code-box"><span>Kód hry</span><strong id="lobby-code"></strong></div>
-          <button id="btn-invite" class="btn-invite" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
-            Pozvat
-          </button>
-        </div>
-      </header>
+      </div>
+      <p id="home-help" class="home-help"></p>
+    </div>
+  </section>
+
+  <!-- online -->
+  <section id="online" class="screen online" aria-labelledby="online-title" hidden>
+    <header class="screen-top">
+      <button id="btn-online-back" class="btn-mini" type="button" aria-label="Zpět">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+      </button>
+      <h2 id="online-title" class="screen-title">Online s kamarády</h2>
+    </header>
+    <div class="online-grid">
+      <div class="online-card create">
+        <p class="card-kicker">Založ hru</p>
+        <label class="field" for="nick"><span>Tvoje jméno</span><input id="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="např. Honza"></label>
+        <button id="btn-create" class="btn-play" type="button">Založit hru</button>
+      </div>
+      <div class="online-or">nebo</div>
+      <div class="online-card join">
+        <p class="card-kicker">Připoj se ke kamarádovi</p>
+        <label class="field" for="join-code"><span>Kód hry</span>
+          <input id="join-code" type="text" maxlength="4" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="ABCD"></label>
+        <button id="btn-join" class="btn-game blue" type="button">Připojit</button>
+      </div>
+    </div>
+    <p id="online-status" class="status" role="status"></p>
+    <div id="public-hint" class="public-hint" hidden>
+      <p>Bez účtu na Claude hrajte online na webu:</p>
+      <p class="url" id="public-url"></p>
+      <button id="btn-copy-public" class="btn-chip" type="button">Kopírovat adresu</button>
+    </div>
+  </section>
+
+  <!-- lobby -->
+  <section id="lobby" class="screen lobby" aria-labelledby="lobby-title" hidden>
+    <header class="lobby-top">
+      <button id="btn-lobby-back" class="btn-mini" type="button" aria-label="Zpět do menu">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+      </button>
+      <div class="lobby-heading">
+        <p id="lobby-kicker" class="lobby-kicker">Hra proti počítači</p>
+        <h2 id="lobby-title" class="lobby-title">Výběr hráčů</h2>
+      </div>
       <div class="lobby-settings">
         <div class="seg" role="group" aria-label="Zápas" data-key="format">
           <button type="button" data-v="1v1">1 v 1</button>
@@ -103,47 +123,63 @@
           <button type="button" data-v="hard">Těžký</button>
         </div>
       </div>
-      <div id="slots" class="arena"></div>
+      <div id="lobby-invite" class="invite" hidden>
+        <div class="code-box"><span>Kód</span><strong id="lobby-code"></strong></div>
+        <button id="btn-invite" class="btn-invite" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+          Pozvat
+        </button>
+      </div>
+    </header>
+    <div id="slots" class="arena"></div>
+    <footer class="lobby-bottom">
       <ul id="lobby-members" class="members" aria-label="Hráči ve hře" hidden></ul>
-      <div class="lobby-bottom">
-        <p id="lobby-hint" class="hint"></p>
-        <div class="lobby-actions">
-          <button id="btn-ready" class="btn btn-ready" type="button" hidden>Jsem připraven</button>
-          <button id="btn-start" class="btn-play" type="button">Hrát</button>
-        </div>
-      </div>
+      <p id="lobby-hint" class="hint"></p>
       <p id="lobby-wait" class="status wait" hidden>Čeká se, až hostitel spustí zápas…</p>
-    </div>
+      <div class="lobby-actions">
+        <button id="btn-ready" class="btn-game green" type="button" hidden>Jsem připraven</button>
+        <button id="btn-start" class="btn-play" type="button">Hrát</button>
+      </div>
+    </footer>
   </section>
 
-  <section id="pause" class="overlay" aria-labelledby="pause-title" hidden>
-    <div class="panel small-panel">
-      <h2 id="pause-title" class="panel-title">Pauza</h2>
-      <div class="stack">
+  <!-- pauza -->
+  <section id="pause" class="screen dim" aria-labelledby="pause-title" hidden>
+    <div class="dialog">
+      <h2 id="pause-title" class="screen-title big">Pauza</h2>
+      <div class="dialog-buttons">
         <button id="btn-resume" class="btn-play" type="button">Pokračovat</button>
-        <button id="btn-restart" class="btn" type="button">Hrát znovu</button>
-        <button id="btn-quit" class="btn" type="button">Výběr hráčů</button>
+        <button id="btn-restart" class="btn-game" type="button">Hrát znovu</button>
+        <button id="btn-quit" class="btn-game" type="button">Výběr hráčů</button>
+        <button id="btn-swap2" class="btn-chip" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>
+          <span id="swap-label2">Joystick vlevo</span>
+        </button>
       </div>
     </div>
   </section>
 
-  <section id="result" class="overlay" aria-labelledby="res-title" hidden>
-    <div class="panel small-panel">
+  <!-- výsledek -->
+  <section id="result" class="screen dim" aria-labelledby="res-title" hidden>
+    <div class="dialog result">
       <p id="res-kicker" class="res-kicker">Konec zápasu</p>
       <h2 id="res-title" class="res-title">Výhra!</h2>
       <p class="res-score"><span id="res-a">0</span><span class="colon">:</span><span id="res-b">0</span></p>
       <p id="res-sub" class="res-sub"></p>
-      <div class="stack">
+      <p id="res-wait" class="status wait" hidden>Čeká se na hostitele…</p>
+      <div class="dialog-buttons row">
+        <button id="btn-res-third" class="btn-game" type="button">Hlavní menu</button>
+        <button id="btn-res-second" class="btn-game" type="button">Výběr hráčů</button>
         <button id="btn-res-main" class="btn-play" type="button">Hrát znovu</button>
-        <p id="res-wait" class="status wait" hidden>Čeká se na hostitele…</p>
-        <button id="btn-res-second" class="btn" type="button">Výběr hráčů</button>
-        <button id="btn-res-third" class="btn ghost" type="button">Hlavní menu</button>
       </div>
     </div>
   </section>
 
   <div id="toast" class="toast" role="status" hidden></div>
-  <div id="rotate" class="rotate" hidden>Otoč telefon na šířku</div>
+  <div id="rotate" class="rotate-screen" hidden>
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="22" y="8" width="20" height="36" rx="4"/><path d="M14 48a20 20 0 0 0 30 6M44 54l1-7-7 1"/></svg>
+    <p>Otoč telefon na šířku</p>
+  </div>
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->

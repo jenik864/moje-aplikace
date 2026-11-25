@@ -53,7 +53,7 @@ class AIBrain {
     this.p = p;
     this.L = AI_LEVELS[level] || AI_LEVELS.medium;
     this.role = role;
-    this.out = { left: false, right: false, jump: false, kick: false };
+    this.out = { left: false, right: false, jump: false, kick: false, super: false };
     this.reset();
   }
 
@@ -67,6 +67,7 @@ class AIBrain {
 
   update(dt, m) {
     this.out.kick = false; // kop je jen jednorázový stisk
+    this.out.super = false;
     this.t -= dt;
     this.noiseT -= dt;
     if (this.noiseT <= 0) {
@@ -189,6 +190,13 @@ class AIBrain {
     const zx = p.x + dir * (R + 4), zy = p.y + R + PHYS.footH - 24;
     const inZone = (q) => (q.x - p.x) * dir > 0 && Math.hypot(q.x - zx, q.y - zy) < 46;
     if ((inZone(b) || inZone(predAt(pred, 0.06))) && Math.random() < L.kick) kick = true;
+
+    // superstřela, když je nabitá a branka soupeře není daleko
+    const oppGoal = p.team === 0 ? W - GOAL_W : GOAL_W;
+    if (kick && p.superCharge >= 1 && Math.abs(oppGoal - p.x) < 760 && Math.random() < L.kick) {
+      this.out.super = true;
+      kick = false;
+    }
 
     const dx = tx - p.x;
     this.out.left = dx < -8;

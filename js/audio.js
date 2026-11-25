@@ -198,6 +198,25 @@ const Sound = {
     [523.25, 659.25, 783.99].forEach((f) => this.tone('sine', f, f, 0.9, 0.05, 0.65));
   },
 
+  superShot() {
+    if (!this.live()) return;
+    this.tone('sawtooth', 170, 55, 0.4, 0.16);
+    this.tone('sine', 700, 1500, 0.25, 0.07);
+    this.hiss(0.35, 0.3, 'lowpass', 1400);
+  },
+
+  knock() {
+    if (!this.live()) return;
+    this.tone('sine', 150, 48, 0.28, 0.5);
+    this.hiss(0.14, 0.3, 'bandpass', 600, 1);
+  },
+
+  charged() {
+    if (!this.live()) return;
+    this.tone('triangle', 660, 1320, 0.16, 0.06);
+    this.tone('triangle', 990, 1980, 0.16, 0.04, 0.08);
+  },
+
   whoosh() {
     if (!this.live()) return;
     this.hiss(0.35, 0.08, 'bandpass', 900, 0.7);

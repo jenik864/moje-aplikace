@@ -16,6 +16,8 @@ class Ball {
     this.vx = 0;
     this.vy = 0;
     this.rot = 0;
+    this.superT = 0;   // jak dlouho ještě letí superstřela
+    this.superBy = -1; // kdo ji vystřelil (index hráče)
     this.held = true; // při výkopu visí míč nad středem hřiště
     this.lastTouch = null;
     this.idle = 0;
@@ -40,7 +42,7 @@ class Player {
     this.dir = o.team === 0 ? 1 : -1; // směr útoku a pohledu
     this.look = o.look;
     this.label = o.label || '';
-    this.ctrl = o.ctrl || 'cpu'; // 'cpu', 'p1', 'p2', 'host' nebo id kamaráda online
+    this.ctrl = o.ctrl || 'cpu'; // 'cpu', 'p1', 'host' nebo id kamaráda online
     this.slot = -1;              // vstup na tomto zařízení (0 = hráč 1, 1 = hráč 2)
     this.remote = null;          // id kamaráda, který hráče ovládá na svém telefonu
     this.isHuman = this.ctrl !== 'cpu';
@@ -52,6 +54,8 @@ class Player {
     this.blinkT = rand(1, 4);
     this.blink = 0;
     this.runPhase = 0;
+    this.superCharge = 0; // 0..1, při 1 lze vystřelit superstřelu
+    this.superKick = false;
     this.place(o.x);
   }
 
@@ -200,7 +204,6 @@ class Match {
       const p = new Player({ team: sp.team, x: sp.team === 0 ? x : W - x, look: charById(sp.char), role, ctrl: sp.ctrl, label: sp.name });
       if (sp.ctrl === 'cpu') this.makeCPU(p);
       else if (sp.ctrl === 'p1' || sp.ctrl === 'host') p.slot = 0;
-      else if (sp.ctrl === 'p2') p.slot = 1;
       else p.remote = sp.ctrl;
       this.players.push(p);
     });
@@ -265,6 +268,7 @@ class Match {
         this.remoteIntent(p.remote);
       }
       p.mood = (mode === 'celebrate' || mode === 'ceremony') && this.celebrate >= 0 ? (p.team === this.celebrate ? 1 : -1) : 0;
+      if (mode === 'play') p.superCharge = Math.min(1, p.superCharge + dt / PHYS.superCharge);
       this.movePlayer(p, it, dt);
     }
     this.collidePlayers();
@@ -333,7 +337,15 @@ class Match {
       p.onGround = false;
       this.onEvent('jump', { human: p.isHuman });
     }
-    if (it.kick && p.kickT < 0 && p.kickCd <= 0) {
+    if (it.super && p.superCharge >= 1 && p.kickT < 0) {
+      // superstřela: švih nohou, další zásah míče je superstřela
+      p.superCharge = 0;
+      p.superKick = true;
+      p.kickT = 0;
+      p.kickCd = 0;
+      p.kickHit = false;
+      this.onEvent('superswing', { idx: this.players.indexOf(p) });
+    } else if (it.kick && p.kickT < 0 && p.kickCd <= 0) {
       p.kickT = 0;
       p.kickHit = false;
       this.onEvent('swing', p);
@@ -343,6 +355,9 @@ class Match {
       if (p.kickT >= PHYS.kickDur) {
         p.kickT = -1;
         p.kickCd = PHYS.kickCooldown;
+        // superstřela minula míč – nabití nepropadne
+        if (p.superKick) p.superCharge = 1;
+        p.superKick = false;
       }
     } else if (p.kickCd > 0) {
       p.kickCd -= dt;
@@ -446,9 +461,11 @@ class Match {
     const drag = 1 - PHYS.airDrag * dt;
     b.vx *= drag;
     b.vy *= drag;
+    if (b.superT > 0) b.superT = Math.max(0, b.superT - dt);
+    const cap = b.superT > 0 ? PHYS.superSpeed * 1.05 : PHYS.ballMaxSpeed;
     const sp = Math.hypot(b.vx, b.vy);
-    if (sp > PHYS.ballMaxSpeed) {
-      const k = PHYS.ballMaxSpeed / sp;
+    if (sp > cap) {
+      const k = cap / sp;
       b.vx *= k;
       b.vy *= k;
     }
@@ -502,6 +519,23 @@ class Match {
   ballVsPlayer(p) {
     const b = this.ball;
     let touch = false;
+    // superstřela soupeře srazí a letí dál
+    if (b.superT > 0 && b.superBy >= 0 && this.players[b.superBy] && this.players[b.superBy].team !== p.team) {
+      for (const [cx, cy, cr] of [[p.x, p.y, p.R], [p.x - p.dir, p.y + p.R + 18, PHYS.bodyR]]) {
+        const dx = p.x - b.x, rr = cr + b.r;
+        if ((b.x - cx) ** 2 + (b.y - cy) ** 2 >= rr * rr) continue;
+        const dir = Math.sign(b.vx) || (dx > 0 ? 1 : -1);
+        p.vx = dir * 560;
+        p.vy = -460;
+        p.onGround = false;
+        p.x += dir * 6;
+        b.vx *= 0.72;
+        b.vy *= 0.72;
+        b.superT = 0;
+        this.onEvent('knock', { x: p.x, y: p.y, idx: this.players.indexOf(p) });
+        return true;
+      }
+    }
     // 1) kop – kopačka ve švihu
     if (p.kickT >= 0 && !p.kickHit && p.kickT / PHYS.kickDur <= 0.55) {
       const s = p.kickS();
@@ -544,6 +578,19 @@ class Match {
 
   doKick(p, s, f) {
     const b = this.ball;
+    p.superCharge = Math.min(1, p.superCharge + 0.06);
+    if (p.superKick) {
+      p.superKick = false;
+      const el = ((8 + 14 * s) * Math.PI) / 180;
+      b.vx = p.dir * Math.cos(el) * PHYS.superSpeed;
+      b.vy = -Math.sin(el) * PHYS.superSpeed;
+      b.superT = 1.4;
+      b.superBy = this.players.indexOf(p);
+      p.kickHit = true;
+      b.lastTouch = p;
+      this.onEvent('super', { x: b.x, y: b.y, dir: p.dir, idx: b.superBy });
+      return;
+    }
     let deg = 24 + 34 * s; // pozdní zásah = vyšší lob
     // Soupeř stojí těsně před míčem: kop ho přeloží obloučkem (jinak by se míč
     // jen odrážel mezi dvěma hráči).

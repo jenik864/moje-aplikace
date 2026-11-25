@@ -1,7 +1,7 @@
 'use strict';
 /* Vykreslování: stadion (předkreslený), hráči, míč, efekty a výsledková tabule. */
 
-const FONT_D = '"Lilita One", "Arial Rounded MT Bold", "Arial Black", sans-serif';
+const FONT_D = '"Paytone One", "Arial Rounded MT Bold", "Arial Black", sans-serif';
 const FONT_U = '"Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif';
 const TAU = Math.PI * 2;
 const OUTLINE = 'rgba(28,16,10,.62)';
@@ -202,6 +202,7 @@ const STANDS_TOP = 150;
 const STANDS_BOTTOM = 458;
 const JUMBO = { x: 528, y: 162, w: 224, h: 92 };
 const DEFAULT_CAM = { x: W / 2, y: H / 2, z: 1, bars: 0 };
+const AISLES = [-638, 214, 1066, 1918];
 const INTRO_DUR = 3.9;
 
 const Renderer = {
@@ -219,6 +220,8 @@ const Renderer = {
   figs: new Map(),
   vig: null,
   fanColors: ['#e8458f', '#2f80ff'],
+  // viditelná část světa při kameře bez přiblížení (na širokém displeji je vidět víc stadionu)
+  view: { x0: 0, x1: W, y0: 0, y1: H },
 
   // Fanoušci v barvách týmů, které právě hrají.
   setFans(teams) {
@@ -229,7 +232,7 @@ const Renderer = {
     const y = cr.getContext('2d');
     y.setTransform(1, 0, 0, 1, 0, 0);
     y.clearRect(0, 0, cr.width, cr.height);
-    y.setTransform(s, 0, 0, s, 0, -STANDS_TOP * s);
+    y.setTransform(s, 0, 0, s, -this.view.x0 * s, -STANDS_TOP * s);
     this.drawFans(y);
   },
 
@@ -246,62 +249,78 @@ const Renderer = {
     const cw = Math.max(1, this.canvas.clientWidth), ch = Math.max(1, this.canvas.clientHeight);
     this.canvas.width = Math.round(cw * dpr);
     this.canvas.height = Math.round(ch * dpr);
-    this.scale = Math.min(this.canvas.width / W, this.canvas.height / H);
-    this.ox = Math.round((this.canvas.width - W * this.scale) / 2);
-    this.oy = Math.round((this.canvas.height - H * this.scale) / 2);
+    const A = this.canvas.width / this.canvas.height;
+    // hra vyplní celý displej: širší displej ukáže víc stadionu do stran,
+    // užší víc oblohy a trávníku
+    if (A >= W / H) {
+      this.scale = this.canvas.height / H;
+      const vw = this.canvas.width / this.scale;
+      this.view = { x0: W / 2 - vw / 2, x1: W / 2 + vw / 2, y0: 0, y1: H };
+    } else {
+      this.scale = this.canvas.width / W;
+      const vh = this.canvas.height / this.scale;
+      const y1 = H + (vh - H) * 0.3;
+      this.view = { x0: 0, x1: W, y0: y1 - vh, y1 };
+    }
+    this.ox = -this.view.x0 * this.scale;
+    this.oy = -this.view.y0 * this.scale;
+    const vw = this.view.x1 - this.view.x0, vh = this.view.y1 - this.view.y0;
     // pozadí ve vyšším rozlišení, aby bylo ostré i při přiblížení kamery
-    this.bgScale = Math.min(this.scale * 1.6, 4096 / W);
+    this.bgScale = Math.min(this.scale * 1.6, 4096 / vw, 4096 / vh);
+    this.vig = null;
     this.buildBg();
   },
 
   /* ---- statické pozadí ---- */
 
   buildBg() {
-    const s = this.bgScale;
+    const s = this.bgScale, v = this.view;
     const c = this.bg;
-    c.width = Math.max(1, Math.ceil(W * s));
-    c.height = Math.max(1, Math.ceil(H * s));
+    c.width = Math.max(1, Math.ceil((v.x1 - v.x0) * s));
+    c.height = Math.max(1, Math.ceil((v.y1 - v.y0) * s));
     const x = c.getContext('2d');
-    x.setTransform(s, 0, 0, s, 0, 0);
+    x.setTransform(s, 0, 0, s, -v.x0 * s, -v.y0 * s);
     this.drawSky(x);
     this.drawStandsBase(x);
     this.drawPitch(x);
+    this.drawFences(x);
     this.drawGoalShadow(x, 0);
     this.drawGoalShadow(x, 1);
     const cr = this.crowd;
-    cr.width = Math.max(1, Math.ceil(W * s));
+    cr.width = Math.max(1, Math.ceil((v.x1 - v.x0) * s));
     cr.height = Math.max(1, Math.ceil((STANDS_BOTTOM - STANDS_TOP) * s));
     const y = cr.getContext('2d');
-    y.setTransform(s, 0, 0, s, 0, -STANDS_TOP * s);
+    y.setTransform(s, 0, 0, s, -v.x0 * s, -STANDS_TOP * s);
     this.drawFans(y);
   },
 
   drawSky(x) {
-    const g = x.createLinearGradient(0, 0, 0, 170);
+    const X0 = this.view.x0 - 4, X1 = this.view.x1 + 4, XW = X1 - X0, Y0 = Math.min(0, this.view.y0);
+    const g = x.createLinearGradient(0, Y0, 0, 170);
     g.addColorStop(0, '#050c1c');
     g.addColorStop(1, '#152f57');
     x.fillStyle = g;
-    x.fillRect(0, 0, W, 170);
+    x.fillRect(X0, Y0, XW, 170 - Y0);
     const rng = mulberry32(3);
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 60 * XW / W; i++) {
       x.fillStyle = `rgba(255,255,255,${0.25 + rng() * 0.5})`;
-      circle(x, rng() * W, rng() * 100, rng() * 1.1 + 0.3);
+      circle(x, X0 + rng() * XW, Y0 + rng() * (100 - Y0), rng() * 1.1 + 0.3);
       x.fill();
     }
     // střecha s ocelovou konstrukcí
     x.fillStyle = '#080e1a';
-    x.fillRect(0, 108, W, 44);
+    x.fillRect(X0, 108, XW, 44);
     x.strokeStyle = 'rgba(120,150,200,.16)';
     x.lineWidth = 2;
-    for (let k = -20; k < W + 40; k += 40) {
+    for (let k = Math.floor(X0 / 40) * 40 - 20; k < X1 + 40; k += 40) {
       line(x, k, 110, k + 40, 150);
       line(x, k + 40, 110, k, 150);
     }
     x.fillStyle = '#0c1424';
-    x.fillRect(0, 106, W, 5);
-    x.fillRect(0, 146, W, 6);
+    x.fillRect(X0, 106, XW, 5);
+    x.fillRect(X0, 146, XW, 6);
     // světla pod střechou
-    for (let k = 20; k < W; k += 46) {
+    for (let k = Math.floor(X0 / 46) * 46 + 20; k < X1; k += 46) {
       x.fillStyle = 'rgba(255,240,200,.25)';
       circle(x, k, 150, 5);
       x.fill();
@@ -341,21 +360,22 @@ const Renderer = {
 
   drawStandsBase(x) {
     const top = STANDS_TOP, bottom = STANDS_BOTTOM;
+    const X0 = this.view.x0 - 4, XW = this.view.x1 - this.view.x0 + 8;
     const g = x.createLinearGradient(0, top, 0, bottom);
     g.addColorStop(0, '#0d1626');
     g.addColorStop(1, '#1d2a40');
     x.fillStyle = g;
-    x.fillRect(0, top + 2, W, bottom - top);
+    x.fillRect(X0, top + 2, XW, bottom - top);
     const rows = 13, rowH = (bottom - 14 - top) / rows;
     for (let r = 0; r < rows; r++) {
       const y = top + 8 + r * rowH;
       x.fillStyle = r % 2 ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.1)';
-      x.fillRect(0, y, W, rowH);
+      x.fillRect(X0, y, XW, rowH);
       x.fillStyle = 'rgba(255,255,255,.05)';
-      x.fillRect(0, y + rowH - 2, W, 1);
+      x.fillRect(X0, y + rowH - 2, XW, 1);
     }
     // schodiště mezi sektory
-    for (const ax of [214, 1066]) {
+    for (const ax of AISLES) {
       x.fillStyle = '#26344d';
       x.fillRect(ax - 9, top + 4, 18, bottom - top - 4);
       x.fillStyle = 'rgba(255,255,255,.08)';
@@ -363,14 +383,14 @@ const Renderer = {
     }
     // zábradlí a zeď pod tribunou
     x.fillStyle = '#0b1322';
-    x.fillRect(0, bottom, W, 10);
+    x.fillRect(X0, bottom, XW, 10);
     x.fillStyle = 'rgba(255,255,255,.18)';
-    x.fillRect(0, bottom - 2, W, 1.5);
+    x.fillRect(X0, bottom - 2, XW, 1.5);
     // podklad pro LED tabule
     x.fillStyle = '#05080f';
-    x.fillRect(0, 462, W, 48);
+    x.fillRect(X0, 462, XW, 48);
     x.fillStyle = 'rgba(0,0,0,.4)';
-    x.fillRect(0, 506, W, 5);
+    x.fillRect(X0, 506, XW, 5);
   },
 
   drawFans(x) {
@@ -386,8 +406,8 @@ const Renderer = {
       const y = top + 8 + r * rowH;
       const depth = r / (rows - 1);
       const sp = 11 + depth * 4, size = 3.6 + depth * 2;
-      for (let cx = rng() * sp; cx < W; cx += sp * (0.85 + rng() * 0.4)) {
-        if (rng() < 0.06 || Math.abs(cx - 214) < 12 || Math.abs(cx - 1066) < 12) continue;
+      for (let cx = this.view.x0 - 10 + rng() * sp; cx < this.view.x1 + 10; cx += sp * (0.85 + rng() * 0.4)) {
+        if (rng() < 0.06 || AISLES.some((a) => Math.abs(cx - a) < 12)) continue;
         const home = cx < W / 2, q = rng();
         const shirt = q < 0.5 ? pick2(rng, home ? pinks : blues) : q < 0.62 ? pick2(rng, home ? blues : pinks) : pick2(rng, neutral);
         const yy = y + rowH - 1 + (rng() - 0.5) * 2;
@@ -417,22 +437,24 @@ const Renderer = {
     sh.addColorStop(1, 'rgba(4,8,18,0)');
     x.globalCompositeOperation = 'source-atop';
     x.fillStyle = sh;
-    x.fillRect(0, top, W, bottom - top);
+    x.fillRect(this.view.x0 - 4, top, this.view.x1 - this.view.x0 + 8, bottom - top);
     x.globalCompositeOperation = 'source-over';
   },
 
   drawPitch(x) {
     const top = 510;
-    const g = x.createLinearGradient(0, top, 0, H);
+    const X0 = this.view.x0 - 4, X1 = this.view.x1 + 4, XW = X1 - X0;
+    const YB = Math.max(H, this.view.y1);
+    const g = x.createLinearGradient(0, top, 0, YB);
     g.addColorStop(0, '#286b2e');
-    g.addColorStop(0.45, '#3b943c');
+    g.addColorStop(0.45 * (H - top) / (YB - top), '#3b943c');
     g.addColorStop(1, '#48a646');
     x.fillStyle = g;
-    x.fillRect(0, top, W, H - top);
+    x.fillRect(X0, top, XW, YB - top);
     // posekané pruhy
     const n = 16, sw = W / n;
     x.fillStyle = 'rgba(255,255,255,.055)';
-    for (let i = -6; i < n + 6; i += 2) {
+    for (let i = -6 - Math.ceil(-X0 / sw) * 2; i < n + 6 + Math.ceil((X1 - W) / sw) * 2; i += 2) {
       x.beginPath();
       x.moveTo(persp(i * sw, top), top);
       x.lineTo(persp((i + 1) * sw, top), top);
@@ -443,8 +465,8 @@ const Renderer = {
     }
     // stébla trávy
     const rng = mulberry32(11);
-    for (let i = 0; i < 2600; i++) {
-      const px = rng() * W, py = top + 4 + rng() * (H - top - 4);
+    for (let i = 0; i < 2600 * XW / W; i++) {
+      const px = X0 + rng() * XW, py = top + 4 + rng() * (H - top - 4);
       const k = (py - top) / (H - top);
       x.strokeStyle = rng() < 0.5 ? `rgba(20,60,20,${0.18 + k * 0.12})` : `rgba(160,230,120,${0.08 + k * 0.1})`;
       x.lineWidth = 0.8 + k;
@@ -454,14 +476,14 @@ const Renderer = {
     sh.addColorStop(0, 'rgba(0,0,0,.34)');
     sh.addColorStop(1, 'rgba(0,0,0,0)');
     x.fillStyle = sh;
-    x.fillRect(0, top, W, 34);
+    x.fillRect(X0, top, XW, 34);
 
     // čáry
     x.strokeStyle = 'rgba(255,255,255,.75)';
     x.lineWidth = 3;
     x.lineCap = 'round';
-    line(x, 0, 520, W, 520);
-    line(x, W / 2, 520, W / 2, H);
+    line(x, X0, 520, X1, 520);
+    line(x, W / 2, 520, W / 2, YB);
     oval(x, W / 2, 602, 120, 36);
     x.stroke();
     x.fillStyle = 'rgba(255,255,255,.85)';
@@ -483,6 +505,33 @@ const Renderer = {
     }
   },
 
+  // Záchytné sítě za brankami (sem až míč dolétne, dál ne).
+  drawFences(x) {
+    for (const side of [0, 1]) {
+      const fx = side === 0 ? -26 : W, fw = 26, top = 118, bot = GROUND_Y;
+      if (side === 0 && this.view.x0 > 0) continue;
+      if (side === 1 && this.view.x1 < W) continue;
+      x.fillStyle = 'rgba(10,16,30,.35)';
+      x.fillRect(fx, top, fw, bot - top);
+      x.save();
+      x.beginPath();
+      x.rect(fx, top, fw, bot - top);
+      x.clip();
+      x.strokeStyle = 'rgba(220,230,245,.28)';
+      x.lineWidth = 1;
+      for (let k = top - 40; k < bot; k += 9) {
+        line(x, fx, k, fx + fw, k + 26);
+        line(x, fx + fw, k, fx, k + 26);
+      }
+      x.restore();
+      x.fillStyle = '#8f9bad';
+      x.fillRect(fx - 2, top - 6, 4, bot - top + 6);
+      x.fillRect(fx + fw - 2, top - 6, 4, bot - top + 6);
+      x.fillStyle = '#c3ccd8';
+      x.fillRect(fx - 2, top - 8, fw + 4, 3);
+    }
+  },
+
   drawGoalShadow(x, side) {
     const x0 = side === 0 ? 0 : W - GOAL_W;
     x.fillStyle = 'rgba(0,0,0,.28)';
@@ -492,25 +541,28 @@ const Renderer = {
 
   /* ---- snímek ---- */
 
+  // Střed výchozího záběru (kamera bez přiblížení).
+  viewCenter() {
+    return { x: (this.view.x0 + this.view.x1) / 2, y: (this.view.y0 + this.view.y1) / 2 };
+  },
+
   draw(g) {
-    const ctx = this.ctx, s = this.scale, m = g.match;
+    const ctx = this.ctx, s = this.scale, m = g.match, v = this.view;
+    const cw = this.canvas.width, ch = this.canvas.height;
     const now = performance.now();
     const cam = g.cam || DEFAULT_CAM;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.drawLetterbox(ctx);
+    ctx.fillStyle = '#071022';
+    ctx.fillRect(0, 0, cw, ch);
 
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(this.ox, this.oy, W * s, H * s);
-    ctx.clip();
     let sx = 0, sy = 0;
     if (Effects.shakeAmt > 0.2) {
       sx = rand(-1, 1) * Effects.shakeAmt;
       sy = rand(-1, 1) * Effects.shakeAmt;
     }
-    const z = cam.z, k = s * z;
-    ctx.setTransform(k, 0, 0, k, this.ox + (W / 2 - cam.x * z + sx) * s, this.oy + (H / 2 - cam.y * z + sy) * s);
-    ctx.drawImage(this.bg, 0, 0, W, H);
+    const k = s * cam.z;
+    ctx.setTransform(k, 0, 0, k, cw / 2 - cam.x * k + sx * s, ch / 2 - cam.y * k + sy * s);
+    ctx.drawImage(this.bg, v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
     this.drawCrowd(ctx, g.excite || 0, now);
     this.drawBeams(ctx, g);
     this.drawJumbotron(ctx, g, now);
@@ -524,7 +576,8 @@ const Renderer = {
       for (const p of m.players) this.drawShadow(ctx, p.x, p.standY - p.y, 36);
       this.drawShadow(ctx, b.x, GROUND_Y - b.r - b.y, 16);
       for (const p of m.players) this.drawPlayer(ctx, p, b, m.teams, now);
-      if (g.state !== 'intro') this.drawBall(ctx, b);
+      const sp = b.superT > 0 && m.players[b.superBy];
+      if (g.state !== 'intro') this.drawBall(ctx, b, sp ? superColor(sp.look.id) : null);
       this.drawGoalFront(ctx, 0);
       this.drawGoalFront(ctx, 1);
       if (g.screen === 'match' && g.state === 'over') this.drawTrophy(ctx, g, now);
@@ -533,21 +586,23 @@ const Renderer = {
         for (const p of m.players) this.drawTag(ctx, p, m.teams);
       }
     }
-    this.drawVignette(ctx);
-    ctx.restore();
 
     // obrazovka (nezávisle na kameře)
     ctx.setTransform(s, 0, 0, s, this.ox, this.oy);
+    this.drawVignette(ctx);
     if (cam.bars > 0.01) this.drawBars(ctx, cam.bars);
     if (m && g.state !== 'menu') {
       const a = clamp(1 - cam.bars * 1.6, 0, 1);
       if (a > 0) {
         ctx.globalAlpha = a;
+        ctx.setTransform(s, 0, 0, s, this.ox, 0);
         this.drawHUD(ctx, g);
+        ctx.setTransform(s, 0, 0, s, this.ox, this.oy);
         ctx.globalAlpha = 1;
       }
       if (g.state === 'intro') this.drawIntro(ctx, g, now);
       if (g.state === 'replay') this.drawReplayLabel(ctx, now);
+      if (!Touch.enabled && g.myCharge >= 0 && a > 0 && g.screen === 'match') this.drawSuperMeter(ctx, g.myCharge, g.myColor, now);
     }
     if (g.state === 'paused' && g.mode === 'guest') {
       this.drawMsg(ctx, { text: 'PAUZA', sub: 'Hostitel hru pozastavil', t: 1, dur: 9, size: 110, color: '#f3f6ef' });
@@ -555,34 +610,17 @@ const Renderer = {
     if (g.msg) this.drawMsg(ctx, g.msg);
   },
 
-  drawLetterbox(ctx) {
-    const c = this.canvas, s = this.scale, oy = this.oy;
-    if (this.ox <= 0 && oy <= 0) return;
-    const g = ctx.createLinearGradient(0, oy, 0, oy + H * s);
-    g.addColorStop(0, '#071022');
-    g.addColorStop(150 / H, '#14305a');
-    g.addColorStop(155 / H, '#0f1828');
-    g.addColorStop(458 / H, '#1d2a40');
-    g.addColorStop(508 / H, '#0d1526');
-    g.addColorStop(512 / H, '#2a6f30');
-    g.addColorStop(1, '#46a445');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, c.width, c.height);
-    ctx.fillStyle = 'rgba(3,6,14,.6)';
-    ctx.fillRect(0, 0, c.width, c.height);
-  },
-
   // Publikum: při vzrušení vyskakuje ve vlnách.
   drawCrowd(ctx, ex, now) {
-    const c = this.crowd, h = STANDS_BOTTOM - STANDS_TOP;
+    const c = this.crowd, h = STANDS_BOTTOM - STANDS_TOP, v = this.view, vw = v.x1 - v.x0;
     if (ex < 0.05) {
-      ctx.drawImage(c, 0, STANDS_TOP, W, h);
+      ctx.drawImage(c, v.x0, STANDS_TOP, vw, h);
       return;
     }
-    const n = 32, sw = W / n, csw = c.width / n;
+    const n = Math.round(32 * vw / W), sw = vw / n, csw = c.width / n;
     for (let i = 0; i < n; i++) {
       const off = -Math.max(0, Math.sin(now * 0.012 + i * 0.9)) * 6 * ex;
-      ctx.drawImage(c, i * csw, 0, csw, c.height, i * sw, STANDS_TOP + off, sw + 0.6, h);
+      ctx.drawImage(c, i * csw, 0, csw, c.height, v.x0 + i * sw, STANDS_TOP + off, sw + 0.6, h);
     }
   },
 
@@ -733,7 +771,8 @@ const Renderer = {
     const cycle = 5200;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    for (let bx = -30, i = 0; bx < W; bx += bw, i++) {
+    const first = -30 - Math.ceil(Math.max(0, -30 - this.view.x0) / bw) * bw;
+    for (let bx = first, i = 0; bx < this.view.x1; bx += bw, i++) {
       ctx.save();
       ctx.beginPath();
       ctx.rect(bx, y, bw - 3, h);
@@ -811,21 +850,23 @@ const Renderer = {
   },
 
   drawVignette(ctx) {
+    const v = this.view, vw = v.x1 - v.x0, vh = v.y1 - v.y0;
     if (!this.vig) {
-      const g = ctx.createRadialGradient(W / 2, H * 0.58, H * 0.38, W / 2, H * 0.58, W * 0.78);
+      const cx = (v.x0 + v.x1) / 2, cy = v.y0 + vh * 0.58;
+      const g = ctx.createRadialGradient(cx, cy, vh * 0.38, cx, cy, Math.max(vw, vh) * 0.62);
       g.addColorStop(0, 'rgba(0,0,10,0)');
       g.addColorStop(1, 'rgba(0,0,10,.36)');
       this.vig = g;
     }
     ctx.fillStyle = this.vig;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(v.x0, v.y0, vw, vh);
   },
 
   drawBars(ctx, k) {
-    const bh = 74 * easeInOutQuad(clamp(k, 0, 1));
+    const v = this.view, bh = 74 * easeInOutQuad(clamp(k, 0, 1));
     ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, W, bh);
-    ctx.fillRect(0, H - bh, W, bh);
+    ctx.fillRect(v.x0, v.y0, v.x1 - v.x0, bh);
+    ctx.fillRect(v.x0, v.y1 - bh, v.x1 - v.x0, bh);
   },
 
   // Postavička mimo hřiště (plakáty, obrazovka).
@@ -865,15 +906,16 @@ const Renderer = {
       ctx.save();
       ctx.translate(dir * slide * W * 0.6, 0);
       ctx.beginPath();
+      const L0 = Math.min(-20, this.view.x0 - 20), R0 = Math.max(W + 20, this.view.x1 + 20);
       if (side === 0) {
-        ctx.moveTo(-20, by);
+        ctx.moveTo(L0, by);
         ctx.lineTo(W / 2 + 6, by);
         ctx.lineTo(W / 2 - 54, by + bh);
-        ctx.lineTo(-20, by + bh);
+        ctx.lineTo(L0, by + bh);
       } else {
         ctx.moveTo(W / 2 + 54, by);
-        ctx.lineTo(W + 20, by);
-        ctx.lineTo(W + 20, by + bh);
+        ctx.lineTo(R0, by);
+        ctx.lineTo(R0, by + bh);
         ctx.lineTo(W / 2 - 6, by + bh);
       }
       ctx.closePath();
@@ -886,8 +928,8 @@ const Renderer = {
       ctx.clip();
       // pruhy v pozadí
       ctx.fillStyle = 'rgba(255,255,255,.08)';
-      for (let k = -4; k < 14; k++) {
-        const sx = (side === 0 ? 0 : W / 2) + k * 70 + ((now * 0.03) % 70);
+      for (let k = -8; k < 18; k++) {
+        const sx = (side === 0 ? this.view.x0 : W / 2) + k * 70 + ((now * 0.03) % 70);
         ctx.beginPath();
         ctx.moveTo(sx, by);
         ctx.lineTo(sx + 30, by);
@@ -955,8 +997,37 @@ const Renderer = {
     }
   },
 
-  drawReplayLabel(ctx, now) {
+  // Ukazatel superstřely pro hru na klávesnici (vlevo dole).
+  drawSuperMeter(ctx, c, col, now) {
+    const v = this.view, x = v.x0 + 28, y = v.y1 - 70, w = 230, h = 44;
+    const full = c >= 1;
     ctx.save();
+    ctx.fillStyle = 'rgba(8,13,26,.78)';
+    rrect(ctx, x, y, w, h, 14);
+    ctx.fill();
+    ctx.strokeStyle = full ? col : 'rgba(255,255,255,.16)';
+    ctx.lineWidth = full ? 3 : 1.5;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.08)';
+    rrect(ctx, x + 98, y + 14, w - 110, 16, 8);
+    ctx.fill();
+    ctx.fillStyle = col;
+    ctx.globalAlpha = full ? 0.75 + Math.sin(now * 0.012) * 0.25 : 0.85;
+    rrect(ctx, x + 98, y + 14, (w - 110) * clamp(c, 0, 1), 16, 8);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.font = `800 20px ${FONT_U}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = full ? '#ffffff' : 'rgba(255,255,255,.7)';
+    ctx.fillText(full ? 'SUPER  E' : 'SUPER', x + 14, y + h / 2 + 1);
+    ctx.restore();
+  },
+
+  drawReplayLabel(ctx, now) {
+    const v = this.view;
+    ctx.save();
+    ctx.translate(v.x0, v.y0);
     ctx.font = `800 28px ${FONT_U}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -969,7 +1040,7 @@ const Renderer = {
     ctx.fillText('ZÁZNAM GÓLU', 64, 38);
     ctx.fillStyle = 'rgba(255,255,255,.6)';
     ctx.font = `800 22px ${FONT_U}`;
-    ctx.fillText('ZPOMALENĚ', 36, H - 37);
+    ctx.fillText('ZPOMALENĚ', 36, v.y1 - v.y0 - 37);
     ctx.restore();
   },
 
@@ -1265,9 +1336,14 @@ const Renderer = {
     ctx.lineJoin = 'round';
     ctx.lineWidth = 3;
     ctx.strokeStyle = T.dark;
-    ctx.strokeText(String(L.num), -3, R + 8);
+    // obrázek je zrcadlený podle směru, číslo se musí číst normálně
+    ctx.save();
+    ctx.translate(-3, R + 8);
+    if (p.dir < 0) ctx.scale(-1, 1);
+    ctx.strokeText(String(L.num), 0, 0);
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(String(L.num), -3, R + 8);
+    ctx.fillText(String(L.num), 0, 0);
+    ctx.restore();
   },
 
   drawHead(ctx, p, ball, T, now) {
@@ -1399,7 +1475,7 @@ const Renderer = {
       ctx.save();
       circle(ctx, 0, 0, R);
       ctx.clip();
-      ctx.fillStyle = base;
+      ctx.fillStyle = L.hair === 'fade' ? 'rgba(90,60,30,.32)' : base;
       ctx.beginPath();
       if (L.hair === 'wavy') {
         ctx.moveTo(R + 8, -24);
@@ -1606,6 +1682,51 @@ const Renderer = {
         break;
       }
 
+      case 'fade': {
+        // krátko po stranách, objem nahoře vyčesaný dozadu
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(-28, -6);
+          ctx.quadraticCurveTo(-38, -20, -30, -34);
+          ctx.quadraticCurveTo(-24, -50, -6, -52);
+          ctx.quadraticCurveTo(6, -62, 22, -55);
+          ctx.quadraticCurveTo(42, -52, 45, -31);
+          ctx.quadraticCurveTo(37, -32, 31, -25);
+          ctx.quadraticCurveTo(16, -31, 4, -29);
+          ctx.quadraticCurveTo(-10, -27, -17, -16);
+          ctx.quadraticCurveTo(-22, -9, -28, -6);
+          ctx.closePath();
+        });
+        strand(-18, -42, 4, -56, 30, -46, light, 2.6);
+        strand(-10, -36, 10, -46, 34, -36, dark, 1.4);
+        strand(-26, -28, -22, -40, -8, -46, light, 1.8);
+        break;
+      }
+
+      case 'side': {
+        // pěšinka vlevo, ofina sčesaná dopředu přes čelo
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(-34, 18);
+          ctx.arc(0, -1, R + 3, Math.PI * 0.86, Math.PI * 1.82);
+          ctx.quadraticCurveTo(48, -20, 41, -8);
+          ctx.quadraticCurveTo(36, -18, 26, -19);
+          ctx.quadraticCurveTo(10, -25, -4, -24);
+          ctx.quadraticCurveTo(-14, -20, -17, -6);
+          ctx.quadraticCurveTo(-23, 9, -34, 18);
+          ctx.closePath();
+        });
+        ctx.strokeStyle = dark;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(-16, -40);
+        ctx.quadraticCurveTo(-8, -43, -2, -41);
+        ctx.stroke();
+        strand(-2, -40, 22, -44, 40, -22, light, 2.4);
+        strand(-24, -30, -30, -12, -30, 4, light, 1.6);
+        break;
+      }
+
       case 'wavy': {
         // objemné vlny nahoře a dozadu
         const top = [];
@@ -1778,6 +1899,72 @@ const Renderer = {
     ctx.fillText(p.label, x, y + 0.5);
   },
 
+  // Úvodní obrazovka: dvojice na osvětleném pódiu, střídají se.
+  drawHero(cv, now) {
+    if (!cv) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if (!w || !h) return;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+    }
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    const k = Math.min(w / 520, h / 380) * dpr;
+    ctx.setTransform(k, 0, 0, k, cv.width / 2 - 260 * k, cv.height - 380 * k);
+    const per = 5200, idx = Math.floor(now / per) % DUO_TEAMS.length, t = now % per;
+    const T = DUO_TEAMS[idx];
+    const enter = easeOutBack(clamp(t / 500, 0, 1)), exit = clamp((t - per + 420) / 420, 0, 1);
+    const a = clamp(enter, 0, 1) * (1 - exit);
+    // pódium a světlo
+    ctx.save();
+    ctx.globalAlpha = 0.9 * a;
+    const beam = ctx.createLinearGradient(0, 0, 0, 330);
+    beam.addColorStop(0, 'rgba(255,255,255,0)');
+    beam.addColorStop(1, hexA(T.color, 0.35));
+    ctx.fillStyle = beam;
+    ctx.beginPath();
+    ctx.moveTo(220, -20);
+    ctx.lineTo(300, -20);
+    ctx.lineTo(470, 330);
+    ctx.lineTo(50, 330);
+    ctx.closePath();
+    ctx.fill();
+    const pod = ctx.createRadialGradient(260, 330, 10, 260, 330, 200);
+    pod.addColorStop(0, hexA(T.light, 0.9));
+    pod.addColorStop(0.5, hexA(T.color, 0.55));
+    pod.addColorStop(1, hexA(T.dark, 0));
+    ctx.fillStyle = pod;
+    oval(ctx, 260, 330, 200, 34);
+    ctx.fill();
+    ctx.restore();
+    // postavy
+    const slide = (1 - enter) * 60 + exit * 60;
+    const figs = T.chars.map((id, i) => ({ look: charById(id), x: 180 + i * 160 + (i === 0 ? -slide : slide), dir: i === 0 ? 1 : -1 }));
+    const happy = t > 2200 && t < 3300;
+    ctx.save();
+    ctx.globalAlpha = a;
+    figs.forEach((f, i) => {
+      const bob = Math.sin(now * 0.004 + i * 1.7) * 4;
+      this.drawFigure(ctx, f.look, T, f.x, 196 + bob, 1.55, f.dir, happy ? 1 : 0, { x: 260, y: 120 });
+    });
+    // jmenovka
+    ctx.font = `30px ${FONT_D}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(T.name).width + 40;
+    ctx.fillStyle = T.color;
+    rrect(ctx, 260 - tw / 2, 340, tw, 40, 20);
+    ctx.fill();
+    ctx.fillStyle = T.dark;
+    ctx.fillRect(260 - tw / 2 + 14, 376, tw - 28, 4);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(T.name, 260, 361);
+    ctx.restore();
+  },
+
   // Portrét postavy pro výběr hráčů.
   portrait(canvas, charId, team, facing) {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1797,19 +1984,47 @@ const Renderer = {
 
   /* ---- míč ---- */
 
-  drawBall(ctx, b) {
+  drawBall(ctx, b, superCol) {
     const t = this.trail;
-    if (!b.held && b.speed > 760) {
+    if (!b.held && (b.speed > 760 || superCol)) {
       t.push(b.x, b.y);
-      if (t.length > 14) t.splice(0, 2);
+      if (t.length > (superCol ? 24 : 14)) t.splice(0, 2);
     } else if (t.length) {
       t.splice(0, 2);
     }
-    for (let i = 0; i < t.length; i += 2) {
-      const k = (i + 2) / (t.length + 2);
-      ctx.fillStyle = `rgba(255,255,255,${0.28 * k})`;
-      circle(ctx, t[i], t[i + 1], b.r * (0.45 + 0.45 * k));
+    if (superCol) {
+      // ohnivá stopa superstřely v barvě střelce
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < t.length; i += 2) {
+        const k = (i + 2) / (t.length + 2);
+        ctx.fillStyle = superCol;
+        ctx.globalAlpha = 0.22 * k;
+        circle(ctx, t[i], t[i + 1], b.r * (0.6 + 0.9 * k));
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.18 * k;
+        circle(ctx, t[i], t[i + 1], b.r * 0.5 * k);
+        ctx.fill();
+      }
+      const glow = ctx.createRadialGradient(b.x, b.y, b.r * 0.6, b.x, b.y, b.r * 3.2);
+      glow.addColorStop(0, superCol);
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = glow;
+      circle(ctx, b.x, b.y, b.r * 3.2);
       ctx.fill();
+      ctx.restore();
+      if (Math.random() < 0.7) {
+        Effects.add({ x: b.x + rand(-8, 8), y: b.y + rand(-8, 8), vx: -b.vx * 0.15 + rand(-60, 60), vy: rand(-80, 40), g: -60, life: rand(0.2, 0.45), size: rand(2, 4.5), color: Math.random() < 0.5 ? superCol : '#fff6c8' });
+      }
+    } else {
+      for (let i = 0; i < t.length; i += 2) {
+        const k = (i + 2) / (t.length + 2);
+        ctx.fillStyle = `rgba(255,255,255,${0.28 * k})`;
+        circle(ctx, t[i], t[i + 1], b.r * (0.45 + 0.45 * k));
+        ctx.fill();
+      }
     }
 
     ctx.save();
@@ -1962,6 +2177,15 @@ function star(ctx, x, y, r, r2) {
     else ctx.lineTo(px, py);
   }
   ctx.closePath();
+}
+
+function hexA(hex, a) {
+  return `rgba(${hexRgb(hex)},${a})`;
+}
+
+function hexRgb(hex) {
+  const n = parseInt(String(hex).slice(1), 16) || 0;
+  return `${n >> 16},${(n >> 8) & 255},${n & 255}`;
 }
 
 function pick2(rng, arr) {
