@@ -312,6 +312,8 @@ kbd {
   white-space: nowrap;
   color: var(--mute);
 }
+.seg-info { display: flex; align-items: center; padding: 3px 10px; border-radius: 12px; border: 2px solid var(--line); background: rgba(0, 0, 0, 0.35); font-size: 15px; font-weight: 800; letter-spacing: 0.04em; color: var(--gold); white-space: nowrap; }
+:root.h320 .seg-info { font-size: 12px; padding: 2px 7px; }
 .seg button[aria-pressed="true"] { background: var(--gold); color: var(--ink); box-shadow: 0 2px 0 var(--gold-deep); }
 .seg button:disabled:not([aria-pressed="true"]) { opacity: 0.4; }
 .invite { display: flex; align-items: center; gap: 10px; flex: none; }
@@ -566,15 +568,26 @@ kbd {
 .res-score .colon { color: var(--mute); font-size: 0.7em; }
 .res-sub { margin: 0; font-size: 18px; color: var(--mute); }
 .dialog.result {
-  width: min(860px, 100%);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  width: min(940px, 100%);
+  grid-template-columns: minmax(0, 0.62fr) minmax(0, 1.6fr);
   grid-template-areas: "main side" "btns btns";
   align-items: center;
   column-gap: clamp(14px, 4vw, 40px);
 }
 .dialog.result:has(.res-side .res-card:not([hidden])) .res-main { justify-self: end; }
 .res-main { grid-area: main; display: grid; gap: clamp(4px, calc(var(--vh, 1vh) * 1.6), 10px); justify-items: center; }
-.res-side { grid-area: side; display: grid; gap: 10px; justify-items: start; width: 100%; }
+.res-side {
+  grid-area: side;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  grid-template-areas: "stats mvp" "stats reward";
+  gap: 8px;
+  align-items: start;
+  width: 100%;
+}
+.res-side #res-stats { grid-area: stats; align-self: stretch; }
+.res-side .res-card.mvp { grid-area: mvp; }
+.res-side .res-card.reward { grid-area: reward; }
 .dialog.result > .dialog-buttons { grid-area: btns; }
 .dialog.result:not(:has(.res-card:not([hidden]))) { grid-template-columns: 1fr; grid-template-areas: "main" "btns"; }
 .res-card {
@@ -609,6 +622,45 @@ kbd {
 .rw-note { margin: 0; font-size: 14px; color: var(--mute); }
 .res-card.rankup { animation: rankup 0.9s ease-in-out 3; border-color: var(--gold); }
 @keyframes rankup { 50% { box-shadow: 0 5px 0 var(--ink), 0 0 28px rgba(255, 201, 60, 0.8); transform: scale(1.03); } }
+
+/* statistiky zápasu */
+.res-card.stats { display: grid; gap: 3px; padding: 8px 12px; align-content: start; }
+.st-row { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; padding-bottom: 4px; }
+.st-row b { font-family: var(--font-display); font-weight: 400; font-size: 17px; line-height: 1.05; }
+.st-row b:first-child { text-align: left; }
+.st-row b:nth-child(3) { text-align: right; }
+.st-row b.lead { color: var(--gold); }
+.st-row span { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); text-align: center; white-space: nowrap; }
+.st-row i { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 2px; opacity: 0.85; background: linear-gradient(90deg, var(--c0) var(--a), var(--c1) var(--a)); }
+.st-head { padding-bottom: 2px; }
+.st-head span { font-family: var(--font-display); font-size: 13px; letter-spacing: 0.02em; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-head span:first-child { text-align: left; }
+.st-head span:last-child { text-align: right; }
+.st-head span:nth-child(2) { color: var(--gold); font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+
+/* poločas */
+.dialog.half {
+  width: min(780px, 100%);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-areas: "main stats" "btns btns" "wait wait";
+  align-items: center;
+  gap: 10px 22px;
+  padding: clamp(10px, calc(var(--vh, 1vh) * 2.5), 18px) clamp(12px, 3vw, 24px);
+  border-radius: 24px;
+  border: 3px solid var(--ink);
+  background: linear-gradient(160deg, #22304c, #121a2c);
+  box-shadow: 0 6px 0 var(--ink);
+}
+.half-main { grid-area: main; display: grid; gap: 6px; justify-items: center; }
+.dialog.half #half-stats { grid-area: stats; width: 100%; }
+.dialog.half .dialog-buttons { grid-area: btns; }
+.dialog.half #half-wait { grid-area: wait; }
+.half-score { margin: 0; display: flex; align-items: center; gap: 10px; }
+.half-score b { font-family: var(--font-display); font-weight: 400; font-size: clamp(30px, calc(var(--vh, 1vh) * 10), 48px); line-height: 1; text-shadow: 0 4px 0 var(--ink); white-space: nowrap; }
+.hs-team { font-family: var(--font-display); font-size: 15px; max-width: 110px; line-height: 1.1; }
+.ref-card { display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 6px; border-radius: 14px; background: rgba(0, 0, 0, 0.3); text-align: left; }
+.ref-pic { width: 44px; height: 58px; display: block; }
+.ref-name { margin: 0; font-family: var(--font-display); font-size: 18px; line-height: 1.1; }
 
 /* odznak ligy */
 .rank-emblem { --rank: #9fb0c7; display: inline-grid; place-items: center; width: 30px; height: 30px; flex: none; }
@@ -920,6 +972,13 @@ kbd {
 :root.h380 .lobby-power { font-size: 13px; }
 :root.h380 .lobby-power b { font-size: 15px; }
 :root.h380 .dialog.cup { gap: 6px; padding: 8px 14px; }
+:root.h380 .res-card.stats { padding: 5px 10px; gap: 1px; }
+:root.h380 .st-row b { font-size: 15px; }
+:root.h380 .st-row { padding-bottom: 3px; }
+:root.h380 .dialog.half { gap: 6px 16px; padding: 8px 14px; }
+:root.h380 .dialog.half .res-title { font-size: 30px; }
+:root.h380 .ref-pic { width: 36px; height: 46px; }
+:root.h380 .ref-name { font-size: 15px; }
 :root.h380 .cup-head { display: flex; align-items: baseline; gap: 12px; }
 :root.h380 .dialog.cup .screen-title { font-size: 24px; }
 :root.h380 .br-pic { width: 22px; height: 27px; }
@@ -961,6 +1020,18 @@ kbd {
 :root.h320 .br-team { padding: 0 6px 0 3px; }
 :root.h320 .dialog.cup { gap: 4px; padding: 6px 12px; }
 :root.h320 .cup-sub { font-size: 12px; }
+:root.h320 .st-row b { font-size: 13px; }
+:root.h320 .st-row span { font-size: 9.5px; }
+:root.h320 .st-row { padding-bottom: 2px; gap: 4px; }
+:root.h320 .st-row i { height: 2px; }
+:root.h320 .st-head span { font-size: 11px; }
+:root.h320 .res-card.stats { padding: 4px 8px; }
+:root.h320 .dialog.half .res-title { font-size: 26px; }
+:root.h320 .half-score b { font-size: 30px; }
+:root.h320 .hs-team { font-size: 12px; }
+:root.h320 .dialog.half .res-kicker { display: none; }
+:root.h320 .res-side { gap: 5px; }
+:root.h320 .dialog.result { column-gap: 12px; }
 :root.h320 .lobby-top { gap: 8px; flex-wrap: nowrap; }
 :root.h320 .lobby-settings { flex-wrap: nowrap; justify-content: flex-start; gap: 5px; }
 :root.h320 .seg { padding: 2px; border-width: 1.5px; }

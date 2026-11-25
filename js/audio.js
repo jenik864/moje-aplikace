@@ -152,7 +152,8 @@ const Sound = {
   whistle(kind = 'short') {
     if (!this.live()) return;
     const parts = kind === 'final' ? [[0, 0.16], [0.26, 0.16], [0.52, 0.75]]
-      : kind === 'long' ? [[0, 0.6]] : [[0, 0.3]];
+      : kind === 'half' ? [[0, 0.2], [0.32, 0.6]]
+        : kind === 'long' ? [[0, 0.6]] : [[0, 0.3]];
     for (const [at, dur] of parts) this._whistle(at, dur);
   },
 
@@ -230,6 +231,23 @@ const Sound = {
     this.hiss(1.1, 0.12, 'highpass', 3500);
     for (let i = 0; i < 14; i++) this.hiss(0.03, 0.18, 'bandpass', 2500 + Math.random() * 2500, 2, 0.15 + Math.random() * 1.1);
     this.tone('sine', 90, 50, 0.35, 0.3);
+  },
+
+  // basketbalový driblink
+  dribble() {
+    if (!this.live()) return;
+    for (const at of [0, 0.16]) {
+      this.tone('sine', 160, 70, 0.12, 0.45, at);
+      this.hiss(0.04, 0.2, 'bandpass', 900, 2, at);
+    }
+  },
+
+  // míč propadne košem + klakson jako v hale
+  swish() {
+    if (!this.live()) return;
+    this.hiss(0.3, 0.25, 'bandpass', 3200, 0.8);
+    this.tone('sawtooth', 220, 220, 0.5, 0.06, 0.12);
+    this.tone('square', 277, 277, 0.5, 0.04, 0.12);
   },
 
   // jásot tribuny (gól, SKIPER)

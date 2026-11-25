@@ -121,11 +121,7 @@
           <button type="button" data-v="1v1">1 v 1</button>
           <button type="button" data-v="2v2">2 v 2</button>
         </div>
-        <div class="seg" role="group" aria-label="Délka zápasu" data-key="minutes">
-          <button type="button" data-v="1">1 min</button>
-          <button type="button" data-v="2">2 min</button>
-          <button type="button" data-v="3">3 min</button>
-        </div>
+        <span class="seg-info" title="Zápas má dva poločasy po 45 s">⏱ 2 × 45 s</span>
         <div id="lobby-level" class="seg" role="group" aria-label="Obtížnost počítače" data-key="level">
           <button type="button" data-v="easy">Lehký</button>
           <button type="button" data-v="medium">Střední</button>
@@ -182,6 +178,7 @@
         <p id="res-wait" class="status wait" hidden>Čeká se na hostitele…</p>
       </div>
       <div class="res-side">
+        <div id="res-stats" class="res-card stats" hidden></div>
         <div id="res-mvp" class="res-card mvp" hidden>
           <canvas id="res-mvp-pic" class="mvp-pic" aria-hidden="true"></canvas>
           <div class="mvp-text">
@@ -201,6 +198,26 @@
         <button id="btn-res-second" class="btn-game" type="button">Výběr hráčů</button>
         <button id="btn-res-main" class="btn-play" type="button">Hrát znovu</button>
       </div>
+    </div>
+  </section>
+
+  <!-- poločas -->
+  <section id="half" class="screen dim" aria-labelledby="half-title" hidden>
+    <div class="dialog half">
+      <div class="half-main">
+        <p class="res-kicker">Přestávka</p>
+        <h2 id="half-title" class="res-title">Poločas</h2>
+        <p class="half-score"><span id="half-a" class="hs-team"></span><b id="half-sc">0 : 0</b><span id="half-b" class="hs-team"></span></p>
+        <div class="ref-card">
+          <canvas id="half-ref" class="ref-pic" aria-hidden="true"></canvas>
+          <div><p class="mini-kicker">Rozhodčí</p><p class="ref-name">Milan Voračka</p></div>
+        </div>
+      </div>
+      <div id="half-stats" class="res-card stats"></div>
+      <div class="dialog-buttons row">
+        <button id="btn-half-go" class="btn-play" type="button">Druhý poločas</button>
+      </div>
+      <p id="half-wait" class="status wait" hidden>Čeká se na hostitele…</p>
     </div>
   </section>
 

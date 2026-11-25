@@ -384,9 +384,11 @@ const STANDS_BOTTOM = 458;
 const JUMBO = { x: 528, y: 162, w: 224, h: 92 };
 const DEFAULT_CAM = { x: W / 2, y: H / 2, z: 1, bars: 0 };
 const AISLES = [-638, 214, 1066, 1918];
-const INTRO_DUR = 7.4;   // celý úvod zápasu
-const POSTER_END = 3.9;  // do kdy jsou vidět plakáty týmů
-const TALK_AT = [4.15, 5.65]; // předzápasové hlášky: tým vlevo, tým vpravo
+const INTRO_DUR = 8.8;   // celý úvod zápasu
+const POSTER_END = 3.6;  // do kdy jsou vidět plakáty týmů
+const REF_AT = 3.6;      // představení rozhodčího
+const REF_END = 5.5;
+const TALK_AT = [5.75, 7.2]; // předzápasové hlášky: tým vlevo, tým vpravo
 const TALK_DUR = 1.35;
 
 const Renderer = {
@@ -762,10 +764,17 @@ const Renderer = {
       const b = m.ball;
       for (const p of m.players) this.drawShadow(ctx, p.x, p.standY - p.y, 36 * PS);
       this.drawShadow(ctx, b.x, GROUND_Y - b.r - b.y, b.r);
+      const hoop = b.basketT > 0 || b.carryBy >= 0;
+      if (hoop) this.drawHoop(ctx, b, now, false);
+      if (g.screen === 'match' && g.state === 'intro') this.drawReferee(ctx, g, b, now);
       for (const p of m.players) if (p.boostT > 0) this.drawBoost(ctx, p, now);
       for (const p of m.players) this.drawPlayer(ctx, p, b, m.teams, now);
       const sp = b.superT > 0 && m.players[b.superBy];
-      if (g.state !== 'intro') this.drawBall(ctx, b, sp ? superColor(sp.look.id) : null);
+      if (g.state !== 'intro') {
+        if (hoop) this.drawBasketball(ctx, b);
+        else this.drawBall(ctx, b, sp ? superColor(sp.look.id) : null);
+      }
+      if (hoop) this.drawHoop(ctx, b, now, true);
       this.drawGoalFront(ctx, 0);
       this.drawGoalFront(ctx, 1);
       if (g.screen === 'match' && g.state === 'over') this.drawTrophy(ctx, g, now);
@@ -792,7 +801,10 @@ const Renderer = {
         ctx.setTransform(s, 0, 0, s, this.ox, this.oy);
         ctx.globalAlpha = 1;
       }
-      if (g.state === 'intro') this.drawIntro(ctx, g, now);
+      if (g.state === 'intro') {
+        this.drawIntro(ctx, g, now);
+        this.drawRefBanner(ctx, g, now);
+      }
       if (g.state === 'replay') this.drawReplayLabel(ctx, now);
       if (!Touch.enabled && g.myCharge >= 0 && a > 0 && g.screen === 'match') this.drawSuperMeter(ctx, g.myCharge, g.myColor, now, g.myPower);
     }
@@ -930,8 +942,7 @@ const Renderer = {
       ctx.fillText(String(m.score[1]), x + w * 0.73, cy + 4);
       ctx.fillStyle = '#ffc93c';
       ctx.font = `800 22px ${FONT_U}`;
-      const t = Math.max(0, Math.ceil(g.timeLeft));
-      ctx.fillText(g.golden ? 'ZG' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`, cx, cy + 2);
+      ctx.fillText(fbClock(g.clock || 0), cx, cy + 2);
     }
     // LED mřížka a lesk
     ctx.fillStyle = 'rgba(0,0,0,.22)';
@@ -1391,6 +1402,21 @@ const Renderer = {
   /* ---- hráč ---- */
 
   drawPlayer(ctx, p, ball, teams, now) {
+    // při oslavě se hráč může otočit k vlastním fanouškům
+    if (p.face && p.face !== p.dir) {
+      const d = p.dir;
+      p.dir = p.face;
+      try {
+        this.drawPlayerBody(ctx, p, ball, teams, now);
+      } finally {
+        p.dir = d;
+      }
+      return;
+    }
+    this.drawPlayerBody(ctx, p, ball, teams, now);
+  },
+
+  drawPlayerBody(ctx, p, ball, teams, now) {
     // kresba je v základních rozměrech, na hřišti se zvětší o PS
     const T = teams[p.team], L = p.look, R = p.R / PS, F = p.F / PS;
     const kicking = p.kickT >= 0;
@@ -1413,9 +1439,30 @@ const Renderer = {
       fx = ((f.x - p.x) * p.dir) / PS;
       fy = (f.y - p.y) / PS + 5;
     }
+    // skluz po kolenou: kolena na zemi, bérce dozadu
+    const kn = p.kneel || 0;
+    if (kn > 0) {
+      bx = lerp(bx, -30, kn);
+      by = lerp(by, footY - 4, kn);
+      fx = lerp(fx, -18, kn);
+      fy = lerp(fy, footY - 2, kn);
+    }
     // úhel ruky od svislice: kladný dopředu, ±π nahoru
     let aBack, aFront;
-    if (p.mood > 0) {
+    if (p.shootT > 0) {
+      // basketbalový hod: obě ruce nahoru
+      aBack = -2.75;
+      aFront = 2.95;
+    } else if (kn > 0.3) {
+      // ruce rozpažené nahoru do stran (ne přes obličej)
+      const w = Math.sin(now * 0.012) * 0.12;
+      aBack = -2.0 - w;
+      aFront = 1.7 + w;
+    } else if (p.plane > 0.3) {
+      // letadlo: ruce rozpažené
+      aBack = -1.62;
+      aFront = 1.58;
+    } else if (p.mood > 0) {
       // radost: mávání do stran (nahoru by ruce zakryly obličej)
       const w = Math.sin(now * 0.016 + p.homeX) * 0.4;
       aBack = -1.75 - w;
@@ -1447,7 +1494,15 @@ const Renderer = {
       ctx.rotate(p.spin);
       ctx.translate(0, -c);
     }
+    if (kn > 0) ctx.translate(0, F * 0.36 * kn * PS);
+    if (p.plane > 0) ctx.rotate(Math.sin(now * 0.008 + p.homeX) * 0.16 * p.plane);
     ctx.scale(p.dir * PS, PS);
+    if (kn > 0) {
+      // trup se při skluzu zaklání
+      ctx.translate(0, R + 18);
+      ctx.rotate(-0.22 * kn);
+      ctx.translate(0, -(R + 18));
+    }
     this.drawHair(ctx, p, T, 'back', now);
     this.drawArm(ctx, -12, R + 1, aBack, T, L, true);
     this.drawLeg(ctx, -6, R + 18, bx, by, T, L, 0, true);
@@ -1874,6 +1929,26 @@ const Renderer = {
     ctx.strokeStyle = 'rgba(255,255,255,.6)';
     ctx.lineWidth = 2;
     line(ctx, 12, R + 2, 11, R + 13);
+    // šňůrka s píšťalkou (rozhodčí)
+    if (L.ref) {
+      ctx.strokeStyle = '#111317';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-6, R - 2);
+      ctx.quadraticCurveTo(4, R + 14, 12, R + 2);
+      ctx.stroke();
+      if (!p.blow) {
+        ctx.fillStyle = '#d9dee6';
+        rrect(ctx, 2, R + 10, 9, 5, 2);
+        ctx.fill();
+      }
+      // žluté lemování dresu
+      ctx.strokeStyle = T.light;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(2, R - 1, 7, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+    }
     // číslo
     ctx.font = `800 13px ${FONT_U}`;
     ctx.textAlign = 'center';
@@ -2095,14 +2170,20 @@ const Renderer = {
       ctx.save();
       circle(ctx, 0, 0, R);
       ctx.clip();
-      const faded = L.hair === 'fade' || L.hair === 'curlyshort';
-      ctx.fillStyle = L.hair === 'fade' ? 'rgba(90,60,30,.32)' : faded ? hexA(dark, 0.42) : base;
+      const faded = L.hair === 'fade' || L.hair === 'curlyshort' || L.hair === 'receding';
+      ctx.fillStyle = L.hair === 'fade' ? 'rgba(90,60,30,.32)' : L.hair === 'receding' ? hexA(base, 0.5) : faded ? hexA(dark, 0.42) : base;
       ctx.beginPath();
       if (L.hair === 'wavy') {
         ctx.moveTo(R + 8, -24);
         ctx.quadraticCurveTo(20, -18, 4, -22);
         ctx.quadraticCurveTo(-12, -16, -18, 2);
         ctx.quadraticCurveTo(-22, 16, -30, 24);
+      } else if (L.hair === 'receding') {
+        // ustupující koutky: vlasy začínají výš
+        ctx.moveTo(R + 8, -36);
+        ctx.quadraticCurveTo(20, -36, 10, -36);
+        ctx.quadraticCurveTo(0, -27, -12, -12);
+        ctx.quadraticCurveTo(-20, 6, -32, 22);
       } else if (L.hair === 'wavyshort') {
         ctx.moveTo(R + 8, -22);
         ctx.quadraticCurveTo(20, -20, 4, -26);
@@ -2361,6 +2442,36 @@ const Renderer = {
         ctx.stroke();
         strand(-2, -40, 22, -44, 40, -22, light, 2.4);
         strand(-24, -30, -30, -12, -30, 4, light, 1.6);
+        break;
+      }
+
+      case 'receding': {
+        // krátký sestřih, vyšší čelo, pramínek trčí nahoru
+        // jen nahoře; boky jsou vystříhané (vrstva 'cap')
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(-40, -4);
+          ctx.quadraticCurveTo(-47, -24, -33, -34);
+          ctx.quadraticCurveTo(-18, -48, 2, -47);
+          ctx.quadraticCurveTo(20, -46, 27, -34);
+          ctx.quadraticCurveTo(17, -37, 10, -35);
+          ctx.quadraticCurveTo(0, -31, -8, -21);
+          ctx.quadraticCurveTo(-16, -10, -24, -8);
+          ctx.quadraticCurveTo(-32, -4, -40, -4);
+          ctx.closePath();
+        });
+        strand(-22, -36, -4, -45, 18, -41, light, 2.2);
+        strand(-34, -16, -38, -26, -28, -36, light, 1.6);
+        // pramínek na temeni
+        ctx.strokeStyle = dark;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(-4, -41);
+        ctx.quadraticCurveTo(-2, -52, 4, -55);
+        ctx.stroke();
+        ctx.strokeStyle = base;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
         break;
       }
 
@@ -2704,6 +2815,42 @@ const Renderer = {
       ctx.arc(25, 13, 6.5, 0.2 * Math.PI, 0.8 * Math.PI);
       ctx.stroke();
     }
+    // strniště
+    if (L.stubble) {
+      // jemné strniště na bradě a čelisti
+      ctx.save();
+      circle(ctx, 0, 0, 40);
+      ctx.clip();
+      ctx.fillStyle = 'rgba(170,130,90,.1)';
+      ctx.beginPath();
+      ctx.ellipse(18, 25, 22, 12, 0.15, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(150,110,70,.28)';
+      const rng = mulberry32(3);
+      for (let i = 0; i < 26; i++) {
+        const a = rng() * Math.PI, d = 0.55 + rng() * 0.45;
+        ctx.fillRect(18 + Math.cos(a) * 21 * d, 22 + Math.sin(a) * 12 * d, 0.8, 0.8);
+      }
+      ctx.restore();
+    }
+    // rozhodčí píská
+    if (L.ref && p.blow) {
+      ctx.fillStyle = '#d9dee6';
+      ctx.strokeStyle = 'rgba(40,40,50,.8)';
+      ctx.lineWidth = 1.4;
+      rrect(ctx, 24, 14, 16, 8, 3);
+      ctx.fill();
+      ctx.stroke();
+      circle(ctx, 40, 20, 5);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.8)';
+      ctx.fillRect(26, 15.5, 8, 1.6);
+      // nafouknutá tvář
+      ctx.fillStyle = 'rgba(240,120,110,.3)';
+      circle(ctx, 18, 12, 6);
+      ctx.fill();
+    }
     // piercing v nose
     if (L.pierce) {
       ctx.fillStyle = L.pierce;
@@ -2888,9 +3035,10 @@ const Renderer = {
     const ctx = canvas.getContext('2d');
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cw, ch);
+    const look = typeof charId === 'string' ? charById(charId) : charId;
     let p = canvas._pl;
-    if (!p || p.look.id !== charId) {
-      p = canvas._pl = new Player({ team: 0, x: 0, look: charById(charId), role: 'attacker', ctrl: 'cpu' });
+    if (!p || p.look.id !== look.id) {
+      p = canvas._pl = new Player({ team: 0, x: 0, look, role: 'attacker', ctrl: 'cpu' });
       canvas._ph = Math.random() * 10;
     }
     const extra = (p.F - PHYS.footH) / PS; // vysoký hráč má delší nohy
@@ -2905,8 +3053,154 @@ const Renderer = {
     p.blink = live && (t + ph) % 3.4 < 0.13 ? 0.1 : 0;
     p.mood = opts && opts.happy ? 1 : 0;
     p.homeX = ph * 100;
-    const look = live ? { x: facing * 300, y: -20 + Math.sin(t * 0.7 + ph) * 60 } : { x: facing * 300, y: -20 };
-    this.drawPlayer(ctx, p, look, [team], live ? t * 1000 : 0);
+    const eye = live ? { x: facing * 300, y: -20 + Math.sin(t * 0.7 + ph) * 60 } : { x: facing * 300, y: -20 };
+    this.drawPlayer(ctx, p, eye, [team], live ? t * 1000 : 0);
+  },
+
+  /* ---- Marsalova trojka ---- */
+
+  drawBasketball(ctx, b) {
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    const g = ctx.createRadialGradient(-b.r * 0.35, -b.r * 0.4, 2, 0, 0, b.r);
+    g.addColorStop(0, '#ffb36b');
+    g.addColorStop(0.6, '#f0782a');
+    g.addColorStop(1, '#b84a12');
+    ctx.fillStyle = g;
+    circle(ctx, 0, 0, b.r);
+    ctx.fill();
+    ctx.save();
+    circle(ctx, 0, 0, b.r);
+    ctx.clip();
+    ctx.rotate(b.rot);
+    ctx.strokeStyle = '#2a1408';
+    ctx.lineWidth = 1.8;
+    line(ctx, -b.r, 0, b.r, 0);
+    line(ctx, 0, -b.r, 0, b.r);
+    ctx.beginPath();
+    ctx.arc(-b.r * 1.15, 0, b.r * 0.85, -0.9, 0.9);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(b.r * 1.15, 0, b.r * 0.85, Math.PI - 0.9, Math.PI + 0.9);
+    ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(60,20,0,.7)';
+    ctx.lineWidth = 2;
+    circle(ctx, 0, 0, b.r);
+    ctx.stroke();
+    ctx.restore();
+  },
+
+  // Koš nad bránou soupeře (zadní část před míčem, přední po něm).
+  drawHoop(ctx, b, now, front) {
+    const side = b.basketSide;
+    if (side !== 0 && side !== 1) return;
+    const s = side === 0 ? 1 : -1;
+    const hx = side === 0 ? GOAL_W * 0.5 : W - GOAL_W * 0.5, hy = BASKET_Y;
+    const age = b.carryBy >= 0 ? 0 : 4 - b.basketT;
+    const k = easeOutBack(clamp((age + 0.15) / 0.35, 0, 1));
+    ctx.save();
+    ctx.translate(hx, BAR_Y);
+    ctx.scale(1, k);
+    ctx.translate(-hx, -BAR_Y);
+    const ring = '#ff5a1f';
+    if (!front) {
+      // sloup na střeše brány a deska
+      const bx = hx - s * 46;
+      ctx.fillStyle = '#9aa3b2';
+      ctx.fillRect(bx - 3, hy - 20, 6, BAR_Y - hy + 20);
+      ctx.fillStyle = 'rgba(240,246,255,.92)';
+      ctx.strokeStyle = '#1b2232';
+      ctx.lineWidth = 3;
+      rrect(ctx, bx - 5, hy - 74, 10, 82, 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = ring;
+      ctx.fillRect(bx - 5, hy - 40, 10, 24);
+      // držák a zadní polovina obroučky
+      ctx.strokeStyle = '#8c95a5';
+      ctx.lineWidth = 4;
+      line(ctx, bx, hy, hx - s * 32, hy);
+      ctx.strokeStyle = ring;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.ellipse(hx, hy, 33, 7, 0, Math.PI, TAU);
+      ctx.stroke();
+    } else {
+      // síťka a přední polovina obroučky
+      ctx.strokeStyle = 'rgba(255,255,255,.85)';
+      ctx.lineWidth = 1.6;
+      const sw = Math.sin(now * 0.02) * (b.swished ? 3 : 0);
+      for (let i = -3; i <= 3; i++) {
+        const x0 = hx + i * 10, x1 = hx + i * 6 + sw;
+        line(ctx, x0, hy + 2, x1, hy + 40);
+      }
+      for (let j = 1; j <= 3; j++) {
+        const yy = hy + j * 11, w = 33 - j * 4;
+        ctx.beginPath();
+        ctx.ellipse(hx + sw * j / 3, yy, w, 4, 0, 0, Math.PI);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = ring;
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.ellipse(hx, hy, 33, 7, 0, 0, Math.PI);
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+
+  /* ---- rozhodčí ---- */
+
+  // V úvodu stojí rozhodčí uprostřed hřiště, píská a pak odběhne.
+  drawReferee(ctx, g, ball, now) {
+    const t = g.stateT;
+    if (t < 0.4) return;
+    let p = this.refP;
+    if (!p) p = this.refP = new Player({ team: 0, x: W / 2, look: REFEREE, role: 'attacker', ctrl: 'cpu' });
+    const out = clamp((t - REF_END) / 1.7, 0, 1);
+    const x = W / 2 + easeInQuad(out) * (W / 2 + 200);
+    const vx = out > 0 && out < 1 ? 520 : 0;
+    p.x = x;
+    p.y = p.standY;
+    p.vx = vx;
+    p.vy = 0;
+    p.onGround = true;
+    p.dir = out > 0 ? 1 : -1;
+    p.runPhase = x * 0.05;
+    p.blink = (t % 3.1) < 0.12 ? 0.1 : 0;
+    p.blow = t > REF_AT + 0.75 && t < REF_AT + 1.45;
+    p.mood = 0;
+    if (x > W + 150) return;
+    this.drawShadow(ctx, p.x, 0, 36 * PS);
+    this.drawPlayer(ctx, p, { x: p.x + p.dir * 300, y: p.y - 10 }, [REF_T], now);
+  },
+
+  // Titulek: rozhodčí dnešního zápasu.
+  drawRefBanner(ctx, g, now) {
+    const t = g.stateT - REF_AT, dur = REF_END - REF_AT;
+    if (t < 0 || t > dur) return;
+    const a = clamp(t / 0.3, 0, 1) * clamp((dur - t) / 0.3, 0, 1);
+    const v = this.view;
+    const slide = (1 - easeOutBack(clamp(t / 0.45, 0, 1))) * -420;
+    ctx.save();
+    ctx.globalAlpha = a;
+    const x = v.x0 + 40 + slide, y = v.y1 - 200, w = 470, h = 92;
+    ctx.fillStyle = 'rgba(8,13,26,.9)';
+    rrect(ctx, x, y, w, h, 16);
+    ctx.fill();
+    ctx.fillStyle = '#ffd23f';
+    rrect(ctx, x, y, 14, h, 7);
+    ctx.fill();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.font = `800 22px ${FONT_U}`;
+    ctx.fillStyle = '#ffd23f';
+    ctx.fillText('ROZHODČÍ DNEŠNÍHO ZÁPASU', x + 34, y + 26);
+    ctx.font = `46px ${FONT_D}`;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('MILAN VORAČKA', x + 32, y + 62);
+    ctx.restore();
   },
 
   /* ---- míč ---- */
@@ -3015,17 +3309,21 @@ const Renderer = {
     ctx.fill();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    if (g.golden) {
-      ctx.font = `800 22px ${FONT_U}`;
-      ctx.fillStyle = '#ffc93c';
-      ctx.fillText('ZLATÝ GÓL', x + timeW / 2, iy + ih / 2 + 1);
-    } else {
-      const t = Math.max(0, Math.ceil(g.timeLeft));
-      const urgent = g.state === 'play' && g.timeLeft <= 10 && Math.floor(g.timeLeft * 2) % 2 === 0;
-      ctx.font = `800 34px ${FONT_U}`;
-      ctx.fillStyle = urgent ? '#ff6b62' : '#f3f6ef';
-      ctx.fillText(`${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`, x + timeW / 2, iy + ih / 2 + 2);
-    }
+    // fotbalové hodiny: 0:00 → 45:00 a 45:00 → 90:00
+    const left = g.half * HALF_LEN - g.clock;
+    const urgent = !g.golden && g.half === 2 && g.state === 'play' && left <= 5 && Math.floor(left * 2) % 2 === 0;
+    ctx.font = `800 34px ${FONT_U}`;
+    ctx.fillStyle = g.golden ? '#ffc93c' : urgent ? '#ff6b62' : '#f3f6ef';
+    ctx.fillText(fbClock(g.clock), x + timeW / 2, iy + ih / 2 + 2);
+    // poločas pod hodinami
+    const lab = g.golden ? 'ZLATÝ GÓL' : g.half === 1 ? '1. POLOČAS' : '2. POLOČAS';
+    ctx.font = `800 15px ${FONT_U}`;
+    const lw = ctx.measureText(lab).width + 18;
+    ctx.fillStyle = g.golden ? '#ffc93c' : 'rgba(8,13,26,.85)';
+    rrect(ctx, x + timeW / 2 - lw / 2, y + h - 1, lw, 20, 6);
+    ctx.fill();
+    ctx.fillStyle = g.golden ? '#0b1220' : '#ffc93c';
+    ctx.fillText(lab, x + timeW / 2, y + h + 9.5);
     x += timeW + gap;
     this.scoreBox(ctx, x, iy, scoreW, ih, m.score[1], g.scorePop[1]);
     x += scoreW + gap;

@@ -21,6 +21,11 @@ class Ball {
     this.held = true; // při výkopu visí míč nad středem hřiště
     this.lastTouch = null;
     this.lastHow = ''; // čím se ho naposledy dotkl: kick, head, super, body
+    this.basketT = 0;   // míč je basketbalový (Marsalova trojka)
+    this.basketSide = -1; // brána (tým), na kterou trojka letí
+    this.carryBy = -1;  // Marsal drží míč nad hlavou před hodem
+    this.carryT = 0;
+    this.swished = false;
     this.idle = 0;
     this.stuck = 0;
     this.stale = 0;
@@ -86,6 +91,13 @@ class Player {
     this.stunT = 0; // omámení po zásahu superstřelou
     this.boostT = 0;
     this.pengT = 0;
+    this.shootT = 0;  // basketbalový hod (ruce nahoře)
+    this.celeb = '';  // oslava gólu: 'slide' (po kolenou) nebo 'plane' (letadlo)
+    this.celebT = 0;
+    this.celebDir = 0;
+    this.kneel = 0;
+    this.plane = 0;
+    this.face = 0;    // otočení obličeje při oslavě (0 = podle týmu)
     this.spin = 0;  // otočení při letu vzduchem
     this.knockDir = 0;
   }
@@ -304,7 +316,16 @@ class Match {
     const px = b.x, py = b.y;
     this.moveBall(dt);
     for (const p of this.players) {
-      if (this.ballVsPlayer(p)) this.touchAt[p.team] = this.playT;
+      if (b.carryBy >= 0) break;
+      // střelec se trojky nedotkne; co projde košem, propadne do brány
+      if (b.basketT > 0 && (b.lastTouch === p || b.swished)) continue;
+      if (this.ballVsPlayer(p)) {
+        this.touchAt[p.team] = this.playT;
+        if (b.basketT > 0) {
+          b.basketT = 0; // obránce trojku vyrazil
+          this.onEvent('unbasket', { x: b.x, y: b.y });
+        }
+      }
     }
     // Míč sevřený mezi soupeři (oba se ho dotýkají a drží ho dole) vyskočí
     // nad jejich hlavy a dopadne stranou, jinak by se hra zasekla.
@@ -332,7 +353,7 @@ class Match {
     // a břevnem), vyskočí zpátky do hry.
     const moved = Math.abs(b.x - px) + Math.abs(b.y - py);
     const still = moved < 0.25;
-    b.stuck = still && b.y + b.r < GROUND_Y - 2 ? (b.stuck || 0) + dt : 0;
+    b.stuck = still && b.carryBy < 0 && b.y + b.r < GROUND_Y - 2 ? (b.stuck || 0) + dt : 0;
     if (b.stuck > 0.4) {
       b.vy = -560;
       b.vx = (b.x < W / 2 ? 1 : -1) * 280;
@@ -349,6 +370,23 @@ class Match {
   }
 
   movePlayer(p, it, dt) {
+    if (p.shootT > 0) p.shootT = Math.max(0, p.shootT - dt);
+    if (p.celeb) {
+      // oslava gólu
+      p.celebT += dt;
+      it = IDLE;
+      const sd = p.celebDir;
+      if (p.celeb === 'slide') {
+        if (p.celebT < 0.3) p.vx = approach(p.vx, sd * 640, 4200 * dt);
+        else {
+          p.kneel = Math.min(1, p.kneel + dt * 9);
+          p.vx = approach(p.vx, 0, 430 * dt);
+        }
+      } else {
+        p.plane = Math.min(1, p.plane + dt * 5);
+        p.vx = approach(p.vx, p.celebT < 1.7 ? sd * 470 : 0, 2200 * dt);
+      }
+    }
     const stunned = p.stunT > 0;
     if (stunned) {
       // odstřelený hráč neovládá nic: ve vzduchu letí a točí se, na zemi se motá
@@ -359,7 +397,7 @@ class Match {
     const input = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
     const boost = p.boostT > 0 ? BOOST_MUL : 1;
     const max = PHYS.moveSpeed * p.speedMul * boost;
-    if (!stunned) p.vx = approach(p.vx, input * max, (p.onGround ? PHYS.accelGround : PHYS.accelAir) * boost * dt);
+    if (!stunned && !p.celeb) p.vx = approach(p.vx, input * max, (p.onGround ? PHYS.accelGround : PHYS.accelAir) * boost * dt);
     else if (p.onGround) p.vx = approach(p.vx, 0, 1700 * dt);
 
     if (it.jump && p.onGround) {
@@ -418,8 +456,28 @@ class Match {
 
   // Superschopnost postavy (kromě superstřely, ta se spouští švihem).
   usePower(p) {
-    p.superCharge = 0;
     const idx = this.players.indexOf(p);
+    const b = this.ball;
+    if (p.power === 'basket') {
+      // jen u míče: Marsal ho chytí nad hlavu a hodí trojku
+      if (b.held || b.carryBy >= 0 || Math.abs(b.x - p.x) > BASKET_REACH || b.y < GROUND_Y - 320) return false;
+      p.superCharge = 0;
+      b.carryBy = idx;
+      b.carryT = 0.34;
+      b.basketT = 4;
+      b.basketSide = 1 - p.team;
+      b.swished = false;
+      b.superT = 0;
+      p.shootT = 0.75;
+      p.kickT = -1;
+      if (p.onGround) {
+        p.vy = -PHYS.jumpV * 0.72;
+        p.onGround = false;
+      }
+      this.onEvent('power', { idx, kind: 'basket', team: p.team });
+      return true;
+    }
+    p.superCharge = 0;
     if (p.power === 'cheese' || p.power === 'penguin') {
       const t = p.team;
       this.blocks[t] = BLOCK_TIME;
@@ -430,6 +488,23 @@ class Match {
       p.boostT = BOOST_TIME;
     }
     this.onEvent('power', { idx, kind: p.power, team: p.team });
+    return true;
+  }
+
+  // Trojka: míč letí vysokým obloukem do koše nad bránou soupeře a propadne do brány.
+  launchBasket() {
+    const b = this.ball, p = this.players[b.carryBy];
+    b.carryBy = -1;
+    const t = b.basketSide;
+    const hx = t === 0 ? GOAL_W * 0.5 : W - GOAL_W * 0.5, hy = BASKET_Y;
+    const g = PHYS.ballGravity, apex = 40;
+    const up = Math.max(30, b.y - apex), down = Math.max(30, hy - apex);
+    const t1 = Math.sqrt((2 * up) / g), t2 = Math.sqrt((2 * down) / g);
+    b.vy = -Math.sqrt(2 * g * up);
+    b.vx = (hx - b.x) / (t1 + t2);
+    b.lastTouch = p || b.lastTouch;
+    b.lastHow = 'basket';
+    this.onEvent('basketshot', { x: b.x, y: b.y });
   }
 
   // Zablokovaná brána: míč i hráči z ní musí ven.
@@ -535,12 +610,31 @@ class Match {
 
   moveBall(dt) {
     const b = this.ball;
+    if (b.carryBy >= 0) {
+      // Marsal drží míč nad hlavou
+      const p = this.players[b.carryBy];
+      if (!p) {
+        b.carryBy = -1;
+      } else {
+        b.x = clamp(p.x + p.dir * 8, b.r, W - b.r);
+        b.y = Math.max(b.r, p.y - p.R - b.r - 8);
+        b.vx = b.vy = 0;
+        b.rot += dt * 6;
+        b.carryT -= dt;
+        if (b.carryT <= 0) this.launchBasket();
+        return;
+      }
+    }
+    if (b.basketT > 0) b.basketT = Math.max(0, b.basketT - dt);
+    const py0 = b.y;
     b.vy += PHYS.ballGravity * dt;
-    const drag = 1 - PHYS.airDrag * dt;
-    b.vx *= drag;
-    b.vy *= drag;
+    if (b.basketT <= 0) {
+      const drag = 1 - PHYS.airDrag * dt;
+      b.vx *= drag;
+      b.vy *= drag;
+    }
     if (b.superT > 0) b.superT = Math.max(0, b.superT - dt);
-    const cap = b.superT > 0 ? PHYS.superSpeed * 1.05 : PHYS.ballMaxSpeed;
+    const cap = b.basketT > 0 ? 4000 : b.superT > 0 ? PHYS.superSpeed * 1.05 : PHYS.ballMaxSpeed;
     const sp = Math.hypot(b.vx, b.vy);
     if (sp > cap) {
       const k = cap / sp;
@@ -550,6 +644,15 @@ class Match {
     b.x += b.vx * dt;
     b.y += b.vy * dt;
     b.rot += (b.vx / b.r) * dt;
+    // průlet košem
+    if (b.basketT > 0 && !b.swished && py0 < BASKET_Y && b.y >= BASKET_Y) {
+      const hx = b.basketSide === 0 ? GOAL_W * 0.5 : W - GOAL_W * 0.5;
+      if (Math.abs(b.x - hx) < 36) {
+        b.swished = true;
+        b.vx *= 0.2;
+        this.onEvent('swish', { x: hx, y: BASKET_Y, team: b.basketSide });
+      }
+    }
     this.ballWorld(dt);
   }
 
@@ -559,6 +662,10 @@ class Match {
       b.y = GROUND_Y - r;
       if (b.vy > 0) {
         const imp = b.vy;
+        if (b.basketT > 0) {
+          b.basketT = 0;
+          this.onEvent('unbasket', { x: b.x, y: b.y });
+        }
         b.vy = imp > 90 ? -imp * PHYS.ballBounce : 0;
         if (imp > 90) b.vx *= PHYS.groundGrip;
         if (imp > 240) this.onEvent('bounce', { x: b.x, impact: imp });
@@ -597,6 +704,7 @@ class Match {
       }
     }
     for (let side = 0; side < 2; side++) {
+      if (b.basketT > 0 && side === b.basketSide) continue; // trojka propadne střechou do brány
       const [x0, x1] = goalRect(side);
       const hit = collideBallRect(b, x0, BAR_Y, x1, BAR_Y + BAR_T, 0.55);
       if (!hit) continue;
@@ -754,6 +862,12 @@ class Match {
     this.celebrate = team;
     this.score[team]++;
     const s = b.lastTouch;
+    if (s && s.team === team) {
+      s.celeb = Math.random() < 0.75 ? 'slide' : 'plane';
+      s.celebT = 0;
+      s.celebDir = -s.dir; // k vlastním fanouškům
+      s.face = s.celebDir;
+    }
     this.onEvent('goal', { team, scorer: s, scorerIdx: s ? this.players.indexOf(s) : -1, own: !!s && s.team !== team, how: b.lastHow });
   }
 }

@@ -199,6 +199,10 @@ class AIBrain {
           this.out.super = true;
           kick = false;
         }
+      } else if (p.power === 'basket') {
+        // trojka, když je u míče (ne těsně u vlastní brány)
+        const nearBall = Math.abs(b.x - p.x) < BASKET_REACH - 40 && b.y > GROUND_Y - 260;
+        if (nearBall && (b.x - ownLine) * dir > 250 && m.blocks[1 - p.team] <= 0 && Math.random() < L.kick * 0.6) this.out.super = true;
       } else if (p.power === 'vo2') {
         // zrychlení, když je míč daleko nebo jde o závod
         if (Math.abs(b.x - p.x) > 320 && Math.random() < L.kick) this.out.super = true;

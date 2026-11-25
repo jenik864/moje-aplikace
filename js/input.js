@@ -66,6 +66,7 @@ const TOUCH_ICONS = {
   kick: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="15"/><path d="m24 15.5 7.2 5.2-2.8 8.4h-8.8l-2.8-8.4z" class="f"/><path d="M24 9v6.5M38.3 19.4l-7.1 1.3M33 36.2l-4.6-7.1M15 36.2l4.6-7.1M9.7 19.4l7.1 1.3"/></svg>',
   super: '<svg viewBox="0 0 48 48"><path d="M27 5 11 27h11l-3 16 17-23H25z" class="f"/></svg>',
   cheese: '<svg viewBox="0 0 48 48"><path d="M6 31 40 15v18L6 39z" class="f"/><path d="M6 31 24 11l16 4"/><circle cx="16" cy="33" r="2.4"/><circle cx="29" cy="27" r="3"/></svg>',
+  basket: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" class="f" fill-opacity=".25"/><circle cx="24" cy="24" r="16"/><path d="M8 24h32M24 8v32M12.5 12.5c5 4 5 19 0 23M35.5 12.5c-5 4-5 19 0 23"/></svg>',
   vo2: '<svg viewBox="0 0 48 48"><path d="M6 16h18M3 24h22M7 32h16"/><path d="M30 10c8 2 12 8 12 14s-4 12-12 14" /><path d="M30 18c4 1 6 3 6 6s-2 5-6 6"/></svg>',
   penguin: '<svg viewBox="0 0 48 48"><ellipse cx="24" cy="26" rx="13" ry="17" class="f"/><ellipse cx="26" cy="29" rx="7" ry="11" fill="#fff" stroke="none"/><path d="m33 19 8 3-8 2z" fill="#ffb03a" stroke="none"/><circle cx="29" cy="17" r="2" fill="#fff" stroke="none"/></svg>',
 };

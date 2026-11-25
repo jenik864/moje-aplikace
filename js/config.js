@@ -153,19 +153,37 @@ const superColor = (id) => SUPER_COLORS[id] || '#ffc93c';
 
 // Superschopnosti postav (ostatní mají superstřelu).
 //  cheese  – v bráně jejich týmu se objeví obří hermelín a na 3 s ji zablokuje
-//  vo2     – „MÁM VO2max 67“: 5 s běhá 1,7× rychleji
+//  vo2     – „MÁM VO2max 67“: 5 s běhá 2× rychleji
+//  basket  – „STŘÍLIM TY TROJKY“: míč se změní v basketbalový a letí obloukem přes obránce do koše nad bránou
 //  penguin – na 3 s se promění v tučňáka a jejich brána zamrzne
 const POWERS = {
   shot: { name: 'Superstřela', short: 'Super', icon: '⚡', desc: 'Dělová rána s ohněm, odstřelí soupeře' },
   cheese: { name: 'Obří hermelín', short: 'Hermelín', icon: '🧀', desc: 'Na 3 s zablokuje vaši bránu' },
-  vo2: { name: 'VO2max 67', short: 'VO2max', icon: '💨', desc: '5 s běhá 1,7× rychleji' },
+  vo2: { name: 'VO2max 67', short: 'VO2max', icon: '💨', desc: '5 s běhá 2× rychleji' },
+  basket: { name: 'Trojka', short: 'Trojka', icon: '🏀', desc: 'U míče: míč se změní v basketbalový a letí obloukem do brány soupeře' },
   penguin: { name: 'Tučňák', short: 'Tučňák', icon: '🐧', desc: 'Promění se v tučňáka, brána zamrzne na 3 s' },
 };
-const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin' };
+const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket' };
 const powerOf = (id) => CHAR_POWER[id] || 'shot';
 const BLOCK_TIME = 3;    // jak dlouho hermelín / led blokuje bránu
 const BOOST_TIME = 5;    // VO2max
-const BOOST_MUL = 1.7;
+const BOOST_MUL = 2;
+const BASKET_REACH = 170; // jak blízko musí být Marsal u míče
+const BASKET_Y = BAR_Y - 64; // výška koše nad bránou
+const HALF_LEN = 45;      // poločas trvá 45 s (na hodinách 45 minut)
+
+// Fotbalové hodiny: 1 s hry = 1 minuta na hodinách.
+function fbClock(sec) {
+  const m = Math.floor(sec), s = Math.floor((sec - m) * 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+// Rozhodčí (nehraje, objeví se v úvodu a o poločase).
+const REFEREE = {
+  id: 'referee', name: 'Milan Voračka', num: '', ref: true, skin: '#f1c2a0', hair: 'receding', hairColor: '#c9a66a',
+  hairDark: '#8a6a34', hairLight: '#ecd39c', eyes: '#86a0b4', brow: '#a8895a', lid: 0.24, browW: 3.4, mouth: 'flat', stubble: true,
+};
+const REF_T = { name: 'ROZHODČÍ', short: 'Rozhodčí', color: '#25282f', dark: '#121419', light: '#ffd23f' };
 const PENGUIN_TIME = 3;
 // Do které dvojice postava patří (kvůli barvě dresu v 1 v 1).
 const duoOf = (id) => DUO_TEAMS.findIndex((d) => d.chars.includes(id));
@@ -186,6 +204,7 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const approach = (v, target, d) => (v < target ? Math.min(v + d, target) : Math.max(v - d, target));
 const easeOutQuad = (t) => 1 - (1 - t) * (1 - t);
 const easeInOutQuad = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+const easeInQuad = (t) => t * t;
 const easeOutBounce = (t) => {
   const n = 7.5625, d = 2.75;
   if (t < 1 / d) return n * t * t;
