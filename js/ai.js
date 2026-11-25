@@ -187,7 +187,7 @@ class AIBrain {
     }
 
     // 8) Kop: míč je (nebo za okamžik bude) v dosahu kopačky.
-    const zx = p.x + dir * (R + 4), zy = p.y + R + PHYS.footH - 24 * PS;
+    const zx = p.x + dir * (R + 4), zy = p.y + R + p.F - 24 * PS;
     const inZone = (q) => (q.x - p.x) * dir > 0 && Math.hypot(q.x - zx, q.y - zy) < 46 * PS;
     if ((inZone(b) || inZone(predAt(pred, 0.06))) && Math.random() < L.kick) kick = true;
 

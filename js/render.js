@@ -1122,7 +1122,7 @@ const Renderer = {
       ctx.font = `800 26px ${FONT_U}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const label = `${g.setup ? (g.setup.format === '2v2' ? '2 V 2' : '1 V 1') : ''} · ZÁPAS ZAČÍNÁ`;
+      const label = g.setup && g.setup.stage ? `TURNAJ · ${g.setup.stage}` : `${g.setup ? (g.setup.format === '2v2' ? '2 V 2' : '1 V 1') : ''} · ZÁPAS ZAČÍNÁ`;
       const w = ctx.measureText(label).width + 40;
       ctx.fillStyle = 'rgba(8,13,26,.8)';
       rrect(ctx, W / 2 - w / 2, 130, w, 40, 20);
@@ -1331,7 +1331,7 @@ const Renderer = {
 
   drawPlayer(ctx, p, ball, teams, now) {
     // kresba je v základních rozměrech, na hřišti se zvětší o PS
-    const T = teams[p.team], L = p.look, R = p.R / PS, F = PHYS.footH / PS;
+    const T = teams[p.team], L = p.look, R = p.R / PS, F = p.F / PS;
     const kicking = p.kickT >= 0;
     const s = p.kickS();
     const air = !p.onGround;
@@ -1377,7 +1377,7 @@ const Renderer = {
     ctx.translate(p.x, p.y);
     if (p.spin) {
       // odstřelený hráč se točí kolem středu těla
-      const c = (p.R + PHYS.footH) * 0.5;
+      const c = (p.R + p.F) * 0.5;
       ctx.translate(0, c);
       ctx.rotate(p.spin);
       ctx.translate(0, -c);
@@ -1586,6 +1586,41 @@ const Renderer = {
         ctx.fill();
       }
     };
+    // kudrny: světlý lesk nahoře a tmavá spirálka dole
+    const curlTex = (list, every = 1) => {
+      ctx.lineCap = 'round';
+      list.forEach(([x, y, r], i) => {
+        if (i % every) return;
+        ctx.strokeStyle = light;
+        ctx.lineWidth = Math.max(1.4, r * 0.18);
+        ctx.beginPath();
+        ctx.arc(x - r * 0.1, y - r * 0.05, r * 0.58, 1.1 * Math.PI, 1.7 * Math.PI);
+        ctx.stroke();
+        ctx.strokeStyle = dark;
+        ctx.lineWidth = Math.max(1, r * 0.13);
+        ctx.beginPath();
+        ctx.arc(x + r * 0.12, y + r * 0.1, r * 0.42, 0.05 * Math.PI, 0.85 * Math.PI);
+        ctx.stroke();
+      });
+    };
+    // obrys s vlnkami: každý úsek se vyboulí ven o b (třetí číslo bodu)
+    const wavyPath = (pts) => {
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) {
+        const [x0, y0] = pts[i - 1], [x1, y1, b = 0] = pts[i];
+        const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1;
+        ctx.quadraticCurveTo((x0 + x1) / 2 + (dy / len) * b, (y0 + y1) / 2 - (dx / len) * b, x1, y1);
+      }
+      ctx.closePath();
+    };
+    const hook = (x, y, r, a0, color, w) => {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = w;
+      ctx.beginPath();
+      ctx.arc(x, y, r, a0, a0 + Math.PI * 1.1);
+      ctx.stroke();
+    };
     const strand = (x0, y0, cx, cy, x1, y1, color, w) => {
       ctx.strokeStyle = color;
       ctx.lineWidth = w;
@@ -1632,6 +1667,19 @@ const Renderer = {
       } else if (L.hair === 'wavy') {
         // vlny na zátylku
         blobs([[-34, 14, 10], [-38, 2, 11], [-37, -12, 11], [-28, 22, 8]]);
+      } else if (L.hair === 'shaggy') {
+        // delší pramínky na krku
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(-26, 6);
+          ctx.quadraticCurveTo(-44, 10, -42, 26);
+          ctx.lineTo(-36, 20);
+          ctx.lineTo(-33, 30);
+          ctx.lineTo(-28, 21);
+          ctx.lineTo(-22, 26);
+          ctx.quadraticCurveTo(-20, 14, -26, 6);
+          ctx.closePath();
+        });
       }
       return;
     }
@@ -1641,13 +1689,30 @@ const Renderer = {
       ctx.save();
       circle(ctx, 0, 0, R);
       ctx.clip();
-      ctx.fillStyle = L.hair === 'fade' ? 'rgba(90,60,30,.32)' : base;
+      const faded = L.hair === 'fade' || L.hair === 'curlyshort';
+      ctx.fillStyle = L.hair === 'fade' ? 'rgba(90,60,30,.32)' : faded ? hexA(dark, 0.42) : base;
       ctx.beginPath();
       if (L.hair === 'wavy') {
         ctx.moveTo(R + 8, -24);
         ctx.quadraticCurveTo(20, -18, 4, -22);
         ctx.quadraticCurveTo(-12, -16, -18, 2);
         ctx.quadraticCurveTo(-22, 16, -30, 24);
+      } else if (L.hair === 'wavyshort') {
+        ctx.moveTo(R + 8, -22);
+        ctx.quadraticCurveTo(20, -20, 4, -26);
+        ctx.quadraticCurveTo(-10, -18, -15, -6);
+        ctx.quadraticCurveTo(-22, 12, -32, 22);
+      } else if (L.hair === 'curlytop') {
+        // vysoké čelo, vlasy začínají výš
+        ctx.moveTo(R + 8, -31);
+        ctx.quadraticCurveTo(22, -29, 6, -30);
+        ctx.quadraticCurveTo(-10, -24, -16, -4);
+        ctx.quadraticCurveTo(-22, 12, -32, 22);
+      } else if (L.hair === 'shaggy') {
+        ctx.moveTo(R + 8, -18);
+        ctx.quadraticCurveTo(22, -16, 6, -19);
+        ctx.quadraticCurveTo(-10, -15, -17, 0);
+        ctx.quadraticCurveTo(-22, 14, -32, 24);
       } else {
         ctx.moveTo(R + 8, -27);
         ctx.quadraticCurveTo(18, -22, 2, -26);
@@ -1893,6 +1958,91 @@ const Renderer = {
         break;
       }
 
+      case 'curlytop': {
+        // objemné vlny vyčesané nahoru a dozadu, jedna kudrna padá do čela
+        shape(() => wavyPath([
+          [-32, 20], [-44, 6, 5], [-49, -13, 6], [-45, -33, 6], [-33, -51, 7], [-14, -63, 7], [7, -67, 7],
+          [25, -61, 6], [39, -49, 6], [46, -35, 4], [30, -31, -2], [12, -32], [-4, -27], [-15, -8], [-20, 8], [-32, 20],
+        ]));
+        strand(34, -42, 14, -58, -10, -58, dark, 1.8);
+        strand(22, -35, 0, -47, -24, -45, dark, 1.6);
+        strand(-6, -29, -26, -36, -38, -22, dark, 1.5);
+        strand(-18, -57, -38, -50, -42, -30, dark, 1.5);
+        strand(30, -52, 12, -63, -8, -63, light, 2.4);
+        strand(-14, -50, -32, -47, -40, -35, light, 2.2);
+        strand(14, -45, 2, -54, -14, -54, light, 1.8);
+        for (const [x, y, a] of [[-41, -40, 3.6], [-24, -60, 4.1], [-2, -66, 4.4], [18, -64, 4.8], [38, -48, 5.4]]) hook(x, y, 4.2, a, light, 1.8);
+        // kudrna do čela
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(20, -33);
+          ctx.quadraticCurveTo(40, -33, 37, -19);
+          ctx.quadraticCurveTo(35, -9, 27, -12);
+          ctx.quadraticCurveTo(33, -17, 30, -24);
+          ctx.quadraticCurveTo(27, -29, 18, -30);
+          ctx.closePath();
+        });
+        strand(24, -31, 35, -29, 33, -18, light, 1.8);
+        break;
+      }
+
+      case 'curlyshort': {
+        // krátké husté kudrny nahoře, vystříhané strany
+        const pts = [];
+        for (let a = -2.4; a <= -0.8; a += 0.19) pts.push([Math.cos(a) * (R - 4), Math.sin(a) * (R - 4), 7.4]);
+        for (let a = -2.2; a <= -0.95; a += 0.21) pts.push([Math.cos(a) * (R + 3), Math.sin(a) * (R + 3), 7]);
+        pts.push([-4, -49, 6.4], [12, -48, 6.4], [30, -32, 6], [36, -25, 4.6]);
+        blobs(pts);
+        curlTex(pts, 1);
+        break;
+      }
+
+      case 'shaggy': {
+        // střapaté vlasy s ofinou přes čelo až k obočí
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(-30, 16);
+          ctx.quadraticCurveTo(-49, 4, -46, -16);
+          ctx.quadraticCurveTo(-46, -40, -30, -48);
+          ctx.lineTo(-27, -56);
+          ctx.lineTo(-18, -51);
+          ctx.lineTo(-10, -60);
+          ctx.lineTo(-2, -53);
+          ctx.lineTo(8, -60);
+          ctx.lineTo(14, -53);
+          ctx.quadraticCurveTo(28, -52, 33, -44);
+          ctx.quadraticCurveTo(47, -33, 45, -17);
+          const tips = [[42, -10], [37, -19], [33, -9], [28, -18], [23, -11], [17, -20], [11, -13], [5, -22], [-2, -15], [-7, -23]];
+          for (const [x, y] of tips) ctx.lineTo(x, y);
+          ctx.quadraticCurveTo(-14, -18, -16, -4);
+          ctx.lineTo(-19, 7);
+          ctx.lineTo(-24, 1);
+          ctx.quadraticCurveTo(-26, 10, -30, 16);
+          ctx.closePath();
+        });
+        strand(-30, -36, -8, -50, 22, -46, light, 2.4);
+        strand(-38, -20, -40, -36, -26, -44, light, 1.8);
+        strand(6, -38, 20, -36, 30, -22, light, 1.8);
+        strand(-4, -36, 6, -30, 10, -16, dark, 1.4);
+        strand(18, -40, 28, -32, 34, -14, dark, 1.4);
+        strand(-20, -30, -24, -16, -22, 0, dark, 1.4);
+        break;
+      }
+
+      case 'wavyshort': {
+        // blond vlny, ofina do čela, vzadu kratší
+        shape(() => wavyPath([
+          [-32, 20], [-43, 4, 4], [-46, -16, 5], [-41, -36, 5], [-27, -51, 5], [-7, -59, 5], [14, -57, 5],
+          [31, -50, 5], [42, -38, 4], [45, -24, 3], [37, -21, -2], [28, -26, 3], [17, -22, 3], [4, -28], [-12, -14], [-20, 8], [-32, 20],
+        ]));
+        strand(36, -40, 16, -54, -8, -55, light, 2.4);
+        strand(24, -30, 6, -44, -20, -46, dark, 1.5);
+        strand(-14, -40, -32, -40, -40, -24, light, 2);
+        strand(-4, -32, -20, -30, -30, -14, dark, 1.4);
+        for (const [x, y, a] of [[-38, -40, 3.6], [-14, -57, 4.2], [12, -57, 4.6], [36, -44, 5.4]]) hook(x, y, 4, a, light, 1.8);
+        break;
+      }
+
       case 'wavy': {
         // objemné vlny nahoře a dozadu
         const top = [];
@@ -1966,9 +2116,11 @@ const Renderer = {
     oval(ctx, 16, 11, 6, 3.6);
     ctx.fill();
     if (L.freckles) {
-      ctx.fillStyle = 'rgba(160,75,30,.55)';
-      for (const [fx, fy] of [[12, 8], [16, 6.5], [19.5, 9], [14.5, 11], [33, 7], [35.5, 10]]) {
-        circle(ctx, fx, fy, 1.1);
+      const soft = L.freckles === 'light';
+      ctx.fillStyle = soft ? 'rgba(170,90,45,.26)' : 'rgba(160,75,30,.55)';
+      const dots = soft ? [[13, 6], [18, 8], [31, 6], [35, 8.5]] : [[12, 8], [16, 6.5], [19.5, 9], [14.5, 11], [33, 7], [35.5, 10]];
+      for (const [fx, fy] of dots) {
+        circle(ctx, fx, fy, soft ? 0.95 : 1.1);
         ctx.fill();
       }
     }
@@ -1988,13 +2140,14 @@ const Renderer = {
     else if (p.kickT >= 0) inner = 3;
     else if (p.mood > 0) outer = -2.5;
     ctx.strokeStyle = L.brow;
-    ctx.lineWidth = L.girl ? 2.6 : 3.4;
+    ctx.lineWidth = L.browW || (L.girl ? 2.6 : 3.4);
     ctx.lineCap = 'round';
+    const arch = L.browFlat ? 1.2 : 3.5;
     ctx.beginPath();
     ctx.moveTo(3, -14 + outer);
-    ctx.quadraticCurveTo(8, -17.5, 14, -14.5 + inner);
+    ctx.quadraticCurveTo(8, -14 - arch, 14, -14.5 + inner);
     ctx.moveTo(21, -14.5 + inner);
-    ctx.quadraticCurveTo(28, -18.5, 34, -15 + outer);
+    ctx.quadraticCurveTo(28, -15 - arch, 34, -15 + outer);
     ctx.stroke();
 
     // nos
@@ -2023,12 +2176,40 @@ const Renderer = {
       ctx.beginPath();
       ctx.arc(25, 24, 6, 1.22 * Math.PI, 1.78 * Math.PI);
       ctx.stroke();
+    } else if (L.mouth === 'flat') {
+      // klidný, vážný výraz
+      ctx.strokeStyle = lip;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(19.5, 19.5);
+      ctx.quadraticCurveTo(25, 20.6, 30.5, 19.2);
+      ctx.stroke();
+    } else if (L.mouth === 'smirk') {
+      // úšklebek na jednu stranu
+      ctx.strokeStyle = lip;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(19.5, 19.8);
+      ctx.quadraticCurveTo(26, 21.5, 31.5, 16.5);
+      ctx.stroke();
     } else {
       ctx.strokeStyle = lip;
       ctx.lineWidth = 2.4;
       ctx.beginPath();
       ctx.arc(25, 13, 6.5, 0.2 * Math.PI, 0.8 * Math.PI);
       ctx.stroke();
+    }
+    // piercing v nose
+    if (L.pierce) {
+      ctx.fillStyle = L.pierce;
+      circle(ctx, 37.2, 6.2, 1.9);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(40,40,50,.7)';
+      ctx.lineWidth = 0.9;
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      circle(ctx, 36.6, 5.6, 0.6);
+      ctx.fill();
     }
   },
 
@@ -2067,12 +2248,32 @@ const Renderer = {
     // stín víčka
     ctx.fillStyle = 'rgba(60,30,20,.18)';
     ctx.fillRect(ex - rx, ey - ry, rx * 2, ry * 0.45);
+    // přivřené víčko (vážnější pohled)
+    const lh = L.lid ? ry * 2 * L.lid : 0;
+    if (lh) {
+      ctx.fillStyle = shade(L.skin, -0.05);
+      ctx.fillRect(ex - rx - 1, ey - ry - 1, rx * 2 + 2, lh + 1);
+    }
     ctx.restore();
     // horní víčko
     ctx.strokeStyle = lidC;
     ctx.lineWidth = L.girl ? 2.8 : 2.3;
     ctx.beginPath();
-    ctx.ellipse(ex, ey, rx + 0.3, ry + 0.3, 0, Math.PI * 1.05, Math.PI * 1.95);
+    if (lh) {
+      const ly0 = ey - ry + lh;
+      const half = Math.sqrt(Math.max(0, 1 - ((ly0 - ey) / ry) ** 2)) * rx;
+      ctx.moveTo(ex - half - 0.8, ly0 + 0.8);
+      ctx.quadraticCurveTo(ex, ly0 - 1.6, ex + half + 0.8, ly0 + 0.3);
+      ctx.stroke();
+      // záhyb víčka
+      ctx.strokeStyle = shade(L.skin, -0.3);
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(ex - rx * 0.8, ey - ry - 0.5);
+      ctx.quadraticCurveTo(ex, ey - ry - 2.6, ex + rx * 0.9, ey - ry - 0.8);
+    } else {
+      ctx.ellipse(ex, ey, rx + 0.3, ry + 0.3, 0, Math.PI * 1.05, Math.PI * 1.95);
+    }
     ctx.stroke();
     if (L.girl) {
       ctx.lineWidth = 1.8;
@@ -2176,9 +2377,10 @@ const Renderer = {
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     const ctx = canvas.getContext('2d');
-    const k = (Math.min(w / 126, h / 156) * dpr) / PS;
-    ctx.setTransform(k, 0, 0, k, canvas.width / 2, canvas.height / 2 - 12 * k);
     const p = new Player({ team: 0, x: 0, look: charById(charId), role: 'attacker', ctrl: 'cpu' });
+    const extra = (p.F - PHYS.footH) / PS; // vysoký hráč má delší nohy
+    const k = (Math.min(w / 126, h / (156 + extra)) * dpr) / PS;
+    ctx.setTransform(k, 0, 0, k, canvas.width / 2, canvas.height / 2 - (12 + extra / 2) * k * PS);
     p.x = 0;
     p.y = 0;
     p.dir = facing;

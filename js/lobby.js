@@ -46,6 +46,7 @@ function makeSlots(format, prev, duos) {
 
 function newLobby(prefs, firstCtrl) {
   const lobby = {
+    mode: prefs.mode === 'cup' && firstCtrl === 'p1' ? 'cup' : 'match', // zápas nebo turnaj (jen na tomto zařízení)
     format: prefs.format === '1v1' ? '1v1' : '2v2',
     minutes: [1, 2, 3].includes(prefs.minutes) ? prefs.minutes : 2,
     level: AI_LEVELS[prefs.level] ? prefs.level : 'medium',
@@ -115,6 +116,64 @@ function applyWant(lobby, uid, want) {
   return changed;
 }
 
+/* ---------------- turnaj: pavouk pro 4 týmy (semifinále a finále) ---------------- */
+
+// Hráč je vždy tým 0. Ostatní tři týmy se vylosují.
+function newCup(lobby) {
+  const me = lobby.slots.find((s) => s.ctrl === 'p1') || lobby.slots[0];
+  const cup = { format: lobby.format, minutes: lobby.minutes, level: lobby.level, myChar: me.char, teams: [], res: { s1: null, s2: null, f: null }, stage: 's1' };
+  if (lobby.format === '2v2') {
+    const mine = lobby.duos[me.team];
+    const rest = shuffle(DUO_TEAMS.map((d, i) => i).filter((i) => i !== mine)).slice(0, 3);
+    cup.teams = [mine].concat(rest).map((duo) => ({ duo }));
+  } else {
+    const rest = shuffle(ROSTER.map((c) => c.id).filter((id) => id !== me.char)).slice(0, 3);
+    cup.teams = [me.char].concat(rest).map((char) => ({ char }));
+  }
+  return cup;
+}
+
+// Jméno, postavy a barvy týmu v turnaji.
+function cupTeam(cup, i) {
+  const t = cup.teams[i];
+  if (t.duo !== undefined) {
+    const d = DUO_TEAMS[t.duo];
+    return { name: d.name, chars: d.chars.slice(), T: d };
+  }
+  const c = charById(t.char), d = duoOf(c.id);
+  return { name: c.name.toUpperCase(), chars: [c.id], T: d >= 0 ? DUO_TEAMS[d] : SIDE_COLORS[0] };
+}
+
+// Kdo vyhrál zápas v pavouku (index týmu) nebo -1.
+function cupWinner(cup, key) {
+  const r = cup.res[key];
+  if (!r) return -1;
+  const pair = key === 's1' ? [0, 1] : key === 's2' ? [2, 3] : [0, cupWinner(cup, 's2')];
+  return r[0] > r[1] ? pair[0] : pair[1];
+}
+
+// Lobby pro zápas v turnaji (já vlevo, soupeř vpravo). Ve finále je počítač o stupeň těžší.
+function cupLobby(cup, opp, final) {
+  const levels = ['easy', 'medium', 'hard'];
+  const level = final ? levels[Math.min(2, levels.indexOf(cup.level) + 1)] : cup.level;
+  const me = cup.teams[0], op = cup.teams[opp];
+  let lobby;
+  if (cup.format === '2v2') {
+    lobby = { format: '2v2', minutes: cup.minutes, level, duos: [me.duo, op.duo], slots: duoSlots([me.duo, op.duo]) };
+    lobby.slots.forEach((s) => { s.ctrl = 'cpu'; });
+    (lobby.slots.find((s) => s.team === 0 && s.char === cup.myChar) || lobby.slots[0]).ctrl = 'p1';
+  } else {
+    lobby = { format: '1v1', minutes: cup.minutes, level, duos: [0, 1], slots: [{ team: 0, char: me.char, ctrl: 'p1' }, { team: 1, char: op.char, ctrl: 'cpu' }] };
+  }
+  return lobby;
+}
+
+// Druhé semifinále se odehraje „vedle“ – náhodný výsledek.
+function simCupMatch() {
+  const w = 1 + Math.floor(Math.random() * 4), l = Math.floor(Math.random() * w);
+  return Math.random() < 0.5 ? [w, l] : [l, w];
+}
+
 // Týmy pro zápas podle lobby. V 1 v 1 dres podle dvojice, ze které postava je.
 function teamsFor(lobby) {
   if (lobby.format === '2v2') return lobby.duos.map((i) => ({ ...DUO_TEAMS[i] }));
@@ -143,6 +202,7 @@ const LobbyUI = {
       arena: $('slots'), hint: $('lobby-hint'), code: $('lobby-code'), invite: $('lobby-invite'),
       kicker: $('lobby-kicker'), title: $('lobby-title'), members: $('lobby-members'),
       start: $('btn-start'), ready: $('btn-ready'), wait: $('lobby-wait'), levelRow: $('lobby-level'),
+      modeRow: $('lobby-mode'),
     };
     document.querySelectorAll('#lobby .seg').forEach((seg) => {
       seg.addEventListener('click', (e) => {
@@ -199,6 +259,8 @@ const LobbyUI = {
       });
     });
     el.levelRow.hidden = !lobby.slots.some((s) => s.ctrl === 'cpu');
+    el.modeRow.hidden = ctx.mode !== 'local';
+    const cup = ctx.mode === 'local' && lobby.mode === 'cup';
 
     // hlavička
     if (ctx.mode === 'local') {
@@ -231,7 +293,7 @@ const LobbyUI = {
     const teams = teamsFor(lobby);
     const two = lobby.format === '2v2';
     el.arena.textContent = '';
-    const key = lobby.format + lobby.duos.join('-') + (two ? '' : lobby.slots.map((s) => s.char).join('-'));
+    const key = lobby.format + lobby.duos.join('-') + (two ? '' : lobby.slots.map((s) => s.char).join('-')) + (cup ? 'cup' : '');
     el.arena.className = `arena fmt-${lobby.format}` + (key !== this.lastKey ? ' anim' : '');
     this.lastKey = key;
     const portraits = [];
@@ -239,6 +301,20 @@ const LobbyUI = {
       if (team === 1) {
         const vs = this.el2('div', 'vs-badge', 'VS');
         el.arena.appendChild(vs);
+      }
+      if (cup && team === 1) {
+        // turnaj: soupeře vylosuje pavouk
+        const col = this.el2('div', 'team-col side-1 cup-col');
+        col.style.setProperty('--team', '#ffc93c');
+        col.style.setProperty('--team-dark', '#7a4f00');
+        col.style.setProperty('--team-light', '#ffe9a0');
+        const box = this.el2('div', 'cup-info');
+        const icon = this.el2('span', 'cup-icon');
+        icon.innerHTML = '<svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v2.5a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 14.6V17h3v3H8v-3h3v-2.4A5 5 0 0 1 8.4 11.5H8a4 4 0 0 1-4-4V5h3zm0 4H6v.5a2 2 0 0 0 1.2 1.8zm10 0v2.3A2 2 0 0 0 18 7.5V7z"/></svg>';
+        box.append(icon, this.el2('strong', 'cup-name', 'TURNAJ'), this.el2('span', 'cup-line', '4 týmy · semifinále a finále'), this.el2('span', 'cup-line', 'Soupeře vylosuje pavouk, finále je těžší'));
+        col.appendChild(box);
+        el.arena.appendChild(col);
+        continue;
       }
       const T = teams[team];
       const col = this.el2('div', `team-col side-${team}`);
@@ -290,9 +366,11 @@ const LobbyUI = {
     // nápověda a tlačítka
     const meSlot = lobby.slots.find((s) => s.ctrl === ctx.me);
     if (ctx.mode === 'local') {
-      el.hint.textContent = two
-        ? 'Šipkami vyber dvojice a klepni na postavu, za kterou chceš hrát. Ostatní hraje počítač. Spoluhráče na svém telefonu přidáš přes Online.'
-        : 'Šipkami vyber postavy a klepni na tu, za kterou chceš hrát.';
+      el.hint.textContent = cup
+        ? 'Vyber svůj tým a postavu. Vyhraj semifinále i finále a získáš pohár.'
+        : two
+          ? 'Šipkami vyber dvojice a klepni na postavu, za kterou chceš hrát. Ostatní hraje počítač. Spoluhráče na svém telefonu přidáš přes Online.'
+          : 'Šipkami vyber postavy a klepni na tu, za kterou chceš hrát.';
     } else if (ctx.mode === 'host') {
       el.hint.textContent = 'Klepni na postavu, za kterou chceš hrát. Kamarádi si vyberou u sebe, volná místa hraje počítač.';
     } else {
@@ -304,7 +382,7 @@ const LobbyUI = {
       const ready = guests.filter((m) => m.ready).length;
       el.start.textContent = guests.length ? `Hrát (${ready}/${guests.length} připraveno)` : 'Hrát';
     } else {
-      el.start.textContent = 'Hrát';
+      el.start.textContent = cup ? 'Začít turnaj' : 'Hrát';
     }
     el.ready.hidden = ctx.mode !== 'guest';
     if (ctx.mode === 'guest') {

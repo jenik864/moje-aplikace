@@ -68,16 +68,17 @@ const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
 
 // Postavy. hair = účes, accent = doplněk (gumička, mašle, náušnice).
 const ROSTER = [
+  // lid = jak moc víčko zakrývá oko (vážný pohled), browW = síla obočí, mouth = smile | flat | smirk
   { id: 'nelcis', name: 'Nelcis', girl: true, num: 7, skin: '#f7d6bf', hair: 'ponytail', hairColor: '#f1cd6c', hairDark: '#b2832a', hairLight: '#fff1b8', eyes: '#3d8f6c', brow: '#a8833f', accent: '#ff6fb0' },
-  { id: 'majda', name: 'Majda', girl: true, num: 10, skin: '#f4d1b6', hair: 'long', hairColor: '#6d3f22', hairDark: '#3d2211', hairLight: '#a86f43', eyes: '#6a4426', brow: '#4a2a16', accent: '#ffd23f' },
-  { id: 'marsal', name: 'Marsal', num: 9, skin: '#f3cdac', hair: 'quiff', hairColor: '#ebc65f', hairDark: '#a98326', hairLight: '#fff2b0', eyes: '#3a78d6', brow: '#b08b3c' },
-  { id: 'durcado', name: 'Durcado', num: 11, skin: '#f1c6a6', hair: 'wavy', hairColor: '#8e5d34', hairDark: '#4f321b', hairLight: '#d09a5c', eyes: '#6f93ad', brow: '#5a3a20' },
+  { id: 'majda', name: 'Majda', girl: true, num: 10, skin: '#f4d1b6', hair: 'long', hairColor: '#6d3f22', hairDark: '#3d2211', hairLight: '#a86f43', eyes: '#6a4426', brow: '#4a2a16', accent: '#ffd23f', pierce: '#e9edf3' },
+  { id: 'marsal', name: 'Marsal', num: 9, skin: '#f3cdac', hair: 'wavyshort', hairColor: '#e4bf63', hairDark: '#a07a26', hairLight: '#fff0b4', eyes: '#3a78d6', brow: '#b08b3c', tall: 1.2, lid: 0.12 },
+  { id: 'durcado', name: 'Durcado', num: 11, skin: '#f2c8a8', hair: 'curlytop', hairColor: '#a2703d', hairDark: '#5a3818', hairLight: '#d6a564', eyes: '#7c95a9', brow: '#5d3c1e', freckles: 'light', lid: 0.3, browW: 4, browFlat: true, mouth: 'flat' },
   { id: 'toma', name: 'Tóma', num: 5, skin: '#f2c9a6', hair: 'messy', hairColor: '#5b3a21', hairDark: '#2e1b0e', hairLight: '#946642', eyes: '#5b4632', brow: '#3e2814' },
-  { id: 'peli', name: 'Peli', num: 8, skin: '#eebf98', hair: 'buzz', hairColor: '#24212a', hairDark: '#08070a', hairLight: '#5d5869', eyes: '#3c2a1c', brow: '#1d1814' },
-  { id: 'bemic', name: 'Bémič', num: 14, skin: '#f6d2b8', hair: 'spiky', hairColor: '#d8642a', hairDark: '#87340f', hairLight: '#ffb37c', eyes: '#3e8a5e', brow: '#9a4518', freckles: true },
-  { id: 'kiki', name: 'Kiki', girl: true, num: 3, skin: '#f3cdb0', hair: 'buns', hairColor: '#3b2519', hairDark: '#1b0f08', hairLight: '#7b5238', eyes: '#5a3a22', brow: '#2e1a10', accent: '#53d2ff' },
-  { id: 'simsa', name: 'Šimša', num: 17, skin: '#f4caa7', hair: 'fade', hairColor: '#c9a15a', hairDark: '#7d5b22', hairLight: '#f3d998', eyes: '#4b7fb8', brow: '#8a6a32' },
-  { id: 'jenda', name: 'Jenda', num: 21, skin: '#efc19c', hair: 'side', hairColor: '#3a2416', hairDark: '#1a0f08', hairLight: '#77513a', eyes: '#5b4632', brow: '#2b1a10' },
+  { id: 'peli', name: 'Peli', num: 8, skin: '#eebf98', hair: 'side', hairColor: '#3b2a1c', hairDark: '#1a110a', hairLight: '#6a4d34', eyes: '#3c2a1c', brow: '#1d1814' },
+  { id: 'bemic', name: 'Bémič', num: 14, skin: '#f1c9a8', hair: 'buzz', hairColor: '#1c1a1f', hairDark: '#050506', hairLight: '#4a4652', eyes: '#3b2718', brow: '#16110e', lid: 0.15, browW: 3.8 },
+  { id: 'kiki', name: 'Kiki', girl: true, num: 3, skin: '#f5d2b6', hair: 'buns', hairColor: '#b8975c', hairDark: '#6f5428', hairLight: '#e6cd96', eyes: '#5a4126', brow: '#8a6a3a', accent: '#53d2ff' },
+  { id: 'simsa', name: 'Šimša', num: 87, skin: '#f3caa8', hair: 'curlyshort', hairColor: '#4a2e19', hairDark: '#22130a', hairLight: '#7a5436', eyes: '#4a3020', brow: '#2c1a0f', lid: 0.34, browW: 4.4, browFlat: true, mouth: 'flat' },
+  { id: 'jenda', name: 'Jenda', num: 21, skin: '#f0c7a6', hair: 'shaggy', hairColor: '#5c3d22', hairDark: '#2b190b', hairLight: '#8f6844', eyes: '#5e4a33', brow: '#3a2614', lid: 0.32, browW: 3.4, mouth: 'smirk' },
 ];
 
 // Superschopnost postavy (zatím superstřela v barvě postavy; schopnosti doladíme).
@@ -101,7 +102,9 @@ const QUIPS = {
 const QUIPS_ANY = ['Dneska padne gól za gólem!', 'Na tohle jsem čekal!', 'Pojďte na to!', 'Vy jste ty soupeři? Haha!'];
 // Pokřiky z tribun ({V} = oslovení hráče, {T} = jméno dvojice).
 const SHOUTS = {
-  chant: ['Do toho, {V}!', '{T}! {T}!', 'Hlavouni do toho!', 'Dej gól!', 'Jdeme na ně!', 'Pojď, {V}!', 'Ole, ole, ole!', 'Bojujte!', 'Střílej, {V}!'],
+  // pokřiky, které tribuny volají v každém zápase
+  crowd: ['KIKI KIKI', 'VIKY VIKY', 'SULI SULI', 'SLAJZNUL DO BAHNA', 'SULI TI DÁ', 'MAGDI MAGDI'],
+  chant: ['Do toho, {V}!', '{T}! {T}!', 'Dej gól!', 'Pojď, {V}!', 'Střílej, {V}!'],
   goal: ['GÓÓÓL!', 'Jóóó!', 'To byla pecka!', '{V}! {V}!', 'Krása!', 'Ten sedl!'],
   sad: ['Néé!', 'To snad ne…', 'Probuďte se!', 'Ještě to otočíme!'],
   super: ['BOMBA!', 'Superstřela!', 'Wow!', 'To je dělo!'],
@@ -110,6 +113,15 @@ const SHOUTS = {
   head: ['Hlavička!', 'Hezká hlava!', 'Hlavou!'],
   late: ['Posledních 10 vteřin!', 'Ještě to dáme!', 'Rychle!'],
 };
+
+// Pokřiky fanoušků konkrétních dvojic (index jako v DUO_TEAMS).
+const DUO_SHOUTS = [
+  [],
+  ['JIŽNÍ SUPY', 'CP COMPANY'],
+  ['TÓMA ŽLOUTEK'],
+  ['JONY, KIKI TĚ CHCE', 'SKIPER'],
+  ['MÁ VO2max 67'],
+];
 
 // Poháry a ligy (postup se ukládá v zařízení).
 const RANKS = [

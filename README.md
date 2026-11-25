@@ -17,18 +17,20 @@ Ve 2 v 2 se v lobby šipkami vybírají dvě z pěti dvojic:
 
 | Dvojice | Postavy |
 | --- | --- |
-| Nelcis & Majda (růžoví) | Nelcis (blond cop), Majda (dlouhé hnědé vlasy s mašlí) |
-| Marsal & Durcado (modří) | Marsal (blond patka), Durcado (vlnité hnědé vlasy) |
-| Tóma & Peli (zelení) | Tóma (střapaté hnědé vlasy), Peli (krátké černé vlasy) |
-| Bémič & Kiki (oranžoví) | Bémič (zrzavý ježek, pihy), Kiki (dva drdoly) |
-| Šimša & Jenda (fialoví) | Šimša (světlý sestřih do strany), Jenda (tmavé vlasy s pěšinkou) |
+| Nelcis & Majda (růžoví) | Nelcis (blond cop), Majda (dlouhé hnědé vlasy s mašlí, piercing v nose) |
+| Marsal & Durcado (modří) | Marsal (blond vlny, vysoký – má delší nohy), Durcado (objemné vlny vyčesané nahoru, kudrna do čela, modrošedé oči) |
+| Tóma & Peli (zelení) | Tóma (střapaté hnědé vlasy), Peli (tmavé vlasy s pěšinkou) |
+| Bémič & Kiki (oranžoví) | Bémič (černý buzzcut), Kiki (špinavý blond, dva drdoly) |
+| Šimša & Jenda (fialoví) | Šimša (krátké tmavé kudrny, vystříhané strany, číslo 87), Jenda (střapaté hnědé vlasy s ofinou) |
+
+Postavy se liší i obličejem: přivřená víčka a vážný pohled, síla obočí a výraz pusy (úsměv, klidný, úšklebek).
 
 V 1 v 1 si každý vybere libovolnou z deseti postav. Dres má barvu její dvojice. Postavy mají tělo s dresem a číslem, trenky, ruce a kopačky, běhají, při radosti mávají a po inkasovaném gólu se mračí.
 
 ## Filmové scény a stadion
 
 - **Úvod zápasu**: kamera sjede z velké obrazovky na hřiště, hráči vyběhnou a vyjedou plakáty obou týmů s VS. Pak vybuchne ohňostroj a z každého týmu jeden hráč v bublině hecuje soupeře (každá postava má své hlášky). Kamera se na něj přiblíží.
-- **Fanoušci**: během zápasu povzbuzují v bublinách na tribunách („Do toho, Šimšo!“, „NELCIS! NELCIS!“), tleskají do rytmu bubnu, při tyčce zklamaně zahučí a reagují na góly, superstřely i odstřelení.
+- **Fanoušci**: během zápasu pokřikují v bublinách na tribunách, tleskají do rytmu bubnu, při tyčce zklamaně zahučí a reagují na góly, superstřely i odstřelení. Pokřiky z tribun v každém zápase: KIKI KIKI, VIKY VIKY, SULI SULI, SLAJZNUL DO BAHNA, SULI TI DÁ, MAGDI MAGDI. Fanoušci jednotlivých dvojic: Marsal & Durcado – JIŽNÍ SUPY, CP COMPANY; Tóma & Peli – TÓMA ŽLOUTEK; Bémič & Kiki – JONY, KIKI TĚ CHCE, SKIPER; Šimša & Jenda – MÁ VO2max 67. Občas zazní i jméno hráče („Do toho, Šimšo!“).
 - **Gól**: kamera se přiblíží k brance, síť se zavlní, publikum vyskakuje, reklamní tabule i velká obrazovka blikají GÓL a ukazují střelce.
 - **Záznam gólu**: zpomalené opakování posledních vteřin se zoomem na míč.
 - **Konec zápasu**: vítězové doběhnou doprostřed, nad nimi vyjede zlatý pohár, poražení odejdou ke své brance.
@@ -38,6 +40,7 @@ Scény jdou přeskočit tlačítkem *Přeskočit* (nebo klávesou Enter). Online
 ## Lobby (výběr hráčů)
 
 - **Hrát** (proti počítači): vyber 1 v 1 nebo 2 v 2, délku zápasu a obtížnost počítače. Klepnutím na postavu si vybereš, za koho hraješ, ostatní hraje počítač. V 1 v 1 se šipkami mění postava.
+- **Turnaj** (přepínač *Zápas / Turnaj* v lobby, jen proti počítači): vybereš svůj tým, pavouk vylosuje tři soupeře. Hraje se semifinále a finále, druhé semifinále se odehraje mezi počítači. Ve finále je soupeř o stupeň těžší. Za vítězství v turnaji je +15 pohárů navíc a počítá se do profilu (Vyhrané turnaje).
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
 ## Ovládání

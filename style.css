@@ -568,6 +568,43 @@ kbd {
 .pf-step.now { background: rgba(255, 201, 60, 0.16); outline: 2px solid var(--gold); }
 .pf-step.locked { opacity: 0.55; filter: grayscale(0.35); }
 
+/* turnaj v lobby */
+.cup-col { place-items: center; grid-template-rows: 1fr; }
+.cup-info { display: grid; justify-items: center; gap: 4px; text-align: center; padding: 6px; }
+.cup-icon .cup { width: clamp(44px, 18vh, 96px); height: clamp(44px, 18vh, 96px); fill: var(--gold); filter: drop-shadow(0 4px 0 var(--ink)) drop-shadow(0 0 16px rgba(255, 201, 60, 0.6)); animation: cup-bob 2.4s ease-in-out infinite; }
+@keyframes cup-bob { 50% { transform: translateY(-5px) rotate(-3deg); } }
+.cup-name { font-family: var(--font-display); font-weight: 400; font-size: clamp(20px, 7vh, 34px); line-height: 1; text-shadow: 0 3px 0 var(--ink); }
+.cup-line { font-size: 14px; font-weight: 700; color: #fff7dc; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
+
+/* pavouk turnaje */
+.dialog.cup {
+  width: min(820px, 100%);
+  padding: clamp(10px, 2.5vh, 18px) clamp(12px, 3vw, 24px);
+  border-radius: 24px;
+  border: 3px solid var(--ink);
+  background: linear-gradient(160deg, #2a2a52, #121a2c);
+  box-shadow: 0 6px 0 var(--ink);
+}
+.cup-head { display: grid; justify-items: center; gap: 2px; }
+.cup-sub { margin: 0; font-size: 16px; color: var(--gold); font-weight: 700; }
+.bracket { display: grid; grid-template-columns: minmax(0, 1.1fr) 26px minmax(0, 1fr) auto; align-items: center; width: 100%; gap: 6px; }
+.br-semis { display: grid; gap: 10px; }
+.br-final { display: grid; gap: 4px; justify-items: start; }
+.br-link { align-self: stretch; margin: 26px 0; border: 3px solid rgba(255, 255, 255, 0.25); border-left: 0; border-radius: 0 14px 14px 0; position: relative; }
+.br-link::after { content: ""; position: absolute; right: -16px; top: 50%; width: 13px; border-top: 3px solid rgba(255, 255, 255, 0.25); }
+.br-match { display: grid; gap: 3px; width: 100%; padding: 5px; border-radius: 14px; background: rgba(0, 0, 0, 0.35); border: 2px solid rgba(255, 255, 255, 0.1); }
+.br-team { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 2px 8px 2px 4px; border-radius: 10px; background: linear-gradient(90deg, color-mix(in srgb, var(--team, #445) 55%, transparent), transparent); }
+.br-team.me { outline: 2px solid var(--gold); }
+.br-team.lose { opacity: 0.45; }
+.br-team.win .br-score { color: var(--gold); }
+.br-pics { display: flex; }
+.br-pic { width: 26px; height: 32px; display: block; }
+.br-pics .br-pic + .br-pic { margin-left: -8px; }
+.br-name { font-family: var(--font-display); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.br-score { font-family: var(--font-display); font-weight: 400; font-size: 20px; min-width: 16px; text-align: right; }
+.br-cup .cup { width: clamp(48px, 18vh, 92px); height: clamp(48px, 18vh, 92px); fill: rgba(255, 255, 255, 0.18); transition: fill 0.3s; }
+.br-cup.won .cup { fill: var(--gold); filter: drop-shadow(0 4px 0 var(--ink)) drop-shadow(0 0 22px rgba(255, 201, 60, 0.9)); animation: cup-bob 1.6s ease-in-out infinite; }
+
 /* lesk na hlavním tlačítku */
 .btn-play { position: relative; overflow: hidden; }
 .btn-play.big::after {
@@ -842,6 +879,15 @@ kbd {
   .pf-stat span, .pf-step span, .pf-step small { font-size: 10px; }
   .pf-ladder .rank-emblem { width: 24px; height: 24px; }
   .online-card { padding: 10px; gap: 6px; }
+  .lobby-settings { flex-wrap: wrap; row-gap: 3px; }
+  .cup-line { font-size: 12px; }
+  .cup-sub { font-size: 13px; }
+  .br-pic { width: 20px; height: 25px; }
+  .br-name { font-size: 13px; }
+  .br-score { font-size: 17px; }
+  .br-semis { gap: 6px; }
+  .br-match { padding: 3px; }
+  .dialog.cup .screen-title { font-size: 22px; }
   .card-kicker { font-size: 17px; }
   .field span { display: none; }
   .screen-title { font-size: 24px; }
@@ -853,7 +899,7 @@ kbd {
   .online-or { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .logo-ball, .vs-badge, .tbtn.super.full, .rotate-screen svg, .btn-play.big::after, .logo, .res-card.rankup { animation: none; }
+  .logo-ball, .vs-badge, .tbtn.super.full, .rotate-screen svg, .btn-play.big::after, .logo, .res-card.rankup, .cup-icon .cup, .br-cup.won .cup { animation: none; }
   .arena.anim .team-col { animation: none; }
 }
 @media (max-height: 320px) { .home-help { display: none; } }

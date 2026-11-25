@@ -113,7 +113,11 @@
         <h2 id="lobby-title" class="lobby-title">Výběr hráčů</h2>
       </div>
       <div class="lobby-settings">
-        <div class="seg" role="group" aria-label="Zápas" data-key="format">
+        <div id="lobby-mode" class="seg" role="group" aria-label="Zápas nebo turnaj" data-key="mode">
+          <button type="button" data-v="match">Zápas</button>
+          <button type="button" data-v="cup">Turnaj</button>
+        </div>
+        <div class="seg" role="group" aria-label="Formát" data-key="format">
           <button type="button" data-v="1v1">1 v 1</button>
           <button type="button" data-v="2v2">2 v 2</button>
         </div>
@@ -193,6 +197,32 @@
         <button id="btn-res-third" class="btn-game" type="button">Hlavní menu</button>
         <button id="btn-res-second" class="btn-game" type="button">Výběr hráčů</button>
         <button id="btn-res-main" class="btn-play" type="button">Hrát znovu</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- turnaj -->
+  <section id="cup" class="screen dim" aria-labelledby="cup-title" hidden>
+    <div class="dialog cup">
+      <header class="cup-head">
+        <h2 id="cup-title" class="screen-title">Turnaj</h2>
+        <p id="cup-sub" class="cup-sub"></p>
+      </header>
+      <div class="bracket">
+        <div class="br-semis">
+          <div class="br-match" id="br-s1"></div>
+          <div class="br-match" id="br-s2"></div>
+        </div>
+        <div class="br-link" aria-hidden="true"></div>
+        <div class="br-final">
+          <p class="mini-kicker">Finále</p>
+          <div class="br-match" id="br-f"></div>
+        </div>
+        <div class="br-cup" id="br-cup"><svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v2.5a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 14.6V17h3v3H8v-3h3v-2.4A5 5 0 0 1 8.4 11.5H8a4 4 0 0 1-4-4V5h3zm0 4H6v.5a2 2 0 0 0 1.2 1.8zm10 0v2.3A2 2 0 0 0 18 7.5V7z"/></svg></div>
+      </div>
+      <div class="dialog-buttons row">
+        <button id="btn-cup-quit" class="btn-game" type="button">Ukončit turnaj</button>
+        <button id="btn-cup-play" class="btn-play" type="button">Hrát semifinále</button>
       </div>
     </div>
   </section>

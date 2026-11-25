@@ -25,7 +25,7 @@ const store = {
 const Profile = {
   get() {
     const p = store.get(STORE_PROFILE, null);
-    const d = { trophies: 0, played: 0, wins: 0, goals: 0, supers: 0, knocks: 0, streak: 0, bestStreak: 0 };
+    const d = { trophies: 0, played: 0, wins: 0, goals: 0, supers: 0, knocks: 0, streak: 0, bestStreak: 0, cups: 0 };
     if (!p || typeof p !== 'object') return d;
     for (const k in d) d[k] = Math.max(0, Math.floor(Number(p[k]) || 0));
     return d;
@@ -123,6 +123,7 @@ const Game = {
   },
 
   toHome() {
+    this.cup = null;
     if (Online.active) Online.leave();
     this.mode = 'local';
     this.screen = 'home';
@@ -242,7 +243,7 @@ const Game = {
   savePrefs() {
     const l = this.lobby;
     if (!l) return;
-    this.prefs = { format: l.format, minutes: l.minutes, level: l.level, duos: l.duos.slice(), chars: l.format === '1v1' ? l.slots.map((s) => s.char) : this.prefs.chars };
+    this.prefs = { mode: this.mode === 'local' ? l.mode : this.prefs.mode, format: l.format, minutes: l.minutes, level: l.level, duos: l.duos.slice(), chars: l.format === '1v1' ? l.slots.map((s) => s.char) : this.prefs.chars };
     store.set(STORE_LOBBY, this.prefs);
   },
 
@@ -270,6 +271,11 @@ const Game = {
         if (l.format === a.value) return;
         l.slots = makeSlots(a.value, l, l.duos);
         l.format = a.value;
+      } else if (a.key === 'mode') {
+        l.mode = a.value === 'cup' ? 'cup' : 'match';
+        // v turnaji hraje hráč vždy za levý tým
+        const mine = l.slots.findIndex((s) => s.ctrl === 'p1');
+        if (l.mode === 'cup' && (mine < 0 || l.slots[mine].team !== 0)) claimSlot(l, 'p1', 0);
       } else {
         l[a.key] = a.value;
       }
@@ -278,6 +284,7 @@ const Game = {
       if (!s) return;
       if (this.mode === 'local') {
         // na jednom zařízení hraje jeden hráč: klepnutím si vybere postavu
+        if (l.mode === 'cup' && s.team !== 0) return;
         claimSlot(l, 'p1', a.slot);
       } else if (s.ctrl === 'host') {
         s.ctrl = 'cpu';
@@ -370,7 +377,58 @@ const Game = {
 
   start() {
     if (this.mode === 'guest') return;
+    // znovu stejný zápas turnaje (z pauzy)
+    if (this.cup && this.setup && this.setup.cup && this.screen === 'match') {
+      this.playCupMatch();
+      return;
+    }
+    if (this.mode === 'local' && this.lobby.mode === 'cup' && this.screen === 'lobby') {
+      this.startCup();
+      return;
+    }
+    this.cup = null;
     this.beginMatch(this.buildSetup(this.lobby));
+  },
+
+  /* ---------------- turnaj ---------------- */
+
+  startCup() {
+    this.cup = newCup(this.lobby);
+    UI.showCup();
+  },
+
+  // Další zápas turnaje: semifinále proti týmu 1, finále proti vítězi druhého semifinále.
+  playCupMatch() {
+    const cup = this.cup;
+    if (!cup || cup.stage === 'done') return;
+    const final = cup.stage === 'f';
+    const opp = final ? cupWinner(cup, 's2') : 1;
+    const setup = this.buildSetup(cupLobby(cup, opp, final));
+    setup.cup = true;
+    setup.stage = final ? 'FINÁLE' : 'SEMIFINÁLE';
+    this.beginMatch(setup);
+  },
+
+  // Výsledek mého zápasu do pavouka (jednou za zápas).
+  cupRecord() {
+    const cup = this.cup, m = this.match;
+    if (!cup || !this.setup || !this.setup.cup || cup.lastId === this.setup.id || m.score[0] === m.score[1]) return;
+    cup.lastId = this.setup.id;
+    const sc = [m.score[0], m.score[1]];
+    if (cup.stage === 's1') {
+      cup.res.s1 = sc;
+      cup.res.s2 = simCupMatch();
+      cup.stage = sc[0] > sc[1] ? 'f' : 'done';
+    } else if (cup.stage === 'f') {
+      cup.res.f = sc;
+      cup.stage = 'done';
+      cup.won = sc[0] > sc[1];
+    }
+  },
+
+  quitCup() {
+    this.cup = null;
+    this.toLobby();
   },
 
   beginMatch(setup) {
@@ -441,6 +499,7 @@ const Game = {
   },
 
   backToLobby() {
+    this.cup = null;
     if (this.mode === 'host') this.publishLobby();
     this.toLobby();
   },
@@ -936,6 +995,17 @@ const Game = {
     const ps = this.match.players.filter((p) => p.team === team);
     const p = who || pick(ps);
     let text = pick(list);
+    if (kind === 'chant') {
+      // pokřiky fanoušků: dvojice, která hraje, obecné z tribun, nebo jméno hráče
+      const own = [];
+      for (const q of ps) {
+        const d = duoOf(q.look.id);
+        if (d >= 0) for (const t of DUO_SHOUTS[d] || []) if (!own.includes(t)) own.push(t);
+      }
+      const r = Math.random();
+      if (own.length && r < 0.4) text = pick(own);
+      else if (r < 0.8) text = pick(SHOUTS.crowd);
+    }
     text = text.replace(/\{V\}/g, p ? VOCATIVE[p.look.id] || p.look.name : 'kluci');
     text = text.replace(/\{T\}/g, p ? p.look.name.toUpperCase() : T.name);
     this.lastShout = this.gameT;
@@ -999,6 +1069,13 @@ const Game = {
       const goals = Math.min(2, st.goals);
       delta = -Math.min(before, Math.max(0, lose - goals));
       parts.push(goals ? `prohra −${lose}, tvoje góly +${goals}` : `prohra −${lose}`);
+    }
+    // vítězství v turnaji
+    this.cupRecord();
+    if (this.cup && setup.cup && this.cup.stage === 'done' && this.cup.won) {
+      delta += 15;
+      parts.push('turnaj +15');
+      prof.cups++;
     }
     prof.trophies = Math.max(0, before + delta);
     prof.played++;
@@ -1485,7 +1562,7 @@ const UI = {
       resKicker: $('res-kicker'), resTitle: $('res-title'), resA: $('res-a'), resB: $('res-b'), resSub: $('res-sub'),
       resMain: $('btn-res-main'), resSecond: $('btn-res-second'), resThird: $('btn-res-third'), resWait: $('res-wait'),
       pauseSecond: $('btn-restart'), pauseThird: $('btn-quit'),
-      profile: $('profile'), chip: $('profile-chip'),
+      profile: $('profile'), chip: $('profile-chip'), cup: $('cup'),
     };
     const click = (id, fn) => $(id).addEventListener('click', () => {
       Sound.init();
@@ -1538,12 +1615,20 @@ const UI = {
     click('btn-restart', () => Game.start());
     click('btn-quit', () => Game.backToLobby());
     click('btn-res-main', () => {
-      if (Game.mode !== 'guest') Game.start();
+      if (Game.cup && Game.setup && Game.setup.cup) this.showCup();
+      else if (Game.mode !== 'guest') Game.start();
     });
     click('btn-res-second', () => {
       if (Game.mode === 'guest') Game.toHome();
+      else if (Game.cup) Game.quitCup();
       else Game.backToLobby();
     });
+    click('btn-cup-play', () => {
+      if (!Game.cup) return;
+      if (Game.cup.stage === 'done') Game.startCup();
+      else Game.playCupMatch();
+    });
+    click('btn-cup-quit', () => Game.quitCup());
     click('btn-res-third', () => Game.toHome());
     this.el.pauseBtn.addEventListener('click', () => (Game.state === 'paused' ? Game.resume() : Game.pause()));
     this.el.skip = $('btn-skip');
@@ -1592,7 +1677,7 @@ const UI = {
     this.setEmblem($('pf-emblem'), r.rank);
     const stats = [
       ['Zápasy', prof.played], ['Výhry', prof.wins], ['Góly', prof.goals],
-      ['Superstřely', prof.supers], ['Odstřelení', prof.knocks], ['Nejdelší série', prof.bestStreak],
+      ['Superstřely', prof.supers], ['Vyhrané turnaje', prof.cups], ['Nejdelší série', prof.bestStreak],
     ];
     const box = $('pf-stats');
     box.textContent = '';
@@ -1623,6 +1708,61 @@ const UI = {
       lad.appendChild(d);
     });
     this.show('profile');
+  },
+
+  // Pavouk turnaje.
+  showCup() {
+    const cup = Game.cup;
+    if (!cup) return;
+    const $ = (id) => document.getElementById(id);
+    const box = (id, key, a, b) => {
+      const el = $(id);
+      el.textContent = '';
+      const r = cup.res[key], w = cupWinner(cup, key);
+      [a, b].forEach((ti, k) => {
+        const row = document.createElement('div');
+        row.className = 'br-team' + (ti === 0 ? ' me' : '') + (r ? (ti === w ? ' win' : ' lose') : '');
+        const pics = document.createElement('span');
+        pics.className = 'br-pics';
+        let name = '?';
+        if (ti >= 0) {
+          const info = cupTeam(cup, ti);
+          name = info.name;
+          row.style.setProperty('--team', info.T.color);
+          for (const c of info.chars) {
+            const cv = document.createElement('canvas');
+            cv.className = 'br-pic';
+            pics.appendChild(cv);
+            requestAnimationFrame(() => Renderer.portrait(cv, c, info.T, k === 0 ? 1 : -1));
+          }
+        }
+        const nm = document.createElement('span');
+        nm.className = 'br-name';
+        nm.textContent = name + (ti === 0 ? ' (TY)' : '');
+        const sc = document.createElement('b');
+        sc.className = 'br-score';
+        sc.textContent = r ? r[k] : '–';
+        row.append(pics, nm, sc);
+        el.appendChild(row);
+      });
+    };
+    box('br-s1', 's1', 0, 1);
+    box('br-s2', 's2', 2, 3);
+    box('br-f', 'f', cup.res.s1 ? cupWinner(cup, 's1') : -1, cup.res.s2 ? cupWinner(cup, 's2') : -1);
+    const champ = cup.stage === 'done' && cup.won;
+    $('br-cup').classList.toggle('won', champ);
+    const sub = cup.stage === 's1' ? 'Losování je hotové. Čeká tě semifinále!'
+      : cup.stage === 'f' ? 'Jsi ve finále! Soupeř bude těžší.'
+        : champ ? 'Pohár je tvůj! +15 pohárů navíc.' : 'Tentokrát to nevyšlo. Zkus to znovu!';
+    $('cup-title').textContent = champ ? 'Turnaj vyhrán!' : 'Turnaj';
+    $('cup-sub').textContent = sub;
+    $('btn-cup-play').textContent = cup.stage === 's1' ? 'Hrát semifinále' : cup.stage === 'f' ? 'Hrát finále' : 'Nový turnaj';
+    $('btn-cup-quit').textContent = cup.stage === 'done' ? 'Hotovo' : cup.stage === 's1' ? 'Zpět' : 'Ukončit turnaj';
+    this.show('cup');
+    if (champ && !cup.celebrated) {
+      cup.celebrated = true;
+      Sound.fanfare();
+    }
   },
 
   // Hráč zápasu a poháry na obrazovce výsledku.
@@ -1773,12 +1913,12 @@ const UI = {
   },
 
   show(name) {
-    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile']) {
+    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup']) {
       this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home');
     }
     this.el.chip.hidden = name !== 'home';
     // u velkých tabulek schovat ikony v rohu, ať nic nepřekrývají
-    document.getElementById('app').classList.toggle('modal', name === 'result' || name === 'profile');
+    document.getElementById('app').classList.toggle('modal', name === 'result' || name === 'profile' || name === 'cup');
     this.measureHud();
     this.el.pauseBtn.hidden = !(Game.screen === 'match' && Game.mode !== 'guest' && (Game.inMatch() || Game.state === 'paused'));
     if (name === 'pause') {
@@ -1825,6 +1965,15 @@ const UI = {
     this.el.resSecond.textContent = guest ? 'Odejít ze hry' : Game.mode === 'host' ? 'Do lobby' : 'Výběr hráčů';
     this.el.resThird.hidden = guest;
     this.el.resThird.textContent = Game.mode === 'host' ? 'Ukončit online hru' : 'Hlavní menu';
+    if (Game.cup && setup.cup) {
+      Game.cupRecord();
+      const cup = Game.cup, won = a > b;
+      this.el.resKicker.textContent = `Turnaj · ${setup.stage}`;
+      this.el.resTitle.textContent = cup.stage === 'f' ? 'Postup do finále!' : cup.won ? 'Turnaj vyhrán!' : setup.stage === 'FINÁLE' ? 'Prohra ve finále' : 'Konec turnaje';
+      this.el.resTitle.style.color = won ? '#ffc93c' : T.light;
+      this.el.resMain.textContent = 'Pokračovat';
+      this.el.resSecond.textContent = 'Ukončit turnaj';
+    }
     this.show('result');
     this.renderRewards();
   },

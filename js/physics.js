@@ -50,6 +50,7 @@ class Player {
     this.role = o.role;
     this.homeX = o.x;
     this.R = PHYS.playerR;
+    this.F = PHYS.footH * ((o.look && o.look.tall) || 1); // tělo a nohy (vysoký hráč má delší nohy)
     this.speedMul = 1;
     this.brain = null;
     this.blinkT = rand(1, 4);
@@ -61,7 +62,7 @@ class Player {
   }
 
   get standY() {
-    return GROUND_Y - PHYS.footH - this.R;
+    return GROUND_Y - this.F - this.R;
   }
 
   get human() {
@@ -93,7 +94,7 @@ class Player {
 
   // Poloha kopačky: kvadratická křivka od země dopředu a nahoru.
   footAt(s, out) {
-    const R = this.R, F = PHYS.footH, i = 1 - s;
+    const R = this.R, F = this.F, i = 1 - s;
     const lx = i * i * 8 * PS + 2 * i * s * (R + 22 * PS) + s * s * (R + 18 * PS);
     const ly = i * i * (R + F - 12 * PS) + 2 * i * s * (R + F - 4 * PS) + s * s * (R + F - 50 * PS);
     out = out || {};
@@ -375,7 +376,7 @@ class Match {
       p.kickCd -= dt;
     }
 
-    p.prevFeet = p.y + p.R + PHYS.footH;
+    p.prevFeet = p.y + p.R + p.F;
     p.vy += PHYS.gravity * dt;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
@@ -397,7 +398,7 @@ class Match {
   }
 
   playerWorld(p) {
-    const R = p.R, foot = PHYS.footH;
+    const R = p.R, foot = p.F;
     this.clampPlayer(p);
     for (let side = 0; side < 2; side++) {
       const [x0, x1] = goalRect(side);
@@ -424,7 +425,7 @@ class Match {
   }
 
   clampPlayer(p) {
-    const stand = GROUND_Y - PHYS.footH - p.R;
+    const stand = GROUND_Y - p.F - p.R;
     if (p.y >= stand) {
       p.y = stand;
       if (p.vy > 0) p.vy = 0;
