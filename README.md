@@ -88,6 +88,8 @@ Tlačítko *Příběh* v hlavním menu (dokud je zamčený, má zámeček). Kód
 | 9 | 2 v 2 | Nelcis & Majda | těžká, +12 % | vyhraj o 3 góly | |
 | 10 | 1 v 1 | BOSS Milan Voračka | těžká, +15 % | vyhraj o 5 gólů | **dvojice Tlustej páv & Suli** |
 
+Některé úrovně se hrají ve speciální aréně: 2 na pláži, 5 na ledu, 6 ve vichřici a 8 na Měsíci.
+
 Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhled, co za ni dostaneš.
 
 - **Moncler-Jenda**: skin jen pro Jendu – bílá péřová bunda s prošíváním, černé brýle, zlatý řetěz, diamant v uchu, černé tepláky a bílé tenisky (bez loga značky). Zapíná se tlačítkem *Moncler* u Jendy v lobby nebo v Příběhu a platí i online.
