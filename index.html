@@ -128,22 +128,7 @@
         <p id="lobby-kicker" class="lobby-kicker">Hra proti počítači</p>
         <h2 id="lobby-title" class="lobby-title">Výběr hráčů</h2>
       </div>
-      <div class="lobby-settings">
-        <div id="lobby-mode" class="seg" role="group" aria-label="Zápas nebo turnaj" data-key="mode">
-          <button type="button" data-v="match">Zápas</button>
-          <button type="button" data-v="cup">Turnaj</button>
-        </div>
-        <div class="seg" role="group" aria-label="Formát" data-key="format">
-          <button type="button" data-v="1v1">1 v 1</button>
-          <button type="button" data-v="2v2">2 v 2</button>
-        </div>
-        <span class="seg-info" title="Zápas má dva poločasy po 45 s">⏱ 2 × 45 s</span>
-        <div id="lobby-level" class="seg" role="group" aria-label="Obtížnost počítače" data-key="level">
-          <button type="button" data-v="easy">Lehký</button>
-          <button type="button" data-v="medium">Střední</button>
-          <button type="button" data-v="hard">Těžký</button>
-        </div>
-      </div>
+      <ul id="lobby-members" class="members" aria-label="Hráči ve hře" hidden></ul>
       <div id="lobby-invite" class="invite" hidden>
         <div class="code-box"><span>Kód</span><strong id="lobby-code"></strong></div>
         <button id="btn-invite" class="btn-invite" type="button">
@@ -154,8 +139,22 @@
     </header>
     <div id="slots" class="arena"></div>
     <footer class="lobby-bottom">
+      <div class="lobby-settings">
+        <div id="lobby-mode" class="seg" role="group" aria-label="Zápas nebo turnaj" data-key="mode">
+          <button type="button" data-v="match">Zápas</button>
+          <button type="button" data-v="cup">Turnaj</button>
+        </div>
+        <div class="seg" role="group" aria-label="Formát" data-key="format">
+          <button type="button" data-v="1v1">1 v 1</button>
+          <button type="button" data-v="2v2">2 v 2</button>
+        </div>
+        <div id="lobby-level" class="seg" role="group" aria-label="Obtížnost počítače" data-key="level">
+          <button type="button" data-v="easy">Lehký</button>
+          <button type="button" data-v="medium">Střední</button>
+          <button type="button" data-v="hard">Těžký</button>
+        </div>
+      </div>
       <div class="lobby-info">
-        <ul id="lobby-members" class="members" aria-label="Hráči ve hře" hidden></ul>
         <p id="lobby-power" class="lobby-power" hidden></p>
         <p id="lobby-hint" class="hint"></p>
         <p id="lobby-wait" class="status wait" hidden>Čeká se, až hostitel spustí zápas…</p>

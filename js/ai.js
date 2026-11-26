@@ -206,7 +206,11 @@ class AIBrain {
       } else if (p.power === 'prime') {
         // JENDA PRIME, když jde o míč
         if (Math.abs(b.x - p.x) < 380 && Math.random() < L.kick * 0.7) this.out.super = true;
-      } else if (p.power === 'redcard') {
+      } else if (p.power === 'grow') {
+        // zvětšit se, když je soupeř blízko nebo jde o míč
+        const near = m.players.some((o) => o.team !== p.team && o.stunT <= 0 && Math.abs(o.x - p.x) < 260);
+        if ((near || Math.abs(b.x - p.x) < 200) && Math.random() < L.kick * 0.6) this.out.super = true;
+      } else if (p.power === 'redcard' || p.power === 'flash') {
         // karta, když je soupeř u míče blíž než my
         const opp = m.players.filter((o) => o.team !== p.team && o.stunT <= 0);
         const close = opp.some((o) => Math.abs(o.x - b.x) < 170 && Math.abs(o.x - b.x) < Math.abs(p.x - b.x));

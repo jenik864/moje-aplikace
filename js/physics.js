@@ -42,6 +42,18 @@ class Ball {
   }
 }
 
+// Obří páv: zvětšení postavy (fyzika i kresba), hlava zůstane na zemi správně vysoko.
+function setGrow(p, k) {
+  sizeGrow(p, k);
+  if (p.onGround) p.y = p.standY;
+}
+// jen velikost (u kamaráda online a v opakování, poloha přijde zvlášť)
+function sizeGrow(p, k) {
+  p.growK = k;
+  p.R = PHYS.playerR * k;
+  p.F = p.baseF * k;
+}
+
 class Player {
   constructor(o) {
     this.team = o.team;
@@ -67,6 +79,7 @@ class Player {
     this.boostT = 0;      // VO2max: zrychlení
     this.pengT = 0;       // proměna v tučňáka
     this.primeT = 0;      // JENDA PRIME
+    this.baseF = this.F;
     this.place(o.x);
   }
 
@@ -93,6 +106,11 @@ class Player {
     this.boostT = 0;
     this.pengT = 0;
     this.primeT = 0;
+    this.growT = 0;   // Obří páv
+    this.flashT = 0;  // oslněný bleskem (vyvalené oči)
+    this.selfieT = 0; // Sully fotí selfie
+    if (this.growK && this.growK !== 1) setGrow(this, 1);
+    this.y = this.standY;
     this.shootT = 0;  // basketbalový hod (ruce nahoře)
     this.celeb = '';  // oslava gólu: 'slide' (po kolenou) nebo 'plane' (letadlo)
     this.celebT = 0;
@@ -348,6 +366,12 @@ class Match {
         p.primeT = Math.max(0, p.primeT - dt);
         if (p.primeT === 0) this.onEvent('unprime', { idx: this.players.indexOf(p) });
       }
+      if (p.flashT > 0) p.flashT = Math.max(0, p.flashT - dt);
+      if (p.selfieT > 0) p.selfieT = Math.max(0, p.selfieT - dt);
+      if (p.growT > 0 || (p.growK || 1) > 1) {
+        p.growT = Math.max(0, p.growT - dt);
+        setGrow(p, approach(p.growK || 1, p.growT > 0 ? GROW_K : 1, dt * 2.4));
+      }
       this.movePlayer(p, it, dt);
     }
     for (let t = 0; t < 2; t++) {
@@ -553,6 +577,20 @@ class Match {
       p.boostT = BOOST_TIME;
     } else if (p.power === 'prime') {
       p.primeT = PRIME_TIME;
+    } else if (p.power === 'grow') {
+      p.growT = GROW_TIME;
+    } else if (p.power === 'flash') {
+      // Selfie flash: blesk z mobilu, soupeři ztuhnou s vyvalenýma očima
+      p.selfieT = 0.9;
+      for (const o of this.players) {
+        if (o.team === p.team || o.primeT > 0) continue;
+        o.stunT = Math.max(o.stunT, FLASH_TIME);
+        o.flashT = FLASH_TIME;
+        o.knockDir = 0;
+        o.kickT = -1;
+        o.superKick = false;
+        o.vx *= 0.2;
+      }
     } else if (p.power === 'redcard') {
       // Červená karta: soupeři na chvíli ztuhnou (JENDA PRIME ji ustojí)
       for (const o of this.players) {
@@ -670,6 +708,23 @@ class Match {
           // JENDA PRIME soupeře odstrčí
           if (a.primeT > 0 && !(c.primeT > 0)) { wa = 0.1; wc = 0.9; }
           else if (c.primeT > 0 && !(a.primeT > 0)) { wa = 0.9; wc = 0.1; }
+          // Obří páv: kdo do něj narazí, odletí a je omráčený
+          if ((a.growT > 0) !== (c.growT > 0)) {
+            const big = a.growT > 0 ? a : c, small = big === a ? c : a;
+            if (big === a) { wa = 0.05; wc = 0.95; } else { wa = 0.95; wc = 0.05; }
+            if (big.team !== small.team && small.stunT <= 0 && !(small.primeT > 0)) {
+              const dir = Math.sign(small.x - big.x) || (big.team === 0 ? 1 : -1);
+              small.vx = dir * PHYS.knockVX * 0.7;
+              small.vy = -PHYS.knockVY * 0.55;
+              small.onGround = false;
+              small.y -= 4;
+              small.stunT = GROW_STUN;
+              small.knockDir = dir;
+              small.kickT = -1;
+              small.superKick = false;
+              this.onEvent('ram', { x: small.x, y: small.y, idx: ps.indexOf(small), by: ps.indexOf(big) });
+            }
+          }
           a.x -= nx * o * wa; a.y -= ny * o * wa;
           c.x += nx * o * wc; c.y += ny * o * wc;
           const rv = (c.vx - a.vx) * nx + (c.vy - a.vy) * ny;

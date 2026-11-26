@@ -183,7 +183,9 @@ const Effects = {
     this.flashes.push({ x: rand(10, W - 10), y: rand(170, 450), t: 0, dur: rand(0.08, 0.16) });
   },
 
+  whiteT: 0,
   update(dt) {
+    if (this.whiteT > 0) this.whiteT = Math.max(0, this.whiteT - dt);
     this.shakeAmt = Math.max(0, this.shakeAmt * Math.pow(0.02, dt) - dt * 2);
     const ps = this.parts;
     for (let i = ps.length - 1; i >= 0; i--) {
@@ -800,7 +802,7 @@ const Renderer = {
       if (g.screen === 'match' && g.state === 'over') this.drawTrophy(ctx, g, now);
       Effects.draw(ctx);
       Effects.drawTalks(ctx, m.players);
-      for (const p of m.players) if (p.stunT > 0 && p.onGround) this.drawDizzy(ctx, p, now);
+      for (const p of m.players) if (p.stunT > 0 && p.onGround && !(p.flashT > 0)) this.drawDizzy(ctx, p, now);
       if (g.screen === 'match' && g.state === 'intro') this.drawIntroTalk(ctx, g, now);
       Effects.drawPops(ctx);
       if (g.state !== 'menu' && cam.bars < 0.3) {
@@ -835,6 +837,12 @@ const Renderer = {
       this.drawMsg(ctx, { text: 'PAUZA', sub: 'Hostitel hru pozastavil', t: 1, dur: 9, size: 110, color: '#f3f6ef' });
     }
     if (g.msg) this.drawMsg(ctx, g.msg);
+    // Selfie flash: bílý záblesk přes celou obrazovku
+    if (Effects.whiteT > 0) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = `rgba(255,255,255,${clamp(Effects.whiteT / 0.45, 0, 1) * 0.85})`;
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
   },
 
   // Publikum: při vzrušení vyskakuje ve vlnách.
@@ -1541,6 +1549,27 @@ const Renderer = {
   },
 
   drawPlayerBody(ctx, p, ball, teams, now) {
+    // Obří páv: nakreslit v základní velikosti a celé zvětšit kolem hlavy
+    const gk = p.growK || 1;
+    if (gk !== 1 && !p._growDraw) {
+      const R0 = p.R, F0 = p.F;
+      p.R = R0 / gk;
+      p.F = F0 / gk;
+      p._growDraw = true;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.scale(gk, gk);
+      ctx.translate(-p.x, -p.y);
+      try {
+        this.drawPlayerBody(ctx, p, ball, teams, now);
+      } finally {
+        ctx.restore();
+        p.R = R0;
+        p.F = F0;
+        p._growDraw = false;
+      }
+      return;
+    }
     // kresba je v základních rozměrech, na hřišti se zvětší o PS
     const T = teams[p.team], L = p.look, R = p.R / PS, F = p.F / PS;
     const kicking = p.kickT >= 0;
@@ -1605,6 +1634,8 @@ const Renderer = {
       aFront = 0.12 + Math.sin(ph) * 0.8 * run;
     }
 
+    // Sully fotí selfie: ruka s mobilem nahoru před obličej
+    if (p.selfieT > 0) aFront = 2.45;
     if (p.pengT > 0) {
       this.drawPenguin(ctx, p, T, now, R, F);
       return;
@@ -1636,7 +1667,7 @@ const Renderer = {
     }
     // Moncler-Jenda: péřová bunda, brýle, řetěz (při JENDA PRIME bílý dres Realu)
     this._drip = p.skin === 'moncler' && !(p.primeT > 0);
-    const ch = L.chub || 1; // Tlustej páv je širší
+    const ch = (L.chub || 1) * (p.growT > 0 ? 1.15 : 1); // Tlustej páv je širší (a při Obřím pávovi ještě víc)
     this.drawHair(ctx, p, T, 'back', now);
     this.drawArm(ctx, -12 * ch, R + 1, aBack, T, L, true);
     this.drawLeg(ctx, -6 * ch, R + 18, bx - (ch - 1) * 8, by, T, L, 0, true);
@@ -1645,6 +1676,7 @@ const Renderer = {
     this.drawHead(ctx, p, ball, T, now);
     if (this._drip) this.drawShades(ctx, p);
     this.drawArm(ctx, 10 * ch, R + 1, aFront, T, L, false);
+    if (p.selfieT > 0) this.drawPhone(ctx, 10 * ch + Math.sin(aFront) * 17, R + 1 + Math.cos(aFront) * 17, p.selfieT);
     this._drip = false;
     ctx.restore();
   },
@@ -2092,7 +2124,7 @@ const Renderer = {
 
   drawTorso(ctx, p, T, L) {
     const R = p.R / PS;
-    const ch = (L.chub || 1) * (this._drip ? 1.12 : 1);
+    const ch = (L.chub || 1) * (this._drip ? 1.12 : 1) * (p.growT > 0 ? 1.15 : 1);
     ctx.save();
     if (ch !== 1) {
       // širší (bříško / nafouklá bunda): roztáhnout trup do stran
@@ -2277,6 +2309,49 @@ const Renderer = {
     ctx.strokeStyle = '#7a5a10';
     ctx.lineWidth = 1.2;
     ctx.stroke();
+  },
+
+  // Mobil v ruce (selfie), na začátku s bleskem.
+  drawPhone(ctx, x, y, t) {
+    ctx.save();
+    ctx.translate(x, y - 6);
+    ctx.rotate(-0.25);
+    ctx.fillStyle = '#1b1f2a';
+    rrect(ctx, -5.5, -10, 11, 19, 2.5);
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+    ctx.fillStyle = '#ff7ac8';
+    rrect(ctx, -4, -8.5, 8, 15, 1.5);
+    ctx.fill();
+    // blesk
+    const f = clamp((t - 0.55) / 0.35, 0, 1);
+    if (f > 0) {
+      const g = ctx.createRadialGradient(0, -6, 0, 0, -6, 40 * f + 10);
+      g.addColorStop(0, `rgba(255,255,255,${0.95 * f})`);
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      circle(ctx, 0, -6, 40 * f + 10);
+      ctx.fill();
+    }
+    ctx.restore();
+  },
+
+  // Oslněný bleskem: vyvalené oči.
+  drawStareEye(ctx, x, y, r) {
+    ctx.fillStyle = '#ffffff';
+    circle(ctx, x, y, r);
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#16120f';
+    circle(ctx, x + 1, y + 0.5, r * 0.26);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    circle(ctx, x - r * 0.2, y - r * 0.35, r * 0.14);
+    ctx.fill();
   },
 
   // Moncler-Jenda: černé brýle a diamant v uchu.
@@ -3097,7 +3172,12 @@ const Renderer = {
     }
 
     // oči (odstřelený hráč má spirály)
-    if (p.stunT > 0) {
+    if (p.flashT > 0) {
+      // vyvalené oči, trochu pulzují
+      const pz = 1 + Math.sin(p.flashT * 14) * 0.06;
+      this.drawStareEye(ctx, 8, -4, 9.5 * pz);
+      this.drawStareEye(ctx, 28, -4, 11 * pz);
+    } else if (p.stunT > 0) {
       this.drawDizzyEye(ctx, 9, -3, 6, p.stunT);
       this.drawDizzyEye(ctx, 27, -3, 7, p.stunT);
     } else {
@@ -3107,7 +3187,8 @@ const Renderer = {
 
     // obočí: soustředění při kopu, smutek po inkasovaném gólu
     let inner = 0, outer = 0;
-    if (p.mood < 0) inner = -3.5;
+    if (p.flashT > 0) { inner = -6; outer = -6; }
+    else if (p.mood < 0) inner = -3.5;
     else if (p.kickT >= 0) inner = 3;
     else if (p.mood > 0) outer = -2.5;
     ctx.strokeStyle = L.brow;
@@ -3131,7 +3212,7 @@ const Renderer = {
 
     // pusa
     const lip = L.girl ? '#c23d5a' : '#8a3a2c';
-    const open = p.mood > 0 || p.kickT >= 0 || (!p.onGround && p.vy < -200);
+    const open = p.mood > 0 || p.kickT >= 0 || p.flashT > 0 || (!p.onGround && p.vy < -200);
     if (open) {
       ctx.fillStyle = '#5a1a1c';
       oval(ctx, 25, 18.5, 5.5, p.mood > 0 ? 5.5 : 4);
@@ -3186,6 +3267,38 @@ const Renderer = {
         const a = rng() * Math.PI, d = 0.55 + rng() * 0.45;
         ctx.fillRect(18 + Math.cos(a) * 21 * d, 22 + Math.sin(a) * 12 * d, 0.8, 0.8);
       }
+      ctx.restore();
+    }
+    // lehké vousy (Tlustej páv): po bradě a čelisti, knírek
+    if (L.beard) {
+      ctx.save();
+      circle(ctx, 0, 0, 39);
+      ctx.clip();
+      ctx.fillStyle = hexA(L.hairColor, 0.38);
+      ctx.beginPath();
+      ctx.moveTo(-14, 12);
+      ctx.quadraticCurveTo(-6, 30, 14, 33);
+      ctx.quadraticCurveTo(32, 33, 40, 22);
+      ctx.lineTo(40, 30);
+      ctx.lineTo(40, 45);
+      ctx.lineTo(-20, 45);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = hexA(L.hairDark, 0.55);
+      const rng = mulberry32(7);
+      for (let i = 0; i < 70; i++) {
+        const a = 0.05 + rng() * 2.9, d = 0.72 + rng() * 0.3;
+        const x = 14 + Math.cos(a) * 26 * d, y = 20 + Math.sin(a) * 15 * d;
+        if (y < 23 && x > 15 && x < 35) continue; // kolem pusy holo
+        ctx.fillRect(x, y, 1.3, 1.3);
+      }
+      ctx.strokeStyle = hexA(L.hairDark, 0.7);
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(19, 15);
+      ctx.quadraticCurveTo(25, 12.5, 32, 14.5);
+      ctx.stroke();
       ctx.restore();
     }
     // rozhodčí píská

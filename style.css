@@ -1302,3 +1302,21 @@ kbd {
 .rw-pics { align-items: flex-end; }
 .rw-pic { width: clamp(110px, calc(var(--vh, 1vh) * 46), 230px); height: clamp(120px, calc(var(--vh, 1vh) * 64), 300px); }
 .rw-pics .rw-pic + .rw-pic { margin-left: -14px; }
+
+/* ---- přehlednější lobby: nahoře jen nadpis a online, dole nastavení a Hrát ---- */
+.lobby-top .members { flex: 1; min-width: 0; flex-wrap: nowrap; overflow: hidden; justify-content: flex-start; }
+.lobby-top .member .m-state { display: none; }
+.lobby-bottom { grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; }
+.lobby-bottom .lobby-settings,
+:root.w700:not(.h320) .lobby-bottom .lobby-settings,
+:root.h320 .lobby-bottom .lobby-settings { flex: none; order: 0; flex-basis: auto; flex-wrap: nowrap; justify-content: flex-start; gap: 6px; }
+.lobby-bottom .lobby-settings:empty { display: none; }
+.lobby-power { display: none !important; }
+.team-col.no-head { grid-template-rows: minmax(0, 1fr); padding-top: 10px; }
+.team-col { padding: 6px 10px 8px; }
+.cards { gap: clamp(10px, 4vw, 40px); }
+.hint { font-size: 13px; }
+:root.h380 .lobby-bottom .seg button { padding: 4px 8px; font-size: 14px; }
+:root.h320 .lobby-bottom .seg button { padding: 3px 6px; font-size: 12px; }
+:root.w700 .lobby-bottom .seg button { padding: 3px 6px; font-size: 12px; }
+:root.h380 .lobby-actions .btn-play { font-size: 24px; padding: 5px 22px 3px; }

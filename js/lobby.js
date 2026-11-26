@@ -372,22 +372,19 @@ const LobbyUI = {
       col.style.setProperty('--team', T.color);
       col.style.setProperty('--team-dark', T.dark);
       col.style.setProperty('--team-light', T.light);
-      const head = this.el2('div', 'team-head');
-      const tt = this.el2('div', 'team-tt');
-      const duoLocked = two && !duoAvailable(lobby.duos[team]);
-      tt.appendChild(this.el2('span', 'team-title', two ? (duoLocked ? '🔒 ' : '') + T.name : team === 0 ? 'Levá strana' : 'Pravá strana'));
-      // pokřik fanoušků dvojice
-      const duo = two ? lobby.duos[team] : duoOf(lobby.slots[team].char);
-      const chant = duo >= 0 && DUO_SHOUTS[duo] && DUO_SHOUTS[duo][0];
-      if (chant) tt.appendChild(this.el2('span', 'team-chant', `📣 ${chant}`));
+      // hlavička jen u 2 v 2 (jméno dvojice se šipkami); u 1 v 1 stačí barva a jméno pod postavou
       if (two) {
+        const head = this.el2('div', 'team-head');
+        const tt = this.el2('div', 'team-tt');
+        const duoLocked = !duoAvailable(lobby.duos[team]);
+        tt.appendChild(this.el2('span', 'team-title', (duoLocked ? '🔒 ' : '') + T.name));
         head.appendChild(this.arrow(-1, { duo: team, d: -1 }, 'Předchozí dvojice', !ctx.canEdit));
         head.appendChild(tt);
         head.appendChild(this.arrow(1, { duo: team, d: 1 }, 'Další dvojice', !ctx.canEdit));
+        col.appendChild(head);
       } else {
-        head.appendChild(tt);
+        col.classList.add('no-head');
       }
-      col.appendChild(head);
       const row = this.el2('div', 'cards');
       lobby.slots.forEach((s, i) => {
         if (s.team !== team) return;
@@ -455,7 +452,7 @@ const LobbyUI = {
       const b1 = this.el2('b', '', `${pw.icon} ${pw.name}`);
       el.power.append(this.el2('span', 'lp-k', 'Tvoje superschopnost'), b1);
     }
-    el.power.hidden = !me;
+    el.power.hidden = true; // schopnost je vidět pod postavou
 
     // nápověda a tlačítka
     const meSlot = lobby.slots.find((s) => s.ctrl === ctx.me);
