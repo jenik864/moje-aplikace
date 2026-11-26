@@ -88,7 +88,7 @@ const ROSTER = [
   { id: 'jenda', name: 'Jenda', num: 21, skin: '#f0c7a6', hair: 'shaggy', hairColor: '#5c3d22', hairDark: '#2b190b', hairLight: '#8f6844', eyes: '#5e4a33', brow: '#3a2614', lid: 0.32, browW: 3.4, mouth: 'smirk' },
   // odemkne se v příběhu (úroveň 10)
   { id: 'pav', name: 'Tlustej páv', short: 'Páv', num: 99, skin: '#efc3a0', hair: 'side', hairColor: '#b8975c', hairDark: '#6f5428', hairLight: '#e6cd96', eyes: '#4a3424', brow: '#8a6a3a', chub: 1.75, beard: true, lid: 0.1, locked: 'pav' },
-  { id: 'sully', name: 'Sully', girl: true, num: 17, skin: '#f3cfb4', hair: 'longhair', fringe: 'curtain', wavy: true, hairColor: '#f3dc96', hairDark: '#b08f45', hairLight: '#fffae0', eyes: '#3d6f8f', brow: '#b3924f', accent: '#7ee8d8', locked: 'pav' },
+  { id: 'sully', name: 'Sully', girl: true, num: 17, skin: '#f3cfb4', hair: 'longhair', fringe: 'curtain', wavy: true, hairColor: '#f3dc96', hairDark: '#b08f45', hairLight: '#fffae0', eyes: '#3d6f8f', brow: '#b3924f', accent: '#7ee8d8', curvy: true, flashPose: true, locked: 'pav' },
   // boss příběhu (hratelný jen pro toho, kdo ho dřív odemkl)
   { id: 'milan', hidden: true, name: 'Milan', num: 90, skin: '#f1c2a0', hair: 'receding', hairColor: '#c9a66a', hairDark: '#8a6a34', hairLight: '#ecd39c', eyes: '#86a0b4', brow: '#a8895a', lid: 0.24, browW: 3.4, mouth: 'flat', stubble: true, locked: 'milan', kit: { color: '#25282f', dark: '#121419', light: '#ffd23f' } },
 ];
@@ -194,7 +194,7 @@ const STORY = [
 // Odměny příběhu (náhled po klepnutí).
 const STORY_REWARDS = {
   moncler: { kind: 'skin', name: 'MONCLER-JENDA', text: 'Luxusní skin pro Jendu: bílá péřová bunda, černé brýle, zlatý řetěz a bílé tenisky. Zapneš ho, když hraješ za Jendu.' },
-  pav: { kind: 'duo', name: 'TLUSTEJ PÁV & SULLY', text: 'Nová dvojice hráčů. Páv umí OBŘÍ PÁV (zvětší se a kdo do něj narazí, je omráčený), Sully SELFIE FLASH (soupeři na 3 s ztuhnou). Do té doby mají ve výběru zámeček.' },
+  pav: { kind: 'duo', name: 'TLUSTEJ PÁV & SULLY', text: 'Nová dvojice hráčů. Páv umí OBŘÍ PÁV (zvětší se a kdo do něj narazí, je omráčený), Sully FLASH (vyhrne triko a soupeři na 3 s ztuhnou). Do té doby mají ve výběru zámeček.' },
 };
 const plural = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
 function storyGoalText(g) {
@@ -286,7 +286,7 @@ const POWERS = {
   vo2: { name: 'VO2max 67', short: 'VO2max', icon: '💨', desc: '5 s běhá 2× rychleji' },
   prime: { name: 'JENDA PRIME', short: 'Prime', icon: '⭐', desc: '5 s v bílém dresu Realu Madrid: rychlejší, silnější, skáče výš' },
   grow: { name: 'Obří páv', short: 'Obr', icon: '🦚', desc: 'Na 3 s se zvětší a ztloustne, kdo do něj narazí, je omráčený' },
-  flash: { name: 'Selfie flash', short: 'Flash', icon: '📸', desc: 'Blesk z mobilu: soupeři na 3 s ztuhnou' },
+  flash: { name: 'Flash', short: 'Flash', icon: '😳', desc: 'Vyhrne triko a soupeři na 3 s ztuhnou s vyvalenýma očima' },
   redcard: { name: 'Červená karta', short: 'Karta', icon: '🟥', desc: 'Soupeři na 2 s ztuhnou' },
   basket: { name: 'Trojka', short: 'Trojka', icon: '🏀', desc: 'U míče: míč se změní v basketbalový a letí obloukem do brány soupeře' },
   penguin: { name: 'Skiper', short: 'Skiper', icon: '🐧', desc: 'Promění se v tučňáka, brána zamrzne na 3 s' },

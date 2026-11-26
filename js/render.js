@@ -1634,8 +1634,11 @@ const Renderer = {
       aFront = 0.12 + Math.sin(ph) * 0.8 * run;
     }
 
-    // Sully fotí selfie: ruka s mobilem nahoru před obličej
-    if (p.selfieT > 0) aFront = 2.45;
+    // Sully vyhrnuje triko: obě ruce nahoru ke krku
+    if (p.selfieT > 0) {
+      aBack = -2.3;
+      aFront = 2.3;
+    }
     if (p.pengT > 0) {
       this.drawPenguin(ctx, p, T, now, R, F);
       return;
@@ -1676,7 +1679,6 @@ const Renderer = {
     this.drawHead(ctx, p, ball, T, now);
     if (this._drip) this.drawShades(ctx, p);
     this.drawArm(ctx, 10 * ch, R + 1, aFront, T, L, false);
-    if (p.selfieT > 0) this.drawPhone(ctx, 10 * ch + Math.sin(aFront) * 17, R + 1 + Math.cos(aFront) * 17, p.selfieT);
     this._drip = false;
     ctx.restore();
   },
@@ -2144,6 +2146,17 @@ const Renderer = {
     ctx.strokeStyle = OUTLINE;
     ctx.lineWidth = 2;
     ctx.stroke();
+    if (L.curvy) {
+      // výrazné pozadí
+      ctx.fillStyle = T.dark;
+      oval(ctx, -15, R + 15, 9.5, 8.5);
+      ctx.fill();
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(-15, R + 15, 9.5, 8.5, 0, Math.PI * 0.4, Math.PI * 1.6);
+      ctx.stroke();
+    }
     // dres
     ctx.beginPath();
     ctx.moveTo(-17, R - 8);
@@ -2168,6 +2181,23 @@ const Renderer = {
     ctx.strokeStyle = 'rgba(255,255,255,.6)';
     ctx.lineWidth = 2;
     line(ctx, 12, R + 2, 11, R + 13);
+    if (L.curvy && !(p.selfieT > 0)) {
+      // výrazné poprsí
+      ctx.fillStyle = T.color;
+      oval(ctx, 15, R + 5, 8.5, 7.5);
+      ctx.fill();
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(15, R + 5, 8.5, 7.5, 0, -Math.PI * 0.6, Math.PI * 0.6);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.35)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(15, R + 5, 5, -1.2, -0.2);
+      ctx.stroke();
+    }
+    if (p.selfieT > 0 && L.flashPose) this.drawFlashPose(ctx, R, T, L);
     if (L.chub) {
       // bříško dopředu přes trenky
       ctx.beginPath();
@@ -2204,7 +2234,8 @@ const Renderer = {
       ctx.arc(2, R - 1, 7, 0.15 * Math.PI, 0.85 * Math.PI);
       ctx.stroke();
     }
-    // číslo
+    // číslo (ne při vyhrnutém triku)
+    if (p.selfieT > 0 && L.flashPose) return;
     ctx.font = `800 13px ${FONT_U}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -2309,6 +2340,53 @@ const Renderer = {
     ctx.strokeStyle = '#7a5a10';
     ctx.lineWidth = 1.2;
     ctx.stroke();
+  },
+
+  // Sully: vyhrnuté triko, místo detailů kreslená cenzura (mozaika).
+  drawFlashPose(ctx, R, T, L) {
+    // odhalené břicho a hrudník
+    ctx.beginPath();
+    ctx.moveTo(-18, R + 2);
+    ctx.lineTo(16, R + 2);
+    ctx.quadraticCurveTo(18, R + 8, 15, R + 13);
+    ctx.quadraticCurveTo(14, R + 16, 11, R + 16);
+    ctx.lineTo(-13, R + 16);
+    ctx.quadraticCurveTo(-16, R + 16, -16, R + 13);
+    ctx.lineTo(-19, R + 5);
+    ctx.closePath();
+    ctx.fillStyle = L.skin;
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+    oval(ctx, 15, R + 6, 8.5, 7.5);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(15, R + 6, 8.5, 7.5, 0, -Math.PI * 0.6, Math.PI * 0.6);
+    ctx.stroke();
+    // pupík
+    ctx.fillStyle = shade(L.skin, -0.35);
+    oval(ctx, 3, R + 12.5, 1, 1.4);
+    ctx.fill();
+    // vyhrnuté triko pod bradou
+    ctx.fillStyle = T.color;
+    rrect(ctx, -21, R - 1, 42, 8, 4);
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // cenzura (mozaika)
+    const cols = [shade(L.skin, -0.1), shade(L.skin, -0.28), shade(L.skin, 0.18), shade(L.skin, -0.2), shade(L.skin, 0.06)];
+    const sz = 6, x0 = 2, y0 = R + 5;
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 2; j++) {
+        ctx.fillStyle = cols[(i * 2 + j * 3) % cols.length];
+        ctx.fillRect(x0 + i * sz, y0 + j * sz, sz, sz);
+      }
+    }
+    ctx.strokeStyle = 'rgba(0,0,0,.35)';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(x0, y0, sz * 4, sz * 2);
   },
 
   // Mobil v ruce (selfie), na začátku s bleskem.

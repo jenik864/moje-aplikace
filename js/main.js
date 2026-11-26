@@ -895,8 +895,8 @@ const Game = {
             Sound.thud();
           }
         } else if (kind === 'flash') {
-          Effects.say(a[0], 'SÝÝÝR!', col, 1.6);
-          Effects.whiteT = 0.45; // bílý záblesk přes celou obrazovku
+          Effects.say(a[0], 'PŘEDPLAŤ SI MĚ!', col, 1.8);
+          Effects.whiteT = 0.3; // záblesk přes celou obrazovku
           for (const o of m.players) if (o.team !== p.team) Effects.rings.push({ x: o.x, y: o.y, t: 0, dur: 0.4, r0: 8, r1: 80, rgb: '255,255,255' });
           if (live) {
             Effects.pop('FLASH!', p.x, p.y - 130, '#ffffff', 40);

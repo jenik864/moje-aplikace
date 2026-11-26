@@ -85,7 +85,7 @@ Tlačítko *Příběh* v hlavním menu. Je zamčený kódem (kód se zadává je
 Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhled, co za ni dostaneš.
 
 - **Moncler-Jenda**: skin jen pro Jendu – bílá péřová bunda s prošíváním, černé brýle, zlatý řetěz, diamant v uchu, černé tepláky a bílé tenisky (bez loga značky). Zapíná se tlačítkem *Moncler* u Jendy v lobby nebo v Příběhu a platí i online.
-- **Tlustej páv & Sully**: nová dvojice (Páv č. 99 – špinavý blond, lehké vousy, pořádné bříško; Sully č. 17 – dlouhé blond vlasy). Ve výběru hráčů jsou vidět od začátku, ale mají zámeček a hrát za ně (ani proti nim) nejde, dokud nesplníš 10. úroveň.
+- **Tlustej páv & Sully**: nová dvojice (Páv č. 99 – špinavý blond, lehké vousy, pořádné bříško; Sully č. 17 – dlouhé blond vlasy, výrazná postava). Ve výběru hráčů jsou vidět od začátku, ale mají zámeček a hrát za ně (ani proti nim) nejde, dokud nesplníš 10. úroveň.
 
 Když hraješ za stejnou postavu nebo dvojici jako soupeř úrovně, dostaneš místo nich Marsala (1 v 1) nebo Šimšu & Jendu (2 v 2). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, odemčené věci `hlavouni.odemceno`).
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
@@ -120,7 +120,7 @@ Nabíjí se časem (asi 15 s) a každým kopem do míče. Každá postava má sv
 | Bémič | **Skiper**: na 3 s se promění v tučňáka (jen vzhled), brána jeho týmu zamrzne ve velkém ledovém kráteru (nejde dát gól) a fanoušci řvou SKIPER. |
 | Jenda | **JENDA PRIME**: na 5 s se promění v hráče Realu Madrid – bílý dres se zlatým lemováním, zlatá záře a nápis JENDA PRIME. Běhá 1,5× rychleji, skáče výš, kope o 40 % silněji, silnější hlavičky, odstrčí soupeře a superstřela ho neodstřelí. |
 | Tlustej páv | **Obří páv**: na 3 s se zvětší a ztloustne (větší i pro míč a soupeře). Kdo do něj narazí, odletí a je omráčený. |
-| Sully | **Selfie flash**: vytáhne mobil, „SÝÝÝR!“ a blesk přes celou obrazovku – soupeři na 3 s ztuhnou s vyvalenýma očima (JENDA PRIME to ustojí). |
+| Sully | **Flash**: „PŘEDPLAŤ SI MĚ!“, vyhrne triko (místo detailů kreslená cenzura – mozaika), záblesk přes obrazovku a soupeři na 3 s ztuhnou s vyvalenýma očima (JENDA PRIME to ustojí). |
 | Milan (boss Příběhu) | **Červená karta**: písknutí, nápis ČERVENÁ KARTA a všichni soupeři na 2 s ztuhnou (JENDA PRIME a tučňák ji ustojí). |
 | ostatní | **Superstřela** (viz dál). Vlastní schopnosti přijdou v dalších verzích. |
 
@@ -193,7 +193,7 @@ Hřiště má virtuální rozměr 1280 × 720. Na displeji jiného poměru stran
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
-- 1.25 – přehlednější lobby (nastavení dole v jednom řádku), schopnosti Obří páv a Selfie flash, nový vzhled Páva a Sully
+- 1.25 – přehlednější lobby (nastavení dole v jednom řádku), schopnosti Obří páv a Flash, nový vzhled Páva a Sully
 - 1.24 – Příběh: úrovně 1 v 1 i 2 v 2 s úkoly, skin Moncler-Jenda, nová dvojice Tlustej páv & Sully, náhled odměn
 - 1.23 – Příběh (10 úrovní, zamčený kódem), zlatý dres, nový hráč Milan, turnaj i pro více hráčů a online
 - 1.22 – rozcvička na začátku zápasu
