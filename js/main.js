@@ -673,7 +673,7 @@ const Game = {
           Effects.snow(p.team === 0 ? GOAL_W / 2 : W - GOAL_W / 2, BAR_Y + 80, 40);
           if (live) {
             Sound.freeze();
-            Effects.pop('TUČŇÁK!', p.x, p.y - 110, '#53d2ff', 38);
+            Effects.pop('SKIPER!', p.x, p.y - 110, '#53d2ff', 38);
             Effects.shake(6);
           }
         } else if (kind === 'prime') {

@@ -391,7 +391,7 @@ const LobbyUI = {
       const pw = POWERS[powerOf(me.char)];
       el.power.textContent = '';
       const b1 = this.el2('b', '', `${pw.icon} ${pw.name}`);
-      el.power.append(this.el2('span', 'lp-k', 'Tvoje superschopnost'), b1, this.el2('span', 'lp-d', pw.desc));
+      el.power.append(this.el2('span', 'lp-k', 'Tvoje superschopnost'), b1);
     }
     el.power.hidden = !me;
 

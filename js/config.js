@@ -168,7 +168,7 @@ const POWERS = {
   vo2: { name: 'VO2max 67', short: 'VO2max', icon: '💨', desc: '5 s běhá 2× rychleji' },
   prime: { name: 'JENDA PRIME', short: 'Prime', icon: '⭐', desc: '5 s v bílém dresu Realu Madrid: rychlejší, silnější, skáče výš' },
   basket: { name: 'Trojka', short: 'Trojka', icon: '🏀', desc: 'U míče: míč se změní v basketbalový a letí obloukem do brány soupeře' },
-  penguin: { name: 'Tučňák', short: 'Tučňák', icon: '🐧', desc: 'Promění se v tučňáka, brána zamrzne na 3 s' },
+  penguin: { name: 'Skiper', short: 'Skiper', icon: '🐧', desc: 'Promění se v tučňáka, brána zamrzne na 3 s' },
 };
 const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime' };
 // JENDA PRIME: na 5 s hráč Realu Madrid

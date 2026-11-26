@@ -49,7 +49,7 @@ Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče,
 
 ## Lobby (výběr hráčů)
 
-- **Hrát** (proti počítači): vyber 1 v 1 nebo 2 v 2 a obtížnost počítače (zápas trvá vždy 2 × 45 s). Klepnutím na postavu si vybereš, za koho hraješ, ostatní hraje počítač. V 1 v 1 se šipkami mění postava. Postavy v lobby jsou živé (dýchají, mrkají, rozhlížejí se, vybraná zamává), stojí na osvětleném pódiu, pod každou je štítek kdo za ni hraje a její superschopnost. U dvojice je její pokřik a dole popis tvé superschopnosti.
+- **Hrát** (proti počítači): vyber 1 v 1 nebo 2 v 2 a obtížnost počítače (zápas trvá vždy 2 × 45 s). Klepnutím na postavu si vybereš, za koho hraješ, ostatní hraje počítač. V 1 v 1 se šipkami mění postava. Postavy v lobby jsou živé (dýchají, mrkají, rozhlížejí se, vybraná zamává), stojí na osvětleném pódiu, pod každou je štítek kdo za ni hraje a její superschopnost. U dvojice je její pokřik a dole název tvé superschopnosti.
 - **Turnaj** (přepínač *Zápas / Turnaj* v lobby, jen proti počítači): vybereš svůj tým, pavouk vylosuje tři soupeře. Hraje se semifinále a finále, druhé semifinále se odehraje mezi počítači. Ve finále je soupeř o stupeň těžší. Za vítězství v turnaji je +15 pohárů navíc a počítá se do profilu (Vyhrané turnaje).
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
@@ -80,7 +80,7 @@ Nabíjí se časem (asi 15 s) a každým kopem do míče. Každá postava má sv
 | Nelcis | **Obří hermelín**: do brány jejího týmu spadne obří hermelín s nápisem HERMELÍN a na 3 s ji úplně zablokuje, gól nejde dát. |
 | Šimša | **VO2max 67**: nad hlavou se mu objeví bublina „MÁM VO2max 67“ a 5 s běhá 2× rychleji. |
 | Marsal | **Trojka**: když je u míče, míč se změní v basketbalový, Marsal řekne „STŘÍLIM TY TROJKY“, chytí ho nad hlavu a hodí vysoký oblouk. Nad bránou soupeře se objeví basketbalový koš, míč jím propadne rovnou do brány. Chytit se dá jen před košem (hlavičkou nebo výskokem), hermelín a led ho zastaví. |
-| Bémič | **Tučňák**: na 3 s se promění v tučňáka (jen vzhled), brána jeho týmu zamrzne ve velkém ledovém kráteru (nejde dát gól) a fanoušci řvou SKIPER. |
+| Bémič | **Skiper**: na 3 s se promění v tučňáka (jen vzhled), brána jeho týmu zamrzne ve velkém ledovém kráteru (nejde dát gól) a fanoušci řvou SKIPER. |
 | Jenda | **JENDA PRIME**: na 5 s se promění v hráče Realu Madrid – bílý dres se zlatým lemováním, zlatá záře a nápis JENDA PRIME. Běhá 1,5× rychleji, skáče výš, kope o 40 % silněji, silnější hlavičky, odstrčí soupeře a superstřela ho neodstřelí. |
 | ostatní | **Superstřela** (viz dál). Vlastní schopnosti přijdou v dalších verzích. |
 
