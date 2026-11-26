@@ -68,7 +68,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.29';
+const GAME_VERSION = '1.30';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -200,7 +200,7 @@ function lookFor(charId, skin) {
 // Úkoly (postup se ukládá v zařízení).
 const TASKS = [
   { id: 'milan', title: 'Odehraj 15 zápasů', goal: 15, reward: 'milan', kind: 'char', char: 'milan', name: 'MILAN VORAČKA', text: 'Rozhodčí jako hráč, schopnost Červená karta.' },
-  { id: 'bikini', title: 'Dej 15 gólů v jednom zápase', goal: 15, reward: 'bikini', kind: 'skin', char: 'kiki', name: 'KIKI V BIKINÁCH', text: 'Plážový skin pro Kiki.' },
+  { id: 'bikini', title: 'Dej 15 gólů v jednom zápase', goal: 15, reward: 'bikini', kind: 'skin', char: 'kiki', name: 'KIKI V BIKINÁCH', text: 'Plážový skin pro Kiki: plavky a sluneční brýle.' },
   { id: 'michael', title: 'Dej 30 gólů za Bémiče', goal: 30, reward: 'michael', kind: 'skin', char: 'bemic', name: 'MICHAEL BÉMIČ', text: 'Skin pro Bémiče: holohlavý, tmavá kůže a červený basketbalový dres s číslem 23.' },
 ];
 const TASK_KEY = 'hlavouni.ukoly';

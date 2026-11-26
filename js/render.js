@@ -1681,6 +1681,7 @@ const Renderer = {
     this.drawTorso(ctx, p, T, L);
     this.drawHead(ctx, p, ball, T, now);
     if (this._drip) this.drawShades(ctx, p);
+    else if (this._beach) this.drawShades(ctx, p, true);
     this.drawArm(ctx, 10 * ch, R + 1, aFront, T, L, false);
     this._drip = false;
     this._beach = false;
@@ -2519,10 +2520,10 @@ const Renderer = {
   },
 
   // Moncler-Jenda: černé brýle a diamant v uchu.
-  drawShades(ctx, p) {
+  drawShades(ctx, p, beach) {
     ctx.save();
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#0d0f14';
+    ctx.strokeStyle = beach ? '#ffffff' : '#0d0f14';
     ctx.lineWidth = 2.4;
     line(ctx, 2, -6, -15, -3);
     line(ctx, 16, -6.5, 20, -6.5);
@@ -2533,14 +2534,26 @@ const Renderer = {
       ctx.quadraticCurveTo(x1 + 0.5, 3, (x0 + x1) / 2, 3);
       ctx.quadraticCurveTo(x0 - 0.5, 3, x0, -11);
       ctx.closePath();
-      ctx.fillStyle = '#0d0f14';
+      if (beach) {
+        // plážové brýle: tónovaná skla a bílá obroučka
+        const g = ctx.createLinearGradient(0, -11, 0, 3);
+        g.addColorStop(0, '#3a1f4d');
+        g.addColorStop(1, '#ff7a9e');
+        ctx.fillStyle = g;
+      } else {
+        ctx.fillStyle = '#0d0f14';
+      }
       ctx.fill();
-      ctx.strokeStyle = '#2a2f3a';
-      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = beach ? '#ffffff' : '#2a2f3a';
+      ctx.lineWidth = beach ? 2 : 1.6;
       ctx.stroke();
       ctx.strokeStyle = 'rgba(255,255,255,.4)';
       ctx.lineWidth = 1.4;
       line(ctx, x0 + 3, -8, x0 + 7, -3);
+    }
+    if (beach) {
+      ctx.restore();
+      return;
     }
     // diamant
     ctx.fillStyle = '#e8fbff';
