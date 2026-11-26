@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.27">
+<link rel="stylesheet" href="style.css?v=1.28">
 </head>
 <body>
 <!-- HRA:START -->
@@ -80,6 +80,10 @@
           <button id="btn-swap" class="btn-chip small" type="button" aria-pressed="false">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>
             <span id="swap-label">Joystick vlevo</span>
+          </button>
+          <button id="btn-tasks" class="btn-chip small" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
+            <span>Úkoly</span>
           </button>
           <button id="btn-code" class="btn-chip small" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3M14 9l2 2"/></svg>
@@ -322,6 +326,19 @@
     </div>
   </section>
 
+  <!-- úkoly -->
+  <section id="tasks" class="screen dim" aria-labelledby="tasks-title" hidden>
+    <div class="dialog tasks-dlg">
+      <header class="tasks-head">
+        <h2 id="tasks-title" class="screen-title">Úkoly</h2>
+        <button id="btn-tasks-close" class="btn-mini" type="button" aria-label="Zavřít">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <ul id="task-list" class="task-list"></ul>
+    </div>
+  </section>
+
   <!-- náhled odměny z příběhu -->
   <section id="reward" class="screen dim" aria-labelledby="rw-title" hidden>
     <div class="dialog reward-dlg">
@@ -370,15 +387,15 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.27"></script>
-<script src="js/audio.js?v=1.27"></script>
-<script src="js/input.js?v=1.27"></script>
-<script src="js/ai.js?v=1.27"></script>
-<script src="js/physics.js?v=1.27"></script>
-<script src="js/render.js?v=1.27"></script>
-<script src="js/penalty.js?v=1.27"></script>
-<script src="js/net.js?v=1.27"></script>
-<script src="js/lobby.js?v=1.27"></script>
-<script src="js/main.js?v=1.27"></script>
+<script src="js/config.js?v=1.28"></script>
+<script src="js/audio.js?v=1.28"></script>
+<script src="js/input.js?v=1.28"></script>
+<script src="js/ai.js?v=1.28"></script>
+<script src="js/physics.js?v=1.28"></script>
+<script src="js/render.js?v=1.28"></script>
+<script src="js/penalty.js?v=1.28"></script>
+<script src="js/net.js?v=1.28"></script>
+<script src="js/lobby.js?v=1.28"></script>
+<script src="js/main.js?v=1.28"></script>
 </body>
 </html>

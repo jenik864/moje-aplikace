@@ -407,20 +407,21 @@ const LobbyUI = {
         main.append(cv, plate, this.el2('span', 'card-power', `${pw.icon} ${pw.short}`));
         if (locked) {
           const lk = this.el2('span', 'card-lock');
-          lk.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><b>Odemkni v Příběhu</b>';
+          lk.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><b>${c.locked === 'milan' ? 'Úkol: 15 zápasů' : 'Odemkni v Příběhu'}</b>`;
           main.appendChild(lk);
         }
         card.appendChild(main);
-        // můj Jenda: přepínač skinu Moncler-Jenda
+        // moje postava s odemčeným skinem: přepínač
         const meCtrl = ctx.mode === 'local' ? 'p1' : ctx.me;
-        const skinOn = s.ctrl === meCtrl && c.id === SKIN_CHAR && Unlocks.has('moncler');
-        if (skinOn) {
-          const sk = this.el2('button', 'skin-chip' + (mySkin() ? ' on' : ''), mySkin() ? 'Moncler ✓' : 'Moncler');
+        const skinId = s.ctrl === meCtrl ? ownedSkinFor(c.id) : '';
+        if (skinId) {
+          const on = skinOn(skinId);
+          const sk = this.el2('button', 'skin-chip' + (on ? ' on' : ''), SKINS[skinId].short + (on ? ' ✓' : ''));
           sk.type = 'button';
           sk.addEventListener('click', (e) => {
             e.stopPropagation();
             Sound.init();
-            Game.toggleSkin();
+            Game.toggleSkin(skinId);
           });
           card.appendChild(sk);
         }
@@ -433,7 +434,7 @@ const LobbyUI = {
           card.appendChild(arrows);
         }
         row.appendChild(card);
-        const skin = skinOn ? mySkin() : '';
+        const skin = skinId && skinOn(skinId) ? skinId : '';
         const key2 = `${i}:${s.char}:${s.ctrl}:${skin}`;
         const prev = (this.portraits || []).find((o) => o.key === key2);
         portraits.push({ cv, char: s.char, T, facing: team === 0 ? 1 : -1, mine, skin, key: key2, since: prev ? prev.since : performance.now() / 1000 });
@@ -479,12 +480,12 @@ const LobbyUI = {
       el.start.textContent = cup ? 'Začít turnaj' : 'Hrát';
     }
     const anyLocked = lobbyLocked(lobby);
-    if (anyLocked && ctx.mode !== 'guest') el.hint.textContent = '🔒 Tlustej páv a Sully jsou zamčení – odemkneš je v Příběhu (úroveň 10). Vyber jinou postavu.';
+    if (anyLocked && ctx.mode !== 'guest') el.hint.textContent = '🔒 Zamčená postava – odemkneš ji v Příběhu nebo v Úkolech. Vyber jinou.';
     el.start.disabled = anyLocked;
     el.ready.hidden = ctx.mode !== 'guest';
     if (ctx.mode === 'guest') {
       const myLocked = meSlot && !charAvailable(charById(meSlot.char));
-      if (myLocked) el.hint.textContent = '🔒 Tahle postava je zamčená – odemkneš ji v Příběhu. Vyber jinou.';
+      if (myLocked) el.hint.textContent = '🔒 Tahle postava je zamčená – odemkneš ji v Příběhu nebo v Úkolech. Vyber jinou.';
       el.ready.disabled = !meSlot || myLocked;
       el.ready.classList.toggle('on', !!Online.ready);
       el.ready.textContent = Online.ready ? 'Připraven ✓' : 'Jsem připraven';

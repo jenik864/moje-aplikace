@@ -1634,7 +1634,7 @@ const Renderer = {
       aFront = 0.12 + Math.sin(ph) * 0.8 * run;
     }
 
-    // Sully vyhrnuje triko: obě ruce nahoru ke krku
+    // Suli vyhrnuje triko: obě ruce nahoru ke krku
     if (p.selfieT > 0) {
       aBack = -2.3;
       aFront = 2.3;
@@ -1670,6 +1670,7 @@ const Renderer = {
     }
     // Moncler-Jenda: péřová bunda, brýle, řetěz (při JENDA PRIME bílý dres Realu)
     this._drip = p.skin === 'moncler' && !(p.primeT > 0);
+    this._beach = p.skin === 'bikini' && !(p.primeT > 0);
     const ch = (L.chub || 1) * (p.growT > 0 ? 1.15 : 1); // Tlustej páv je širší (a při Obřím pávovi ještě víc)
     this.drawHair(ctx, p, T, 'back', now);
     this.drawArm(ctx, -12 * ch, R + 1, aBack, T, L, true);
@@ -1680,6 +1681,7 @@ const Renderer = {
     if (this._drip) this.drawShades(ctx, p);
     this.drawArm(ctx, 10 * ch, R + 1, aFront, T, L, false);
     this._drip = false;
+    this._beach = false;
     ctx.restore();
   },
 
@@ -2067,9 +2069,15 @@ const Renderer = {
     ctx.strokeStyle = skin;
     ctx.lineWidth = 6.5;
     line(ctx, mx, my, ex, ey);
-    ctx.strokeStyle = back ? T.dark : T.color;
-    ctx.lineWidth = 8;
-    line(ctx, sx, sy, mx, my);
+    if (this._beach) {
+      ctx.strokeStyle = skin;
+      ctx.lineWidth = 6.5;
+      line(ctx, sx, sy, mx, my);
+    } else {
+      ctx.strokeStyle = back ? T.dark : T.color;
+      ctx.lineWidth = 8;
+      line(ctx, sx, sy, mx, my);
+    }
     ctx.fillStyle = skin;
     circle(ctx, ex, ey, 4.4);
     ctx.fill();
@@ -2088,11 +2096,13 @@ const Renderer = {
     ctx.lineWidth = 6.5;
     line(ctx, hx, hy, ax, ay);
     const sx = lerp(hx, ax, 0.4), sy = lerp(hy, ay, 0.4);
-    ctx.strokeStyle = back ? '#c4cad3' : '#f2f4f7';
-    ctx.lineWidth = 7;
-    line(ctx, sx, sy, ax, ay);
-    ctx.strokeStyle = back ? T.dark : T.color;
-    line(ctx, sx, sy, lerp(sx, ax, 0.3), lerp(sy, ay, 0.3));
+    if (!this._beach) {
+      ctx.strokeStyle = back ? '#c4cad3' : '#f2f4f7';
+      ctx.lineWidth = 7;
+      line(ctx, sx, sy, ax, ay);
+      ctx.strokeStyle = back ? T.dark : T.color;
+      line(ctx, sx, sy, lerp(sx, ax, 0.3), lerp(sy, ay, 0.3));
+    }
     ctx.save();
     ctx.translate(fx, fy);
     ctx.rotate(rot);
@@ -2136,6 +2146,11 @@ const Renderer = {
     }
     if (this._drip) {
       this.drawPuffer(ctx, R);
+      ctx.restore();
+      return;
+    }
+    if (this._beach) {
+      this.drawBikini(ctx, R, T, L);
       ctx.restore();
       return;
     }
@@ -2342,7 +2357,7 @@ const Renderer = {
     ctx.stroke();
   },
 
-  // Sully: vyhrnuté triko, místo detailů kreslená cenzura (mozaika).
+  // Suli: vyhrnuté triko, místo detailů kreslená cenzura (mozaika).
   drawFlashPose(ctx, R, T, L) {
     // odhalené břicho a hrudník
     ctx.beginPath();
@@ -2432,6 +2447,57 @@ const Renderer = {
     ctx.fill();
   },
 
+  // Kiki v bikinách: sportovní dvoudílné plavky v barvě týmu.
+  drawBikini(ctx, R, T, L) {
+    // tělo
+    ctx.beginPath();
+    ctx.moveTo(-16, R - 8);
+    ctx.lineTo(14, R - 8);
+    ctx.quadraticCurveTo(17, R - 6, 15, R + 2);
+    ctx.lineTo(13, R + 13);
+    ctx.quadraticCurveTo(13, R + 17, 10, R + 17);
+    ctx.lineTo(-12, R + 17);
+    ctx.quadraticCurveTo(-15, R + 17, -15, R + 13);
+    ctx.lineTo(-18, R + 1);
+    ctx.quadraticCurveTo(-19, R - 6, -16, R - 8);
+    ctx.closePath();
+    ctx.fillStyle = L.skin;
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+    // pupík
+    ctx.fillStyle = shade(L.skin, -0.35);
+    oval(ctx, 2, R + 9, 0.9, 1.3);
+    ctx.fill();
+    // spodní díl
+    ctx.beginPath();
+    ctx.moveTo(-15, R + 12);
+    ctx.lineTo(13, R + 12);
+    ctx.lineTo(12, R + 18);
+    ctx.quadraticCurveTo(-1, R + 22, -14, R + 18);
+    ctx.closePath();
+    ctx.fillStyle = T.color;
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // horní díl (sportovní) a ramínka
+    ctx.strokeStyle = T.dark;
+    ctx.lineWidth = 2;
+    line(ctx, -9, R - 8, -8, R - 2);
+    line(ctx, 7, R - 8, 8, R - 2);
+    ctx.fillStyle = T.color;
+    rrect(ctx, -16, R - 3, 31, 7.5, 3.5);
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.lineWidth = 1.4;
+    line(ctx, -12, R - 1, 11, R - 1);
+  },
+
   // Moncler-Jenda: černé brýle a diamant v uchu.
   drawShades(ctx, p) {
     ctx.save();
@@ -2515,6 +2581,18 @@ const Renderer = {
   // Vlasy mají tři vrstvy: 'back' (za tělem), 'cap' (na hlavě), 'top' (přes obrys a čelo).
   drawHair(ctx, p, T, layer, now) {
     const R = p.R / PS, L = p.look;
+    if (L.hair === 'bald') {
+      // holá hlava: jen odlesk
+      if (layer === 'cap') {
+        ctx.fillStyle = 'rgba(255,255,255,.22)';
+        oval(ctx, 4, -24, 13, 6, -0.25);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.35)';
+        oval(ctx, 8, -26, 5, 2.2, -0.25);
+        ctx.fill();
+      }
+      return;
+    }
     const base = L.hairColor, dark = L.hairDark, light = L.hairLight;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
@@ -3581,9 +3659,9 @@ const Renderer = {
     const ctx = canvas.getContext('2d');
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cw, ch);
-    const look = typeof charId === 'string' ? charById(charId) : charId;
+    const look = typeof charId === 'string' ? lookFor(charId, opts && opts.skin) : charId;
     let p = canvas._pl;
-    if (!p || p.look.id !== look.id) {
+    if (!p || p.look !== look) {
       p = canvas._pl = new Player({ team: 0, x: 0, look, role: 'attacker', ctrl: 'cpu' });
       canvas._ph = Math.random() * 10;
     }

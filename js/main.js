@@ -364,10 +364,10 @@ const Game = {
       const m = members.find((x) => x.uid === ctrl);
       return (m && m.name) || '';
     };
-    const skinOf = (ctrl) => {
-      if (ctrl === 'p1' || ctrl === 'host') return mySkin();
+    const skinOf = (ctrl, char) => {
+      if (ctrl === 'p1' || ctrl === 'host') return mySkinFor(char);
       const m = members.find((x) => x.uid === ctrl);
-      return (m && m.skin) || '';
+      return (m && m.skins && m.skins[char]) || '';
     };
     return {
       id: randomId(6),
@@ -377,7 +377,7 @@ const Game = {
       level: lobby.level,
       minutes: lobby.minutes,
       teams: teamsFor(lobby),
-      players: lobby.slots.map((s) => ({ char: s.char, team: s.team, ctrl: s.ctrl, name: nameOf(s.ctrl), skin: skinOf(s.ctrl) })),
+      players: lobby.slots.map((s) => ({ char: s.char, team: s.team, ctrl: s.ctrl, name: nameOf(s.ctrl), skin: skinOf(s.ctrl, s.char) })),
     };
   },
 
@@ -451,7 +451,7 @@ const Game = {
     const norm = String(code || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').toUpperCase();
     const h = codeHash(norm);
     if (h === MASTER_CODE) {
-      for (const k of ['story', 'moncler', 'skinOn', 'pav', 'milan']) Unlocks.set(k);
+      for (const k of ['story', 'moncler', 'on.moncler', 'pav', 'milan', 'bikini', 'michael']) Unlocks.set(k);
       const st = Story.get();
       st.done = STORY.length;
       Story.save(st);
@@ -473,12 +473,12 @@ const Game = {
     Story.save(s);
   },
 
-  // Zapnout/vypnout skin Moncler-Jenda (platí, když hraješ za Jendu, i online).
-  toggleSkin() {
-    if (!Unlocks.has('moncler')) return;
-    Unlocks.set('skinOn', !Unlocks.has('skinOn'));
+  // Zapnout/vypnout skin (platí pro svou postavu, i online).
+  toggleSkin(id) {
+    if (!skinOwned(id)) return;
+    Unlocks.set('on.' + id, !Unlocks.has('on.' + id));
     Sound.click();
-    if (this.mode === 'guest') Online.publish({ skin: mySkin() });
+    if (this.mode === 'guest') Online.publish({ skins: mySkins() });
     if (this.screen === 'lobby') {
       if (this.mode === 'host') this.publishLobby();
       this.renderLobby();
@@ -540,7 +540,7 @@ const Game = {
       const rw = lv.reward;
       if (rw && !Unlocks.has(rw)) {
         Unlocks.set(rw);
-        if (rw === 'moncler') Unlocks.set('skinOn');
+        if (rw === 'moncler') Unlocks.set('on.moncler');
         rewards.push(rw);
       }
     }
@@ -1755,7 +1755,8 @@ const Game = {
     prof.streak = win ? prof.streak + 1 : 0;
     prof.bestStreak = Math.max(prof.bestStreak, prof.streak);
     Profile.save(prof);
-    this.lastReward = { delta, before, after: prof.trophies, win, parts, streak: prof.streak };
+    const tasks = Tasks.record(me.look.id, st.goals);
+    this.lastReward = { delta, before, after: prof.trophies, win, parts, streak: prof.streak, tasks };
     return this.lastReward;
   },
 
@@ -2489,7 +2490,7 @@ function sanitizeSetup(s) {
       team: p && p.team === 1 ? 1 : 0,
       ctrl: p && typeof p.ctrl === 'string' ? p.ctrl.slice(0, 16) : 'cpu',
       name: cleanName(p && p.name),
-      skin: p && p.skin === 'moncler' ? 'moncler' : '',
+      skin: p && SKINS[p.skin] && SKINS[p.skin].char === charById(p.char).id ? p.skin : '',
     })),
     cup: !!s.cup,
     stage: ['SEMIFINÁLE', 'FINÁLE'].includes(s.stage) ? s.stage : '',
@@ -2513,7 +2514,7 @@ const UI = {
       resMain: $('btn-res-main'), resSecond: $('btn-res-second'), resThird: $('btn-res-third'), resWait: $('res-wait'),
       pauseSecond: $('btn-restart'), pauseThird: $('btn-quit'),
       profile: $('profile'), chip: $('profile-chip'), cup: $('cup'), half: $('half'),
-      story: $('story'), unlock: $('unlock'), reward: $('reward'),
+      story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'),
     };
     const click = (id, fn) => $(id).addEventListener('click', () => {
       Sound.init();
@@ -2537,6 +2538,8 @@ const UI = {
     });
     click('btn-unlock-back', () => this.show('home'));
     click('btn-code', () => this.showUnlock(true));
+    click('btn-tasks', () => this.showTasks());
+    click('btn-tasks-close', () => this.show('home'));
     $('unlock-form').addEventListener('submit', (e) => {
       e.preventDefault();
       Sound.init();
@@ -2547,7 +2550,7 @@ const UI = {
         this.updateLocks();
         Sound.fanfare();
         if (got === 'all') {
-          this.toast('Odemčeno úplně všechno! Příběh, Moncler-Jenda, Páv & Sully i Milan.');
+          this.toast('Odemčeno úplně všechno! Příběh, skiny, Páv & Suli i Milan.');
           this.show('home');
         } else {
           this.toast('Příběh odemčen!');
@@ -2567,7 +2570,8 @@ const UI = {
     click('btn-sc-prev', () => this.storyCycle(-1));
     click('btn-sc-next', () => this.storyCycle(1));
     click('btn-gold', () => {
-      Game.toggleSkin();
+      const id = ownedSkinFor(Game.storyChar());
+      if (id) Game.toggleSkin(id);
       this.showStory(true);
     });
     click('btn-story-reward', () => this.showReward(STORY[this.storySel] && STORY[this.storySel].reward));
@@ -2872,6 +2876,13 @@ const UI = {
       requestAnimationFrame(() => Renderer.portrait($('res-mvp-pic'), p.look.id, T, 1));
     }
     const rw = Game.award();
+    if (rw && rw.tasks && rw.tasks.length && !rw.tasksShown) {
+      rw.tasksShown = true;
+      setTimeout(() => {
+        Sound.fanfare();
+        this.toast(`Úkol splněn! Odměna: ${rw.tasks.map((t) => t.name).join(' + ')}`);
+      }, 1600);
+    }
     const card = $('res-reward');
     card.hidden = !rw;
     card.classList.remove('rankup');
@@ -3000,13 +3011,13 @@ const UI = {
   },
 
   show(name) {
-    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward']) {
+    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks']) {
       this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home') && !(name === 'reward' && key === 'story');
     }
     this.el.chip.hidden = name !== 'home';
     document.getElementById('app').classList.toggle('on-home', name === 'home');
     // u velkých tabulek schovat ikony v rohu, ať nic nepřekrývají
-    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock', 'reward'].includes(name));
+    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock', 'reward', 'tasks'].includes(name));
     if (name === 'home') this.updateLocks();
     this.measureHud();
     this.el.pauseBtn.hidden = !(Game.screen === 'match' && Game.mode !== 'guest' && (Game.inMatch() || Game.state === 'paused'));
@@ -3082,7 +3093,7 @@ const UI = {
         this.el.resSub.textContent = `Odměna: ${txt}!`;
         setTimeout(() => {
           Sound.fanfare();
-          this.toast(sr.rewards.includes('pav') ? 'Odemčena dvojice Tlustej páv & Sully!' : 'Odměna: skin MONCLER-JENDA! Zapneš ho, když hraješ za Jendu.');
+          this.toast(sr.rewards.includes('pav') ? 'Odemčena dvojice Tlustej páv & Suli!' : 'Odměna: skin MONCLER-JENDA! Zapneš ho, když hraješ za Jendu.');
         }, 700);
       }
     }
@@ -3120,19 +3131,19 @@ const UI = {
     const $ = (id) => document.getElementById(id);
     const st = Story.get(), me = Game.storyChar(), look = charById(me);
     const d = duoOf(me), T = d >= 0 ? DUO_TEAMS[d] : look.kit || SIDE_COLORS[0];
-    const canSkin = me === SKIN_CHAR && Unlocks.has('moncler');
-    const skin = canSkin ? mySkin() : '';
+    const skinId = ownedSkinFor(me);
+    const skin = skinId && skinOn(skinId) ? skinId : '';
     $('story-prog').textContent = `${st.done} / ${STORY.length}`;
     $('story-title').textContent = st.done >= STORY.length ? 'Příběh dokončen' : 'Příběh';
     $('story-name').textContent = look.name;
     const pw = POWERS[powerOf(me)];
     $('story-power').textContent = `${pw.icon} ${pw.name}`;
-    document.querySelector('.story-me').style.setProperty('--me', skin ? '#e9edf3' : T.color);
+    document.querySelector('.story-me').style.setProperty('--me', skin === 'moncler' ? '#e9edf3' : T.color);
     requestAnimationFrame(() => Renderer.portrait($('story-pic'), me, T, 1, undefined, { skin }));
     const gb = $('btn-gold');
-    gb.hidden = !canSkin;
+    gb.hidden = !skinId;
     gb.setAttribute('aria-pressed', String(!!skin));
-    $('gold-label').textContent = skin ? 'Moncler-Jenda ✓' : 'Moncler-Jenda';
+    if (skinId) $('gold-label').textContent = SKINS[skinId].name + (skin ? ' ✓' : '');
     const cur = Math.min(st.done, STORY.length - 1);
     if (!keepSel || this.storySel < 0) this.storySel = cur;
     const map = $('story-map');
@@ -3209,6 +3220,65 @@ const UI = {
     if (Game.screen === 'story') this.show('story');
   },
 
+  // Úkoly: postup, odměna a zapnutí skinu.
+  showTasks() {
+    const list = document.getElementById('task-list');
+    list.textContent = '';
+    const draws = [];
+    for (const t of TASKS) {
+      const got = Unlocks.has(t.reward);
+      const prog = Math.min(t.goal, Tasks.progress(t));
+      const li = document.createElement('li');
+      li.className = 'task' + (got ? ' done' : '');
+      const cv = document.createElement('canvas');
+      cv.className = 'task-pic';
+      const info = document.createElement('div');
+      info.className = 'task-info';
+      const k = document.createElement('p');
+      k.className = 'mini-kicker';
+      k.textContent = t.title;
+      const nm = document.createElement('p');
+      nm.className = 'task-name';
+      nm.textContent = t.name;
+      const bar = document.createElement('span');
+      bar.className = 'rw-bar wide';
+      const fill = document.createElement('i');
+      fill.style.width = `${Math.round((prog / t.goal) * 100)}%`;
+      bar.appendChild(fill);
+      const num = document.createElement('span');
+      num.className = 'task-num';
+      num.textContent = got ? 'Splněno ✓' : `${prog} / ${t.goal}`;
+      const row = document.createElement('div');
+      row.className = 'task-row';
+      row.append(bar, num);
+      info.append(k, nm, row);
+      li.append(cv, info);
+      if (got && t.kind === 'skin') {
+        const on = skinOn(t.reward);
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn-chip small skin-toggle' + (on ? ' on' : '');
+        b.textContent = on ? 'Zapnuto ✓' : 'Zapnout';
+        b.addEventListener('click', () => {
+          Sound.init();
+          Game.toggleSkin(t.reward);
+          this.showTasks();
+        });
+        li.appendChild(b);
+      } else if (got) {
+        const b = document.createElement('span');
+        b.className = 'task-got';
+        b.textContent = 'Odemčeno';
+        li.appendChild(b);
+      }
+      list.appendChild(li);
+      const c = charById(t.char), d = duoOf(c.id), T = d >= 0 ? DUO_TEAMS[d] : c.kit || SIDE_COLORS[0];
+      draws.push(() => Renderer.portrait(cv, t.char, T, 1, undefined, { skin: t.kind === 'skin' ? t.reward : '' }));
+    }
+    this.show('tasks');
+    requestAnimationFrame(() => draws.forEach((f) => f()));
+  },
+
   // Náhled odměny (co dostaneš za úroveň).
   showReward(key) {
     const rw = STORY_REWARDS[key];
@@ -3222,7 +3292,7 @@ const UI = {
     $('rw-how').textContent = got ? (key === 'moncler' ? 'Zapneš ho tlačítkem Moncler-Jenda u Jendy.' : 'Najdeš je ve výběru hráčů.') : `Úkol: ${storyGoalText(lv.goal)}`;
     const box = $('rw-pics');
     box.textContent = '';
-    const list = rw.kind === 'skin' ? [[SKIN_CHAR, 'moncler']] : DUO_TEAMS.find((t) => t.locked === key).chars.map((c) => [c, '']);
+    const list = rw.kind === 'skin' ? [[SKINS.moncler.char, 'moncler']] : DUO_TEAMS.find((t) => t.locked === key).chars.map((c) => [c, '']);
     const T = rw.kind === 'skin' ? MONCLER_KIT : DUO_TEAMS.find((t) => t.locked === key);
     const cvs = list.map(() => {
       const cv = document.createElement('canvas');

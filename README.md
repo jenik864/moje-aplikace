@@ -65,7 +65,7 @@ Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče,
 
 ## Příběh
 
-Tlačítko *Příběh* v hlavním menu (dokud je zamčený, má zámeček). Kódy se dají zadat i tlačítkem *Kód* dole v menu; **hlavní kód odemkne úplně všechno** (Příběh se všemi úrovněmi splněnými, Moncler-Jenda, Tlustej páv & Sully, Milan). Příběh je zamčený kódem (kód se zadává jednou, pak zůstane odemčený na tomto zařízení; v kódu se nekontrolují velká/malá písmena, mezery ani háčky). Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
+Tlačítko *Příběh* v hlavním menu (dokud je zamčený, má zámeček). Kódy se dají zadat i tlačítkem *Kód* dole v menu; **hlavní kód odemkne úplně všechno** (Příběh se všemi úrovněmi splněnými, Moncler-Jenda, Kiki v bikinách, Michael Bémič, Tlustej páv & Suli, Milan). Příběh je zamčený kódem (kód se zadává jednou, pak zůstane odemčený na tomto zařízení; v kódu se nekontrolují velká/malá písmena, mezery ani háčky). Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
 
 10 úrovní, každá je jeden zápas proti počítači – některé 1 v 1, některé 2 v 2 (spoluhráče máš z tvé dvojice, hraje za něj počítač). Vybereš si svého hráče a postupně odemykáš další úrovně (splněné jde hrát znovu, zamčené si můžeš prohlédnout). Každá úroveň má úkol, bez jeho splnění se nepostoupí; úkol je vidět i během zápasu pod tabulí:
 
@@ -80,15 +80,27 @@ Tlačítko *Příběh* v hlavním menu (dokud je zamčený, má zámeček). Kód
 | 7 | 2 v 2 | Marsal & Durcado | těžká, +5 % | vyhraj o 2 góly | |
 | 8 | 1 v 1 | Šimša | těžká, +10 % | vyhraj o 3 góly | |
 | 9 | 2 v 2 | Nelcis & Majda | těžká, +12 % | vyhraj o 3 góly | |
-| 10 | 1 v 1 | BOSS Milan Voračka | těžká, +15 % | vyhraj o 5 gólů | **dvojice Tlustej páv & Sully** |
+| 10 | 1 v 1 | BOSS Milan Voračka | těžká, +15 % | vyhraj o 5 gólů | **dvojice Tlustej páv & Suli** |
 
 Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhled, co za ni dostaneš.
 
 - **Moncler-Jenda**: skin jen pro Jendu – bílá péřová bunda s prošíváním, černé brýle, zlatý řetěz, diamant v uchu, černé tepláky a bílé tenisky (bez loga značky). Zapíná se tlačítkem *Moncler* u Jendy v lobby nebo v Příběhu a platí i online.
-- **Tlustej páv & Sully**: nová dvojice (Páv č. 99 – špinavý blond, lehké vousy, pořádné bříško; Sully č. 17 – dlouhé blond vlasy, výrazná postava). Ve výběru hráčů jsou vidět od začátku, ale mají zámeček a hrát za ně (ani proti nim) nejde, dokud nesplníš 10. úroveň.
+- **Tlustej páv & Suli**: nová dvojice (Páv č. 99 – špinavý blond, lehké vousy, pořádné bříško; Suli č. 17 – dlouhé blond vlasy, výrazná postava). Ve výběru hráčů jsou vidět od začátku, ale mají zámeček a hrát za ně (ani proti nim) nejde, dokud nesplníš 10. úroveň.
 
 Když hraješ za stejnou postavu nebo dvojici jako soupeř úrovně, dostaneš místo nich Marsala (1 v 1) nebo Šimšu & Jendu (2 v 2). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, odemčené věci `hlavouni.odemceno`).
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
+
+## Úkoly a skiny
+
+Tlačítko *Úkoly* dole v hlavním menu. Postup se počítá ze všech zápasů (i online a v Příběhu) a ukládá se v zařízení:
+
+| Úkol | Odměna |
+| --- | --- |
+| Odehraj 15 zápasů | hráč **Milan Voračka** (do té doby je ve výběru se zámečkem „Úkol: 15 zápasů“) |
+| Dej 15 gólů v jednom zápase | skin **Kiki v bikinách** (sportovní dvoudílné plavky v barvě týmu) |
+| Dej 30 gólů za Bémiče | skin **Michael Bémič** (Bémič s tmavou kůží a holou hlavou) |
+
+Skiny (Moncler-Jenda, Kiki v bikinách, Michael Bémič) se zapínají v Úkolech, v Příběhu nebo tlačítkem přímo na kartě své postavy v lobby a platí i online.
 
 ## Ovládání
 
@@ -120,7 +132,7 @@ Nabíjí se časem (asi 15 s) a každým kopem do míče. Každá postava má sv
 | Bémič | **Skiper**: na 3 s se promění v tučňáka (jen vzhled), brána jeho týmu zamrzne ve velkém ledovém kráteru (nejde dát gól) a fanoušci řvou SKIPER. |
 | Jenda | **JENDA PRIME**: na 5 s se promění v hráče Realu Madrid – bílý dres se zlatým lemováním, zlatá záře a nápis JENDA PRIME. Běhá 1,5× rychleji, skáče výš, kope o 40 % silněji, silnější hlavičky, odstrčí soupeře a superstřela ho neodstřelí. |
 | Tlustej páv | **Obří páv**: na 3 s se zvětší a ztloustne (větší i pro míč a soupeře). Kdo do něj narazí, odletí a je omráčený. |
-| Sully | **Flash**: „PŘEDPLAŤ SI MĚ!“, vyhrne triko (místo detailů kreslená cenzura – mozaika), záblesk přes obrazovku a soupeři na 3 s ztuhnou s vyvalenýma očima (JENDA PRIME to ustojí). |
+| Suli | **Flash**: „PŘEDPLAŤ SI MĚ!“, vyhrne triko (místo detailů kreslená cenzura – mozaika), záblesk přes obrazovku a soupeři na 3 s ztuhnou s vyvalenýma očima (JENDA PRIME to ustojí). |
 | Milan (boss Příběhu) | **Červená karta**: písknutí, nápis ČERVENÁ KARTA a všichni soupeři na 2 s ztuhnou (JENDA PRIME a tučňák ji ustojí). |
 | ostatní | **Superstřela** (viz dál). Vlastní schopnosti přijdou v dalších verzích. |
 
@@ -195,6 +207,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.28 – Úkoly (Milan za 15 zápasů, skiny Kiki v bikinách a Michael Bémič), Sully přejmenována na Suli
 - 1.27 – automatická aktualizace na GitHub Pages (hra se sama obnoví, když je venku novější verze)
 - 1.26 – přehlednější hlavní menu (dlaždice Online / Turnaj / Příběh, sponzoři v jednom řádku), tlačítko Kód a hlavní kód na odemčení všeho
 - 1.25 – přehlednější lobby (nastavení dole v jednom řádku), schopnosti Obří páv a Flash, nový vzhled Páva a Sully

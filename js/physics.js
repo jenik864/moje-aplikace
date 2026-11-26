@@ -108,7 +108,7 @@ class Player {
     this.primeT = 0;
     this.growT = 0;   // Obří páv
     this.flashT = 0;  // oslněný bleskem (vyvalené oči)
-    this.selfieT = 0; // Sully fotí selfie
+    this.selfieT = 0; // Suli fotí selfie
     if (this.growK && this.growK !== 1) setGrow(this, 1);
     this.y = this.standY;
     this.shootT = 0;  // basketbalový hod (ruce nahoře)
@@ -258,8 +258,9 @@ class Match {
     s.players.forEach((sp, i) => {
       const role = roles[i];
       const x = role === 'attacker' ? attX : defX;
-      const p = new Player({ team: sp.team, x: sp.team === 0 ? x : W - x, look: charById(sp.char), role, ctrl: sp.ctrl, label: sp.name });
-      p.skin = sp.skin === 'moncler' && sp.char === SKIN_CHAR ? 'moncler' : '';
+      const skin = SKINS[sp.skin] && SKINS[sp.skin].char === charById(sp.char).id ? sp.skin : '';
+      const p = new Player({ team: sp.team, x: sp.team === 0 ? x : W - x, look: lookFor(sp.char, skin), role, ctrl: sp.ctrl, label: sp.name });
+      p.skin = skin;
       if (sp.ctrl === 'cpu') {
         this.makeCPU(p);
         if (s.boost > 1) p.speedMul *= Math.min(1.3, s.boost); // příběh: těžší soupeř
