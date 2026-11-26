@@ -636,7 +636,7 @@ class Match {
       b.jetBy = -1;
       b.superT = 0;
       b.armBy = idx;
-      p.dir = b.x >= p.x ? 1 : -1;
+      // Majda se neotáčí (hráči koukají pořád na bránu soupeře), ruce dosáhnou i dozadu
       this.arms = { by: idx, t: 0, bx: b.x, by0: b.y, from };
       if (from) this.onEvent('steal', { x: b.x, y: b.y, from, idx });
     } else if (p.power === 'jet') {

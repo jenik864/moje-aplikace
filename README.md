@@ -229,6 +229,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.40 – oprava: Majda se po Gumových rukou už neotočí zády k bráně
 - 1.39 – Majda má schopnost Gumové ruce (přitáhne míč, ukradne trojku i tryskáč)
 - 1.38 – Durcado má schopnost Byznysman (oblek a soukromý tryskáč, který shodí míč před bránu soupeře)
 - 1.37 – Příběh odemčený pro všechny bez kódu
