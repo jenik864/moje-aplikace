@@ -27,14 +27,16 @@ const PHYS = {
   bodyR: 18 * PS,      // poloměr těla pro kolize s míčem
   bodyOff: 18 * PS,    // střed těla pod spodkem hlavy
   kickDur: 0.24,       // délka švihu nohou
+  kickWindow: 0.85,    // jak dlouho během švihu může kopačka trefit míč (část švihu)
+  kickReach: 16,       // o kolik je zásah kopačkou shovívavější než její velikost
   kickCooldown: 0.1,
-  ballR: 20,
+  ballR: 24,           // větší míč = lépe se trefuje
   ballGravity: 1300,
   ballBounce: 0.7,     // odraz od trávníku
   wallBounce: 0.78,
   headBounce: 0.55,    // odraz od hlavy
   headMinOut: 130,     // míč se od hlavy vždy odrazí aspoň touto rychlostí
-  headerPush: 80,      // hlavička posílá míč trochu dopředu
+  headerPush: 120,     // hlavička posílá míč dopředu
   headMaxSpeed: 820,   // hlavička sama nezrychlí míč nad tuto hodnotu
   groundGrip: 0.88,    // část vodorovné rychlosti, která zůstane po dopadu
   ballMaxSpeed: 1500,
@@ -68,7 +70,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.30';
+const GAME_VERSION = '1.31';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';

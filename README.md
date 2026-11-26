@@ -174,6 +174,8 @@ Pro testy lze v prohlížeči nastavit `window.HLAVOUNI_NET = 'bc'` (BroadcastCh
 
 ## Jak funguje hra
 
+**Kop je shovívavý:** míč se trefí kopačkou nebo kdekoli kousek před hráčem od výšky hlavy po trávník (i volej). Když hráč zmáčkne Střelu o chvilku dřív, než míč doletí, noha počká až 0,18 s a vykopne, jakmile je míč v dosahu. Lidským hráčům se kop směrem na bránu soupeře jemně natočí, aby míč letěl pod břevno (počítač tuhle pomoc nemá). Míč je větší (poloměr 24) a hlavičky posílají míč víc dopředu.
+
 - Kop: kopačka se švihne dopředu a nahoru. Čím později ve švihu trefí míč, tím vyšší je lob. Když stojí soupeř těsně před tebou, kop ho přeloží obloučkem.
 - Hlavička: míč se odráží od hlavy podle toho, kam hráč běží a skáče. Tělo a nohy míč zastaví a dá se s ním vést.
 - Na břevno se dá vyskočit. Míč, který zůstane sevřený mezi dvěma hráči, vyskočí nahoru.
@@ -207,6 +209,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.31 – hratelnost: větší míč, shovívavější kop (i volej a míč ve výšce hlavy), kop zmáčknutý o chvilku dřív počká na míč, pomoc s mířením na bránu, silnější hlavičky
 - 1.30 – Kiki v bikinách má sluneční brýle
 - 1.29 – Michael Bémič v červeném basketbalovém dresu s číslem 23
 - 1.28 – Úkoly (Milan za 15 zápasů, skiny Kiki v bikinách a Michael Bémič), Sully přejmenována na Suli

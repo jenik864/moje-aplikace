@@ -106,6 +106,7 @@ class Player {
     this.boostT = 0;
     this.pengT = 0;
     this.primeT = 0;
+    this.kickBuf = 0; // kop zmáčknutý o chvilku dřív (čeká na míč)
     this.growT = 0;   // Obří páv
     this.flashT = 0;  // oslněný bleskem (vyvalené oči)
     this.selfieT = 0; // Suli fotí selfie
@@ -494,10 +495,20 @@ class Match {
       p.kickCd = 0;
       p.kickHit = false;
       this.onEvent('superswing', { idx: this.players.indexOf(p) });
-    } else if (it.kick && p.kickT < 0 && p.kickCd <= 0) {
-      p.kickT = 0;
-      p.kickHit = false;
-      this.onEvent('swing', p);
+    } else if ((it.kick || p.kickBuf > 0) && p.kickT < 0 && p.kickCd <= 0) {
+      // člověk zmáčkl kop o chvilku dřív: počkat, až míč doletí do dosahu (max 0,18 s)
+      if (it.kick && !(p.kickBuf > 0) && p.isHuman && this.ballComing(p)) p.kickBuf = 0.18;
+      let wait = false;
+      if (p.kickBuf > 0 && !this.inKickZone(p, this.ball)) {
+        p.kickBuf -= dt;
+        wait = p.kickBuf > 0;
+      }
+      if (!wait) {
+        p.kickBuf = 0;
+        p.kickT = 0;
+        p.kickHit = false;
+        this.onEvent('swing', p);
+      }
     }
     if (p.kickT >= 0) {
       p.kickT += dt;
@@ -888,11 +899,12 @@ class Match {
       }
     }
     // 1) kop – kopačka ve švihu
-    if (p.kickT >= 0 && !p.kickHit && p.kickT / PHYS.kickDur <= 0.55) {
+    if (p.kickT >= 0 && !p.kickHit && p.kickT / PHYS.kickDur <= PHYS.kickWindow) {
       const s = p.kickS();
       const f = p.footAt(s, this._f);
-      const dx = b.x - f.x, dy = b.y - f.y, rr = PHYS.footR + 6 + b.r;
-      if (dx * dx + dy * dy < rr * rr) {
+      const dx = b.x - f.x, dy = b.y - f.y, rr = PHYS.footR + PHYS.kickReach + b.r;
+      // shovívavý zásah: kopačka, nebo míč kousek před hráčem (od brady k trávníku)
+      if (dx * dx + dy * dy < rr * rr || this.inKickZone(p, b)) {
         this.doKick(p, s, f);
         touch = true;
       }
@@ -949,10 +961,11 @@ class Match {
     // jen odrážel mezi dvěma hráči).
     const close = this.players.some((q) => q.team !== p.team && (q.x - p.x) * p.dir > 0
       && (q.x - p.x) * p.dir < 2 * p.R + 45 * PS && Math.abs(q.y - p.y) < 70 * PS);
-    if (close) deg = Math.max(deg, 63);
-    const el = (deg * Math.PI) / 180;
     const run = Math.max(0, p.vx * p.dir);
     const power = (PHYS.kickSpeed * rand(0.94, 1.02) + run * 0.3) * (p.primeT > 0 ? PRIME_KICK : 1);
+    if (close) deg = Math.max(deg, 63);
+    else deg = this.aimAssist(p, deg, power);
+    const el = (deg * Math.PI) / 180;
     b.vx = p.dir * Math.cos(el) * power;
     b.vy = -Math.sin(el) * power + Math.min(0, p.vy) * 0.25;
     // míč vysunout před kopačku
@@ -965,6 +978,38 @@ class Match {
     b.lastTouch = p;
     b.lastHow = 'kick';
     this.onEvent('kick', { x: b.x, y: b.y, dir: p.dir, power: clamp(power / PHYS.kickSpeed, 0.6, 1.2) });
+  }
+
+  // Míč je před hráčem v dosahu kopu (od výšky hlavy k trávníku).
+  inKickZone(p, b) {
+    const fx = (b.x - p.x) * p.dir;
+    return fx > -4 && fx < p.R + 62 * PS && b.y > p.y - p.R * 0.15 && b.y < GROUND_Y;
+  }
+
+  // Míč je kousek před hráčem a blíží se (kop má smysl chvilku počkat).
+  ballComing(p) {
+    const b = this.ball;
+    const fx = (b.x - p.x) * p.dir;
+    if (fx < p.R + 62 * PS || fx > p.R + 230 * PS) return false;
+    if (b.y < p.y - p.R * 1.2) return false;
+    return (b.vx - p.vx) * p.dir < -40;
+  }
+
+  // Pomoc s mířením (jen lidé): kop směrem na bránu soupeře se natočí tak,
+  // aby míč letěl pod břevno, místo aby přeletěl nebo zapíchl do trávníku.
+  aimAssist(p, deg, power) {
+    if (!p.isHuman) return deg;
+    const b = this.ball;
+    const line = p.team === 0 ? W - GOAL_W + 12 : GOAL_W - 12;
+    const D = (line - b.x) * p.dir;
+    if (D < 60 || D > 860) return deg;
+    const g = PHYS.ballGravity, v = power;
+    const h = b.y - (BAR_Y + GROUND_Y) / 2 - 18; // cíl: kousek nad středem brány
+    const disc = v ** 4 - g * (g * D * D + 2 * h * v * v);
+    if (disc < 0) return deg;
+    const th = (Math.atan((v * v - Math.sqrt(disc)) / (g * D)) * 180) / Math.PI;
+    if (th < -12 || th > 62) return deg;
+    return lerp(deg, th, 0.7);
   }
 
   // Míč zaklíněný mezi hráčem a trávníkem/stěnou – ustoupí hráč.
