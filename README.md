@@ -189,6 +189,10 @@ GitHub Pages zdarma funguje jen pro veřejný repozitář.
 
 Společný žebříček potřebuje běžící `server.mjs`. Pokud hra běží na GitHub Pages, nasaď server na HTTPS host s trvalým diskem. Na serveru nastav `FIFA67_WEB_ORIGIN=https://jenik864.github.io`. V `js/config.js` nastav `SOCIAL_API` na veřejnou HTTPS adresu tohoto serveru včetně cesty `/api/social/`. Hráčům tak zůstanou data uložená pod původní adresou hry. Zahraješ si i při výpadku API a synchronizace počká na připojení.
 
+### Nasazení na Railway
+
+Railway sestaví hru z `Dockerfile` a spustí ji na portu, který službě přidělí. Konfigurace `railway.toml` ověřuje dostupnost žebříčku před přepnutím na novou verzi. Ke službě připoj jeden **Volume** s přípojným bodem `/data` pro databázi SQLite a ponech jednu instanci služby. Po nasazení použij HTTPS adresu v **Networking → Public Networking**. Tatáž služba může obsluhovat hru i žebříček. Když ponecháš původní web na GitHub Pages, nastav adresu API a povolený původ podle předchozího odstavce.
+
 Pro testy lze v prohlížeči nastavit `window.HLAVOUNI_NET = 'bc'` (BroadcastChannel mezi panely), `window.HLAVOUNI_PEER = { host, port, path, secure }` (vlastní server PeerJS) nebo `window.HLAVOUNI_RELAY = ['ws://…']` (vlastní MQTT server pro záložní přenos).
 
 ## Jak funguje hra
