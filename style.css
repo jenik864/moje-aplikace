@@ -623,6 +623,9 @@ kbd {
 .res-card.rankup { animation: rankup 0.9s ease-in-out 3; border-color: var(--gold); }
 @keyframes rankup { 50% { box-shadow: 0 5px 0 var(--ink), 0 0 28px rgba(255, 201, 60, 0.8); transform: scale(1.03); } }
 
+.version { position: absolute; left: max(10px, var(--safe-l)); bottom: max(6px, var(--safe-b)); z-index: 21; margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.35); pointer-events: none; }
+#app:not(.on-home) .version { display: none; }
+
 /* sponzoři */
 .sponsors { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .sp-k { font-size: 11px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute); }

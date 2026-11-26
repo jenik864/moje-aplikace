@@ -1908,6 +1908,7 @@ const UI = {
     this.setMuted(store.get(STORE_MUTE, false) === true);
     this.renderHelp();
     this.renderProfile();
+    document.getElementById('version').textContent = `FIFA67 · verze ${GAME_VERSION}`;
     this.orient();
   },
 
@@ -2254,6 +2255,7 @@ const UI = {
       this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home');
     }
     this.el.chip.hidden = name !== 'home';
+    document.getElementById('app').classList.toggle('on-home', name === 'home');
     // u velkých tabulek schovat ikony v rohu, ať nic nepřekrývají
     document.getElementById('app').classList.toggle('modal', name === 'result' || name === 'profile' || name === 'cup' || name === 'half');
     this.measureHud();

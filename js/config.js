@@ -63,6 +63,9 @@ const DUO_TEAMS = [
   { name: 'ŠIMŠA & JENDA', short: 'Šimša a Jenda', girls: false, color: '#8b5cf6', dark: '#5527c4', light: '#d6c6ff', chars: ['simsa', 'jenda'] },
 ];
 
+// Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
+const GAME_VERSION = '1.15';
+
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
 
