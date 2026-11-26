@@ -1257,3 +1257,48 @@ kbd {
 .home-row .btn-game svg { flex: none; }
 .home-row .btn-game > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 :root.h380 .home-row .btn-game > svg:not(.lock), :root.w700 .home-row .btn-game > svg:not(.lock) { display: none; }
+
+/* příběh: dvě hlavy u 2 v 2, úkol, odměna */
+.sn-pics { display: flex; justify-content: center; }
+.sn.two .sn-pic { width: clamp(26px, calc(var(--vh, 1vh) * 10), 46px); height: clamp(26px, calc(var(--vh, 1vh) * 10), 46px); }
+.sn.two .sn-pic + .sn-pic { margin-left: -9px; }
+.sn-badge { font-size: 18px; }
+.si-row { margin: 2px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.si-goal { font-size: 14px; font-weight: 800; color: #ffe48a; text-transform: uppercase; letter-spacing: 0.04em; }
+.btn-chip.reward { font-size: 12px; padding: 3px 10px; border-color: rgba(255, 210, 63, 0.6); color: #ffe48a; background: rgba(255, 201, 60, 0.12); animation: sn-glow 1.6s ease-in-out infinite; }
+.btn-play:disabled { filter: grayscale(0.8) brightness(0.7); }
+.btn-chip.gold { border-color: rgba(255, 255, 255, 0.5); color: #fff; }
+.btn-chip.gold[aria-pressed="true"] { background: linear-gradient(180deg, #ffffff, #d5dae2); color: var(--ink); }
+.dialog.reward-dlg {
+  width: min(520px, 100%);
+  gap: 6px;
+  padding: clamp(10px, calc(var(--vh, 1vh) * 3), 20px) 22px;
+  border-radius: 24px;
+  border: 3px solid var(--ink);
+  background: radial-gradient(ellipse at 50% 30%, rgba(255, 210, 63, 0.25), transparent 65%), linear-gradient(160deg, #2a2a52, #121a2c);
+  box-shadow: 0 6px 0 var(--ink);
+}
+.rw-pics { display: flex; justify-content: center; gap: 4px; }
+.rw-pic { width: clamp(70px, calc(var(--vh, 1vh) * 26), 130px); height: clamp(86px, calc(var(--vh, 1vh) * 32), 160px); display: block; }
+.rw-text { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; color: #d8e1f2; max-width: 440px; }
+.rw-how { margin: 0; font-size: 14px; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 0.04em; }
+:root.h380 .rw-text { font-size: 13px; }
+:root.h380 .dialog.reward-dlg .screen-title { font-size: 24px; }
+:root.h380 .si-goal { font-size: 12px; }
+:root.h320 .si-desc { display: none; }
+
+/* lobby: zamčené postavy a skin */
+.card.locked .portrait { filter: grayscale(0.9) brightness(0.55); }
+.card-main { position: relative; }
+.card-lock { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 2px; pointer-events: none; }
+.card-lock svg { width: 30px; height: 30px; fill: rgba(8, 13, 26, 0.75); stroke: #fff; stroke-width: 2.2; stroke-linecap: round; filter: drop-shadow(0 2px 0 var(--ink)); }
+.card-lock b { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; padding: 1px 6px; border-radius: 8px; background: rgba(8, 13, 26, 0.8); color: var(--gold); }
+.skin-chip { position: absolute; top: 0; right: -4px; z-index: 2; padding: 3px 8px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.6); background: rgba(8, 13, 26, 0.75); color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+.skin-chip.on { background: linear-gradient(180deg, #ffffff, #d5dae2); color: var(--ink); border-color: var(--ink); }
+#btn-start:disabled { filter: grayscale(0.8) brightness(0.7); }
+.dialog.reward-dlg { width: min(760px, 100%); grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; text-align: left; justify-items: start; }
+.rw-info { display: grid; gap: 6px; justify-items: start; }
+.rw-info .dialog-buttons.row { justify-content: flex-start; }
+.rw-pics { align-items: flex-end; }
+.rw-pic { width: clamp(110px, calc(var(--vh, 1vh) * 46), 230px); height: clamp(120px, calc(var(--vh, 1vh) * 64), 300px); }
+.rw-pics .rw-pic + .rw-pic { margin-left: -14px; }

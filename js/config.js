@@ -61,10 +61,14 @@ const DUO_TEAMS = [
   { name: 'TÓMA & PELI', short: 'Tóma a Peli', girls: false, color: '#1fae66', dark: '#0d7040', light: '#a5f0c8', chars: ['toma', 'peli'] },
   { name: 'BÉMIČ & KIKI', short: 'Bémič a Kiki', girls: false, color: '#ff8a1f', dark: '#b85400', light: '#ffd3a6', chars: ['bemic', 'kiki'] },
   { name: 'ŠIMŠA & JENDA', short: 'Šimša a Jenda', girls: false, color: '#8b5cf6', dark: '#5527c4', light: '#d6c6ff', chars: ['simsa', 'jenda'] },
+  // odemkne se v příběhu (úroveň 10)
+  { name: 'TLUSTEJ PÁV & SULLY', short: 'Páv a Sully', girls: false, color: '#0e8a8f', dark: '#075457', light: '#8ef0e6', chars: ['pav', 'sully'], locked: 'pav' },
 ];
+// Dvojice je k dispozici (zamčená až po odemčení v příběhu).
+const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.23';
+const GAME_VERSION = '1.24';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -83,14 +87,17 @@ const ROSTER = [
   { id: 'simsa', name: 'Šimša', num: 87, skin: '#f3caa8', hair: 'curlyshort', hairColor: '#4a2e19', hairDark: '#22130a', hairLight: '#7a5436', eyes: '#4a3020', brow: '#2c1a0f', lid: 0.34, browW: 4.4, browFlat: true, mouth: 'flat' },
   { id: 'jenda', name: 'Jenda', num: 21, skin: '#f0c7a6', hair: 'shaggy', hairColor: '#5c3d22', hairDark: '#2b190b', hairLight: '#8f6844', eyes: '#5e4a33', brow: '#3a2614', lid: 0.32, browW: 3.4, mouth: 'smirk' },
   // odemkne se v příběhu (úroveň 10)
-  { id: 'milan', name: 'Milan', num: 90, skin: '#f1c2a0', hair: 'receding', hairColor: '#c9a66a', hairDark: '#8a6a34', hairLight: '#ecd39c', eyes: '#86a0b4', brow: '#a8895a', lid: 0.24, browW: 3.4, mouth: 'flat', stubble: true, locked: 'milan', kit: { color: '#25282f', dark: '#121419', light: '#ffd23f' } },
+  { id: 'pav', name: 'Tlustej páv', short: 'Páv', num: 99, skin: '#efc3a0', hair: 'side', hairColor: '#2a1c12', hairDark: '#120b06', hairLight: '#5a4030', eyes: '#4a3424', brow: '#22160d', chub: 1.5, lid: 0.1, locked: 'pav' },
+  { id: 'sully', name: 'Sully', girl: true, num: 17, skin: '#f3cfb4', hair: 'longhair', fringe: 'curtain', wavy: true, hairColor: '#231a17', hairDark: '#0a0706', hairLight: '#54423c', eyes: '#4a3020', brow: '#1d1410', accent: '#7ee8d8', locked: 'pav' },
+  // boss příběhu (hratelný jen pro toho, kdo ho dřív odemkl)
+  { id: 'milan', hidden: true, name: 'Milan', num: 90, skin: '#f1c2a0', hair: 'receding', hairColor: '#c9a66a', hairDark: '#8a6a34', hairLight: '#ecd39c', eyes: '#86a0b4', brow: '#a8895a', lid: 0.24, browW: 3.4, mouth: 'flat', stubble: true, locked: 'milan', kit: { color: '#25282f', dark: '#121419', light: '#ffd23f' } },
 ];
 
 // Superschopnost postavy (zatím superstřela v barvě postavy; schopnosti doladíme).
 // Oslovení (5. pád) do pokřiků fanoušků a předzápasové hlášky postav.
 const VOCATIVE = {
   nelcis: 'Nelcis', majda: 'Majdo', marsal: 'Marsale', durcado: 'Durcado', toma: 'Tómo',
-  peli: 'Peli', bemic: 'Bémiči', kiki: 'Kiki', simsa: 'Šimšo', jenda: 'Jendo', milan: 'Milane',
+  peli: 'Peli', bemic: 'Bémiči', kiki: 'Kiki', simsa: 'Šimšo', jenda: 'Jendo', milan: 'Milane', pav: 'Páve', sully: 'Sully',
 };
 const QUIPS = {
   nelcis: ['Tohle vyhrajeme levou zadní!', 'Připravte se prohrát!'],
@@ -104,6 +111,8 @@ const QUIPS = {
   simsa: ['Šimša jde na věc!', 'Tenhle zápas je můj!'],
   jenda: ['Jenda dává góly!', 'Dneska vás rozstřílíme!'],
   milan: ['Tohle odpískám po svém!', 'Žlutá? Rovnou červená!'],
+  pav: ['Páv je tady, uhněte!', 'Tohle sním i s míčem!'],
+  sully: ['Sully to rozhodne!', 'Dneska bez slitování!'],
 };
 const QUIPS_ANY = ['Dneska padne gól za gólem!', 'Na tohle jsem čekal!', 'Pojďte na to!', 'Vy jste ty soupeři? Haha!'];
 // Pokřiky z tribun ({V} = oslovení hráče, {T} = jméno dvojice).
@@ -121,6 +130,7 @@ const DUO_SHOUTS = [
   ['TÓMA ŽLOUTEK'],
   ['JONY, KIKI TĚ CHCE', 'SKIPER'],
   ['MÁ VO2max 67'],
+  ['TLUSTEJ PÁV', 'SULLY SULLY'],
 ];
 
 // Odemčené věci na tomto zařízení (příběh, odměny).
@@ -129,7 +139,11 @@ const Unlocks = {
   get() {
     try {
       const o = JSON.parse(localStorage.getItem(UNLOCK_KEY));
-      return o && typeof o === 'object' ? o : {};
+      if (!o || typeof o !== 'object') return {};
+      // starší verze: zlatý dres = skin Moncler-Jenda
+      if (o.gold) o.moncler = true;
+      if (o.goldOn) o.skinOn = true;
+      return o;
     } catch (e) {
       return {};
     }
@@ -146,9 +160,12 @@ const Unlocks = {
 };
 // Postava je k dispozici (zamčené až po odemčení).
 const charAvailable = (c) => !c.locked || Unlocks.has(c.locked);
-const mySkin = () => (Unlocks.has('gold') && Unlocks.has('goldOn') ? 'gold' : '');
-// Zlatý dres (odměna za 5. úroveň příběhu).
-const GOLD_KIT = { name: 'ZLATÝ DRES', short: 'Zlatý dres', color: '#ffd23f', dark: '#b8860b', light: '#fff3b0', num: '#5a3d00' };
+// Postava se ukáže ve výběru (boss jen když už je odemčený).
+const charListed = (c) => !c.hidden || charAvailable(c);
+// Skin Moncler-Jenda (odměna za 5. úroveň příběhu, jen pro Jendu).
+const SKIN_CHAR = 'jenda';
+const mySkin = () => (Unlocks.has('moncler') && Unlocks.has('skinOn') ? 'moncler' : '');
+const MONCLER_KIT = { name: 'MONCLER-JENDA', short: 'Moncler-Jenda', color: '#f7f8fa', dark: '#cfd5de', light: '#1c2230', num: '#1c2230' };
 
 // Příběh: 10 úrovní, každá jeden zápas 1 v 1. Odemyká se kódem (uložen jen hash).
 const STORY_CODE = 'a693ac71';
@@ -160,20 +177,48 @@ function codeHash(s) {
   }
   return h.toString(16);
 }
+// format 1v1: opp = soupeř; 2v2: duo = dvojice soupeřů (hraješ se spoluhráčem z tvé dvojice).
+// goal: podmínka výhry – by (rozdíl gólů), clean (bez obdrženého gólu), goals (aspoň tolik gólů).
 const STORY = [
-  { opp: 'toma', level: 'easy', boost: 1, title: 'Sídlištní plácek', text: 'Tóma tě vyzve na první zápas. Ukaž, co v tobě je!' },
-  { opp: 'peli', level: 'easy', boost: 1.05, title: 'Školní hřiště', text: 'Peli je rychlík. Nenech ho utéct.' },
-  { opp: 'kiki', level: 'medium', boost: 1, title: 'Okresní přebor', text: 'Kiki nikdy neprohrává. Zatím.' },
-  { opp: 'bemic', level: 'medium', boost: 1.05, title: 'Zimní stadion', text: 'Bémič umí zmrazit bránu. Střílej dřív, než se promění v tučňáka!' },
-  { opp: 'majda', level: 'medium', boost: 1.1, title: 'Krajský pohár', text: 'Vyhraj a získáš ZLATÝ DRES!', reward: 'gold' },
-  { opp: 'durcado', level: 'hard', boost: 1, title: 'Velké derby', text: 'Durcado hraje hlavou. Hlídej vysoké míče.' },
-  { opp: 'jenda', level: 'hard', boost: 1.05, title: 'Noc pod reflektory', text: 'Pozor na JENDA PRIME!' },
-  { opp: 'simsa', level: 'hard', boost: 1.1, title: 'Semifinále ligy', text: 'Šimša má VO2max 67. Uteče ti?' },
-  { opp: 'nelcis', level: 'hard', boost: 1.14, title: 'Finále ligy', text: 'Nelcis a její obří hermelín. Poslední krok před bossem.' },
-  { opp: 'milan', level: 'hard', boost: 1.2, title: 'BOSS: Milan Voračka', text: 'Rozhodčí odložil píšťalku a jde hrát sám. Poraz ho a odemkneš ho jako hráče!', reward: 'milan' },
+  { format: '1v1', opp: 'toma', level: 'easy', boost: 1, goal: {}, title: 'Sídlištní plácek', text: 'Tóma tě vyzve na první zápas. Ukaž, co v tobě je!' },
+  { format: '1v1', opp: 'peli', level: 'easy', boost: 1.05, goal: { by: 2 }, title: 'Školní hřiště', text: 'Peli je rychlík. Tentokrát to musí být jasná výhra.' },
+  { format: '2v2', duo: 2, level: 'medium', boost: 1, goal: {}, title: 'Odveta na sídlišti', text: 'Tóma a Peli si přivedli posilu. Hraje se 2 na 2, spoluhráče máš z tvé dvojice.' },
+  { format: '1v1', opp: 'kiki', level: 'medium', boost: 1.05, goal: { clean: true }, title: 'Okresní přebor', text: 'Kiki nikdy neprohrává. Porazíš ji, ani když nedostaneš gól?' },
+  { format: '2v2', duo: 3, level: 'medium', boost: 1.1, goal: { by: 3 }, title: 'Zimní stadion', text: 'Bémič a Kiki. Pozor na Skipera a zmrzlou bránu!', reward: 'moncler' },
+  { format: '1v1', opp: 'durcado', level: 'hard', boost: 1, goal: { goals: 3 }, title: 'Velké derby', text: 'Durcado hraje hlavou. Musíš mu dát aspoň 3 góly.' },
+  { format: '2v2', duo: 1, level: 'hard', boost: 1.05, goal: { by: 2 }, title: 'Jižní supi', text: 'Marsal a Durcado. Trojky z dálky a hlavičky – vydržíš to?' },
+  { format: '1v1', opp: 'simsa', level: 'hard', boost: 1.1, goal: { by: 3 }, title: 'Semifinále ligy', text: 'Šimša má VO2max 67. Uteče ti?' },
+  { format: '2v2', duo: 0, level: 'hard', boost: 1.12, goal: { by: 3 }, title: 'Finále ligy', text: 'Nelcis a Majda s obřím hermelínem. Poslední krok před bossem.' },
+  { format: '1v1', opp: 'milan', level: 'hard', boost: 1.15, goal: { by: 5 }, title: 'BOSS: Milan Voračka', text: 'Rozhodčí odložil píšťalku a jde hrát sám. Musíš ho rozdrtit o 5 gólů!', reward: 'pav' },
 ];
-// Náhradní soupeř, když hráč hraje za stejnou postavu jako soupeř úrovně.
-const STORY_ALT = Object.fromEntries(STORY.map((l) => [l.opp, 'marsal'])); // Marsal v příběhu jinak nehraje
+// Odměny příběhu (náhled po klepnutí).
+const STORY_REWARDS = {
+  moncler: { kind: 'skin', name: 'MONCLER-JENDA', text: 'Luxusní skin pro Jendu: bílá péřová bunda, černé brýle, zlatý řetěz a bílé tenisky. Zapneš ho, když hraješ za Jendu.' },
+  pav: { kind: 'duo', name: 'TLUSTEJ PÁV & SULLY', text: 'Nová dvojice hráčů. Do té doby mají ve výběru zámeček.' },
+};
+const plural = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
+function storyGoalText(g) {
+  if (g.by) return `Vyhraj o ${g.by} ${plural(g.by, 'gól', 'góly', 'gólů')}`;
+  if (g.clean) return 'Vyhraj a nedostaň gól';
+  if (g.goals) return `Vyhraj a dej aspoň ${g.goals} ${plural(g.goals, 'gól', 'góly', 'gólů')}`;
+  return 'Vyhraj zápas';
+}
+// Splnil hráč podmínku? (my, opp = góly; pens = vyhrál až na penalty)
+function storyGoalMet(g, my, opp, won) {
+  if (!won) return false;
+  if (g.by && my - opp < g.by) return false;
+  if (g.clean && opp > 0) return false;
+  if (g.goals && my < g.goals) return false;
+  return true;
+}
+// Soupeř úrovně (když hraješ za stejnou postavu / dvojici, dostaneš náhradu).
+function storyOpp(lv, me) {
+  if (lv.format === '2v2') {
+    const mine = duoOf(me);
+    return lv.duo === mine ? 4 : lv.duo; // Šimša & Jenda v příběhu jinak nehrají
+  }
+  return lv.opp === me ? 'marsal' : lv.opp; // Marsal 1 v 1 jinak nehraje
+}
 const STORY_KEY = 'hlavouni.pribeh';
 const Story = {
   get() {
@@ -226,7 +271,7 @@ function seedOf(str) {
 
 const SUPER_COLORS = {
   nelcis: '#ff5fb0', majda: '#e86bff', marsal: '#3fa2ff', durcado: '#4fe0c0', toma: '#5fe36b',
-  peli: '#b07bff', bemic: '#ff7a1f', kiki: '#53d2ff', simsa: '#c6ff3d', jenda: '#ff4d4d', milan: '#ff2d2d',
+  peli: '#b07bff', bemic: '#ff7a1f', kiki: '#53d2ff', simsa: '#c6ff3d', jenda: '#ff4d4d', milan: '#ff2d2d', pav: '#14b8a6', sully: '#7ee8d8',
 };
 const superColor = (id) => SUPER_COLORS[id] || '#ffc93c';
 

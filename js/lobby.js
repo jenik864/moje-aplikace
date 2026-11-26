@@ -95,12 +95,19 @@ function releaseCtrl(lobby, ctrl) {
   return changed;
 }
 
-function cycleChar(id, d) {
-  const list = ROSTER.filter((c) => charAvailable(c) || c.id === id);
+// Další postava. V lobby jsou vidět i zamčené (se zámečkem), v příběhu jen hratelné.
+function cycleChar(id, d, playable) {
+  const ok = (c) => (playable ? charAvailable(c) : charListed(c));
+  const list = ROSTER.filter((c) => ok(c) || c.id === id);
   const i = list.findIndex((c) => c.id === id);
   let j = (i + d + list.length) % list.length;
-  if (!charAvailable(list[j])) j = (j + d + list.length) % list.length;
+  for (let k = 0; k < list.length && !ok(list[j]); k++) j = (j + d + list.length) % list.length;
   return list[j].id;
+}
+
+// Zamčené postavy v lobby (hrát se nedá, dokud je neodemkneš v příběhu).
+function lobbyLocked(lobby) {
+  return lobby.slots.some((s) => !charAvailable(charById(s.char)));
 }
 
 // Hostitel zpracuje přání kamaráda (vybrat místo nebo postavu).
@@ -128,7 +135,7 @@ function newCup(lobby) {
   const ctrls = (team) => lobby.slots.filter((s) => s.team === team).map((s) => s.ctrl);
   if (lobby.format === '2v2') {
     const used = [lobby.duos[0], lobby.duos[1]];
-    const rest = shuffle(DUO_TEAMS.map((d, i) => i).filter((i) => !used.includes(i))).slice(0, 2);
+    const rest = shuffle(DUO_TEAMS.map((d, i) => i).filter((i) => !used.includes(i) && !DUO_TEAMS[i].locked)).slice(0, 2);
     cup.teams = [
       { duo: used[0], ctrls: ctrls(0) }, { duo: used[1], ctrls: ctrls(1) },
       { duo: rest[0], ctrls: ['cpu', 'cpu'] }, { duo: rest[1], ctrls: ['cpu', 'cpu'] },
@@ -292,7 +299,7 @@ const LobbyUI = {
   // Postavy v lobby jsou živé (volá se z herní smyčky).
   animate(t) {
     for (const o of this.portraits || []) {
-      if (o.cv.isConnected) Renderer.portrait(o.cv, o.char, o.T, o.facing, t, { happy: o.mine && (t - o.since) < 1.4 });
+      if (o.cv.isConnected) Renderer.portrait(o.cv, o.char, o.T, o.facing, t, { happy: o.mine && (t - o.since) < 1.4, skin: o.skin });
     }
   },
 
@@ -367,7 +374,8 @@ const LobbyUI = {
       col.style.setProperty('--team-light', T.light);
       const head = this.el2('div', 'team-head');
       const tt = this.el2('div', 'team-tt');
-      tt.appendChild(this.el2('span', 'team-title', two ? T.name : team === 0 ? 'Levá strana' : 'Pravá strana'));
+      const duoLocked = two && !duoAvailable(lobby.duos[team]);
+      tt.appendChild(this.el2('span', 'team-title', two ? (duoLocked ? '🔒 ' : '') + T.name : team === 0 ? 'Levá strana' : 'Pravá strana'));
       // pokřik fanoušků dvojice
       const duo = two ? lobby.duos[team] : duoOf(lobby.slots[team].char);
       const chant = duo >= 0 && DUO_SHOUTS[duo] && DUO_SHOUTS[duo][0];
@@ -386,7 +394,8 @@ const LobbyUI = {
         const c = charById(s.char);
         const b = this.badge(s.ctrl, ctx);
         const mine = b.cls === 'b-me' || (ctx.mode === 'local' && s.ctrl !== 'cpu');
-        const card = this.el2('div', 'card' + (s.ctrl === 'cpu' ? '' : ' taken') + (mine ? ' mine' : ''));
+        const locked = !charAvailable(c);
+        const card = this.el2('div', 'card' + (s.ctrl === 'cpu' ? '' : ' taken') + (mine ? ' mine' : '') + (locked ? ' locked' : ''));
         const main = this.el2('button', 'card-main');
         main.type = 'button';
         main.dataset.slot = String(i);
@@ -399,7 +408,25 @@ const LobbyUI = {
         plate.append(chip, this.el2('span', 'card-name', c.name));
         const pw = POWERS[powerOf(c.id)];
         main.append(cv, plate, this.el2('span', 'card-power', `${pw.icon} ${pw.short}`));
+        if (locked) {
+          const lk = this.el2('span', 'card-lock');
+          lk.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><b>Odemkni v Příběhu</b>';
+          main.appendChild(lk);
+        }
         card.appendChild(main);
+        // můj Jenda: přepínač skinu Moncler-Jenda
+        const meCtrl = ctx.mode === 'local' ? 'p1' : ctx.me;
+        const skinOn = s.ctrl === meCtrl && c.id === SKIN_CHAR && Unlocks.has('moncler');
+        if (skinOn) {
+          const sk = this.el2('button', 'skin-chip' + (mySkin() ? ' on' : ''), mySkin() ? 'Moncler ✓' : 'Moncler');
+          sk.type = 'button';
+          sk.addEventListener('click', (e) => {
+            e.stopPropagation();
+            Sound.init();
+            Game.toggleSkin();
+          });
+          card.appendChild(sk);
+        }
         const canChar = !two && (ctx.mode === 'local' || s.ctrl === ctx.me || (ctx.mode === 'host' && s.ctrl === 'cpu'));
         if (!two) {
           const arrows = this.el2('div', 'arrows');
@@ -409,9 +436,10 @@ const LobbyUI = {
           card.appendChild(arrows);
         }
         row.appendChild(card);
-        const key2 = `${i}:${s.char}:${s.ctrl}`;
+        const skin = skinOn ? mySkin() : '';
+        const key2 = `${i}:${s.char}:${s.ctrl}:${skin}`;
         const prev = (this.portraits || []).find((o) => o.key === key2);
-        portraits.push({ cv, char: s.char, T, facing: team === 0 ? 1 : -1, mine, key: key2, since: prev ? prev.since : performance.now() / 1000 });
+        portraits.push({ cv, char: s.char, T, facing: team === 0 ? 1 : -1, mine, skin, key: key2, since: prev ? prev.since : performance.now() / 1000 });
       });
       col.appendChild(row);
       el.arena.appendChild(col);
@@ -453,9 +481,14 @@ const LobbyUI = {
     } else {
       el.start.textContent = cup ? 'Začít turnaj' : 'Hrát';
     }
+    const anyLocked = lobbyLocked(lobby);
+    if (anyLocked && ctx.mode !== 'guest') el.hint.textContent = '🔒 Tlustej páv a Sully jsou zamčení – odemkneš je v Příběhu (úroveň 10). Vyber jinou postavu.';
+    el.start.disabled = anyLocked;
     el.ready.hidden = ctx.mode !== 'guest';
     if (ctx.mode === 'guest') {
-      el.ready.disabled = !meSlot;
+      const myLocked = meSlot && !charAvailable(charById(meSlot.char));
+      if (myLocked) el.hint.textContent = '🔒 Tahle postava je zamčená – odemkneš ji v Příběhu. Vyber jinou.';
+      el.ready.disabled = !meSlot || myLocked;
       el.ready.classList.toggle('on', !!Online.ready);
       el.ready.textContent = Online.ready ? 'Připraven ✓' : 'Jsem připraven';
     }

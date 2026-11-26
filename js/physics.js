@@ -241,7 +241,7 @@ class Match {
       const role = roles[i];
       const x = role === 'attacker' ? attX : defX;
       const p = new Player({ team: sp.team, x: sp.team === 0 ? x : W - x, look: charById(sp.char), role, ctrl: sp.ctrl, label: sp.name });
-      p.skin = sp.skin === 'gold' ? 'gold' : '';
+      p.skin = sp.skin === 'moncler' && sp.char === SKIN_CHAR ? 'moncler' : '';
       if (sp.ctrl === 'cpu') {
         this.makeCPU(p);
         if (s.boost > 1) p.speedMul *= Math.min(1.3, s.boost); // příběh: těžší soupeř

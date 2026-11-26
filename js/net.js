@@ -704,7 +704,7 @@ const Online = {
       }
       g.seen = now;
       const name = cleanName(pr.name);
-      const skin = pr.skin === 'gold' ? 'gold' : '';
+      const skin = pr.skin === 'moncler' ? 'moncler' : '';
       const renamed = name !== g.name || !!pr.ready !== g.ready || skin !== g.skin;
       g.skin = skin;
       g.name = name;

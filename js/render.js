@@ -1515,9 +1515,9 @@ const Renderer = {
       }
       return;
     }
-    // zlatý dres (odměna z příběhu)
-    if (p.skin === 'gold' && !p._primeDraw && !p._goldDraw) {
-      const kit = p.team === 0 ? [GOLD_KIT, teams[1]] : [teams[0], GOLD_KIT];
+    // skin Moncler-Jenda (odměna z příběhu): bílá bunda místo dresu
+    if (p.skin === 'moncler' && !p._primeDraw && !p._goldDraw) {
+      const kit = p.team === 0 ? [MONCLER_KIT, teams[1]] : [teams[0], MONCLER_KIT];
       p._goldDraw = true;
       try {
         this.drawPlayer(ctx, p, ball, kit, now);
@@ -1634,13 +1634,18 @@ const Renderer = {
       ctx.rotate(-0.22 * kn);
       ctx.translate(0, -(R + 18));
     }
+    // Moncler-Jenda: péřová bunda, brýle, řetěz (při JENDA PRIME bílý dres Realu)
+    this._drip = p.skin === 'moncler' && !(p.primeT > 0);
+    const ch = L.chub || 1; // Tlustej páv je širší
     this.drawHair(ctx, p, T, 'back', now);
-    this.drawArm(ctx, -12, R + 1, aBack, T, L, true);
-    this.drawLeg(ctx, -6, R + 18, bx, by, T, L, 0, true);
-    this.drawLeg(ctx, 5, R + 18, fx, fy, T, L, kicking ? -s * 0.9 : 0, false);
+    this.drawArm(ctx, -12 * ch, R + 1, aBack, T, L, true);
+    this.drawLeg(ctx, -6 * ch, R + 18, bx - (ch - 1) * 8, by, T, L, 0, true);
+    this.drawLeg(ctx, 5 * ch, R + 18, fx + (ch - 1) * 6, fy, T, L, kicking ? -s * 0.9 : 0, false);
     this.drawTorso(ctx, p, T, L);
     this.drawHead(ctx, p, ball, T, now);
-    this.drawArm(ctx, 10, R + 1, aFront, T, L, false);
+    if (this._drip) this.drawShades(ctx, p);
+    this.drawArm(ctx, 10 * ch, R + 1, aFront, T, L, false);
+    this._drip = false;
     ctx.restore();
   },
 
@@ -1996,6 +2001,29 @@ const Renderer = {
   drawArm(ctx, sx, sy, a, T, L, back) {
     const len = 17;
     const ex = sx + Math.sin(a) * len, ey = sy + Math.cos(a) * len;
+    if (this._drip) {
+      // nafouklý rukáv bundy až k zápěstí
+      const wx = sx + Math.sin(a) * 13, wy = sy + Math.cos(a) * 13;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 14;
+      line(ctx, sx, sy, wx, wy);
+      ctx.strokeStyle = back ? '#d3d9e1' : '#fbfcfd';
+      ctx.lineWidth = 10.5;
+      line(ctx, sx, sy, wx, wy);
+      ctx.strokeStyle = 'rgba(110,122,145,.55)';
+      ctx.lineWidth = 1.3;
+      const mx = sx + Math.sin(a) * 6.5, my = sy + Math.cos(a) * 6.5, nx = Math.cos(a) * 5, ny = -Math.sin(a) * 5;
+      line(ctx, mx - nx, my - ny, mx + nx, my + ny);
+      const skin = back ? shade(L.skin, -0.16) : L.skin;
+      ctx.fillStyle = skin;
+      circle(ctx, ex, ey, 4.4);
+      ctx.fill();
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      return;
+    }
     const mx = sx + Math.sin(a) * 8, my = sy + Math.cos(a) * 8;
     const skin = back ? shade(L.skin, -0.16) : L.skin;
     ctx.lineCap = 'round';
@@ -2047,23 +2075,36 @@ const Renderer = {
     ctx.lineTo(-8, 7);
     ctx.quadraticCurveTo(-12, 7, -11, 0);
     ctx.closePath();
-    ctx.fillStyle = back ? '#10141d' : '#1d2433';
+    ctx.fillStyle = this._drip ? (back ? '#cfd5de' : '#fbfcfd') : back ? '#10141d' : '#1d2433';
     ctx.fill();
     ctx.strokeStyle = OUTLINE;
     ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.strokeStyle = back ? T.dark : T.color;
+    ctx.strokeStyle = this._drip ? '#1c2230' : back ? T.dark : T.color;
     ctx.lineWidth = 2.6;
     ctx.beginPath();
     ctx.moveTo(-4, -5);
     ctx.quadraticCurveTo(1, 0, 9, 1);
     ctx.stroke();
-    ctx.fillStyle = back ? '#aab2bd' : '#e9edf2';
+    ctx.fillStyle = this._drip ? '#c9ced6' : back ? '#aab2bd' : '#e9edf2';
     ctx.fillRect(-9, 4.4, 21, 2.4);
   },
 
   drawTorso(ctx, p, T, L) {
     const R = p.R / PS;
+    const ch = (L.chub || 1) * (this._drip ? 1.12 : 1);
+    ctx.save();
+    if (ch !== 1) {
+      // širší (bříško / nafouklá bunda): roztáhnout trup do stran
+      ctx.translate(-1, R + 4);
+      ctx.scale(ch, L.chub ? 1.12 : 1.04);
+      ctx.translate(1, -(R + 4));
+    }
+    if (this._drip) {
+      this.drawPuffer(ctx, R);
+      ctx.restore();
+      return;
+    }
     // trenky
     ctx.fillStyle = T.dark;
     rrect(ctx, -15, R + 9, 29, 13, 4);
@@ -2095,6 +2136,22 @@ const Renderer = {
     ctx.strokeStyle = 'rgba(255,255,255,.6)';
     ctx.lineWidth = 2;
     line(ctx, 12, R + 2, 11, R + 13);
+    if (L.chub) {
+      // bříško dopředu přes trenky
+      ctx.beginPath();
+      ctx.ellipse(7, R + 10, 15, 13, 0, -1.3, 1.95);
+      ctx.fillStyle = T.color;
+      ctx.fill();
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(7, R + 10, 10, 8.5, 0, -1.0, 0.2);
+      ctx.stroke();
+    }
+    ctx.restore();
     // šňůrka s píšťalkou (rozhodčí)
     if (L.ref) {
       ctx.strokeStyle = '#111317';
@@ -2130,6 +2187,129 @@ const Renderer = {
     ctx.strokeText(String(L.num), 0, 0);
     ctx.fillStyle = T.num || '#ffffff';
     ctx.fillText(String(L.num), 0, 0);
+    ctx.restore();
+  },
+
+  // Moncler-Jenda: bílá péřová bunda s prošíváním, černé tepláky a zlatý řetěz.
+  drawPuffer(ctx, R) {
+    // tepláky
+    ctx.fillStyle = '#1c2230';
+    rrect(ctx, -15, R + 12, 29, 12, 4);
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // bunda
+    ctx.beginPath();
+    ctx.moveTo(-19, R - 9);
+    ctx.lineTo(16, R - 9);
+    ctx.quadraticCurveTo(21, R - 7, 20, R + 3);
+    ctx.quadraticCurveTo(20, R + 18, 14, R + 19);
+    ctx.lineTo(-15, R + 19);
+    ctx.quadraticCurveTo(-22, R + 18, -22, R + 3);
+    ctx.quadraticCurveTo(-23, R - 7, -19, R - 9);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(-22, 0, 20, 0);
+    g.addColorStop(0, '#d9dee6');
+    g.addColorStop(0.45, '#ffffff');
+    g.addColorStop(1, '#eef1f5');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+    // prošívané komory
+    ctx.save();
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(105,118,142,.55)';
+    ctx.lineWidth = 1.5;
+    for (const y of [R - 2, R + 5, R + 12]) {
+      ctx.beginPath();
+      ctx.moveTo(-24, y);
+      ctx.quadraticCurveTo(-2, y + 2.6, 22, y);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.95)';
+    ctx.lineWidth = 1.6;
+    for (const y of [R - 6, R + 1, R + 8, R + 15]) {
+      ctx.beginPath();
+      ctx.moveTo(-8, y);
+      ctx.quadraticCurveTo(2, y - 1.2, 12, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+    // zip a jezdec
+    ctx.strokeStyle = '#8b94a3';
+    ctx.lineWidth = 1.3;
+    line(ctx, 9, R - 7, 9, R + 18);
+    ctx.fillStyle = '#c9a227';
+    rrect(ctx, 7.6, R - 4, 3, 5, 1);
+    ctx.fill();
+    // nafouklý límec
+    ctx.fillStyle = '#ffffff';
+    rrect(ctx, -17, R - 13, 32, 9, 4.5);
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // nášivka na rukávu (bez loga)
+    ctx.fillStyle = '#1c2230';
+    circle(ctx, -14, R + 2, 3);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    circle(ctx, -14, R + 2, 1.1);
+    ctx.fill();
+    // zlatý řetěz
+    ctx.strokeStyle = '#7a5a10';
+    ctx.lineWidth = 3.4;
+    ctx.beginPath();
+    ctx.moveTo(-9, R - 5);
+    ctx.quadraticCurveTo(0, R + 11, 12, R - 4);
+    ctx.stroke();
+    ctx.strokeStyle = '#ffd24a';
+    ctx.lineWidth = 2.2;
+    ctx.setLineDash([2.2, 1.2]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#ffd24a';
+    circle(ctx, 1.5, R + 4.5, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#7a5a10';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  },
+
+  // Moncler-Jenda: černé brýle a diamant v uchu.
+  drawShades(ctx, p) {
+    ctx.save();
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#0d0f14';
+    ctx.lineWidth = 2.4;
+    line(ctx, 2, -6, -15, -3);
+    line(ctx, 16, -6.5, 20, -6.5);
+    for (const [x0, x1] of [[1, 16.5], [19.5, 36]]) {
+      ctx.beginPath();
+      ctx.moveTo(x0, -11);
+      ctx.lineTo(x1, -11);
+      ctx.quadraticCurveTo(x1 + 0.5, 3, (x0 + x1) / 2, 3);
+      ctx.quadraticCurveTo(x0 - 0.5, 3, x0, -11);
+      ctx.closePath();
+      ctx.fillStyle = '#0d0f14';
+      ctx.fill();
+      ctx.strokeStyle = '#2a2f3a';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.4)';
+      ctx.lineWidth = 1.4;
+      line(ctx, x0 + 3, -8, x0 + 7, -3);
+    }
+    // diamant
+    ctx.fillStyle = '#e8fbff';
+    circle(ctx, -16, 11.5, 2.4);
+    ctx.fill();
+    ctx.strokeStyle = '#7fd8ff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
     ctx.restore();
   },
 
@@ -2896,8 +3076,16 @@ const Renderer = {
 
     // tváře a pihy
     ctx.fillStyle = L.girl ? 'rgba(255,100,120,.3)' : 'rgba(235,110,90,.16)';
-    oval(ctx, 16, 11, 6, 3.6);
+    oval(ctx, 16, 11, L.chub ? 8 : 6, L.chub ? 5 : 3.6);
     ctx.fill();
+    if (L.chub) {
+      // dvojitá brada
+      ctx.strokeStyle = shade(L.skin, -0.3);
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(18, 22, 13, 0.35 * Math.PI, 0.78 * Math.PI);
+      ctx.stroke();
+    }
     if (L.freckles) {
       const soft = L.freckles === 'light';
       ctx.fillStyle = soft ? 'rgba(170,90,45,.26)' : 'rgba(160,75,30,.55)';
@@ -3215,6 +3403,7 @@ const Renderer = {
       ctx.setTransform(kh, 0, 0, kh, canvas.width / 2, canvas.height / 2 + p.R * 0.12 * kh);
       p.x = 0;
       p.y = 0;
+      p.skin = (opts && opts.skin) || '';
       p.dir = facing;
       p.blink = 0;
       p.mood = 0;
@@ -3232,6 +3421,7 @@ const Renderer = {
     p.dir = facing;
     p.blink = live && (t + ph) % 3.4 < 0.13 ? 0.1 : 0;
     p.mood = opts && opts.happy ? 1 : 0;
+    p.skin = (opts && opts.skin) || '';
     p.homeX = ph * 100;
     const eye = live ? { x: facing * 300, y: -20 + Math.sin(t * 0.7 + ph) * 60 } : { x: facing * 300, y: -20 };
     this.drawPlayer(ctx, p, eye, [team], live ? t * 1000 : 0);
@@ -3581,6 +3771,17 @@ const Renderer = {
     ctx.fill();
     ctx.fillStyle = g.golden ? '#0b1220' : '#ffc93c';
     ctx.fillText(lab, x + timeW / 2, y + h + 9.5);
+    // příběh: úkol úrovně pod tabulí
+    if (g.setup && g.setup.goal && g.state !== 'shootout') {
+      const gt = `🎯 ${g.setup.goal}`;
+      ctx.font = `800 14px ${FONT_U}`;
+      const gw = ctx.measureText(gt).width + 18;
+      ctx.fillStyle = 'rgba(8,13,26,.72)';
+      rrect(ctx, x + timeW / 2 - gw / 2, y + h + 22, gw, 19, 6);
+      ctx.fill();
+      ctx.fillStyle = '#ffe48a';
+      ctx.fillText(gt, x + timeW / 2, y + h + 32);
+    }
     x += timeW + gap;
     this.scoreBox(ctx, x, iy, scoreW, ih, m.score[1], g.scorePop[1]);
     x += scoreW + gap;

@@ -114,8 +114,9 @@ const Game = {
 
   newDemo() {
     const two = Math.random() < 0.6;
-    const da = Math.floor(Math.random() * DUO_TEAMS.length);
-    const db = (da + 1 + Math.floor(Math.random() * (DUO_TEAMS.length - 1))) % DUO_TEAMS.length;
+    const open = DUO_TEAMS.map((t, i) => i).filter((i) => !DUO_TEAMS[i].locked);
+    const da = pick(open);
+    const db = pick(open.filter((i) => i !== da));
     const lobby = newLobby({ format: two ? '2v2' : '1v1', duos: [da, db] });
     if (!two) {
       const pool = ROSTER.filter((c) => !c.locked);
@@ -404,6 +405,10 @@ const Game = {
       this.playCupMatch();
       return;
     }
+    if (this.screen === 'lobby' && lobbyLocked(this.lobby)) {
+      UI.toast('Zamčená postava – odemkneš ji v Příběhu');
+      return;
+    }
     if ((this.mode === 'local' || this.mode === 'host') && this.lobby.mode === 'cup' && this.screen === 'lobby') {
       this.startCup();
       return;
@@ -420,6 +425,7 @@ const Game = {
       return;
     }
     if (Online.active) Online.leave();
+    this.storySync();
     this.cup = null;
     this.story = { idx: -1 };
     this.mode = 'local';
@@ -454,54 +460,87 @@ const Game = {
     Story.save(s);
   },
 
-  // Zápas jedné úrovně: já (1 v 1) proti počítači.
+  // Zapnout/vypnout skin Moncler-Jenda (platí, když hraješ za Jendu, i online).
+  toggleSkin() {
+    if (!Unlocks.has('moncler')) return;
+    Unlocks.set('skinOn', !Unlocks.has('skinOn'));
+    Sound.click();
+    if (this.mode === 'guest') Online.publish({ skin: mySkin() });
+    if (this.screen === 'lobby') {
+      if (this.mode === 'host') this.publishLobby();
+      this.renderLobby();
+    }
+  },
+
+  // Zápas jedné úrovně proti počítači (1 v 1 nebo 2 v 2 se spoluhráčem počítačem).
   playStory(idx) {
     const st = Story.get();
     idx = clamp(Math.floor(idx), 0, Math.min(st.done, STORY.length - 1));
     const lv = STORY[idx], me = this.storyChar();
-    const opp = lv.opp === me ? STORY_ALT[lv.opp] || 'toma' : lv.opp;
+    const opp = storyOpp(lv, me);
     if (Online.active) Online.leave();
     this.mode = 'local';
     this.cup = null;
     this.story = { idx };
-    const lobby = newLobby({ format: '1v1', level: lv.level }, null);
-    const mine = lobby.slots.find((s) => s.team === 0), other = lobby.slots.find((s) => s.team === 1);
-    mine.char = me;
-    mine.ctrl = 'p1';
-    other.char = opp;
-    other.ctrl = 'cpu';
+    let lobby;
+    if (lv.format === '2v2') {
+      let mine = duoOf(me);
+      if (mine < 0) mine = 4; // postava bez dvojice hraje s Šimšou
+      lobby = newLobby({ format: '2v2', level: lv.level, duos: [mine, opp] }, null);
+      lobby.slots.forEach((s) => { s.ctrl = 'cpu'; });
+      const team0 = lobby.slots.filter((s) => s.team === 0);
+      const meSlot = team0.find((s) => s.char === me) || team0[0];
+      meSlot.char = me;
+      meSlot.ctrl = 'p1';
+    } else {
+      lobby = newLobby({ format: '1v1', level: lv.level }, null);
+      const mine = lobby.slots.find((s) => s.team === 0), other = lobby.slots.find((s) => s.team === 1);
+      mine.char = me;
+      mine.ctrl = 'p1';
+      other.char = opp;
+      other.ctrl = 'cpu';
+    }
     const setup = this.buildSetup(lobby);
     setup.story = idx + 1;
     setup.boost = lv.boost;
     setup.label = `PŘÍBĚH · ÚROVEŇ ${idx + 1}`;
+    setup.goal = storyGoalText(lv.goal).toUpperCase();
     this.beginMatch(setup);
   },
 
-  // Výsledek úrovně (jednou za zápas): postup a odměny.
+  // Výsledek úrovně (jednou za zápas): podmínka, postup a odměny.
   storyRecord() {
     const m = this.match, s = this.setup;
     if (!this.story || !s || !s.story || !m) return null;
     if (this.storyRes && this.storyRes.id === s.id) return this.storyRes;
     const me = this.myPlayer();
-    const idx = s.story - 1;
-    const win = !!me && m.winner() === me.team;
+    const idx = s.story - 1, lv = STORY[idx];
+    const t = me ? me.team : 0;
+    const won = !!me && m.winner() === t;
+    const win = storyGoalMet(lv.goal, m.score[t], m.score[1 - t], won);
     const st = Story.get(), rewards = [];
-    let fresh = false;
     if (win) {
       if (idx >= st.done) {
         st.done = idx + 1;
         Story.save(st);
-        fresh = true;
       }
-      const rw = STORY[idx].reward;
+      const rw = lv.reward;
       if (rw && !Unlocks.has(rw)) {
         Unlocks.set(rw);
-        if (rw === 'gold') Unlocks.set('goldOn');
+        if (rw === 'moncler') Unlocks.set('skinOn');
         rewards.push(rw);
       }
     }
-    this.storyRes = { id: s.id, idx, win, fresh, rewards };
+    this.storyRes = { id: s.id, idx, win, won, rewards };
     return this.storyRes;
+  },
+
+  // Odměny za už splněné úrovně (třeba po úpravě příběhu).
+  storySync() {
+    const st = Story.get();
+    STORY.forEach((lv, i) => {
+      if (lv.reward && i < st.done && !Unlocks.has(lv.reward)) Unlocks.set(lv.reward);
+    });
   },
 
   /* ---------------- turnaj ---------------- */
@@ -2404,11 +2443,12 @@ function sanitizeSetup(s) {
       team: p && p.team === 1 ? 1 : 0,
       ctrl: p && typeof p.ctrl === 'string' ? p.ctrl.slice(0, 16) : 'cpu',
       name: cleanName(p && p.name),
-      skin: p && p.skin === 'gold' ? 'gold' : '',
+      skin: p && p.skin === 'moncler' ? 'moncler' : '',
     })),
     cup: !!s.cup,
     stage: ['SEMIFINÁLE', 'FINÁLE'].includes(s.stage) ? s.stage : '',
     label: typeof s.label === 'string' ? s.label.slice(0, 40) : '',
+    goal: typeof s.goal === 'string' ? s.goal.slice(0, 40) : '',
   };
 }
 
@@ -2427,7 +2467,7 @@ const UI = {
       resMain: $('btn-res-main'), resSecond: $('btn-res-second'), resThird: $('btn-res-third'), resWait: $('res-wait'),
       pauseSecond: $('btn-restart'), pauseThird: $('btn-quit'),
       profile: $('profile'), chip: $('profile-chip'), cup: $('cup'), half: $('half'),
-      story: $('story'), unlock: $('unlock'),
+      story: $('story'), unlock: $('unlock'), reward: $('reward'),
     };
     const click = (id, fn) => $(id).addEventListener('click', () => {
       Sound.init();
@@ -2474,9 +2514,11 @@ const UI = {
     click('btn-sc-prev', () => this.storyCycle(-1));
     click('btn-sc-next', () => this.storyCycle(1));
     click('btn-gold', () => {
-      Unlocks.set('goldOn', !Unlocks.has('goldOn'));
-      this.showStory();
+      Game.toggleSkin();
+      this.showStory(true);
     });
+    click('btn-story-reward', () => this.showReward(STORY[this.storySel] && STORY[this.storySel].reward));
+    click('btn-reward-close', () => this.show('story'));
     click('btn-story-play', () => {
       if (this.storySel >= 0) Game.playStory(this.storySel);
     });
@@ -2905,13 +2947,13 @@ const UI = {
   },
 
   show(name) {
-    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock']) {
-      this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home');
+    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward']) {
+      this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home') && !(name === 'reward' && key === 'story');
     }
     this.el.chip.hidden = name !== 'home';
     document.getElementById('app').classList.toggle('on-home', name === 'home');
     // u velkých tabulek schovat ikony v rohu, ať nic nepřekrývají
-    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock'].includes(name));
+    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock', 'reward'].includes(name));
     if (name === 'home') this.updateLocks();
     this.measureHud();
     this.el.pauseBtn.hidden = !(Game.screen === 'match' && Game.mode !== 'guest' && (Game.inMatch() || Game.state === 'paused'));
@@ -2977,16 +3019,17 @@ const UI = {
     if (sr) {
       const last = sr.idx + 1 >= STORY.length;
       this.el.resKicker.textContent = `Příběh · úroveň ${sr.idx + 1}`;
-      this.el.resTitle.textContent = sr.win ? (last ? 'Příběh dokončen!' : `Úroveň ${sr.idx + 1} splněna!`) : 'Prohra – zkus to znovu';
+      this.el.resTitle.textContent = sr.win ? (last ? 'Příběh dokončen!' : `Úroveň ${sr.idx + 1} splněna!`) : sr.won ? 'Podmínka nesplněna' : 'Prohra – zkus to znovu';
+      if (!sr.win) this.el.resSub.textContent = `Úkol: ${storyGoalText(STORY[sr.idx].goal)}`;
       this.el.resTitle.style.color = sr.win ? '#ffc93c' : T.light;
       this.el.resMain.textContent = sr.win && !last ? 'Další úroveň' : sr.win ? 'Hrát znovu' : 'Zkusit znovu';
       this.el.resSecond.textContent = 'Příběh';
       if (sr.rewards.length) {
-        const txt = sr.rewards.map((r) => (r === 'gold' ? 'ZLATÝ DRES' : 'nový hráč MILAN')).join(' + ');
+        const txt = sr.rewards.map((r) => STORY_REWARDS[r].name).join(' + ');
         this.el.resSub.textContent = `Odměna: ${txt}!`;
         setTimeout(() => {
           Sound.fanfare();
-          this.toast(sr.rewards.includes('milan') ? 'Odemčen nový hráč: Milan Voračka!' : 'Odměna: ZLATÝ DRES! Už ho máš na sobě.');
+          this.toast(sr.rewards.includes('pav') ? 'Odemčena dvojice Tlustej páv & Sully!' : 'Odměna: skin MONCLER-JENDA! Zapneš ho, když hraješ za Jendu.');
         }, 700);
       }
     }
@@ -3011,57 +3054,65 @@ const UI = {
   storySel: -1,
 
   storyCycle(d) {
-    const id = cycleChar(Game.storyChar(), d);
+    const id = cycleChar(Game.storyChar(), d, true);
     Game.setStoryChar(id);
     Sound.click();
     this.showStory(true);
   },
 
-  // Mapa příběhu: 10 úrovní, výběr hráče a zlatý dres.
+  // Mapa příběhu: 10 úrovní, výběr hráče, skin a odměny.
   showStory(keepSel) {
     const $ = (id) => document.getElementById(id);
     const st = Story.get(), me = Game.storyChar(), look = charById(me);
     const d = duoOf(me), T = d >= 0 ? DUO_TEAMS[d] : look.kit || SIDE_COLORS[0];
-    const gold = mySkin() === 'gold';
-    const kit = gold ? GOLD_KIT : T;
+    const canSkin = me === SKIN_CHAR && Unlocks.has('moncler');
+    const skin = canSkin ? mySkin() : '';
     $('story-prog').textContent = `${st.done} / ${STORY.length}`;
     $('story-title').textContent = st.done >= STORY.length ? 'Příběh dokončen' : 'Příběh';
     $('story-name').textContent = look.name;
     const pw = POWERS[powerOf(me)];
     $('story-power').textContent = `${pw.icon} ${pw.name}`;
-    document.querySelector('.story-me').style.setProperty('--me', kit.color);
-    requestAnimationFrame(() => Renderer.portrait($('story-pic'), me, kit, 1));
+    document.querySelector('.story-me').style.setProperty('--me', skin ? '#e9edf3' : T.color);
+    requestAnimationFrame(() => Renderer.portrait($('story-pic'), me, T, 1, undefined, { skin }));
     const gb = $('btn-gold');
-    gb.hidden = !Unlocks.has('gold');
-    gb.setAttribute('aria-pressed', String(gold));
-    $('gold-label').textContent = gold ? 'Zlatý dres: zapnutý' : 'Zlatý dres: vypnutý';
+    gb.hidden = !canSkin;
+    gb.setAttribute('aria-pressed', String(!!skin));
+    $('gold-label').textContent = skin ? 'Moncler-Jenda ✓' : 'Moncler-Jenda';
     const cur = Math.min(st.done, STORY.length - 1);
-    if (!keepSel || this.storySel < 0 || this.storySel > cur) this.storySel = cur;
+    if (!keepSel || this.storySel < 0) this.storySel = cur;
     const map = $('story-map');
     map.textContent = '';
+    const lockSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
     STORY.forEach((lv, i) => {
       const li = document.createElement('li');
       const b = document.createElement('button');
       b.type = 'button';
-      const opp = lv.opp === me ? STORY_ALT[lv.opp] || 'toma' : lv.opp;
-      const oc = charById(opp), od = duoOf(opp), oT = od >= 0 ? DUO_TEAMS[od] : oc.kit || SIDE_COLORS[1];
+      const opp = storyOpp(lv, me), two = lv.format === '2v2';
+      const chars = two ? DUO_TEAMS[opp].chars : [opp];
+      const oT = two ? DUO_TEAMS[opp] : (() => { const od = duoOf(opp); return od >= 0 ? DUO_TEAMS[od] : charById(opp).kit || SIDE_COLORS[1]; })();
       const locked = i > st.done;
-      b.className = 'sn' + (i < st.done ? ' done' : i === st.done ? ' cur' : ' locked') + (i === STORY.length - 1 ? ' boss' : '') + (i === this.storySel ? ' sel' : '');
-      b.disabled = locked;
-      b.setAttribute('aria-label', `Úroveň ${i + 1}: ${oc.name}${locked ? ' (zamčeno)' : ''}`);
+      b.className = 'sn' + (two ? ' two' : '') + (i < st.done ? ' done' : i === st.done ? ' cur' : ' locked') + (i === STORY.length - 1 ? ' boss' : '') + (i === this.storySel ? ' sel' : '');
+      const oname = two ? DUO_TEAMS[opp].short : charById(opp).name;
+      b.setAttribute('aria-label', `Úroveň ${i + 1}: ${oname}${locked ? ' (zamčeno)' : ''}`);
       const num = document.createElement('span');
       num.className = 'sn-num';
       num.textContent = i + 1;
-      const cv = document.createElement('canvas');
-      cv.className = 'sn-pic';
+      const pics = document.createElement('span');
+      pics.className = 'sn-pics';
+      const cvs = chars.map(() => {
+        const cv = document.createElement('canvas');
+        cv.className = 'sn-pic';
+        pics.appendChild(cv);
+        return cv;
+      });
       const nm = document.createElement('span');
       nm.className = 'sn-name';
-      nm.textContent = i === STORY.length - 1 ? 'BOSS' : oc.name;
-      b.append(num, cv, nm);
+      nm.textContent = i === STORY.length - 1 ? 'BOSS' : two ? '2 v 2' : oname;
+      b.append(num, pics, nm);
       if (lv.reward) {
         const bd = document.createElement('span');
         bd.className = 'sn-badge';
-        bd.textContent = lv.reward === 'gold' ? '👕' : '⭐';
+        bd.textContent = '🎁';
         b.appendChild(bd);
       }
       if (i < st.done) {
@@ -3073,7 +3124,7 @@ const UI = {
       if (locked) {
         const lk = document.createElement('span');
         lk.className = 'sn-lock';
-        lk.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+        lk.innerHTML = lockSvg;
         b.appendChild(lk);
       }
       b.addEventListener('click', () => {
@@ -3084,16 +3135,55 @@ const UI = {
       });
       li.appendChild(b);
       map.appendChild(li);
-      requestAnimationFrame(() => Renderer.portrait(cv, opp, oT, -1, undefined, { head: true }));
+      requestAnimationFrame(() => cvs.forEach((cv, k) => Renderer.portrait(cv, chars[k], oT, -1, undefined, { head: true })));
     });
     const lv = STORY[this.storySel];
     const diff = { easy: 'Lehká', medium: 'Střední', hard: 'Těžká' }[lv.level];
     const boss = this.storySel === STORY.length - 1;
-    $('si-kicker').textContent = `Úroveň ${this.storySel + 1} · ${boss ? 'Boss' : diff}${this.storySel < st.done ? ' · splněno ✓' : ''}`;
+    const locked = this.storySel > st.done;
+    $('si-kicker').textContent = `Úroveň ${this.storySel + 1} · ${lv.format === '2v2' ? '2 v 2' : '1 v 1'} · ${boss ? 'Boss' : diff}${this.storySel < st.done ? ' · splněno ✓' : ''}`;
     $('si-title').textContent = lv.title;
     $('si-text').textContent = lv.text;
-    $('btn-story-play').textContent = this.storySel < st.done ? 'Hrát znovu' : 'Hrát';
+    $('si-goal').textContent = `🎯 ${storyGoalText(lv.goal)}`;
+    const rb = $('btn-story-reward');
+    rb.hidden = !lv.reward;
+    if (lv.reward) rb.textContent = `🎁 ${STORY_REWARDS[lv.reward].name}`;
+    const play = $('btn-story-play');
+    play.disabled = locked;
+    play.textContent = locked ? 'Zamčeno' : this.storySel < st.done ? 'Znovu' : 'Hrát';
     if (Game.screen === 'story') this.show('story');
+  },
+
+  // Náhled odměny (co dostaneš za úroveň).
+  showReward(key) {
+    const rw = STORY_REWARDS[key];
+    if (!rw) return;
+    const $ = (id) => document.getElementById(id);
+    const i = STORY.findIndex((l) => l.reward === key), lv = STORY[i];
+    const got = Unlocks.has(key);
+    $('rw-title').textContent = rw.name;
+    $('rw-kicker').textContent = got ? 'Odměna · získáno ✓' : `Odměna za úroveň ${i + 1}`;
+    $('rw-text').textContent = rw.text;
+    $('rw-how').textContent = got ? (key === 'moncler' ? 'Zapneš ho tlačítkem Moncler-Jenda u Jendy.' : 'Najdeš je ve výběru hráčů.') : `Úkol: ${storyGoalText(lv.goal)}`;
+    const box = $('rw-pics');
+    box.textContent = '';
+    const list = rw.kind === 'skin' ? [[SKIN_CHAR, 'moncler']] : DUO_TEAMS.find((t) => t.locked === key).chars.map((c) => [c, '']);
+    const T = rw.kind === 'skin' ? MONCLER_KIT : DUO_TEAMS.find((t) => t.locked === key);
+    const cvs = list.map(() => {
+      const cv = document.createElement('canvas');
+      cv.className = 'rw-pic';
+      box.appendChild(cv);
+      return cv;
+    });
+    this.show('reward');
+    // postavy v náhledu se hýbou
+    const t0 = performance.now();
+    const anim = (now) => {
+      if ($('reward').hidden) return;
+      cvs.forEach((cv, k) => Renderer.portrait(cv, list[k][0], T, k === 0 ? 1 : -1, (now - t0) / 1000, { skin: list[k][1], happy: true }));
+      requestAnimationFrame(anim);
+    };
+    requestAnimationFrame(anim);
   },
 
   orient() {

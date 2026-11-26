@@ -301,7 +301,7 @@
           <p id="story-name" class="sm-name"></p>
           <p id="story-power" class="sm-power"></p>
           <button id="btn-gold" class="btn-chip gold" type="button" aria-pressed="false" hidden>
-            <span id="gold-label">Zlatý dres</span>
+            <span id="gold-label">Moncler-Jenda</span>
           </button>
         </div>
         <div class="story-right">
@@ -311,9 +311,26 @@
               <p id="si-kicker" class="mini-kicker"></p>
               <h3 id="si-title" class="si-title"></h3>
               <p id="si-text" class="si-desc"></p>
+              <p class="si-row"><span id="si-goal" class="si-goal"></span><button id="btn-story-reward" class="btn-chip reward" type="button" hidden></button></p>
             </div>
             <button id="btn-story-play" class="btn-play" type="button">Hrát</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- náhled odměny z příběhu -->
+  <section id="reward" class="screen dim" aria-labelledby="rw-title" hidden>
+    <div class="dialog reward-dlg">
+      <div id="rw-pics" class="rw-pics"></div>
+      <div class="rw-info">
+        <p id="rw-kicker" class="mini-kicker"></p>
+        <h2 id="rw-title" class="screen-title"></h2>
+        <p id="rw-text" class="rw-text"></p>
+        <p id="rw-how" class="rw-how"></p>
+        <div class="dialog-buttons row">
+          <button id="btn-reward-close" class="btn-play" type="button">Super</button>
         </div>
       </div>
     </div>

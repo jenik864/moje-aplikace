@@ -67,22 +67,27 @@ Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče,
 
 Tlačítko *Příběh* v hlavním menu. Je zamčený kódem (kód se zadává jednou, pak zůstane odemčený na tomto zařízení; v kódu se nekontrolují velká/malá písmena, mezery ani háčky). Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
 
-10 úrovní, každá je jeden zápas 1 v 1 proti počítači. Vybereš si svého hráče a postupně odemykáš další úrovně (už splněné jde hrát znovu). Soupeři jsou čím dál těžší (obtížnost a rychlost):
+10 úrovní, každá je jeden zápas proti počítači – některé 1 v 1, některé 2 v 2 (spoluhráče máš z tvé dvojice, hraje za něj počítač). Vybereš si svého hráče a postupně odemykáš další úrovně (splněné jde hrát znovu, zamčené si můžeš prohlédnout). Každá úroveň má úkol, bez jeho splnění se nepostoupí; úkol je vidět i během zápasu pod tabulí:
 
-| Úroveň | Soupeř | Obtížnost | Odměna |
-| --- | --- | --- | --- |
-| 1 | Tóma | lehká | |
-| 2 | Peli | lehká, +5 % rychlost | |
-| 3 | Kiki | střední | |
-| 4 | Bémič | střední, +5 % | |
-| 5 | Majda | střední, +10 % | **Zlatý dres** (zapíná/vypíná se v Příběhu, platí ve všech zápasech i online) |
-| 6 | Durcado | těžká | |
-| 7 | Jenda | těžká, +5 % | |
-| 8 | Šimša | těžká, +10 % | |
-| 9 | Nelcis | těžká, +14 % | |
-| 10 | BOSS Milan Voračka | těžká, +20 % | **Nový hráč Milan** (číslo 90, schopnost Červená karta) |
+| Úroveň | Zápas | Soupeř | Obtížnost | Úkol | Odměna |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1 v 1 | Tóma | lehká | vyhraj | |
+| 2 | 1 v 1 | Peli | lehká, +5 % rychlost | vyhraj o 2 góly | |
+| 3 | 2 v 2 | Tóma & Peli | střední | vyhraj | |
+| 4 | 1 v 1 | Kiki | střední, +5 % | vyhraj a nedostaň gól | |
+| 5 | 2 v 2 | Bémič & Kiki | střední, +10 % | vyhraj o 3 góly | **skin Moncler-Jenda** |
+| 6 | 1 v 1 | Durcado | těžká | vyhraj a dej aspoň 3 góly | |
+| 7 | 2 v 2 | Marsal & Durcado | těžká, +5 % | vyhraj o 2 góly | |
+| 8 | 1 v 1 | Šimša | těžká, +10 % | vyhraj o 3 góly | |
+| 9 | 2 v 2 | Nelcis & Majda | těžká, +12 % | vyhraj o 3 góly | |
+| 10 | 1 v 1 | BOSS Milan Voračka | těžká, +15 % | vyhraj o 5 gólů | **dvojice Tlustej páv & Sully** |
 
-Když hraješ za stejnou postavu jako soupeř úrovně, dostaneš místo něj Marsala. Postup se ukládá v prohlížeči (`hlavouni.pribeh`, odemčené věci `hlavouni.odemceno`).
+Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhled, co za ni dostaneš.
+
+- **Moncler-Jenda**: skin jen pro Jendu – bílá péřová bunda s prošíváním, černé brýle, zlatý řetěz, diamant v uchu, černé tepláky a bílé tenisky (bez loga značky). Zapíná se tlačítkem *Moncler* u Jendy v lobby nebo v Příběhu a platí i online.
+- **Tlustej páv & Sully**: nová dvojice (Páv č. 99 s bříškem, Sully č. 17 s dlouhými černými vlasy). Ve výběru hráčů jsou vidět od začátku, ale mají zámeček a hrát za ně (ani proti nim) nejde, dokud nesplníš 10. úroveň.
+
+Když hraješ za stejnou postavu nebo dvojici jako soupeř úrovně, dostaneš místo nich Marsala (1 v 1) nebo Šimšu & Jendu (2 v 2). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, odemčené věci `hlavouni.odemceno`).
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
 ## Ovládání
@@ -114,7 +119,7 @@ Nabíjí se časem (asi 15 s) a každým kopem do míče. Každá postava má sv
 | Marsal | **Trojka**: když je u míče, míč se změní v basketbalový, Marsal řekne „STŘÍLIM TY TROJKY“, chytí ho nad hlavu a hodí vysoký oblouk. Nad bránou soupeře se objeví basketbalový koš, míč jím propadne rovnou do brány. Chytit se dá jen před košem (hlavičkou nebo výskokem), hermelín a led ho zastaví. |
 | Bémič | **Skiper**: na 3 s se promění v tučňáka (jen vzhled), brána jeho týmu zamrzne ve velkém ledovém kráteru (nejde dát gól) a fanoušci řvou SKIPER. |
 | Jenda | **JENDA PRIME**: na 5 s se promění v hráče Realu Madrid – bílý dres se zlatým lemováním, zlatá záře a nápis JENDA PRIME. Běhá 1,5× rychleji, skáče výš, kope o 40 % silněji, silnější hlavičky, odstrčí soupeře a superstřela ho neodstřelí. |
-| Milan (odemyká se v Příběhu) | **Červená karta**: písknutí, nápis ČERVENÁ KARTA a všichni soupeři na 2 s ztuhnou (JENDA PRIME a tučňák ji ustojí). |
+| Milan (boss Příběhu) | **Červená karta**: písknutí, nápis ČERVENÁ KARTA a všichni soupeři na 2 s ztuhnou (JENDA PRIME a tučňák ji ustojí). |
 | ostatní | **Superstřela** (viz dál). Vlastní schopnosti přijdou v dalších verzích. |
 
 Počítač superschopnosti používá taky: hermelín a led, když letí míč na jeho bránu, VO2max, když je míč daleko, trojku, když je u míče, JENDA PRIME, když jde o míč.
@@ -186,6 +191,7 @@ Hřiště má virtuální rozměr 1280 × 720. Na displeji jiného poměru stran
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.24 – Příběh: úrovně 1 v 1 i 2 v 2 s úkoly, skin Moncler-Jenda, nová dvojice Tlustej páv & Sully, náhled odměn
 - 1.23 – Příběh (10 úrovní, zamčený kódem), zlatý dres, nový hráč Milan, turnaj i pro více hráčů a online
 - 1.22 – rozcvička na začátku zápasu
 - 1.21 – penalty pohledem za střelcem na 3D bránu
