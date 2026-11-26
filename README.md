@@ -49,10 +49,12 @@ Zápas má dva poločasy po 45 sekundách. Hodiny ukazují čas jako ve fotbale:
 
 Když je po 90. minutě remíza, následuje penaltový rozstřel: týmy se střídají, každý kope 5 penalt, pak náhlá smrt. Střílí všichni hráči týmu postupně, chytá brankář soupeře (když je v týmu člověk, chytá on).
 
-- **Střelec**: u brány soupeře se nahoru a dolů pohybuje terčík. Zmáčkni STŘELA (mezerník), až bude tam, kam chceš střílet – nízko, doprostřed, nebo vysoko. Nad břevnem (červeně) je to vedle. Terčík vidí jen střelec.
-- **Brankář**: zvol výšku – joystick nahoru (W) = vysoko, dolů (S) = nízko, nic = střed. Platí první volba; když se trefíš do výšky střely, chytíš.
-- Na telefonu je při penaltě jen potřebné ovládání, vždy na straně, kde není brána. Pod skóre jsou tečky s výsledky penalt (zelená = gól, červená = neproměněná).
-- Počítač kope do všech výšek a občas přestřelí, brankář počítače si tipuje (těžký častěji správně).
+Penalty mají vlastní pohled jako ve FIFĚ: kamera je za střelcem (vidíš ho zezadu se jménem a číslem na dresu), před ním brána v perspektivě se sítí, za ní tribuny a reklamní tabule a v bráně brankář zepředu v zeleném dresu s rukavicemi.
+
+- **Střelec**: joystickem (šipkami / WASD) míříš terčíkem kamkoli do brány, STŘELA (mezerník) = kop. Terčík se trochu chvěje, takže trefit přesně roh je riskantní; mimo bránu (červeně) je to vedle nebo tyčka. Po 6 s se vystřelí samo. Terčík vidí jen střelec.
+- **Brankář**: joystickem skočíš do strany (nahoru = vysoko, dolů = nízko), SKOK = vysoko doprostřed. Skočit jde i před kopem (tip), ale střelec to uvidí. Chytíš, když jsi tam, kam míč letí.
+- Pod skóre jsou tečky s výsledky penalt (zelená = gól, červená = neproměněná), po gólu se zavlní síť.
+- Počítač kope spíš do rohů a občas mine, brankář počítače si tipuje (těžký častěji správně). Proti počítači padne zhruba 6 penalt z 10.
 
 Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče, střely, střely na bránu, hlavičky, použité superschopnosti a odstřelení.
 
@@ -149,6 +151,7 @@ js/input.js     klávesnice, joystick a dotyková tlačítka
 js/ai.js        počítačový hráč
 js/physics.js   míč, hráči, kolize, góly
 js/render.js    stadion, postavy, míč, efekty, výsledková tabule, portréty
+js/penalty.js   penalty pohledem za střelcem (3D brána, brankář zepředu)
 js/net.js       online přenos (artifact room, PeerJS, BroadcastChannel)
 js/vendor/      PeerJS 1.5.4 (licence MIT)
 js/lobby.js     výběr hráčů

@@ -16,8 +16,8 @@ const Input = {
   held: new Set(),
   kickQ: false,
   superQ: false,
-  touch: { move: 0, jump: false, down: false },
-  out: { left: false, right: false, jump: false, kick: false, super: false, move: 0, down: false },
+  touch: { move: 0, jump: false, down: false, my: 0 },
+  out: { left: false, right: false, jump: false, kick: false, super: false, move: 0, down: false, my: 0 },
 
   down(code, repeat) {
     const a = KEYMAP[code];
@@ -48,6 +48,8 @@ const Input = {
     o.right = o.move > 0.01;
     o.jump = j || t.jump;
     o.down = t.down || this.held.has('KeyS') || this.held.has('ArrowDown');
+    // svislá osa (míření u penalt): joystick, nebo W/S
+    o.my = Math.abs(t.my) > 0.05 ? t.my : (o.down ? 1 : 0) - (j ? 1 : 0);
     o.kick = this.kickQ;
     o.super = this.superQ;
     this.kickQ = false;
@@ -61,6 +63,7 @@ const Input = {
     this.touch.move = 0;
     this.touch.jump = false;
     this.touch.down = false;
+    this.touch.my = 0;
   },
 };
 
@@ -181,6 +184,7 @@ const Touch = {
     Input.touch.move = 0;
     Input.touch.jump = false;
     Input.touch.down = false;
+    Input.touch.my = 0;
   },
 
   // Penalty: střelec má jen tlačítko, brankář jen joystick; obojí na straně bez brány.
@@ -198,7 +202,7 @@ const Touch = {
     const kick = this.btns.find((b) => b.act === 'kick');
     if (kick) {
       const lbl = kick.el.querySelector('.lbl');
-      if (lbl) lbl.textContent = 'Střela';
+      if (lbl) lbl.textContent = role === 'keep' ? 'Skok' : 'Střela';
     }
     this.reset();
   },
@@ -256,6 +260,7 @@ const Touch = {
     Input.touch.move = clamp(mx * 1.15, -1, 1);
     Input.touch.jump = dy / STICK_R < -STICK_JUMP;
     Input.touch.down = dy / STICK_R > STICK_JUMP;
+    Input.touch.my = clamp(dy / STICK_R, -1, 1);
     st.base.classList.toggle('jump', Input.touch.jump);
   },
 

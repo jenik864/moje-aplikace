@@ -733,7 +733,9 @@ const Online = {
     const sp = i ? Number(i.s) || 0 : 0;
     o.super = !!g && sp > g.sup;
     if (g && sp > g.sup) g.sup = sp;
-    o.aim = i && typeof i.a === 'number' ? clamp(i.a / 1000, 0, 1) : undefined;
+    o.my = i ? clamp(Number(i.y) || 0, -1, 1) : 0;
+    o.au = i && typeof i.a === 'number' ? clamp(i.a / 1000, -1.5, 1.5) : undefined;
+    o.av = i && typeof i.b === 'number' ? clamp(i.b / 1000, -0.2, 1.5) : undefined;
     return o;
   },
 
@@ -775,12 +777,16 @@ const Online = {
     const m = Math.round(clamp(it.move || 0, -1, 1) * 4) / 4;
     const j = it.jump ? 1 : 0;
     const dn = it.down ? 1 : 0;
+    const y = Math.round(clamp(it.my || 0, -1, 1) * 4) / 4;
     const sp = this.superSeq || 0;
-    const key = m + ':' + j + ':' + dn + ':' + this.kickSeq + ':' + sp;
+    const key = m + ':' + j + ':' + dn + ':' + y + ':' + this.kickSeq + ':' + sp;
     if (key === this.lastIn) return;
     this.lastIn = key;
-    const msg = { m, j, d: dn, k: this.kickSeq, s: sp };
-    if (typeof aim === 'number') msg.a = Math.round(clamp(aim, 0, 1) * 1000);
+    const msg = { m, j, d: dn, y, k: this.kickSeq, s: sp };
+    if (aim && typeof aim.u === 'number') {
+      msg.a = Math.round(clamp(aim.u, -1.5, 1.5) * 1000);
+      msg.b = Math.round(clamp(aim.v, -0.2, 1.5) * 1000);
+    }
     this.publish({ in: msg });
   },
 };

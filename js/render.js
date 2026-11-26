@@ -748,6 +748,14 @@ const Renderer = {
       sy = rand(-1, 1) * Effects.shakeAmt;
     }
     const k = s * cam.z;
+    const penView = m && g.screen === 'match' && g.state === 'shootout' && g.pen && g.pen.shooter >= 0;
+    if (penView) {
+      // penalty: vlastní scéna pohledem za střelcem
+      ctx.setTransform(s, 0, 0, s, this.ox + sx * s, this.oy + sy * s);
+      PenScene.draw(ctx, g, now);
+      Effects.draw(ctx);
+      Effects.drawPops(ctx);
+    } else {
     ctx.setTransform(k, 0, 0, k, cw / 2 - cam.x * k + sx * s, ch / 2 - cam.y * k + sy * s);
     ctx.drawImage(this.bg, v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
     this.drawCrowd(ctx, g.excite || 0, now);
@@ -775,7 +783,6 @@ const Renderer = {
         else this.drawBall(ctx, b, sp ? superColor(sp.look.id) : null);
       }
       if (hoop) this.drawHoop(ctx, b, now, true);
-      if (g.state === 'shootout' && g.pen) this.drawPenAim(ctx, g, now);
       this.drawGoalFront(ctx, 0);
       this.drawGoalFront(ctx, 1);
       if (g.screen === 'match' && g.state === 'over') this.drawTrophy(ctx, g, now);
@@ -787,6 +794,7 @@ const Renderer = {
       if (g.state !== 'menu' && cam.bars < 0.3) {
         for (const p of m.players) this.drawTag(ctx, p, m.teams);
       }
+    }
     }
 
     // obrazovka (nezávisle na kameře)
@@ -3187,39 +3195,6 @@ const Renderer = {
 
   /* ---- penalty ---- */
 
-  // Zaměřovač: jen pro střelce na tomto zařízení (brankář ho nevidí).
-  drawPenAim(ctx, g, now) {
-    const P = g.pen, m = g.match;
-    if (P.phase !== 'aim') return;
-    const me = g.myPlayer && g.myPlayer();
-    if (!me || m.players.indexOf(me) !== P.shooter) return;
-    const right = me.team === 0, gl = right ? W - GOAL_W : GOAL_W, x = gl - (right ? 14 : -14);
-    const top = BAR_Y - 46, bot = GROUND_Y - 22, y = lerp(bot, top, P.aim);
-    ctx.save();
-    // dráha zaměřovače: zelená v bráně, červená nad břevnem
-    ctx.lineCap = 'round';
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = 'rgba(255,255,255,.35)';
-    line(ctx, x, BAR_Y + 4, x, bot);
-    ctx.strokeStyle = 'rgba(255,80,70,.55)';
-    line(ctx, x, top, x, BAR_Y - 4);
-    // terčík
-    const over = y < BAR_Y;
-    ctx.strokeStyle = over ? '#ff5a4f' : '#ffd23f';
-    ctx.lineWidth = 4;
-    circle(ctx, x, y, 17 + Math.sin(now * 0.02) * 1.5);
-    ctx.stroke();
-    ctx.lineWidth = 3;
-    line(ctx, x - 26, y, x - 10, y);
-    line(ctx, x + 10, y, x + 26, y);
-    line(ctx, x, y - 26, x, y - 10);
-    line(ctx, x, y + 10, x, y + 26);
-    ctx.fillStyle = over ? '#ff5a4f' : '#ffd23f';
-    circle(ctx, x, y, 4);
-    ctx.fill();
-    ctx.restore();
-  },
-
   // Penaltová tabulka pod skóre a nápověda dole.
   drawPenHUD(ctx, g, now) {
     const P = g.pen, m = g.match, cx = W / 2, y = 96;
@@ -3254,11 +3229,11 @@ const Renderer = {
     const idx = me ? m.players.indexOf(me) : -1;
     let tip = '';
     const touch = typeof Touch !== 'undefined' && Touch.enabled;
-    if (idx === P.shooter && P.phase === 'aim') tip = touch ? 'Zmáčkni STŘELA, až bude terčík tam, kam chceš střílet' : 'Zmáčkni mezerník, až bude terčík tam, kam chceš střílet';
-    else if (idx === P.keeper && (P.phase === 'aim' || P.phase === 'flight')) tip = touch ? 'Chytáš! Joystick nahoru = vysoko, dolů = nízko, nic = střed' : 'Chytáš! W = vysoko, S = nízko, nic = střed';
+    if (idx === P.shooter && P.phase === 'aim') tip = touch ? 'Joystickem miř, STŘELA = kop' : 'Miř šipkami nebo WASD, mezerník = kop';
+    else if (idx === P.keeper && (P.phase === 'aim' || (P.phase === 'flight' && !P.res))) tip = touch ? 'Chytáš! Joystickem skoč do strany (nahoru = vysoko), SKOK = vysoko doprostřed' : 'Chytáš! A/D do strany, W vysoko, S nízko';
     if (tip) {
       ctx.font = `800 20px ${FONT_U}`;
-      const tw = ctx.measureText(tip).width + 30, ty = this.canvas.height / this.scale - 46;
+      const tw = ctx.measureText(tip).width + 30, ty = 136;
       ctx.fillStyle = 'rgba(8,13,26,.82)';
       rrect(ctx, cx - tw / 2, ty - 17, tw, 34, 17);
       ctx.fill();
