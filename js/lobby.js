@@ -265,7 +265,9 @@ const LobbyUI = {
     });
     document.getElementById('btn-arena').addEventListener('click', () => {
       const l = this.lastLobby;
-      if (this.onAction && l) this.onAction({ type: 'setting', key: 'arena', value: l.arena === 'snow' ? 'stadium' : 'snow' });
+      if (!this.onAction || !l) return;
+      const i = ARENA_ORDER.indexOf(validArena(l.arena));
+      this.onAction({ type: 'setting', key: 'arena', value: ARENA_ORDER[(i + 1) % ARENA_ORDER.length] });
     });
     this.el.arena.addEventListener('click', (e) => {
       const b = e.target.closest('button');
@@ -325,7 +327,7 @@ const LobbyUI = {
     const ab = document.getElementById('btn-arena');
     if (ab) {
       ab.textContent = `${ar.icon} ${ar.name}`;
-      ab.classList.toggle('snow', lobby.arena === 'snow');
+      for (const k of ARENA_ORDER) ab.classList.toggle(k, validArena(lobby.arena) === k);
       ab.disabled = !ctx.canEdit;
     }
     el.modeRow.hidden = ctx.mode === 'guest';

@@ -117,7 +117,7 @@ const Game = {
     const open = DUO_TEAMS.map((t, i) => i).filter((i) => !DUO_TEAMS[i].locked);
     const da = pick(open);
     const db = pick(open.filter((i) => i !== da));
-    const lobby = newLobby({ format: two ? '2v2' : '1v1', duos: [da, db], arena: Math.random() < 0.3 ? 'snow' : 'stadium' });
+    const lobby = newLobby({ format: two ? '2v2' : '1v1', duos: [da, db], arena: Math.random() < 0.45 ? pick(ARENA_ORDER.slice(1)) : 'stadium' });
     if (!two) {
       const pool = ROSTER.filter((c) => !c.locked);
       lobby.slots[0].char = pick(pool).id;
@@ -985,6 +985,12 @@ const Game = {
         }
         break;
       }
+      case 'wind':
+        if (live) {
+          Sound.whoosh();
+          Effects.pop(a[0] > 0 ? 'VÍTR ➜' : '⬅ VÍTR', W / 2, 200, '#cfe3ff', 40);
+        }
+        break;
       case 'unprime': {
         const p = m && m.players[a[0]];
         if (p) Effects.puff(p.x, p.y);
@@ -1100,6 +1106,9 @@ const Game = {
         break;
       case 'unprime':
         this.fx('unprime', d.idx);
+        break;
+      case 'wind':
+        this.fx('wind', d.dir);
         break;
     }
   },
@@ -1458,7 +1467,9 @@ const Game = {
         const n = 3 - Math.floor(this.stateT / 0.75);
         if (n >= 1 && n !== this.countShown) {
           this.countShown = n;
-          this.showMsg(String(n), '', 0.7, '#f3f6ef', 150);
+          // ve speciální aréně pod odpočtem připomenout, co je jinak
+          const tip = this.half === 1 && m ? ARENAS[m.arenaId].tip || '' : '';
+          this.showMsg(String(n), tip, 0.7, '#f3f6ef', 150);
           this.fx('beep', 0);
         }
         if (this.stateT >= 2.25) {
@@ -2098,6 +2109,7 @@ const Game = {
       b: [r(b.x), r(b.y), r(b.rot * 100), r(b.superT * 100), b.superBy, r(b.basketT * 100), b.basketSide, b.carryBy >= 0 ? 1 : 0],
       p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100), r(p.primeT * 100), r(p.flashT * 100), r((p.growK || 1) * 100), r(p.selfieT * 100), r(p.growT * 100)]),
       bk: [r(m.blocks[0] * 100), r(m.blocks[1] * 100), m.blockKind[0] === 'ice' ? 1 : 0, m.blockKind[1] === 'ice' ? 1 : 0],
+      wd: m.windDir,
       m: msg ? [msg.id, msg.text, msg.sub || '', msg.color, msg.size, Math.round(msg.dur * 10)] : 0,
       e: this.evq,
       rs: this.resultShown ? 1 : 0,
@@ -2123,7 +2135,8 @@ const Game = {
     const svx = srv[5] * 10, svy = srv[6] * 10;
     const stand = me.standY;
     const ex = clamp(srv[0] + svx * ahead, me.R, W - me.R);
-    const ey = srv[4] ? stand : Math.min(stand, srv[1] + svy * ahead + 0.5 * PHYS.gravity * ahead * ahead);
+    const mods = this.match.mods;
+    const ey = srv[4] ? stand : Math.min(stand, srv[1] + svy * ahead + 0.5 * PHYS.gravity * mods.grav * ahead * ahead);
     let q = this.pred;
     if (!q) q = this.pred = { x: ex, y: ey, vx: svx, vy: svy, onGround: !!srv[4] };
     // vlastní pohyb jako ve fyzice hostitele
@@ -2131,12 +2144,12 @@ const Game = {
     const move = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
     const onIce = q.onGround && this.match && this.match.ice;
     const rate = onIce ? (move === 0 ? 1700 * ICE.brake : PHYS.accelGround * ICE.accel * boost) : (q.onGround ? PHYS.accelGround : PHYS.accelAir) * boost;
-    q.vx = approach(q.vx, move * PHYS.moveSpeed * boost, rate * dt);
+    q.vx = approach(q.vx, move * PHYS.moveSpeed * boost * mods.speed, rate * dt);
     if (it.jump && q.onGround) {
-      q.vy = -PHYS.jumpV * (me.primeT > 0 ? PRIME_JUMP : 1);
+      q.vy = -PHYS.jumpV * (me.primeT > 0 ? PRIME_JUMP : 1) * mods.jump;
       q.onGround = false;
     }
-    q.vy += PHYS.gravity * dt;
+    q.vy += PHYS.gravity * mods.grav * dt;
     q.x = clamp(q.x + q.vx * dt, me.R, W - me.R);
     q.y += q.vy * dt;
     if (q.y >= stand) {
@@ -2454,6 +2467,7 @@ const Game = {
     });
     this.predictMe(dt, it, buf[buf.length - 1]);
     // zablokované brány (hermelín, led)
+    if (B.g.wd === 1 || B.g.wd === -1) m.windDir = B.g.wd;
     const bk = B.g.bk;
     if (Array.isArray(bk)) {
       for (let t = 0; t < 2; t++) {

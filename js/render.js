@@ -143,8 +143,8 @@ const Effects = {
   },
   grass(x, n) {
     for (let i = 0; i < n; i++) {
-      const ice = Renderer.arena === 'snow';
-      this.add({ x: x + rand(-10, 10), y: GROUND_Y - 2, vx: rand(-160, 160), vy: rand(-360, -140), g: 1400, life: rand(0.35, 0.6), size: rand(2, 3.5), color: ice ? (Math.random() < 0.5 ? '#ffffff' : '#bfe3fa') : Math.random() < 0.5 ? '#6fcb5a' : '#3f9a3c' });
+      const pal = { snow: ['#ffffff', '#bfe3fa'], beach: ['#f3dc9a', '#d9b46a'], moon: ['#c9ccd4', '#8d919b'] }[Renderer.arena] || ['#6fcb5a', '#3f9a3c'];
+      this.add({ x: x + rand(-10, 10), y: GROUND_Y - 2, vx: rand(-160, 160), vy: rand(-360, -140) * (Renderer.arena === 'moon' ? 0.7 : 1), g: Renderer.arena === 'moon' ? 500 : 1400, life: rand(0.35, 0.6), size: rand(2, 3.5), color: Math.random() < 0.5 ? pal[0] : pal[1] });
     }
   },
   dust(x) {
@@ -475,12 +475,17 @@ const Renderer = {
     x.setTransform(s, 0, 0, s, -v.x0 * s, -v.y0 * s);
     this.drawSky(x);
     this.drawStandsBase(x);
-    if (this.arena === 'snow') {
-      // zasněžené tribuny: lehký opar
-      x.fillStyle = 'rgba(215,232,250,.16)';
-      x.fillRect(v.x0, v.y0, v.x1 - v.x0, 520 - v.y0);
-    }
     this.drawPitch(x);
+    // nálada arény (opar, západ slunce, vesmír, bouřka) – vlastní vrstva nad diváky
+    const md = this.moodCv || (this.moodCv = document.createElement('canvas'));
+    md.width = c.width;
+    md.height = c.height;
+    const mx = md.getContext('2d');
+    mx.setTransform(1, 0, 0, 1, 0, 0);
+    mx.clearRect(0, 0, md.width, md.height);
+    mx.setTransform(s, 0, 0, s, -v.x0 * s, -v.y0 * s);
+    this.hasMood = this.arena !== 'stadium';
+    if (this.hasMood) this.drawArenaMood(mx);
     this.drawFences(x);
     this.drawGoalShadow(x, 0);
     this.drawGoalShadow(x, 1);
@@ -645,6 +650,10 @@ const Renderer = {
       this.drawIcePitch(x);
       return;
     }
+    if (this.arena === 'beach' || this.arena === 'moon') {
+      this.drawGroundPitch(x, this.arena);
+      return;
+    }
     const top = 510;
     const X0 = this.view.x0 - 4, X1 = this.view.x1 + 4, XW = X1 - X0;
     const YB = Math.max(H, this.view.y1);
@@ -792,6 +801,174 @@ const Renderer = {
     x.stroke();
   },
 
+  // Nálada arény přes tribuny a oblohu (opar, západ slunce, vesmír, bouřka).
+  drawArenaMood(x) {
+    const v = this.view, a = this.arena, w = v.x1 - v.x0;
+    if (a === 'snow') {
+      x.fillStyle = 'rgba(215,232,250,.16)';
+      x.fillRect(v.x0, v.y0, w, 520 - v.y0);
+    } else if (a === 'beach') {
+      // západ slunce nad mořem
+      const g = x.createLinearGradient(0, v.y0, 0, 520);
+      g.addColorStop(0, 'rgba(255,120,80,.42)');
+      g.addColorStop(0.5, 'rgba(255,190,110,.22)');
+      g.addColorStop(1, 'rgba(255,210,150,.08)');
+      x.fillStyle = g;
+      x.fillRect(v.x0, v.y0, w, 520 - v.y0);
+      x.fillStyle = 'rgba(255,230,140,.85)';
+      circle(x, W / 2 + 420, 70, 46);
+      x.fill();
+      // palmy na krajích
+      for (const px of [v.x0 + 60, v.x1 - 60, 300, W - 300]) this.drawPalm(x, px, 512);
+    } else if (a === 'moon') {
+      // vesmír: tmavá obloha, hvězdy, Země
+      x.fillStyle = 'rgba(6,8,22,.58)';
+      x.fillRect(v.x0, v.y0, w, 520 - v.y0);
+      const rng = mulberry32(21);
+      x.fillStyle = '#ffffff';
+      for (let i = 0; i < 160; i++) {
+        x.globalAlpha = 0.35 + rng() * 0.65;
+        circle(x, v.x0 + rng() * w, v.y0 + rng() * (330 - v.y0), 0.6 + rng() * 1.6);
+        x.fill();
+      }
+      x.globalAlpha = 1;
+      const ex = W / 2 - 430, ey = 80;
+      const eg = x.createRadialGradient(ex - 12, ey - 12, 4, ex, ey, 42);
+      eg.addColorStop(0, '#9fd8ff');
+      eg.addColorStop(0.6, '#2f7fd6');
+      eg.addColorStop(1, '#173f8a');
+      x.fillStyle = eg;
+      circle(x, ex, ey, 40);
+      x.fill();
+      x.fillStyle = 'rgba(80,190,90,.85)';
+      oval(x, ex - 10, ey - 6, 14, 9, 0.4);
+      x.fill();
+      oval(x, ex + 14, ey + 12, 10, 6, -0.3);
+      x.fill();
+    } else if (a === 'wind') {
+      // bouřka
+      const g = x.createLinearGradient(0, v.y0, 0, 520);
+      g.addColorStop(0, 'rgba(30,38,58,.62)');
+      g.addColorStop(1, 'rgba(40,50,70,.25)');
+      x.fillStyle = g;
+      x.fillRect(v.x0, v.y0, w, 520 - v.y0);
+    }
+  },
+
+  drawPalm(x, px, py) {
+    x.save();
+    x.strokeStyle = '#3a2412';
+    x.lineWidth = 9;
+    x.lineCap = 'round';
+    x.beginPath();
+    x.moveTo(px, py);
+    x.quadraticCurveTo(px - 18, py - 90, px + 6, py - 170);
+    x.stroke();
+    x.fillStyle = '#1f5e2c';
+    for (let i = 0; i < 6; i++) {
+      const a = -Math.PI / 2 + (i - 2.5) * 0.55;
+      x.beginPath();
+      x.moveTo(px + 6, py - 170);
+      x.quadraticCurveTo(px + 6 + Math.cos(a) * 60, py - 170 + Math.sin(a) * 40 - 20, px + 6 + Math.cos(a) * 95, py - 170 + Math.sin(a) * 30 + 25);
+      x.quadraticCurveTo(px + 6 + Math.cos(a) * 50, py - 170 + Math.sin(a) * 20, px + 6, py - 170);
+      x.fill();
+    }
+    x.restore();
+  },
+
+  // Pláž (písek) a Měsíc (prach a krátery): plocha, čáry a detaily.
+  drawGroundPitch(x, kind) {
+    const top = 510;
+    const X0 = this.view.x0 - 4, X1 = this.view.x1 + 4, XW = X1 - X0;
+    const YB = Math.max(H, this.view.y1);
+    const beach = kind === 'beach';
+    const g = x.createLinearGradient(0, top, 0, YB);
+    g.addColorStop(0, beach ? '#d9b46a' : '#6f737d');
+    g.addColorStop(0.4 * (H - top) / (YB - top), beach ? '#ecd08c' : '#9a9ea8');
+    g.addColorStop(1, beach ? '#f6e2a8' : '#b9bcc4');
+    x.fillStyle = g;
+    x.fillRect(X0, top, XW, YB - top);
+    const rng = mulberry32(beach ? 9 : 13);
+    if (beach) {
+      // vlnky v písku a mušle
+      for (let i = 0; i < 260 * XW / W; i++) {
+        const px = X0 + rng() * XW, py = top + 8 + rng() * (H - top - 8), k = (py - top) / (H - top);
+        x.strokeStyle = `rgba(160,110,40,${0.14 + k * 0.14})`;
+        x.lineWidth = 1 + k;
+        x.beginPath();
+        x.moveTo(px, py);
+        x.quadraticCurveTo(px + 14 + k * 10, py - 3, px + 30 + k * 20, py);
+        x.stroke();
+      }
+      for (let i = 0; i < 26; i++) {
+        x.fillStyle = rng() < 0.5 ? '#fff2df' : '#f2b4a0';
+        oval(x, X0 + rng() * XW, top + 20 + rng() * (H - top - 30), 4, 2.6, rng());
+        x.fill();
+      }
+    } else {
+      // krátery a prach
+      for (let i = 0; i < 70 * XW / W; i++) {
+        const px = X0 + rng() * XW, py = top + 10 + rng() * (H - top - 10), k = (py - top) / (H - top);
+        const r = (4 + rng() * 16) * (0.6 + k);
+        x.fillStyle = 'rgba(60,62,70,.35)';
+        oval(x, px, py, r, r * 0.32);
+        x.fill();
+        x.strokeStyle = 'rgba(230,232,240,.35)';
+        x.lineWidth = 1.2;
+        x.beginPath();
+        x.ellipse(px, py + 1, r, r * 0.32, 0, 0.1, Math.PI - 0.1);
+        x.stroke();
+      }
+    }
+    const sh = x.createLinearGradient(0, top, 0, top + 34);
+    sh.addColorStop(0, 'rgba(0,0,0,.3)');
+    sh.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = sh;
+    x.fillRect(X0, top, XW, 34);
+    // čáry
+    x.strokeStyle = beach ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.55)';
+    x.lineWidth = 3;
+    x.lineCap = 'round';
+    line(x, X0, 520, X1, 520);
+    line(x, W / 2, 520, W / 2, YB);
+    oval(x, W / 2, 602, 120, 36);
+    x.stroke();
+    for (let side = 0; side < 2; side++) {
+      const gx = side === 0 ? GOAL_W : W - GOAL_W, sd = side === 0 ? 1 : -1;
+      line(x, persp(gx, 520), 520, persp(gx, H), H);
+      x.beginPath();
+      x.moveTo(persp(gx, 538), 538);
+      x.lineTo(persp(gx + sd * 190, 538), 538);
+      x.lineTo(persp(gx + sd * 190, 676), 676);
+      x.lineTo(persp(gx, 676), 676);
+      x.stroke();
+    }
+  },
+
+  // Vichřice: listí a čáry větru letí směrem, kam fouká.
+  drawWind(ctx, now, dir) {
+    const v = this.view, vw = v.x1 - v.x0, t = now / 1000;
+    ctx.save();
+    for (let i = 0; i < 70; i++) {
+      const r1 = ((i * 7919) % 1000) / 1000, r2 = ((i * 104729) % 1000) / 1000, r3 = ((i * 15485863) % 1000) / 1000;
+      const sp = 380 + r2 * 420;
+      const x = v.x0 + ((((r1 * vw + dir * t * sp) % vw) + vw) % vw);
+      const y = 140 + r3 * 460 + Math.sin(t * 3 + i) * 12;
+      if (i % 3 === 0) {
+        // list
+        ctx.fillStyle = i % 2 ? 'rgba(190,140,60,.85)' : 'rgba(120,160,70,.85)';
+        ctx.beginPath();
+        ctx.ellipse(x, y, 6, 3, t * 6 + i, 0, TAU);
+        ctx.fill();
+      } else {
+        ctx.strokeStyle = 'rgba(220,235,255,.28)';
+        ctx.lineWidth = 2;
+        line(ctx, x, y, x - dir * (40 + r2 * 50), y);
+      }
+    }
+    ctx.restore();
+  },
+
   // Padající sníh (jen ve sněžné aréně), kreslí se přes hřiště.
   drawSnow(ctx, now) {
     const v = this.view, vw = v.x1 - v.x0, top = v.y0 - 30, hh = v.y1 - v.y0 + 60;
@@ -858,7 +1035,7 @@ const Renderer = {
   },
 
   draw(g) {
-    if (g.match) this.setArena(g.match.ice ? 'snow' : 'stadium');
+    if (g.match) this.setArena(g.match.arenaId || 'stadium');
     const ctx = this.ctx, s = this.scale, m = g.match, v = this.view;
     const cw = this.canvas.width, ch = this.canvas.height;
     const now = performance.now();
@@ -884,6 +1061,7 @@ const Renderer = {
     ctx.setTransform(k, 0, 0, k, cw / 2 - cam.x * k + sx * s, ch / 2 - cam.y * k + sy * s);
     ctx.drawImage(this.bg, v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
     this.drawCrowd(ctx, g.excite || 0, now);
+    if (this.hasMood) ctx.drawImage(this.moodCv, v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
     this.drawBeams(ctx, g);
     this.drawJumbotron(ctx, g, now);
     this.drawBoards(ctx, g, now);
@@ -922,6 +1100,7 @@ const Renderer = {
       if (g.screen === 'match' && g.state === 'over') this.drawTrophy(ctx, g, now);
       Effects.draw(ctx);
       if (this.arena === 'snow') this.drawSnow(ctx, now);
+      else if (this.arena === 'wind') this.drawWind(ctx, now, m.windDir || 1);
       Effects.drawTalks(ctx, m.players);
       for (const p of m.players) if (p.stunT > 0 && p.onGround && !(p.flashT > 0)) this.drawDizzy(ctx, p, now);
       if (g.screen === 'match' && g.state === 'intro') this.drawIntroTalk(ctx, g, now);
@@ -4194,16 +4373,29 @@ const Renderer = {
     ctx.fill();
     ctx.fillStyle = g.golden ? '#0b1220' : '#ffc93c';
     ctx.fillText(lab, x + timeW / 2, y + h + 9.5);
+    // vichřice: kam fouká vítr
+    let below = 22;
+    if (m.mods && m.mods.wind && g.state !== 'shootout') {
+      const gt = m.windDir > 0 ? 'VÍTR  ➜' : '⬅  VÍTR';
+      ctx.font = `800 15px ${FONT_U}`;
+      const gw = ctx.measureText(gt).width + 22;
+      ctx.fillStyle = 'rgba(207,227,255,.92)';
+      rrect(ctx, x + timeW / 2 - gw / 2, y + h + below, gw, 20, 6);
+      ctx.fill();
+      ctx.fillStyle = '#0b1220';
+      ctx.fillText(gt, x + timeW / 2, y + h + below + 10.5);
+      below += 22;
+    }
     // příběh: úkol úrovně pod tabulí
     if (g.setup && g.setup.goal && g.state !== 'shootout') {
       const gt = `🎯 ${g.setup.goal}`;
       ctx.font = `800 14px ${FONT_U}`;
       const gw = ctx.measureText(gt).width + 18;
       ctx.fillStyle = 'rgba(8,13,26,.72)';
-      rrect(ctx, x + timeW / 2 - gw / 2, y + h + 22, gw, 19, 6);
+      rrect(ctx, x + timeW / 2 - gw / 2, y + h + below, gw, 19, 6);
       ctx.fill();
       ctx.fillStyle = '#ffe48a';
-      ctx.fillText(gt, x + timeW / 2, y + h + 32);
+      ctx.fillText(gt, x + timeW / 2, y + h + below + 10);
     }
     x += timeW + gap;
     this.scoreBox(ctx, x, iy, scoreW, ih, m.score[1], g.scorePop[1]);

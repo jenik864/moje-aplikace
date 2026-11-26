@@ -50,17 +50,29 @@ const PHYS = {
   rollFriction: 1.1,
 };
 
-// Arény: stadion (tráva) nebo sněžná aréna (led – všichni kloužou).
+// Arény: každá mění vzhled i to, jak se hraje.
+//  speed = rychlost běhu, jump = odraz, grav = gravitace hráčů, ballGrav = gravitace míče,
+//  roll = tření míče po zemi, grip = kolik rychlosti míči zůstane po dopadu, bounce = odraz míče,
+//  wind = síla větru (mění směr), ice = led (pomalý rozjezd, dlouhé dojíždění).
 const ARENAS = {
   stadium: { name: 'Stadion', icon: '🏟️' },
-  snow: { name: 'Sníh', icon: '❄️' },
+  snow: { name: 'Sníh', icon: '❄️', tip: 'LED – VŠICHNI KLOUŽOU', ice: true, roll: 0.2, grip: 1.12 },
+  beach: { name: 'Pláž', icon: '🏖️', tip: 'PÍSEK – POMALÉ NOHY, MÍČ BRZDÍ', speed: 0.8, roll: 3.5, grip: 0.55, bounce: 0.45 },
+  moon: { name: 'Měsíc', icon: '🌙', tip: 'NÍZKÁ GRAVITACE – SKÁČE SE DO NEBE', grav: 0.4, ballGrav: 0.38, jump: 0.78 },
+  wind: { name: 'Vichřice', icon: '🌪️', tip: 'VÍTR MĚNÍ SMĚR – SLEDUJ ŠIPKU', wind: 520 },
 };
-const validArena = (a) => (a === 'snow' ? 'snow' : 'stadium');
+const ARENA_ORDER = ['stadium', 'snow', 'beach', 'moon', 'wind'];
+const validArena = (a) => (ARENAS[a] ? a : 'stadium');
+function arenaMods(a) {
+  const A = ARENAS[validArena(a)];
+  return {
+    speed: A.speed || 1, jump: A.jump || 1, grav: A.grav || 1, ballGrav: A.ballGrav || 1,
+    roll: A.roll || 1, grip: A.grip || 1, bounce: A.bounce || 1, wind: A.wind || 0, ice: !!A.ice,
+  };
+}
 const ICE = {
   accel: 0.3,  // rozjezd a zatáčení na ledu (část běžného)
   brake: 0.22, // brzdění bez ovládání
-  roll: 0.2,   // tření míče po ledu
-  grip: 0.985, // míč po dopadu skoro neztrácí rychlost
 };
 
 // Barvy dresů v zápase 1 v 1 (vlevo, vpravo).
@@ -83,7 +95,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.35';
+const GAME_VERSION = '1.36';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -268,13 +280,13 @@ function codeHash(s) {
 // goal: podmínka výhry – by (rozdíl gólů), clean (bez obdrženého gólu), goals (aspoň tolik gólů).
 const STORY = [
   { format: '1v1', opp: 'toma', level: 'easy', boost: 1, goal: {}, title: 'Sídlištní plácek', text: 'Tóma tě vyzve na první zápas. Ukaž, co v tobě je!' },
-  { format: '1v1', opp: 'peli', level: 'easy', boost: 1.05, goal: { by: 2 }, title: 'Školní hřiště', text: 'Peli je rychlík. Tentokrát to musí být jasná výhra.' },
+  { format: '1v1', opp: 'peli', level: 'easy', boost: 1.05, goal: { by: 2 }, arena: 'beach', title: 'Plážový turnaj', text: 'Peli je rychlík, ale v písku se běhá pomalu. Musí to být jasná výhra.' },
   { format: '2v2', duo: 2, level: 'medium', boost: 1, goal: {}, title: 'Odveta na sídlišti', text: 'Tóma a Peli si přivedli posilu. Hraje se 2 na 2, spoluhráče máš z tvé dvojice.' },
   { format: '1v1', opp: 'kiki', level: 'medium', boost: 1.05, goal: { clean: true }, title: 'Okresní přebor', text: 'Kiki nikdy neprohrává. Porazíš ji, ani když nedostaneš gól?' },
   { format: '2v2', duo: 3, level: 'medium', boost: 1.1, goal: { by: 3 }, arena: 'snow', title: 'Zimní stadion', text: 'Bémič a Kiki. Pozor na Skipera a zmrzlou bránu!', reward: 'moncler' },
-  { format: '1v1', opp: 'durcado', level: 'hard', boost: 1, goal: { goals: 3 }, title: 'Velké derby', text: 'Durcado hraje hlavou. Musíš mu dát aspoň 3 góly.' },
+  { format: '1v1', opp: 'durcado', level: 'hard', boost: 1, goal: { goals: 3 }, arena: 'wind', title: 'Derby ve vichřici', text: 'Durcado hraje hlavou a fouká vítr. Musíš mu dát aspoň 3 góly.' },
   { format: '2v2', duo: 1, level: 'hard', boost: 1.05, goal: { by: 2 }, title: 'Jižní supi', text: 'Marsal a Durcado. Trojky z dálky a hlavičky – vydržíš to?' },
-  { format: '1v1', opp: 'simsa', level: 'hard', boost: 1.1, goal: { by: 3 }, title: 'Semifinále ligy', text: 'Šimša má VO2max 67. Uteče ti?' },
+  { format: '1v1', opp: 'simsa', level: 'hard', boost: 1.1, goal: { by: 3 }, arena: 'moon', title: 'Semifinále na Měsíci', text: 'Šimša má VO2max 67 a na Měsíci skáče do nebe. Uteče ti?' },
   { format: '2v2', duo: 0, level: 'hard', boost: 1.12, goal: { by: 3 }, title: 'Finále ligy', text: 'Nelcis a Majda s obřím hermelínem. Poslední krok před bossem.' },
   { format: '1v1', opp: 'milan', level: 'hard', boost: 1.15, goal: { by: 5 }, title: 'BOSS: Milan Voračka', text: 'Rozhodčí odložil píšťalku a jde hrát sám. Musíš ho rozdrtit o 5 gólů!', reward: 'pav' },
 ];

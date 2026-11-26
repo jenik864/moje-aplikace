@@ -9,18 +9,20 @@ const PDT = 1 / 60;
 const _pred = [];
 
 // Odhad dráhy míče (bez hráčů) na `horizon` sekund dopředu.
-function predictBall(b, horizon) {
+function predictBall(b, horizon, mods) {
+  const M = mods || arenaMods('stadium'), wind = M.wind * (M.windDir || 0);
   let x = b.x, y = b.y, vx = b.vx, vy = b.vy;
   const r = b.r, n = Math.round(horizon / PDT);
   for (let i = 0; i < n; i++) {
     if (!b.held) {
-      vy += PHYS.ballGravity * PDT;
+      vy += PHYS.ballGravity * M.ballGrav * PDT;
+      vx += wind * PDT;
       x += vx * PDT;
       y += vy * PDT;
       if (y + r > GROUND_Y) {
         y = GROUND_Y - r;
-        if (vy > 90) vx *= PHYS.groundGrip;
-        vy = vy > 90 ? -vy * PHYS.ballBounce : 0;
+        if (vy > 90) vx *= Math.min(0.99, PHYS.groundGrip * M.grip);
+        vy = vy > 90 ? -vy * PHYS.ballBounce * M.bounce : 0;
       }
       if (y - r < 0) { y = r; vy = -vy * 0.7; }
       if (x - r < 0) { x = r; vx = -vx * PHYS.wallBounce; }
@@ -84,8 +86,9 @@ class AIBrain {
 
   think(m) {
     const p = this.p, b = m.ball, L = this.L, dir = p.dir, R = p.R, br = b.r;
-    const speed = PHYS.moveSpeed * p.speedMul;
-    const pred = predictBall(b, 1.3);
+    const speed = PHYS.moveSpeed * p.speedMul * m.mods.speed;
+    m.mods.windDir = m.windDir;
+    const pred = predictBall(b, 1.3, m.mods);
     const ownLine = p.team === 0 ? GOAL_W : W - GOAL_W;
     const toOwnGoal = -b.vx * dir; // > 0 když míč letí k mé brance
 
@@ -152,7 +155,7 @@ class AIBrain {
         const dx = q.x - hx;
         const sy = q.y - p.y;
         if (dx * dx + sy * sy < hitR * hitR) break; // stačí zůstat stát
-        const hy = p.y - PHYS.jumpV * t + 0.5 * PHYS.gravity * t * t;
+        const hy = p.y - PHYS.jumpV * m.mods.jump * t + 0.5 * PHYS.gravity * m.mods.grav * t * t;
         const jy = q.y - hy;
         const useful = dx * dir > -R * 0.5 || toOwnGoal > 250;
         if (q.y < p.y - 10 && useful && dx * dx + jy * jy < (hitR + 4) * (hitR + 4)) {

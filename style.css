@@ -1439,3 +1439,7 @@ body.trailer-mode #rotate, body.trailer-mode #toast, body.trailer-mode #btn-skip
 #lobby-hint { display: none !important; }
 #lobby-wait { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .arena-btn { min-width: 8.2em; text-align: center; }
+.arena-btn { min-width: 9em; }
+.arena-btn.beach { background: linear-gradient(180deg, #ffe7a8, #e8b85a); color: #0b1220; border-color: #fff3c4; }
+.arena-btn.moon { background: linear-gradient(180deg, #4a5068, #1c2033); color: #e8ecff; border-color: #9aa3c7; }
+.arena-btn.wind { background: linear-gradient(180deg, #8fa3bf, #4d5d78); color: #ffffff; border-color: #cfe3ff; }

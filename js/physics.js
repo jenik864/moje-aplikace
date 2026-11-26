@@ -224,7 +224,11 @@ class Match {
     this.penKeepIn = { high: false, low: false }; // co brankář právě mačká
     this.penJump = false; // brankář zvolil nahoru – skočí
     this.penKeeper = null; // ovládání brankáře počítače (nastavuje hra)
-    this.ice = setup.arena === 'snow'; // sněžná aréna: led, všichni kloužou
+    this.arenaId = validArena(setup.arena);
+    this.mods = arenaMods(this.arenaId); // jak aréna mění hru (led, písek, Měsíc, vítr)
+    this.ice = this.mods.ice;
+    this.windDir = Math.random() < 0.5 ? -1 : 1; // vichřice: kam fouká
+    this.windT = 7;
     this.blocks = [0, 0]; // jak dlouho je ještě zablokovaná brána týmu 0 / 1
     this.blockKind = ['', '']; // čím: 'cheese' (hermelín) nebo 'ice' (led)
     this._f = { x: 0, y: 0 };
@@ -377,6 +381,14 @@ class Match {
       }
       this.movePlayer(p, it, dt);
     }
+    if (this.mods.wind && mode === 'play') {
+      this.windT -= dt;
+      if (this.windT <= 0) {
+        this.windDir = -this.windDir;
+        this.windT = rand(6, 10);
+        this.onEvent('wind', { dir: this.windDir });
+      }
+    }
     for (let t = 0; t < 2; t++) {
       if (this.blocks[t] > 0) {
         this.blocks[t] = Math.max(0, this.blocks[t] - dt);
@@ -477,7 +489,7 @@ class Match {
     }
     const input = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
     const boost = (p.boostT > 0 ? BOOST_MUL : 1) * (p.primeT > 0 ? PRIME_SPEED : 1);
-    const max = PHYS.moveSpeed * p.speedMul * boost;
+    const max = PHYS.moveSpeed * p.speedMul * boost * this.mods.speed;
     const ice = this.ice && p.onGround;
     // na ledu: bez ovládání hráč dlouho dojíždí, změna směru trvá
     const iceRate = input === 0 ? 1700 * ICE.brake : PHYS.accelGround * ICE.accel * boost;
@@ -485,7 +497,7 @@ class Match {
     else if (p.onGround) p.vx = approach(p.vx, 0, 1700 * (ice ? ICE.brake : 1) * dt);
 
     if (it.jump && p.onGround) {
-      p.vy = -PHYS.jumpV * (p.primeT > 0 ? PRIME_JUMP : 1);
+      p.vy = -PHYS.jumpV * (p.primeT > 0 ? PRIME_JUMP : 1) * this.mods.jump;
       p.onGround = false;
       this.onEvent('jump', { human: p.isHuman });
     }
@@ -528,7 +540,7 @@ class Match {
     }
 
     p.prevFeet = p.y + p.R + p.F;
-    p.vy += PHYS.gravity * dt;
+    p.vy += PHYS.gravity * this.mods.grav * dt;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     const wasAir = !p.onGround;
@@ -628,7 +640,7 @@ class Match {
     b.carryBy = -1;
     const t = b.basketSide;
     const hx = t === 0 ? GOAL_W * 0.5 : W - GOAL_W * 0.5, hy = BASKET_Y;
-    const g = PHYS.ballGravity, apex = 40;
+    const g = PHYS.ballGravity * this.mods.ballGrav, apex = 40;
     const up = Math.max(30, b.y - apex), down = Math.max(30, hy - apex);
     const t1 = Math.sqrt((2 * up) / g), t2 = Math.sqrt((2 * down) / g);
     b.vy = -Math.sqrt(2 * g * up);
@@ -778,7 +790,9 @@ class Match {
     }
     if (b.basketT > 0) b.basketT = Math.max(0, b.basketT - dt);
     const py0 = b.y;
-    b.vy += PHYS.ballGravity * dt;
+    b.vy += PHYS.ballGravity * this.mods.ballGrav * dt;
+    // vichřice: vítr tlačí míč (po zemi méně)
+    if (this.mods.wind && b.basketT <= 0) b.vx += this.windDir * this.mods.wind * dt * (b.y + b.r >= GROUND_Y - 2 ? 0.3 : 1);
     if (b.basketT <= 0) {
       const drag = 1 - PHYS.airDrag * dt;
       b.vx *= drag;
@@ -817,11 +831,11 @@ class Match {
           b.basketT = 0;
           this.onEvent('unbasket', { x: b.x, y: b.y });
         }
-        b.vy = imp > 90 ? -imp * PHYS.ballBounce : 0;
-        if (imp > 90) b.vx *= this.ice ? ICE.grip : PHYS.groundGrip;
+        b.vy = imp > 90 ? -imp * PHYS.ballBounce * this.mods.bounce : 0;
+        if (imp > 90) b.vx *= Math.min(0.99, PHYS.groundGrip * this.mods.grip);
         if (imp > 240) this.onEvent('bounce', { x: b.x, impact: imp });
       }
-      b.vx *= 1 - PHYS.rollFriction * (this.ice ? ICE.roll : 1) * dt;
+      b.vx *= Math.max(0, 1 - PHYS.rollFriction * this.mods.roll * dt);
     }
     if (b.y - r < 0) {
       b.y = r;
@@ -1007,7 +1021,7 @@ class Match {
     const line = p.team === 0 ? W - GOAL_W + 12 : GOAL_W - 12;
     const D = (line - b.x) * p.dir;
     if (D < 60 || D > 860) return deg;
-    const g = PHYS.ballGravity, v = power;
+    const g = PHYS.ballGravity * this.mods.ballGrav, v = power;
     const h = b.y - (BAR_Y + GROUND_Y) / 2 - 18; // cíl: kousek nad středem brány
     const disc = v ** 4 - g * (g * D * D + 2 * h * v * v);
     if (disc < 0) return deg;
