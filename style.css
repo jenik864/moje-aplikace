@@ -1383,3 +1383,55 @@ body.trailer-mode #rotate, body.trailer-mode #toast, body.trailer-mode #btn-skip
 .arena-btn.snow { background: linear-gradient(180deg, #e8f6ff, #a9d2ee); color: #0b1220; border-color: #ffffff; }
 .arena-btn:disabled { opacity: 0.6; }
 :root.h320 .arena-btn, :root.w700 .arena-btn { font-size: 12px; padding: 3px 7px; }
+
+/* žebříček a profil hráče */
+.dialog.board-dlg, .dialog.player-dlg {
+  width: min(660px, 100%);
+  gap: 8px;
+  padding: clamp(10px, calc(var(--vh, 1vh) * 3), 18px) 16px;
+  border-radius: 24px;
+  border: 3px solid var(--ink);
+  background: linear-gradient(160deg, #2a2a52, #121a2c);
+  box-shadow: 0 6px 0 var(--ink);
+  justify-items: stretch;
+  text-align: left;
+}
+.board-tabs { display: flex; gap: 3px; padding: 3px; border-radius: 12px; background: rgba(0, 0, 0, 0.35); border: 2px solid var(--line); margin-left: auto; }
+.board-tabs button { padding: 4px 12px; border: 0; border-radius: 9px; background: none; color: var(--chalk); font: 800 14px/1.2 var(--font-ui); letter-spacing: 0.06em; text-transform: uppercase; }
+.board-tabs button[aria-pressed="true"] { background: var(--gold); color: var(--ink); }
+.nick-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.nick-input { min-width: 0; padding: 6px 10px; border-radius: 12px; border: 2px solid var(--line); background: rgba(0, 0, 0, 0.4); color: var(--chalk); font: 700 18px/1.2 var(--font-ui); -webkit-user-select: text; user-select: text; }
+.nick-row .btn-game { font-size: 16px; padding: 6px 14px; }
+.board-list { list-style: none; margin: 0; padding: 0 2px 0 0; display: grid; gap: 5px; max-height: calc(var(--vh, 1vh) * 100 - 190px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.lb-row { width: 100%; display: grid; grid-template-columns: 34px 40px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 3px 12px 3px 6px; border-radius: 14px; border: 2px solid rgba(255, 255, 255, 0.08); background: rgba(0, 0, 0, 0.3); color: var(--chalk); text-align: left; }
+.lb-row.me { border-color: var(--gold); background: rgba(255, 201, 60, 0.14); }
+.lb-row.friend { border-color: rgba(62, 224, 143, 0.5); }
+.lb-row:active { transform: scale(0.99); }
+.lb-pos { font-family: var(--font-display); font-size: 18px; text-align: center; }
+.lb-pic { width: 40px; height: 40px; display: block; }
+.lb-info { display: grid; min-width: 0; }
+.lb-info b { font-family: var(--font-display); font-weight: 400; font-size: 18px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-info small { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+.lb-tro { font-family: var(--font-display); font-size: 18px; color: var(--gold); white-space: nowrap; }
+.board-empty { margin: 6px 0; text-align: center; color: var(--mute); font-size: 15px; }
+#btn-board-retry { justify-self: center; }
+.dialog.player-dlg { position: relative; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 16px; }
+.pl-back { position: absolute; top: 10px; left: 10px; z-index: 2; }
+.pl-pic { width: clamp(90px, calc(var(--vh, 1vh) * 38), 170px); height: clamp(120px, calc(var(--vh, 1vh) * 50), 220px); display: block; }
+.pl-info { display: grid; gap: 4px; justify-items: start; min-width: 0; }
+.pl-info .screen-title { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.pl-league { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.06em; }
+.pl-tro { font-family: var(--font-display); color: var(--gold); font-size: 20px; margin-left: 8px; }
+.pl-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; width: 100%; }
+.pl-stats div { display: grid; padding: 3px 8px; border-radius: 10px; background: rgba(0, 0, 0, 0.3); }
+.pl-stats b { font-family: var(--font-display); font-weight: 400; font-size: 18px; }
+.pl-stats span { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mute); }
+.pl-note { margin: 0; font-size: 13px; color: var(--mute); }
+#btn-friend { font-size: 20px; padding: 6px 18px 4px; }
+#btn-friend.on { background: linear-gradient(180deg, #b8f7d8, #3ee08f); }
+:root.h380 .board-dlg .screen-title, :root.h380 .player-dlg .screen-title { font-size: 26px; }
+:root.h380 .nick-row .mini-kicker { display: none; }
+:root.h380 .nick-row { grid-template-columns: minmax(0, 1fr) auto; }
+:root.h380 .pl-stats b { font-size: 15px; }
+:root.h380 #btn-friend { font-size: 17px; }
+.tasks-code { margin-left: auto; }

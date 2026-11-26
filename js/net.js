@@ -224,12 +224,13 @@ function mqttConnect(url, clientId, onMessage) {
     };
     const to = setTimeout(() => fail(new Error('timeout')), 6000);
     const api = {
-      publish(topic, text) {
+      // retain: server si zprávu nechá a pošle ji každému, kdo se později přihlásí k odběru
+      publish(topic, text, retain) {
         const t = str(topic), p = enc.encode(text);
         const body = new Uint8Array(t.length + p.length);
         body.set(t, 0);
         body.set(p, t.length);
-        send(packet(0x30, body));
+        send(packet(retain ? 0x31 : 0x30, body));
       },
       subscribe(topic) {
         const id = pid++;

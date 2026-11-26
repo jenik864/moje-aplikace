@@ -66,7 +66,7 @@ Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče,
 
 ## Příběh
 
-Tlačítko *Příběh* v hlavním menu (dokud je zamčený, má zámeček). Kódy se dají zadat i tlačítkem *Kód* dole v menu; **hlavní kód odemkne úplně všechno** (Příběh se všemi úrovněmi splněnými, Moncler-Jenda, Kiki v bikinách, Michael Bémič, Tlustej páv & Suli, Milan). Příběh je zamčený kódem (kód se zadává jednou, pak zůstane odemčený na tomto zařízení; v kódu se nekontrolují velká/malá písmena, mezery ani háčky). Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
+Tlačítko *Příběh* v hlavním menu (dokud je zamčený, má zámeček). Kódy se dají zadat i tlačítkem *Mám kód* v okně Úkoly; **hlavní kód odemkne úplně všechno** (Příběh se všemi úrovněmi splněnými, Moncler-Jenda, Kiki v bikinách, Michael Bémič, Tlustej páv & Suli, Milan). Příběh je zamčený kódem (kód se zadává jednou, pak zůstane odemčený na tomto zařízení; v kódu se nekontrolují velká/malá písmena, mezery ani háčky). Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
 
 10 úrovní, každá je jeden zápas proti počítači – některé 1 v 1, některé 2 v 2 (spoluhráče máš z tvé dvojice, hraje za něj počítač). Vybereš si svého hráče a postupně odemykáš další úrovně (splněné jde hrát znovu, zamčené si můžeš prohlédnout). Každá úroveň má úkol, bez jeho splnění se nepostoupí; úkol je vidět i během zápasu pod tabulí:
 
@@ -90,6 +90,12 @@ Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhl
 
 Když hraješ za stejnou postavu nebo dvojici jako soupeř úrovně, dostaneš místo nich Marsala (1 v 1) nebo Šimšu & Jendu (2 v 2). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, odemčené věci `hlavouni.odemceno`).
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
+
+## Žebříček, profily a přátelé
+
+Tlačítko *Žebříček* dole v hlavním menu. Nahoře si nastavíš přezdívku (stejné jméno se používá i v online hře) a uložíš ji – tím se objevíš v žebříčku. Hráči jsou seřazení podle pohárů (🥇🥈🥉 pro první tři). Klepnutím na hráče se otevře jeho profil: liga, poháry, místo v žebříčku, zápasy, výhry, úspěšnost, góly, turnaje, postup v Příběhu, za koho nejčastěji hraje (i se skinem) a kdy naposledy hrál. Tlačítkem *Přidat do přátel* si ho přidáš; záložka *Přátelé* ukáže jen tvoje přátele a tebe.
+
+Jak to funguje: hra nemá vlastní server, profily se ukládají jako uložené (retained) zprávy na stejných veřejných MQTT serverech, které se používají pro online hru (téma `fifa67/zebricek/v1/<id hráče>`). Profil se pošle po uložení přezdívky, po každém zápase (nejvýš jednou za 20 s) a při otevření žebříčku. Ve hře je jen přezdívka a herní statistiky, nic dalšího. Omezení: veřejné servery nic neslibují (uložené zprávy můžou po restartu serveru zmizet – po dalším zápase se profil pošle znovu) a nejsou tam účty ani hesla, takže kdo by chtěl podvádět, mohl by si poháry upravit. Přátelé se ukládají jen v tomto zařízení. Profily starší než půl roku se nezobrazují.
 
 ## Úkoly a skiny
 
@@ -214,6 +220,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.34 – žebříček hráčů podle pohárů, přezdívky, profily hráčů a přátelé; tlačítko Kód je v Úkolech
 - 1.33 – sněžná aréna (led, všichni kloužou), zvuky hry se na iPhonu smíchají s hudbou ze Spotify
 - 1.32 – trailer k updatu (`?trailer`, video `trailer.mp4`)
 - 1.31 – hratelnost: větší míč, shovívavější kop (i volej a míč ve výšce hlavy), kop zmáčknutý o chvilku dřív počká na míč, pomoc s mířením na bránu, silnější hlavičky

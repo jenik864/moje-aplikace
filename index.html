@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.33">
+<link rel="stylesheet" href="style.css?v=1.34">
 </head>
 <body>
 <!-- HRA:START -->
@@ -81,13 +81,13 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>
             <span id="swap-label">Joystick vlevo</span>
           </button>
+          <button id="btn-board" class="btn-chip small" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V11h4v9M10 20V5h4v15M16 20v-6h4v6"/></svg>
+            <span>Žebříček</span>
+          </button>
           <button id="btn-tasks" class="btn-chip small" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
             <span>Úkoly</span>
-          </button>
-          <button id="btn-code" class="btn-chip small" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3M14 9l2 2"/></svg>
-            <span>Kód</span>
           </button>
         </div>
       </div>
@@ -327,11 +327,59 @@
     </div>
   </section>
 
+  <!-- žebříček hráčů -->
+  <section id="board" class="screen dim" aria-labelledby="board-title" hidden>
+    <div class="dialog board-dlg">
+      <header class="tasks-head">
+        <h2 id="board-title" class="screen-title">Žebříček</h2>
+        <div class="board-tabs" role="tablist">
+          <button type="button" data-tab="all" aria-pressed="true">Všichni</button>
+          <button type="button" data-tab="friends" aria-pressed="false">Přátelé</button>
+        </div>
+        <button id="btn-board-close" class="btn-mini" type="button" aria-label="Zavřít">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <form id="nick-form" class="nick-row" autocomplete="off">
+        <label for="nick-input" class="mini-kicker">Tvoje přezdívka</label>
+        <input id="nick-input" class="nick-input" type="text" maxlength="12" autocapitalize="words" enterkeyhint="done" placeholder="Přezdívka">
+        <button class="btn-game green" type="submit">Uložit</button>
+      </form>
+      <p id="board-status" class="status wait" hidden></p>
+      <button id="btn-board-retry" class="btn-chip small" type="button" hidden>Zkusit znovu</button>
+      <ul id="board-list" class="board-list"></ul>
+      <p id="board-empty" class="board-empty" hidden></p>
+    </div>
+  </section>
+
+  <!-- profil hráče z žebříčku -->
+  <section id="player" class="screen dim" aria-labelledby="pl-nick" hidden>
+    <div class="dialog player-dlg">
+      <button id="btn-player-back" class="btn-mini pl-back" type="button" aria-label="Zpět na žebříček">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+      </button>
+      <canvas id="pl-pic" class="pl-pic" aria-hidden="true"></canvas>
+      <div class="pl-info">
+        <h2 id="pl-nick" class="screen-title"></h2>
+        <p class="pl-league"><span class="rank-emblem" id="pl-emblem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8 3.6 5v6.2c0 5.3 3.6 9.6 8.4 11 4.8-1.4 8.4-5.7 8.4-11V5z"/><path class="st" d="m12 6.6 1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"/></svg></span><b id="pl-rank"></b><span class="pl-tro">🏆 <b id="pl-tro">0</b></span></p>
+        <p id="pl-pos" class="mini-kicker"></p>
+        <div id="pl-stats" class="pl-stats"></div>
+        <p id="pl-char" class="pl-note"></p>
+        <p id="pl-seen" class="pl-note"></p>
+        <button id="btn-friend" class="btn-play" type="button">+ Přidat do přátel</button>
+      </div>
+    </div>
+  </section>
+
   <!-- úkoly -->
   <section id="tasks" class="screen dim" aria-labelledby="tasks-title" hidden>
     <div class="dialog tasks-dlg">
       <header class="tasks-head">
         <h2 id="tasks-title" class="screen-title">Úkoly</h2>
+          <button id="btn-code" class="btn-chip small tasks-code" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3M14 9l2 2"/></svg>
+            <span>Mám kód</span>
+          </button>
         <button id="btn-tasks-close" class="btn-mini" type="button" aria-label="Zavřít">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
         </button>
@@ -388,16 +436,17 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.33"></script>
-<script src="js/audio.js?v=1.33"></script>
-<script src="js/input.js?v=1.33"></script>
-<script src="js/ai.js?v=1.33"></script>
-<script src="js/physics.js?v=1.33"></script>
-<script src="js/render.js?v=1.33"></script>
-<script src="js/penalty.js?v=1.33"></script>
-<script src="js/net.js?v=1.33"></script>
-<script src="js/lobby.js?v=1.33"></script>
-<script src="js/trailer.js?v=1.33"></script>
-<script src="js/main.js?v=1.33"></script>
+<script src="js/config.js?v=1.34"></script>
+<script src="js/audio.js?v=1.34"></script>
+<script src="js/input.js?v=1.34"></script>
+<script src="js/ai.js?v=1.34"></script>
+<script src="js/physics.js?v=1.34"></script>
+<script src="js/render.js?v=1.34"></script>
+<script src="js/penalty.js?v=1.34"></script>
+<script src="js/net.js?v=1.34"></script>
+<script src="js/lobby.js?v=1.34"></script>
+<script src="js/board.js?v=1.34"></script>
+<script src="js/trailer.js?v=1.34"></script>
+<script src="js/main.js?v=1.34"></script>
 </body>
 </html>

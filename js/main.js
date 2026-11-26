@@ -1759,6 +1759,7 @@ const Game = {
     prof.bestStreak = Math.max(prof.bestStreak, prof.streak);
     Profile.save(prof);
     const tasks = Tasks.record(me.look.id, st.goals);
+    Board.afterMatch(me.look.id);
     this.lastReward = { delta, before, after: prof.trophies, win, parts, streak: prof.streak, tasks };
     return this.lastReward;
   },
@@ -2536,7 +2537,7 @@ const UI = {
       resMain: $('btn-res-main'), resSecond: $('btn-res-second'), resThird: $('btn-res-third'), resWait: $('res-wait'),
       pauseSecond: $('btn-restart'), pauseThird: $('btn-quit'),
       profile: $('profile'), chip: $('profile-chip'), cup: $('cup'), half: $('half'),
-      story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'),
+      story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'), board: $('board'), player: $('player'),
     };
     const click = (id, fn) => $(id).addEventListener('click', () => {
       Sound.init();
@@ -2561,6 +2562,7 @@ const UI = {
     click('btn-unlock-back', () => this.show('home'));
     click('btn-code', () => this.showUnlock(true));
     click('btn-tasks', () => this.showTasks());
+    Board.initUI();
     click('btn-tasks-close', () => this.show('home'));
     $('unlock-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -3033,13 +3035,13 @@ const UI = {
   },
 
   show(name) {
-    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks']) {
+    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks', 'board', 'player']) {
       this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home') && !(name === 'reward' && key === 'story');
     }
     this.el.chip.hidden = name !== 'home';
     document.getElementById('app').classList.toggle('on-home', name === 'home');
     // u velkých tabulek schovat ikony v rohu, ať nic nepřekrývají
-    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock', 'reward', 'tasks'].includes(name));
+    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock', 'reward', 'tasks', 'board', 'player'].includes(name));
     if (name === 'home') this.updateLocks();
     this.measureHud();
     this.el.pauseBtn.hidden = !(Game.screen === 'match' && Game.mode !== 'guest' && (Game.inMatch() || Game.state === 'paused'));
