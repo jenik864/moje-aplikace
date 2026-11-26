@@ -427,10 +427,6 @@ const Game = {
   /* ---------------- příběh ---------------- */
 
   openStory() {
-    if (!Unlocks.has('story')) {
-      UI.showUnlock();
-      return;
-    }
     if (Online.active) Online.leave();
     this.storySync();
     this.cup = null;
@@ -3153,7 +3149,7 @@ const UI = {
   // Zámek u tlačítka Příběh.
   updateLocks() {
     const l = document.getElementById('story-lock');
-    if (l) l.hidden = Unlocks.has('story');
+    if (l) l.hidden = true; // Příběh je odemčený pro všechny
   },
 
   showUnlock(any) {

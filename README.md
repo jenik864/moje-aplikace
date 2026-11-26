@@ -71,7 +71,7 @@ Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče,
 
 ## Příběh
 
-Tlačítko *Příběh* v hlavním menu (dokud je zamčený, má zámeček). Kódy se dají zadat i tlačítkem *Mám kód* v okně Úkoly; **hlavní kód odemkne úplně všechno** (Příběh se všemi úrovněmi splněnými, Moncler-Jenda, Kiki v bikinách, Michael Bémič, Tlustej páv & Suli, Milan). Příběh je zamčený kódem (kód se zadává jednou, pak zůstane odemčený na tomto zařízení; v kódu se nekontrolují velká/malá písmena, mezery ani háčky). Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
+Tlačítko *Příběh* v hlavním menu – je odemčený pro všechny (dřív byl zamčený kódem). Tlačítkem *Mám kód* v okně Úkoly jde zadat **hlavní kód**, který odemkne úplně všechno (všechny úrovně Příběhu splněné, Moncler-Jenda, Kiki v bikinách, Michael Bémič, Tlustej páv & Suli, Milan); v kódu se nekontrolují velká/malá písmena, mezery ani háčky. Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
 
 10 úrovní, každá je jeden zápas proti počítači – některé 1 v 1, některé 2 v 2 (spoluhráče máš z tvé dvojice, hraje za něj počítač). Vybereš si svého hráče a postupně odemykáš další úrovně (splněné jde hrát znovu, zamčené si můžeš prohlédnout). Každá úroveň má úkol, bez jeho splnění se nepostoupí; úkol je vidět i během zápasu pod tabulí:
 
@@ -227,6 +227,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.37 – Příběh odemčený pro všechny bez kódu
 - 1.36 – nové arény Pláž, Měsíc a Vichřice (každá mění fyziku hry), některé úrovně Příběhu se hrají v nich
 - 1.35 – lobby má stálou velikost (bez nápovědy dole), v Příběhu jsou soupeři pevní (i zrcadlové zápasy)
 - 1.34 – žebříček hráčů podle pohárů, přezdívky, profily hráčů a přátelé; tlačítko Kód je v Úkolech
