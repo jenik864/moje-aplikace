@@ -145,6 +145,11 @@ async function openPeerTransport(code, asHost) {
       throw e;
     }
   }
+  // Ozvat se každou sekundu, i když se nic nemění: hostitel podle toho pozná,
+  // že kamarád je pořád připojený (jinak by ho po pár sekundách nahradil počítač).
+  const beat = setInterval(() => {
+    if (!timer) flush();
+  }, 1000);
   return {
     kind: 'peer',
     peers: list,
@@ -158,6 +163,7 @@ async function openPeerTransport(code, asHost) {
     },
     connected: () => !peer.disconnected,
     close() {
+      clearInterval(beat);
       for (const c of conns.values()) {
         try { c.close(); } catch (e) { /* nevadí */ }
       }
@@ -655,14 +661,14 @@ const Online = {
       const now = Date.now();
       if (this.role === 'host') {
         for (const [uid, g] of this.guests) {
-          if (now - g.seen > 4000) {
+          if (now - g.seen > 6000) {
             this.guests.delete(uid);
             if (this.onGuestGone) this.onGuestGone(uid);
           }
         }
       } else if (this.role === 'guest') {
         if (this.t) this.guestPeers(this.t.peers());
-        if (now - this.hostSeen > 5000 && this.onHostGone) this.onHostGone();
+        if (now - this.hostSeen > 8000 && this.onHostGone) this.onHostGone();
       }
     }, 1000);
   },
