@@ -159,7 +159,13 @@ async function openPeerTransport(code, asHost) {
         if (patch[k] === null) delete mine[k];
         else mine[k] = patch[k];
       }
-      if (!timer) timer = setTimeout(flush, 33);
+      // ovládání odeslat hned, ostatní stav nejvýš 30× za sekundu
+      if (patch.in !== undefined) {
+        clearTimeout(timer);
+        flush();
+      } else if (!timer) {
+        timer = setTimeout(flush, 33);
+      }
     },
     connected: () => !peer.disconnected,
     close() {
@@ -360,7 +366,12 @@ async function openRelayTransport(code, asHost) {
       }
       // hostitel bez nikoho na záložním přenosu posílá jen jednou za sekundu
       if (asHost && !others.size) return;
-      if (!timer) timer = setTimeout(send, 33);
+      if (patch.in !== undefined) {
+        clearTimeout(timer);
+        send();
+      } else if (!timer) {
+        timer = setTimeout(send, 33);
+      }
     },
     connected: () => alive,
     close() {
@@ -448,7 +459,10 @@ function openBroadcastTransport(code) {
     timer = 0;
     ch.postMessage({ id: me, p: mine });
   };
-  ch.onmessage = (e) => {
+  // window.HLAVOUNI_LAG: umělé zpoždění sítě pro testy (ms)
+  const lag = Number(window.HLAVOUNI_LAG) || 0;
+  ch.onmessage = (e) => (lag ? setTimeout(() => recv(e), lag) : recv(e));
+  const recv = (e) => {
     const d = e.data;
     if (!d || d.id === me) return;
     if (d.bye) {

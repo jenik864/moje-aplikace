@@ -42,7 +42,7 @@ const HALF_SHOW = 1.6; // za jak dlouho po hvizdu se ukáže poločasová přest
 const ST_POS = 1, ST_SHOT = 2, ST_ON = 3, ST_HEAD = 4, ST_POW = 5, ST_KNOCK = 6;
 const REPLAY_SPEED = 0.7;  // zpomalení záznamu gólu
 const RESULT_AT = 5.4;     // kdy po konci zápasu ukázat výsledek (s)
-const INTERP_MS = 100;
+const INTERP_MS = 75;
 
 const Game = {
   mode: 'local',   // local | host | guest
@@ -1547,6 +1547,74 @@ const Game = {
     };
   },
 
+  /*
+   * Předpověď vlastního hráče u kamaráda: postava se pohne hned podle vlastního
+   * ovládání a jen se plynule dorovnává k poloze od hostitele (bez zpoždění sítě).
+   */
+  predictMe(dt, it, latest) {
+    const me = this.myPlayer();
+    const srv = me && me._srv;
+    const free = me && srv && this.state === 'play' && !(me.stunT > 0) && !me.kneel && !me.plane && !me.shootT;
+    if (!free || !it || dt <= 0) {
+      this.pred = null;
+      this.localKick = -1;
+      return;
+    }
+    // poloha od hostitele posunutá o stáří snímku a zpoždění ovládání
+    const age = clamp((performance.now() - this.offset - latest.ht) / 1000, 0, 0.3);
+    const ahead = clamp(age + 0.06, 0, 0.35);
+    const svx = srv[5] * 10, svy = srv[6] * 10;
+    const stand = me.standY;
+    const ex = clamp(srv[0] + svx * ahead, me.R, W - me.R);
+    const ey = srv[4] ? stand : Math.min(stand, srv[1] + svy * ahead + 0.5 * PHYS.gravity * ahead * ahead);
+    let q = this.pred;
+    if (!q) q = this.pred = { x: ex, y: ey, vx: svx, vy: svy, onGround: !!srv[4] };
+    // vlastní pohyb jako ve fyzice hostitele
+    const boost = (me.boostT > 0 ? BOOST_MUL : 1) * (me.primeT > 0 ? PRIME_SPEED : 1);
+    const move = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
+    q.vx = approach(q.vx, move * PHYS.moveSpeed * boost, (q.onGround ? PHYS.accelGround : PHYS.accelAir) * boost * dt);
+    if (it.jump && q.onGround) {
+      q.vy = -PHYS.jumpV * (me.primeT > 0 ? PRIME_JUMP : 1);
+      q.onGround = false;
+    }
+    q.vy += PHYS.gravity * dt;
+    q.x = clamp(q.x + q.vx * dt, me.R, W - me.R);
+    q.y += q.vy * dt;
+    if (q.y >= stand) {
+      q.y = stand;
+      q.vy = 0;
+      q.onGround = true;
+    } else if (srv[4] && Math.abs(q.y - stand) < 2) {
+      q.onGround = true;
+    } else {
+      q.onGround = false;
+    }
+    // dorovnání k hostiteli (velký rozdíl = skok na správné místo)
+    const dx = ex - q.x, dy = ey - q.y;
+    if (Math.abs(dx) > 150 || Math.abs(dy) > 160) {
+      q.x = ex;
+      q.y = ey;
+      q.vx = svx;
+      q.vy = svy;
+    } else {
+      const kx = 1 - Math.exp(-dt * 6), ky = 1 - Math.exp(-dt * (q.onGround && srv[4] ? 10 : 2.5));
+      q.x += dx * kx;
+      q.y += dy * ky;
+    }
+    me.x = q.x;
+    me.y = q.y;
+    me.vx = q.vx;
+    me.vy = q.vy;
+    me.onGround = q.onGround;
+    // švih nohou hned po stisku (míč ale kope hostitel)
+    if (it.kick && me.kickT < 0 && !(this.localKick >= 0)) this.localKick = 0;
+    if (this.localKick >= 0) {
+      this.localKick += dt;
+      if (this.localKick >= PHYS.kickDur) this.localKick = -1;
+      else if (me.kickT < 0) me.kickT = this.localKick;
+    }
+  },
+
   /* ---------------- host: zobrazení zápasu podle hostitele ---------------- */
 
   onHostPresence(hp) {
@@ -1697,7 +1765,8 @@ const Game = {
     UI.setSkip(false);
     if ((this.state === 'goal' && Math.random() < dt * 22) || (this.state === 'over' && Math.random() < dt * 10)) Effects.flash();
     // vlastní ovládání hostiteli
-    if (this.state !== 'over') Online.sendInput(Input.intent(0));
+    const it = this.state !== 'over' ? Input.intent(0) : null;
+    if (it) Online.sendInput(it);
     const buf = this.buf;
     if (!buf.length || this.offset === null) return;
     const target = performance.now() - this.offset - INTERP_MS;
@@ -1732,6 +1801,7 @@ const Game = {
       p.primeT = (Number(pb[16]) || 0) / 100;
       const sa = Number(pa[9]) || 0, sb = Number(pb[9]) || 0;
       p.spin = sb === 0 || Math.sign(sa) !== Math.sign(sb) ? sb / 100 : lerp(sa, sb, k) / 100;
+      p._srv = buf[buf.length - 1].g.p[i];
       if (p.onGround) p.runPhase += p.vx * p.dir * dt * 0.05;
       p.blinkT -= dt;
       if (p.blinkT <= 0) {
@@ -1740,6 +1810,7 @@ const Game = {
       }
       if (p.blink > 0) p.blink -= dt;
     });
+    this.predictMe(dt, it, buf[buf.length - 1]);
     // zablokované brány (hermelín, led)
     const bk = B.g.bk;
     if (Array.isArray(bk)) {
@@ -2400,7 +2471,44 @@ const Fit = {
   },
 };
 
+// Safari na iPhonu nedodržuje zákaz přiblížení: dva prsty (joystick + tlačítko)
+// bere jako roztažení a dvojí ťuknutí přibližuje. Tady se to zablokuje.
+function noZoom() {
+  const stop = (e) => e.preventDefault();
+  for (const t of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(t, stop, { passive: false });
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1 || (e.scale !== undefined && e.scale !== 1)) e.preventDefault();
+  }, { passive: false });
+  // ovládání ve hře: dotyk nesmí posouvat ani přibližovat stránku
+  const touch = document.getElementById('touch');
+  touch.addEventListener('touchstart', stop, { passive: false });
+  touch.addEventListener('touchmove', stop, { passive: false });
+  document.getElementById('game').addEventListener('touchstart', stop, { passive: false });
+  let lastEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    const t = e.target;
+    const interactive = t && t.closest && t.closest('button, input, a, label');
+    if (!interactive && now - lastEnd < 350) e.preventDefault();
+    lastEnd = now;
+  }, { passive: false });
+  document.addEventListener('dblclick', stop, { passive: false });
+  // kdyby se stránka přesto přiblížila, vrátit ji zpět
+  const vv = window.visualViewport;
+  const meta = document.querySelector('meta[name="viewport"]');
+  if (vv && meta) {
+    const base = meta.getAttribute('content');
+    vv.addEventListener('resize', () => {
+      if (vv.scale > 1.02) {
+        meta.setAttribute('content', base + ', maximum-scale=1');
+        setTimeout(() => meta.setAttribute('content', base), 300);
+      }
+    });
+  }
+}
+
 function boot() {
+  noZoom();
   const canvas = document.getElementById('game');
   const heroCanvas = document.getElementById('hero');
   Fit.init();
