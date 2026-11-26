@@ -83,7 +83,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.34';
+const GAME_VERSION = '1.35';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -298,13 +298,9 @@ function storyGoalMet(g, my, opp, won) {
   if (g.goals && my < g.goals) return false;
   return true;
 }
-// Soupeř úrovně (když hraješ za stejnou postavu / dvojici, dostaneš náhradu).
-function storyOpp(lv, me) {
-  if (lv.format === '2v2') {
-    const mine = duoOf(me);
-    return lv.duo === mine ? 4 : lv.duo; // Šimša & Jenda v příběhu jinak nehrají
-  }
-  return lv.opp === me ? 'marsal' : lv.opp; // Marsal 1 v 1 jinak nehraje
+// Soupeř úrovně je pevný (i když hraješ za stejnou postavu – klidně Tóma proti Tómovi).
+function storyOpp(lv) {
+  return lv.format === '2v2' ? lv.duo : lv.opp;
 }
 const STORY_KEY = 'hlavouni.pribeh';
 const Story = {

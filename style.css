@@ -1295,7 +1295,7 @@ kbd {
 .card-lock b { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; padding: 1px 6px; border-radius: 8px; background: rgba(8, 13, 26, 0.8); color: var(--gold); }
 .skin-chip { position: absolute; top: 0; right: -4px; z-index: 2; padding: 3px 8px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.6); background: rgba(8, 13, 26, 0.75); color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
 .skin-chip.on { background: linear-gradient(180deg, #ffffff, #d5dae2); color: var(--ink); border-color: var(--ink); }
-#btn-start:disabled { filter: grayscale(0.8) brightness(0.7); }
+#btn-start:disabled, #btn-start.locked { filter: grayscale(0.8) brightness(0.7); }
 .dialog.reward-dlg { width: min(760px, 100%); grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; text-align: left; justify-items: start; }
 .rw-info { display: grid; gap: 6px; justify-items: start; }
 .rw-info .dialog-buttons.row { justify-content: flex-start; }
@@ -1435,3 +1435,7 @@ body.trailer-mode #rotate, body.trailer-mode #toast, body.trailer-mode #btn-skip
 :root.h380 .pl-stats b { font-size: 15px; }
 :root.h380 #btn-friend { font-size: 17px; }
 .tasks-code { margin-left: auto; }
+/* lobby má pořád stejnou velikost: bez nápovědy dole, aréna s pevnou šířkou */
+#lobby-hint { display: none !important; }
+#lobby-wait { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arena-btn { min-width: 8.2em; text-align: center; }

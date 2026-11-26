@@ -494,7 +494,7 @@ const LobbyUI = {
     }
     const anyLocked = lobbyLocked(lobby);
     if (anyLocked && ctx.mode !== 'guest') el.hint.textContent = '🔒 Zamčená postava – odemkneš ji v Příběhu nebo v Úkolech. Vyber jinou.';
-    el.start.disabled = anyLocked;
+    el.start.classList.toggle('locked', anyLocked); // klepnutí ukáže, proč hrát nejde
     el.ready.hidden = ctx.mode !== 'guest';
     if (ctx.mode === 'guest') {
       const myLocked = meSlot && !charAvailable(charById(meSlot.char));

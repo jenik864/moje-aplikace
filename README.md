@@ -88,7 +88,7 @@ Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhl
 - **Moncler-Jenda**: skin jen pro Jendu – bílá péřová bunda s prošíváním, černé brýle, zlatý řetěz, diamant v uchu, černé tepláky a bílé tenisky (bez loga značky). Zapíná se tlačítkem *Moncler* u Jendy v lobby nebo v Příběhu a platí i online.
 - **Tlustej páv & Suli**: nová dvojice (Páv č. 99 – špinavý blond, lehké vousy, pořádné bříško; Suli č. 17 – dlouhé blond vlasy, výrazná postava). Ve výběru hráčů jsou vidět od začátku, ale mají zámeček a hrát za ně (ani proti nim) nejde, dokud nesplníš 10. úroveň.
 
-Když hraješ za stejnou postavu nebo dvojici jako soupeř úrovně, dostaneš místo nich Marsala (1 v 1) nebo Šimšu & Jendu (2 v 2). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, odemčené věci `hlavouni.odemceno`).
+Soupeři jsou pevní – když hraješ za stejnou postavu nebo dvojici jako soupeř, hraje se zrcadlový zápas (třeba Tóma proti Tómovi; soupeřova dvojice má dres v jiné barvě). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, odemčené věci `hlavouni.odemceno`).
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
 ## Žebříček, profily a přátelé
@@ -220,6 +220,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.35 – lobby má stálou velikost (bez nápovědy dole), v Příběhu jsou soupeři pevní (i zrcadlové zápasy)
 - 1.34 – žebříček hráčů podle pohárů, přezdívky, profily hráčů a přátelé; tlačítko Kód je v Úkolech
 - 1.33 – sněžná aréna (led, všichni kloužou), zvuky hry se na iPhonu smíchají s hudbou ze Spotify
 - 1.32 – trailer k updatu (`?trailer`, video `trailer.mp4`)

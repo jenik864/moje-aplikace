@@ -493,7 +493,7 @@ const Game = {
     const st = Story.get();
     idx = clamp(Math.floor(idx), 0, Math.min(st.done, STORY.length - 1));
     const lv = STORY[idx], me = this.storyChar();
-    const opp = storyOpp(lv, me);
+    const opp = storyOpp(lv);
     if (Online.active) Online.leave();
     this.mode = 'local';
     this.cup = null;
@@ -502,13 +502,19 @@ const Game = {
     if (lv.format === '2v2') {
       let mine = duoOf(me);
       if (mine < 0) mine = 4; // postava bez dvojice hraje s Šimšou
-      lobby = newLobby({ format: '2v2', level: lv.level, duos: [mine, opp], arena: lv.arena }, null);
+      // stejná dvojice proti sobě: lobby dostane jinou, pak se soupeřům vrátí jejich postavy
+      const mirror = mine === opp;
+      const other = mirror ? (opp + 1) % DUO_TEAMS.length : opp;
+      lobby = newLobby({ format: '2v2', level: lv.level, duos: [mine, other], arena: lv.arena }, null);
       lobby.slots.forEach((s) => { s.ctrl = 'cpu'; });
+      if (mirror) lobby.slots.filter((s) => s.team === 1).forEach((s, k) => { s.char = DUO_TEAMS[opp].chars[k]; });
+      this.storyMirror = mirror ? opp : -1;
       const team0 = lobby.slots.filter((s) => s.team === 0);
       const meSlot = team0.find((s) => s.char === me) || team0[0];
       meSlot.char = me;
       meSlot.ctrl = 'p1';
     } else {
+      this.storyMirror = -1;
       lobby = newLobby({ format: '1v1', level: lv.level, arena: lv.arena }, null);
       const mine = lobby.slots.find((s) => s.team === 0), other = lobby.slots.find((s) => s.team === 1);
       mine.char = me;
@@ -517,6 +523,11 @@ const Game = {
       other.ctrl = 'cpu';
     }
     const setup = this.buildSetup(lobby);
+    if (this.storyMirror >= 0) {
+      // zrcadlový zápas: soupeř má stejnou dvojici, ale dres v jiné barvě
+      const D = DUO_TEAMS[this.storyMirror], alt = SIDE_COLORS[D.color === SIDE_COLORS[1].color ? 0 : 1];
+      setup.teams[1] = Object.assign({}, D, { color: alt.color, dark: alt.dark, light: alt.light });
+    }
     setup.story = idx + 1;
     setup.boost = lv.boost;
     setup.label = `PŘÍBĚH · ÚROVEŇ ${idx + 1}`;
@@ -3177,7 +3188,7 @@ const UI = {
       const li = document.createElement('li');
       const b = document.createElement('button');
       b.type = 'button';
-      const opp = storyOpp(lv, me), two = lv.format === '2v2';
+      const opp = storyOpp(lv), two = lv.format === '2v2';
       const chars = two ? DUO_TEAMS[opp].chars : [opp];
       const oT = two ? DUO_TEAMS[opp] : (() => { const od = duoOf(opp); return od >= 0 ? DUO_TEAMS[od] : charById(opp).kit || SIDE_COLORS[1]; })();
       const locked = i > st.done;
