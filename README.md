@@ -61,7 +61,28 @@ Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče,
 ## Lobby (výběr hráčů)
 
 - **Hrát** (proti počítači): vyber 1 v 1 nebo 2 v 2 a obtížnost počítače (zápas trvá vždy 2 × 45 s). Klepnutím na postavu si vybereš, za koho hraješ, ostatní hraje počítač. V 1 v 1 se šipkami mění postava. Postavy v lobby jsou živé (dýchají, mrkají, rozhlížejí se, vybraná zamává), stojí na osvětleném pódiu, pod každou je štítek kdo za ni hraje a její superschopnost. U dvojice je její pokřik a dole název tvé superschopnosti.
-- **Turnaj** (tlačítko *Turnaj* v hlavním menu nebo přepínač *Zápas / Turnaj* v lobby, proti počítači): vybereš svůj tým, pavouk vylosuje tři soupeře. Hraje se semifinále a finále, druhé semifinále se odehraje mezi počítači. Ve finále je soupeř o stupeň těžší. Za vítězství v turnaji je +15 pohárů navíc a počítá se do profilu (Vyhrané turnaje).
+- **Turnaj** (tlačítko *Turnaj* v hlavním menu nebo přepínač *Zápas / Turnaj* v lobby, i online): oba týmy z lobby (i s lidmi, co za ně hrají) a dva vylosované týmy počítače. Semifinále: levý tým proti 3. týmu, pravý proti 4. týmu, takže se kamarádi můžou potkat ve finále. Zápasy bez lidí se odehrají „vedle“. Online spouští zápasy hostitel, kamarádi vidí pavouka a hrají své zápasy na svém telefonu (cizí zápas sledují). Ve finále je soupeř o stupeň těžší. Za vítězství v turnaji je +15 pohárů navíc a počítá se do profilu (Vyhrané turnaje).
+
+## Příběh
+
+Tlačítko *Příběh* v hlavním menu. Je zamčený kódem (kód se zadává jednou, pak zůstane odemčený na tomto zařízení; v kódu se nekontrolují velká/malá písmena, mezery ani háčky). Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
+
+10 úrovní, každá je jeden zápas 1 v 1 proti počítači. Vybereš si svého hráče a postupně odemykáš další úrovně (už splněné jde hrát znovu). Soupeři jsou čím dál těžší (obtížnost a rychlost):
+
+| Úroveň | Soupeř | Obtížnost | Odměna |
+| --- | --- | --- | --- |
+| 1 | Tóma | lehká | |
+| 2 | Peli | lehká, +5 % rychlost | |
+| 3 | Kiki | střední | |
+| 4 | Bémič | střední, +5 % | |
+| 5 | Majda | střední, +10 % | **Zlatý dres** (zapíná/vypíná se v Příběhu, platí ve všech zápasech i online) |
+| 6 | Durcado | těžká | |
+| 7 | Jenda | těžká, +5 % | |
+| 8 | Šimša | těžká, +10 % | |
+| 9 | Nelcis | těžká, +14 % | |
+| 10 | BOSS Milan Voračka | těžká, +20 % | **Nový hráč Milan** (číslo 90, schopnost Červená karta) |
+
+Když hraješ za stejnou postavu jako soupeř úrovně, dostaneš místo něj Marsala. Postup se ukládá v prohlížeči (`hlavouni.pribeh`, odemčené věci `hlavouni.odemceno`).
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
 ## Ovládání
@@ -93,6 +114,7 @@ Nabíjí se časem (asi 15 s) a každým kopem do míče. Každá postava má sv
 | Marsal | **Trojka**: když je u míče, míč se změní v basketbalový, Marsal řekne „STŘÍLIM TY TROJKY“, chytí ho nad hlavu a hodí vysoký oblouk. Nad bránou soupeře se objeví basketbalový koš, míč jím propadne rovnou do brány. Chytit se dá jen před košem (hlavičkou nebo výskokem), hermelín a led ho zastaví. |
 | Bémič | **Skiper**: na 3 s se promění v tučňáka (jen vzhled), brána jeho týmu zamrzne ve velkém ledovém kráteru (nejde dát gól) a fanoušci řvou SKIPER. |
 | Jenda | **JENDA PRIME**: na 5 s se promění v hráče Realu Madrid – bílý dres se zlatým lemováním, zlatá záře a nápis JENDA PRIME. Běhá 1,5× rychleji, skáče výš, kope o 40 % silněji, silnější hlavičky, odstrčí soupeře a superstřela ho neodstřelí. |
+| Milan (odemyká se v Příběhu) | **Červená karta**: písknutí, nápis ČERVENÁ KARTA a všichni soupeři na 2 s ztuhnou (JENDA PRIME a tučňák ji ustojí). |
 | ostatní | **Superstřela** (viz dál). Vlastní schopnosti přijdou v dalších verzích. |
 
 Počítač superschopnosti používá taky: hermelín a led, když letí míč na jeho bránu, VO2max, když je míč daleko, trojku, když je u míče, JENDA PRIME, když jde o míč.
@@ -164,6 +186,7 @@ Hřiště má virtuální rozměr 1280 × 720. Na displeji jiného poměru stran
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.23 – Příběh (10 úrovní, zamčený kódem), zlatý dres, nový hráč Milan, turnaj i pro více hráčů a online
 - 1.22 – rozcvička na začátku zápasu
 - 1.21 – penalty pohledem za střelcem na 3D bránu
 - 1.20 – tlačítko Turnaj v hlavním menu

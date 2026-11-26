@@ -241,7 +241,11 @@ class Match {
       const role = roles[i];
       const x = role === 'attacker' ? attX : defX;
       const p = new Player({ team: sp.team, x: sp.team === 0 ? x : W - x, look: charById(sp.char), role, ctrl: sp.ctrl, label: sp.name });
-      if (sp.ctrl === 'cpu') this.makeCPU(p);
+      p.skin = sp.skin === 'gold' ? 'gold' : '';
+      if (sp.ctrl === 'cpu') {
+        this.makeCPU(p);
+        if (s.boost > 1) p.speedMul *= Math.min(1.3, s.boost); // příběh: těžší soupeř
+      }
       else if (sp.ctrl === 'p1' || sp.ctrl === 'host') p.slot = 0;
       else p.remote = sp.ctrl;
       this.players.push(p);
@@ -549,6 +553,16 @@ class Match {
       p.boostT = BOOST_TIME;
     } else if (p.power === 'prime') {
       p.primeT = PRIME_TIME;
+    } else if (p.power === 'redcard') {
+      // Červená karta: soupeři na chvíli ztuhnou (JENDA PRIME ji ustojí)
+      for (const o of this.players) {
+        if (o.team === p.team || o.primeT > 0 || o.pengT > 0) continue;
+        o.stunT = Math.max(o.stunT, REDCARD_TIME);
+        o.knockDir = 0;
+        o.kickT = -1;
+        o.superKick = false;
+        o.vx *= 0.2;
+      }
     }
     this.onEvent('power', { idx, kind: p.power, team: p.team });
     return true;

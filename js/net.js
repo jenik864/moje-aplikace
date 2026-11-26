@@ -634,7 +634,7 @@ const Online = {
     this.superSeq = 0;
     this.lastIn = '';
     this.unsub = this.t.onPeers((l) => this.guestPeers(l));
-    this.t.setPresence({ v: NET_V, role: 'guest', uid: this.uid, name: this.name, want: null, in: null, ready: false });
+    this.t.setPresence({ v: NET_V, role: 'guest', uid: this.uid, name: this.name, want: null, in: null, ready: false, skin: mySkin() });
     // počkat na hostitele
     const t0 = Date.now();
     while (!this.hostP) {
@@ -704,7 +704,9 @@ const Online = {
       }
       g.seen = now;
       const name = cleanName(pr.name);
-      const renamed = name !== g.name || !!pr.ready !== g.ready;
+      const skin = pr.skin === 'gold' ? 'gold' : '';
+      const renamed = name !== g.name || !!pr.ready !== g.ready || skin !== g.skin;
+      g.skin = skin;
       g.name = name;
       g.ready = !!pr.ready;
       g.in = pr.in && typeof pr.in === 'object' ? pr.in : null;
@@ -741,7 +743,7 @@ const Online = {
 
   members() {
     const out = [{ uid: 'host', name: this.name, ready: true }];
-    for (const g of this.guests.values()) out.push({ uid: g.uid, name: g.name, ready: g.ready });
+    for (const g of this.guests.values()) out.push({ uid: g.uid, name: g.name, ready: g.ready, skin: g.skin || '' });
     return out;
   },
 

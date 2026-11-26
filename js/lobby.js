@@ -46,7 +46,7 @@ function makeSlots(format, prev, duos) {
 
 function newLobby(prefs, firstCtrl) {
   const lobby = {
-    mode: prefs.mode === 'cup' && firstCtrl === 'p1' ? 'cup' : 'match', // zápas nebo turnaj (jen na tomto zařízení)
+    mode: prefs.mode === 'cup' && (firstCtrl === 'p1' || firstCtrl === 'host') ? 'cup' : 'match', // zápas nebo turnaj
     format: prefs.format === '1v1' ? '1v1' : '2v2',
     minutes: [1, 2, 3].includes(prefs.minutes) ? prefs.minutes : 2,
     level: AI_LEVELS[prefs.level] ? prefs.level : 'medium',
@@ -56,7 +56,7 @@ function newLobby(prefs, firstCtrl) {
   lobby.slots = makeSlots(lobby.format, null, lobby.duos);
   if (lobby.format === '1v1' && Array.isArray(prefs.chars)) {
     prefs.chars.forEach((c, i) => {
-      if (lobby.slots[i] && ROSTER.some((r) => r.id === c)) lobby.slots[i].char = c;
+      if (lobby.slots[i] && ROSTER.some((r) => r.id === c && charAvailable(r))) lobby.slots[i].char = c;
     });
   }
   if (firstCtrl) lobby.slots[0].ctrl = firstCtrl;
@@ -96,8 +96,11 @@ function releaseCtrl(lobby, ctrl) {
 }
 
 function cycleChar(id, d) {
-  const i = ROSTER.findIndex((c) => c.id === id);
-  return ROSTER[(i + d + ROSTER.length) % ROSTER.length].id;
+  const list = ROSTER.filter((c) => charAvailable(c) || c.id === id);
+  const i = list.findIndex((c) => c.id === id);
+  let j = (i + d + list.length) % list.length;
+  if (!charAvailable(list[j])) j = (j + d + list.length) % list.length;
+  return list[j].id;
 }
 
 // Hostitel zpracuje přání kamaráda (vybrat místo nebo postavu).
@@ -118,19 +121,35 @@ function applyWant(lobby, uid, want) {
 
 /* ---------------- turnaj: pavouk pro 4 týmy (semifinále a finále) ---------------- */
 
-// Hráč je vždy tým 0. Ostatní tři týmy se vylosují.
+// Oba týmy z lobby (i s lidmi, kteří za ně hrají) + 2 vylosované týmy počítače.
+// Semifinále: tým 1 – tým 3 a tým 2 – tým 4, ve finále se můžou potkat kamarádi.
 function newCup(lobby) {
-  const me = lobby.slots.find((s) => s.ctrl === 'p1') || lobby.slots[0];
-  const cup = { format: lobby.format, minutes: lobby.minutes, level: lobby.level, myChar: me.char, teams: [], res: { s1: null, s2: null, f: null }, stage: 's1' };
+  const cup = { format: lobby.format, minutes: lobby.minutes, level: lobby.level, teams: [], res: { s1: null, s2: null, f: null }, stage: 's1' };
+  const ctrls = (team) => lobby.slots.filter((s) => s.team === team).map((s) => s.ctrl);
   if (lobby.format === '2v2') {
-    const mine = lobby.duos[me.team];
-    const rest = shuffle(DUO_TEAMS.map((d, i) => i).filter((i) => i !== mine)).slice(0, 3);
-    cup.teams = [mine].concat(rest).map((duo) => ({ duo }));
+    const used = [lobby.duos[0], lobby.duos[1]];
+    const rest = shuffle(DUO_TEAMS.map((d, i) => i).filter((i) => !used.includes(i))).slice(0, 2);
+    cup.teams = [
+      { duo: used[0], ctrls: ctrls(0) }, { duo: used[1], ctrls: ctrls(1) },
+      { duo: rest[0], ctrls: ['cpu', 'cpu'] }, { duo: rest[1], ctrls: ['cpu', 'cpu'] },
+    ];
   } else {
-    const rest = shuffle(ROSTER.map((c) => c.id).filter((id) => id !== me.char)).slice(0, 3);
-    cup.teams = [me.char].concat(rest).map((char) => ({ char }));
+    const chars = [lobby.slots[0].char, lobby.slots[1].char];
+    const rest = shuffle(ROSTER.filter((c) => !c.locked && !chars.includes(c.id)).map((c) => c.id)).slice(0, 2);
+    cup.teams = [
+      { char: chars[0], ctrls: ctrls(0) }, { char: chars[1], ctrls: ctrls(1) },
+      { char: rest[0], ctrls: ['cpu'] }, { char: rest[1], ctrls: ['cpu'] },
+    ];
   }
   return cup;
+}
+
+const CUP_PAIRS = { s1: [0, 2], s2: [1, 3] };
+const CUP_NEXT = { s1: 's2', s2: 'f', f: 'done' };
+
+// Kdo hraje zápas `key` (indexy týmů).
+function cupPair(cup, key) {
+  return key === 'f' ? [cupWinner(cup, 's1'), cupWinner(cup, 's2')] : CUP_PAIRS[key];
 }
 
 // Jméno, postavy a barvy týmu v turnaji.
@@ -141,31 +160,54 @@ function cupTeam(cup, i) {
     return { name: d.name, chars: d.chars.slice(), T: d };
   }
   const c = charById(t.char), d = duoOf(c.id);
-  return { name: c.name.toUpperCase(), chars: [c.id], T: d >= 0 ? DUO_TEAMS[d] : SIDE_COLORS[0] };
+  return { name: c.name.toUpperCase(), chars: [c.id], T: d >= 0 ? DUO_TEAMS[d] : c.kit || SIDE_COLORS[i % 2] };
 }
 
 // Kdo vyhrál zápas v pavouku (index týmu) nebo -1.
 function cupWinner(cup, key) {
   const r = cup.res[key];
   if (!r) return -1;
-  const pair = key === 's1' ? [0, 1] : key === 's2' ? [2, 3] : [0, cupWinner(cup, 's2')];
+  const pair = key === 'f' ? [cupWinner(cup, 's1'), cupWinner(cup, 's2')] : CUP_PAIRS[key];
   return r[0] > r[1] ? pair[0] : pair[1];
 }
 
-// Lobby pro zápas v turnaji (já vlevo, soupeř vpravo). Ve finále je počítač o stupeň těžší.
-function cupLobby(cup, opp, final) {
+// Hraje za tým aspoň jeden člověk?
+function cupHuman(cup, i) {
+  return i >= 0 && cup.teams[i].ctrls.some((c) => c !== 'cpu');
+}
+
+// Lobby pro zápas `key` (první tým vlevo). Ve finále je počítač o stupeň těžší.
+function cupLobby(cup, key) {
   const levels = ['easy', 'medium', 'hard'];
-  const level = final ? levels[Math.min(2, levels.indexOf(cup.level) + 1)] : cup.level;
-  const me = cup.teams[0], op = cup.teams[opp];
-  let lobby;
+  const level = key === 'f' ? levels[Math.min(2, levels.indexOf(cup.level) + 1)] : cup.level;
+  const [a, b] = cupPair(cup, key);
+  const A = cup.teams[a], B = cup.teams[b];
   if (cup.format === '2v2') {
-    lobby = { format: '2v2', minutes: cup.minutes, level, duos: [me.duo, op.duo], slots: duoSlots([me.duo, op.duo]) };
-    lobby.slots.forEach((s) => { s.ctrl = 'cpu'; });
-    (lobby.slots.find((s) => s.team === 0 && s.char === cup.myChar) || lobby.slots[0]).ctrl = 'p1';
-  } else {
-    lobby = { format: '1v1', minutes: cup.minutes, level, duos: [0, 1], slots: [{ team: 0, char: me.char, ctrl: 'p1' }, { team: 1, char: op.char, ctrl: 'cpu' }] };
+    const lobby = { format: '2v2', minutes: cup.minutes, level, duos: [A.duo, B.duo], slots: duoSlots([A.duo, B.duo]) };
+    lobby.slots.forEach((s, k) => { s.ctrl = (k < 2 ? A.ctrls[k] : B.ctrls[k - 2]) || 'cpu'; });
+    return lobby;
   }
-  return lobby;
+  return { format: '1v1', minutes: cup.minutes, level, duos: [0, 1], slots: [{ team: 0, char: A.char, ctrl: A.ctrls[0] || 'cpu' }, { team: 1, char: B.char, ctrl: B.ctrls[0] || 'cpu' }] };
+}
+
+// Turnaj od hostitele (nedůvěryhodná data).
+function sanitizeCup(c) {
+  if (!c || typeof c !== 'object' || !Array.isArray(c.teams) || c.teams.length !== 4) return null;
+  const two = c.format === '2v2';
+  const res = (r) => (Array.isArray(r) && r.length === 2 ? [Number(r[0]) || 0, Number(r[1]) || 0] : null);
+  const teams = c.teams.map((t) => {
+    const ctrls = Array.isArray(t && t.ctrls) ? t.ctrls.slice(0, 2).map((x) => (typeof x === 'string' ? x.slice(0, 16) : 'cpu')) : ['cpu'];
+    if (two) {
+      const d = Number(t && t.duo);
+      return { duo: Number.isInteger(d) && d >= 0 && d < DUO_TEAMS.length ? d : 0, ctrls };
+    }
+    return { char: charById(t && t.char).id, ctrls };
+  });
+  return {
+    format: two ? '2v2' : '1v1', minutes: 2, level: AI_LEVELS[c.level] ? c.level : 'medium', teams,
+    res: { s1: res(c.res && c.res.s1), s2: res(c.res && c.res.s2), f: res(c.res && c.res.f) },
+    stage: ['s1', 's2', 'f', 'done'].includes(c.stage) ? c.stage : 's1',
+  };
 }
 
 // Druhé semifinále se odehraje „vedle“ – náhodný výsledek.
@@ -179,7 +221,7 @@ function teamsFor(lobby) {
   if (lobby.format === '2v2') return lobby.duos.map((i) => ({ ...DUO_TEAMS[i] }));
   const cols = [0, 1].map((i) => {
     const d = duoOf(lobby.slots[i].char);
-    return d >= 0 ? DUO_TEAMS[d] : SIDE_COLORS[i];
+    return d >= 0 ? DUO_TEAMS[d] : charById(lobby.slots[i].char).kit || SIDE_COLORS[i];
   });
   if (cols[0].color === cols[1].color) cols[1] = cols[0].color === SIDE_COLORS[1].color ? SIDE_COLORS[0] : SIDE_COLORS[1];
   return [0, 1].map((i) => {
@@ -266,8 +308,8 @@ const LobbyUI = {
       });
     });
     el.levelRow.hidden = !lobby.slots.some((s) => s.ctrl === 'cpu');
-    el.modeRow.hidden = ctx.mode !== 'local';
-    const cup = ctx.mode === 'local' && lobby.mode === 'cup';
+    el.modeRow.hidden = ctx.mode === 'guest';
+    const cup = lobby.mode === 'cup';
 
     // hlavička
     if (ctx.mode === 'local') {
@@ -315,22 +357,8 @@ const LobbyUI = {
     const portraits = [];
     for (let team = 0; team < 2; team++) {
       if (team === 1) {
-        const vs = this.el2('div', 'vs-badge', 'VS');
+        const vs = this.el2('div', 'vs-badge', cup ? '🏆' : 'VS');
         el.arena.appendChild(vs);
-      }
-      if (cup && team === 1) {
-        // turnaj: soupeře vylosuje pavouk
-        const col = this.el2('div', 'team-col side-1 cup-col');
-        col.style.setProperty('--team', '#ffc93c');
-        col.style.setProperty('--team-dark', '#7a4f00');
-        col.style.setProperty('--team-light', '#ffe9a0');
-        const box = this.el2('div', 'cup-info');
-        const icon = this.el2('span', 'cup-icon');
-        icon.innerHTML = '<svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v2.5a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 14.6V17h3v3H8v-3h3v-2.4A5 5 0 0 1 8.4 11.5H8a4 4 0 0 1-4-4V5h3zm0 4H6v.5a2 2 0 0 0 1.2 1.8zm10 0v2.3A2 2 0 0 0 18 7.5V7z"/></svg>';
-        box.append(icon, this.el2('strong', 'cup-name', 'TURNAJ'), this.el2('span', 'cup-line', '4 týmy · semifinále a finále'), this.el2('span', 'cup-line', 'Soupeře vylosuje pavouk, finále je těžší'));
-        col.appendChild(box);
-        el.arena.appendChild(col);
-        continue;
       }
       const T = teams[team];
       const col = this.el2('div', `team-col side-${team}`);
@@ -405,20 +433,23 @@ const LobbyUI = {
     const meSlot = lobby.slots.find((s) => s.ctrl === ctx.me);
     if (ctx.mode === 'local') {
       el.hint.textContent = cup
-        ? 'Vyber svůj tým a postavu. Vyhraj semifinále i finále a získáš pohár.'
+        ? 'Turnaj: tyhle dva týmy + 2 vylosované. Každý hraje své semifinále, ve finále se můžete potkat.'
         : two
           ? 'Šipkami vyber dvojice a klepni na postavu, za kterou chceš hrát. Ostatní hraje počítač. Spoluhráče na svém telefonu přidáš přes Online.'
           : 'Šipkami vyber postavy a klepni na tu, za kterou chceš hrát.';
     } else if (ctx.mode === 'host') {
-      el.hint.textContent = 'Klepni na postavu, za kterou chceš hrát. Kamarádi si vyberou u sebe, volná místa hraje počítač.';
+      el.hint.textContent = cup
+        ? 'Turnaj s kamarády: tyhle dva týmy + 2 vylosované. Kdo je ve stejném týmu, hraje spolu; ve finále se můžete potkat.'
+        : 'Klepni na postavu, za kterou chceš hrát. Kamarádi si vyberou u sebe, volná místa hraje počítač.';
     } else {
-      el.hint.textContent = meSlot ? 'Až budeš mít vybráno, dej „Jsem připraven“.' : 'Klepni na volnou postavu (Počítač), za kterou chceš hrát.';
+      el.hint.textContent = (cup ? 'Hostitel chystá TURNAJ. ' : '') + (meSlot ? 'Až budeš mít vybráno, dej „Jsem připraven“.' : 'Klepni na volnou postavu (Počítač), za kterou chceš hrát.');
     }
     el.start.hidden = ctx.mode === 'guest';
     if (ctx.mode === 'host') {
       const guests = ctx.members.filter((m) => m.uid !== 'host');
       const ready = guests.filter((m) => m.ready).length;
-      el.start.textContent = guests.length ? `Hrát (${ready}/${guests.length} připraveno)` : 'Hrát';
+      const word = cup ? 'Začít turnaj' : 'Hrát';
+      el.start.textContent = guests.length ? `${word} (${ready}/${guests.length})` : word;
     } else {
       el.start.textContent = cup ? 'Začít turnaj' : 'Hrát';
     }

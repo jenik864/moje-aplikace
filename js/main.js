@@ -118,8 +118,9 @@ const Game = {
     const db = (da + 1 + Math.floor(Math.random() * (DUO_TEAMS.length - 1))) % DUO_TEAMS.length;
     const lobby = newLobby({ format: two ? '2v2' : '1v1', duos: [da, db] });
     if (!two) {
-      lobby.slots[0].char = pick(ROSTER).id;
-      lobby.slots[1].char = pick(ROSTER).id;
+      const pool = ROSTER.filter((c) => !c.locked);
+      lobby.slots[0].char = pick(pool).id;
+      lobby.slots[1].char = pick(pool).id;
     }
     lobby.slots.forEach((s) => { s.ctrl = 'cpu'; });
     lobby.level = 'hard';
@@ -133,6 +134,7 @@ const Game = {
 
   toHome() {
     this.cup = null;
+    this.story = null;
     if (Online.active) Online.leave();
     this.mode = 'local';
     this.screen = 'home';
@@ -152,6 +154,7 @@ const Game = {
   },
 
   toOnline(code) {
+    this.story = null;
     this.screen = 'online';
     UI.show('online');
     UI.onlineStatus('');
@@ -179,6 +182,7 @@ const Game = {
 
   // mode: 'match' (Hrát) nebo 'cup' (Turnaj z hlavního menu)
   openLocalLobby(mode) {
+    this.story = null;
     this.mode = 'local';
     this.lobby = newLobby(Object.assign({}, this.prefs, mode ? { mode } : {}), 'p1');
     this.toLobby();
@@ -285,9 +289,6 @@ const Game = {
         l.format = a.value;
       } else if (a.key === 'mode') {
         l.mode = a.value === 'cup' ? 'cup' : 'match';
-        // v turnaji hraje hráč vždy za levý tým
-        const mine = l.slots.findIndex((s) => s.ctrl === 'p1');
-        if (l.mode === 'cup' && (mine < 0 || l.slots[mine].team !== 0)) claimSlot(l, 'p1', 0);
       } else {
         l[a.key] = a.value;
       }
@@ -296,7 +297,6 @@ const Game = {
       if (!s) return;
       if (this.mode === 'local') {
         // na jednom zařízení hraje jeden hráč: klepnutím si vybere postavu
-        if (l.mode === 'cup' && s.team !== 0) return;
         claimSlot(l, 'p1', a.slot);
       } else if (s.ctrl === 'host') {
         s.ctrl = 'cpu';
@@ -319,7 +319,7 @@ const Game = {
     const l = this.lobby;
     Online.publish({
       phase: 'lobby',
-      lobby: { format: l.format, minutes: l.minutes, level: l.level, duos: l.duos.slice(), slots: l.slots.map((s) => ({ team: s.team, char: s.char, ctrl: s.ctrl })), members: Online.members() },
+      lobby: { mode: l.mode, format: l.format, minutes: l.minutes, level: l.level, duos: l.duos.slice(), slots: l.slots.map((s) => ({ team: s.team, char: s.char, ctrl: s.ctrl })), members: Online.members() },
       setup: null,
       g: null,
     });
@@ -359,6 +359,11 @@ const Game = {
       const m = members.find((x) => x.uid === ctrl);
       return (m && m.name) || '';
     };
+    const skinOf = (ctrl) => {
+      if (ctrl === 'p1' || ctrl === 'host') return mySkin();
+      const m = members.find((x) => x.uid === ctrl);
+      return (m && m.skin) || '';
+    };
     return {
       id: randomId(6),
       rev: 0,
@@ -367,7 +372,7 @@ const Game = {
       level: lobby.level,
       minutes: lobby.minutes,
       teams: teamsFor(lobby),
-      players: lobby.slots.map((s) => ({ char: s.char, team: s.team, ctrl: s.ctrl, name: nameOf(s.ctrl) })),
+      players: lobby.slots.map((s) => ({ char: s.char, team: s.team, ctrl: s.ctrl, name: nameOf(s.ctrl), skin: skinOf(s.ctrl) })),
     };
   },
 
@@ -389,12 +394,17 @@ const Game = {
 
   start() {
     if (this.mode === 'guest') return;
+    // znovu stejná úroveň příběhu
+    if (this.story && this.setup && this.setup.story) {
+      this.playStory(this.setup.story - 1);
+      return;
+    }
     // znovu stejný zápas turnaje (z pauzy)
     if (this.cup && this.setup && this.setup.cup && this.screen === 'match') {
       this.playCupMatch();
       return;
     }
-    if (this.mode === 'local' && this.lobby.mode === 'cup' && this.screen === 'lobby') {
+    if ((this.mode === 'local' || this.mode === 'host') && this.lobby.mode === 'cup' && this.screen === 'lobby') {
       this.startCup();
       return;
     }
@@ -402,48 +412,181 @@ const Game = {
     this.beginMatch(this.buildSetup(this.lobby));
   },
 
+  /* ---------------- příběh ---------------- */
+
+  openStory() {
+    if (!Unlocks.has('story')) {
+      UI.showUnlock();
+      return;
+    }
+    if (Online.active) Online.leave();
+    this.cup = null;
+    this.story = { idx: -1 };
+    this.mode = 'local';
+    this.screen = 'story';
+    this.state = 'menu';
+    this.paused = null;
+    this.msg = null;
+    Effects.clear();
+    Touch.show(false);
+    Input.clear();
+    Sound.quiet = true;
+    Sound.crowdLevel(0.02);
+    if (!this.match || this.match.setup.demo !== true) this.newDemo();
+    UI.showStory();
+  },
+
+  tryUnlock(code) {
+    const norm = String(code || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').toUpperCase();
+    if (codeHash(norm) !== STORY_CODE) return false;
+    Unlocks.set('story');
+    return true;
+  },
+
+  storyChar() {
+    const id = Story.get().char, c = ROSTER.find((r) => r.id === id);
+    return c && charAvailable(c) ? c.id : 'jenda';
+  },
+
+  setStoryChar(id) {
+    const s = Story.get();
+    s.char = id;
+    Story.save(s);
+  },
+
+  // Zápas jedné úrovně: já (1 v 1) proti počítači.
+  playStory(idx) {
+    const st = Story.get();
+    idx = clamp(Math.floor(idx), 0, Math.min(st.done, STORY.length - 1));
+    const lv = STORY[idx], me = this.storyChar();
+    const opp = lv.opp === me ? STORY_ALT[lv.opp] || 'toma' : lv.opp;
+    if (Online.active) Online.leave();
+    this.mode = 'local';
+    this.cup = null;
+    this.story = { idx };
+    const lobby = newLobby({ format: '1v1', level: lv.level }, null);
+    const mine = lobby.slots.find((s) => s.team === 0), other = lobby.slots.find((s) => s.team === 1);
+    mine.char = me;
+    mine.ctrl = 'p1';
+    other.char = opp;
+    other.ctrl = 'cpu';
+    const setup = this.buildSetup(lobby);
+    setup.story = idx + 1;
+    setup.boost = lv.boost;
+    setup.label = `PŘÍBĚH · ÚROVEŇ ${idx + 1}`;
+    this.beginMatch(setup);
+  },
+
+  // Výsledek úrovně (jednou za zápas): postup a odměny.
+  storyRecord() {
+    const m = this.match, s = this.setup;
+    if (!this.story || !s || !s.story || !m) return null;
+    if (this.storyRes && this.storyRes.id === s.id) return this.storyRes;
+    const me = this.myPlayer();
+    const idx = s.story - 1;
+    const win = !!me && m.winner() === me.team;
+    const st = Story.get(), rewards = [];
+    let fresh = false;
+    if (win) {
+      if (idx >= st.done) {
+        st.done = idx + 1;
+        Story.save(st);
+        fresh = true;
+      }
+      const rw = STORY[idx].reward;
+      if (rw && !Unlocks.has(rw)) {
+        Unlocks.set(rw);
+        if (rw === 'gold') Unlocks.set('goldOn');
+        rewards.push(rw);
+      }
+    }
+    this.storyRes = { id: s.id, idx, win, fresh, rewards };
+    return this.storyRes;
+  },
+
   /* ---------------- turnaj ---------------- */
 
   startCup() {
     this.cup = newCup(this.lobby);
+    this.cupAdvance();
+    this.showCupAll();
+  },
+
+  // Moje ovládání (podle něj se pozná „můj“ tým v pavouku).
+  myCtrl() {
+    return this.mode === 'local' ? 'p1' : this.mode === 'host' ? 'host' : Online.uid;
+  },
+
+  myCupTeam() {
+    const cup = this.cup, me = this.myCtrl();
+    return cup ? cup.teams.findIndex((t) => t.ctrls.includes(me)) : -1;
+  },
+
+  // Zápasy, kde nehraje žádný člověk, se odehrají „vedle“ (náhodný výsledek).
+  cupAdvance() {
+    const cup = this.cup;
+    while (cup.stage !== 'done') {
+      const [a, b] = cupPair(cup, cup.stage);
+      if (cupHuman(cup, a) || cupHuman(cup, b)) break;
+      cup.res[cup.stage] = simCupMatch();
+      cup.stage = CUP_NEXT[cup.stage];
+    }
+    if (cup.stage === 'done') cup.won = this.myCupTeam() >= 0 && cupWinner(cup, 'f') === this.myCupTeam();
+  },
+
+  // Pavouk u hostitele i u kamarádů.
+  showCupAll() {
+    if (this.mode === 'host') {
+      this.screen = 'cup';
+      Online.publish({ phase: 'cup', cup: this.cupNet(), lobby: null, setup: null, g: null });
+    }
+    if (this.screen === 'match') {
+      this.screen = 'cup';
+      Touch.show(false);
+    }
     UI.showCup();
   },
 
-  // Další zápas turnaje: semifinále proti týmu 1, finále proti vítězi druhého semifinále.
+  cupNet() {
+    const c = this.cup;
+    return { format: c.format, level: c.level, teams: c.teams, res: c.res, stage: c.stage };
+  },
+
+  // Další zápas turnaje.
   playCupMatch() {
     const cup = this.cup;
-    if (!cup || cup.stage === 'done') return;
-    const final = cup.stage === 'f';
-    const opp = final ? cupWinner(cup, 's2') : 1;
-    const setup = this.buildSetup(cupLobby(cup, opp, final));
+    if (!cup || cup.stage === 'done' || this.mode === 'guest') return;
+    const lobby = cupLobby(cup, cup.stage);
+    // kamarád, který mezitím odešel, je nahrazen počítačem
+    if (this.mode === 'host') {
+      const here = new Set(Online.members().map((x) => x.uid));
+      lobby.slots.forEach((sl) => { if (sl.ctrl !== 'cpu' && !here.has(sl.ctrl)) sl.ctrl = 'cpu'; });
+    }
+    const setup = this.buildSetup(lobby);
     setup.cup = true;
-    setup.stage = final ? 'FINÁLE' : 'SEMIFINÁLE';
+    setup.stage = cup.stage === 'f' ? 'FINÁLE' : 'SEMIFINÁLE';
     this.beginMatch(setup);
   },
 
-  // Výsledek mého zápasu do pavouka (jednou za zápas).
+  // Výsledek zápasu do pavouka (jednou za zápas, počítá hostitel).
   cupRecord() {
     const cup = this.cup, m = this.match;
-    if (!cup || !this.setup || !this.setup.cup || cup.lastId === this.setup.id || m.winner() < 0) return;
+    if (!cup || this.mode === 'guest' || !this.setup || !this.setup.cup || cup.lastId === this.setup.id || m.winner() < 0) return;
     cup.lastId = this.setup.id;
-    // po penaltách se do pavouka zapíše o gól víc vítězi (aby bylo vidět, kdo postoupil)
+    // po penaltách se do pavouka zapíše o půl gólu víc vítězi (aby bylo vidět, kdo postoupil)
     const w = m.winner();
     const sc = [m.score[0], m.score[1]];
     if (sc[0] === sc[1]) sc[w] += 0.5;
-    if (cup.stage === 's1') {
-      cup.res.s1 = sc;
-      cup.res.s2 = simCupMatch();
-      cup.stage = w === 0 ? 'f' : 'done';
-    } else if (cup.stage === 'f') {
-      cup.res.f = sc;
-      cup.stage = 'done';
-      cup.won = w === 0;
-    }
+    cup.res[cup.stage] = sc;
+    cup.stage = CUP_NEXT[cup.stage];
+    this.cupAdvance();
+    if (this.mode === 'host') Online.publish({ cup: this.cupNet() });
   },
 
   quitCup() {
     this.cup = null;
-    this.toLobby();
+    if (this.mode === 'host') Online.publish({ cup: null });
+    this.backToLobby();
   },
 
   beginMatch(setup) {
@@ -493,7 +636,7 @@ const Game = {
 
   netSetup() {
     const s = this.setup;
-    return { id: s.id, rev: s.rev, format: s.format, minutes: s.minutes, teams: s.teams, players: s.players };
+    return { id: s.id, rev: s.rev, format: s.format, minutes: s.minutes, teams: s.teams, players: s.players, cup: s.cup ? 1 : 0, stage: s.stage || '', label: s.label || '' };
   },
 
   pause() {
@@ -517,6 +660,10 @@ const Game = {
   },
 
   backToLobby() {
+    if (this.story && this.mode === 'local') {
+      this.openStory();
+      return;
+    }
     this.cup = null;
     if (this.mode === 'host') this.publishLobby();
     this.toLobby();
@@ -699,6 +846,15 @@ const Game = {
           Effects.say(a[0], 'STŘÍLIM TY TROJKY', col, 2.2);
           Effects.puff(m.ball.x, m.ball.y);
           if (live) Sound.dribble();
+        } else if (kind === 'redcard') {
+          Effects.say(a[0], 'ČERVENÁ!', '#ff2d2d', 2);
+          Effects.rings.push({ x: p.x, y: p.y, t: 0, dur: 0.5, r0: 20, r1: 220, rgb: '255,45,45' });
+          for (const o of m.players) if (o.team !== p.team) Effects.rings.push({ x: o.x, y: o.y, t: 0, dur: 0.4, r0: 8, r1: 70, rgb: '255,45,45' });
+          if (live) {
+            Effects.pop('ČERVENÁ KARTA!', p.x, p.y - 120, '#ff3b3b', 38);
+            Effects.shake(5);
+            Sound.whistle('long');
+          }
         } else if (kind === 'vo2') {
           Effects.say(a[0], 'MÁM VO2max 67', col, 2.6);
           Effects.rings.push({ x: p.x, y: p.y, t: 0, dur: 0.45, r0: 20, r1: 110, rgb: hexRgb(col) });
@@ -1908,12 +2064,27 @@ const Game = {
 
   onHostPresence(hp) {
     if (!hp || this.mode !== 'guest') return;
+    if ('cup' in hp) {
+      this.cup = hp.cup ? sanitizeCup(hp.cup) : null;
+      if (this.cup && this.cup.stage === 'done') this.cup.won = this.myCupTeam() >= 0 && cupWinner(this.cup, 'f') === this.myCupTeam();
+    }
+    if (hp.phase === 'cup') {
+      if (this.cup) {
+        if (this.screen === 'match') Touch.show(false);
+        this.screen = 'cup';
+        if (UI.el.cup.hidden || this._cupKey !== JSON.stringify(hp.cup)) {
+          this._cupKey = JSON.stringify(hp.cup);
+          UI.showCup();
+        }
+      }
+      return;
+    }
     if (hp.phase === 'closed') {
       this.hostGone();
       return;
     }
     if (hp.phase === 'lobby') {
-      if (this.screen === 'match') this.toLobby();
+      if (this.screen === 'match' || this.screen === 'cup') this.toLobby();
       else this.renderLobby();
       return;
     }
@@ -1971,7 +2142,8 @@ const Game = {
     Effects.clear();
     UI.show(null);
     Touch.build();
-    Touch.show(true);
+    // kamarád, který v tomhle zápase nehraje (turnaj), se jen dívá
+    Touch.show(setup.players.some((sp) => sp.ctrl === Online.uid));
     Sound.crowdLevel(0.05);
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   },
@@ -2193,6 +2365,7 @@ function sanitizeLobby(l) {
   if (!l || typeof l !== 'object' || !Array.isArray(l.slots)) return null;
   const format = l.format === '1v1' ? '1v1' : '2v2';
   return {
+    mode: l.mode === 'cup' ? 'cup' : 'match',
     format,
     minutes: [1, 2, 3].includes(l.minutes) ? l.minutes : 2,
     level: AI_LEVELS[l.level] ? l.level : 'medium',
@@ -2231,7 +2404,11 @@ function sanitizeSetup(s) {
       team: p && p.team === 1 ? 1 : 0,
       ctrl: p && typeof p.ctrl === 'string' ? p.ctrl.slice(0, 16) : 'cpu',
       name: cleanName(p && p.name),
+      skin: p && p.skin === 'gold' ? 'gold' : '',
     })),
+    cup: !!s.cup,
+    stage: ['SEMIFINÁLE', 'FINÁLE'].includes(s.stage) ? s.stage : '',
+    label: typeof s.label === 'string' ? s.label.slice(0, 40) : '',
   };
 }
 
@@ -2250,6 +2427,7 @@ const UI = {
       resMain: $('btn-res-main'), resSecond: $('btn-res-second'), resThird: $('btn-res-third'), resWait: $('res-wait'),
       pauseSecond: $('btn-restart'), pauseThird: $('btn-quit'),
       profile: $('profile'), chip: $('profile-chip'), cup: $('cup'), half: $('half'),
+      story: $('story'), unlock: $('unlock'),
     };
     const click = (id, fn) => $(id).addEventListener('click', () => {
       Sound.init();
@@ -2266,6 +2444,41 @@ const UI = {
     click('btn-online', () => {
       this.goFullscreen();
       Game.toOnline();
+    });
+    click('btn-story', () => {
+      this.goFullscreen();
+      Game.openStory();
+    });
+    click('btn-unlock-back', () => this.show('home'));
+    $('unlock-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      Sound.init();
+      const input = $('unlock-code');
+      if (Game.tryUnlock(input.value)) {
+        input.blur();
+        this.updateLocks();
+        Sound.fanfare();
+        this.toast('Příběh odemčen!');
+        Game.openStory();
+      } else {
+        $('unlock-err').hidden = false;
+        const f = $('unlock-form');
+        f.classList.remove('shake');
+        void f.offsetWidth;
+        f.classList.add('shake');
+        Sound.beep(false);
+      }
+    });
+    $('unlock-code').addEventListener('input', () => { $('unlock-err').hidden = true; });
+    click('btn-story-back', () => Game.toHome());
+    click('btn-sc-prev', () => this.storyCycle(-1));
+    click('btn-sc-next', () => this.storyCycle(1));
+    click('btn-gold', () => {
+      Unlocks.set('goldOn', !Unlocks.has('goldOn'));
+      this.showStory();
+    });
+    click('btn-story-play', () => {
+      if (this.storySel >= 0) Game.playStory(this.storySel);
     });
     click('btn-swap', () => this.setSwap(!Touch.swap));
     click('profile-chip', () => this.openProfile());
@@ -2306,11 +2519,14 @@ const UI = {
     click('btn-restart', () => Game.start());
     click('btn-quit', () => Game.backToLobby());
     click('btn-res-main', () => {
-      if (Game.cup && Game.setup && Game.setup.cup) this.showCup();
+      const sr = Game.story && Game.setup && Game.setup.story ? Game.storyRecord() : null;
+      if (sr) Game.playStory(sr.win && sr.idx + 1 < STORY.length ? sr.idx + 1 : sr.idx);
+      else if (Game.cup && Game.setup && Game.setup.cup) Game.showCupAll();
       else if (Game.mode !== 'guest') Game.start();
     });
     click('btn-res-second', () => {
-      if (Game.mode === 'guest') Game.toHome();
+      if (Game.story) Game.openStory();
+      else if (Game.mode === 'guest') Game.toHome();
       else if (Game.cup) Game.quitCup();
       else Game.backToLobby();
     });
@@ -2479,13 +2695,14 @@ const UI = {
     const cup = Game.cup;
     if (!cup) return;
     const $ = (id) => document.getElementById(id);
+    const mine = Game.myCupTeam();
     const box = (id, key, a, b) => {
       const el = $(id);
       el.textContent = '';
       const r = cup.res[key], w = cupWinner(cup, key);
       [a, b].forEach((ti, k) => {
         const row = document.createElement('div');
-        row.className = 'br-team' + (ti === 0 ? ' me' : '') + (r ? (ti === w ? ' win' : ' lose') : '');
+        row.className = 'br-team' + (ti >= 0 && ti === mine ? ' me' : '') + (r ? (ti === w ? ' win' : ' lose') : '');
         const pics = document.createElement('span');
         pics.className = 'br-pics';
         let name = '?';
@@ -2502,7 +2719,8 @@ const UI = {
         }
         const nm = document.createElement('span');
         nm.className = 'br-name';
-        nm.textContent = name + (ti === 0 ? ' (TY)' : '');
+        const friend = ti >= 0 && ti !== mine && cupHuman(cup, ti);
+        nm.textContent = name + (ti >= 0 && ti === mine ? ' (TY)' : friend ? ' (KAMARÁD)' : '');
         const sc = document.createElement('b');
         sc.className = 'br-score';
         sc.textContent = r ? (r[k] % 1 ? `${Math.floor(r[k])}p` : r[k]) : '–';
@@ -2510,18 +2728,27 @@ const UI = {
         el.appendChild(row);
       });
     };
-    box('br-s1', 's1', 0, 1);
-    box('br-s2', 's2', 2, 3);
+    box('br-s1', 's1', 0, 2);
+    box('br-s2', 's2', 1, 3);
     box('br-f', 'f', cup.res.s1 ? cupWinner(cup, 's1') : -1, cup.res.s2 ? cupWinner(cup, 's2') : -1);
     const champ = cup.stage === 'done' && cup.won;
-    $('br-cup').classList.toggle('won', champ);
-    const sub = cup.stage === 's1' ? 'Losování je hotové. Čeká tě semifinále!'
-      : cup.stage === 'f' ? 'Jsi ve finále! Soupeř bude těžší.'
-        : champ ? 'Pohár je tvůj! +15 pohárů navíc.' : 'Tentokrát to nevyšlo. Zkus to znovu!';
+    $('br-cup').classList.toggle('won', champ || cup.stage === 'done');
+    let sub;
+    if (cup.stage === 'done') {
+      const wi = cupWinner(cup, 'f');
+      sub = champ ? 'Pohár je tvůj! +15 pohárů navíc.' : `Turnaj vyhráli ${wi >= 0 ? cupTeam(cup, wi).name : '?'}.`;
+    } else {
+      const [a, b] = cupPair(cup, cup.stage);
+      sub = `${cup.stage === 'f' ? 'Finále' : 'Semifinále'}: ${cupTeam(cup, a).name} – ${cupTeam(cup, b).name}`;
+    }
     $('cup-title').textContent = champ ? 'Turnaj vyhrán!' : 'Turnaj';
     $('cup-sub').textContent = sub;
-    $('btn-cup-play').textContent = cup.stage === 's1' ? 'Hrát semifinále' : cup.stage === 'f' ? 'Hrát finále' : 'Nový turnaj';
-    $('btn-cup-quit').textContent = cup.stage === 'done' ? 'Hotovo' : cup.stage === 's1' ? 'Zpět' : 'Ukončit turnaj';
+    const guest = Game.mode === 'guest';
+    $('btn-cup-play').hidden = guest;
+    $('btn-cup-quit').hidden = guest;
+    $('cup-wait').hidden = !guest;
+    $('btn-cup-play').textContent = cup.stage === 'f' ? 'Hrát finále' : cup.stage === 'done' ? 'Nový turnaj' : 'Hrát semifinále';
+    $('btn-cup-quit').textContent = cup.stage === 'done' ? 'Hotovo' : 'Ukončit turnaj';
     this.show('cup');
     if (champ && !cup.celebrated) {
       cup.celebrated = true;
@@ -2678,13 +2905,14 @@ const UI = {
   },
 
   show(name) {
-    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half']) {
+    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock']) {
       this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home');
     }
     this.el.chip.hidden = name !== 'home';
     document.getElementById('app').classList.toggle('on-home', name === 'home');
     // u velkých tabulek schovat ikony v rohu, ať nic nepřekrývají
-    document.getElementById('app').classList.toggle('modal', name === 'result' || name === 'profile' || name === 'cup' || name === 'half');
+    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock'].includes(name));
+    if (name === 'home') this.updateLocks();
     this.measureHud();
     this.el.pauseBtn.hidden = !(Game.screen === 'match' && Game.mode !== 'guest' && (Game.inMatch() || Game.state === 'paused'));
     if (name === 'pause') {
@@ -2734,15 +2962,138 @@ const UI = {
     this.el.resThird.textContent = Game.mode === 'host' ? 'Ukončit online hru' : 'Hlavní menu';
     if (Game.cup && setup.cup) {
       Game.cupRecord();
-      const cup = Game.cup, won = m.winner() === 0;
+      const cup = Game.cup, me = Game.myCtrl();
+      const mySp = setup.players.find((sp) => sp.ctrl === me);
       this.el.resKicker.textContent = `Turnaj · ${setup.stage}`;
-      this.el.resTitle.textContent = cup.stage === 'f' ? 'Postup do finále!' : cup.won ? 'Turnaj vyhrán!' : setup.stage === 'FINÁLE' ? 'Prohra ve finále' : 'Konec turnaje';
-      this.el.resTitle.style.color = won ? '#ffc93c' : T.light;
+      if (mySp) {
+        const myWon = m.winner() === mySp.team;
+        this.el.resTitle.textContent = cup.stage === 'done' && cup.won ? 'Turnaj vyhrán!' : myWon ? 'Postup do finále!' : setup.stage === 'FINÁLE' ? 'Prohra ve finále' : 'Vypadli jste';
+        this.el.resTitle.style.color = myWon ? '#ffc93c' : T.light;
+      }
       this.el.resMain.textContent = 'Pokračovat';
-      this.el.resSecond.textContent = 'Ukončit turnaj';
+      this.el.resSecond.textContent = guest ? 'Odejít ze hry' : 'Ukončit turnaj';
+    }
+    const sr = Game.story && setup.story ? Game.storyRecord() : null;
+    if (sr) {
+      const last = sr.idx + 1 >= STORY.length;
+      this.el.resKicker.textContent = `Příběh · úroveň ${sr.idx + 1}`;
+      this.el.resTitle.textContent = sr.win ? (last ? 'Příběh dokončen!' : `Úroveň ${sr.idx + 1} splněna!`) : 'Prohra – zkus to znovu';
+      this.el.resTitle.style.color = sr.win ? '#ffc93c' : T.light;
+      this.el.resMain.textContent = sr.win && !last ? 'Další úroveň' : sr.win ? 'Hrát znovu' : 'Zkusit znovu';
+      this.el.resSecond.textContent = 'Příběh';
+      if (sr.rewards.length) {
+        const txt = sr.rewards.map((r) => (r === 'gold' ? 'ZLATÝ DRES' : 'nový hráč MILAN')).join(' + ');
+        this.el.resSub.textContent = `Odměna: ${txt}!`;
+        setTimeout(() => {
+          Sound.fanfare();
+          this.toast(sr.rewards.includes('milan') ? 'Odemčen nový hráč: Milan Voračka!' : 'Odměna: ZLATÝ DRES! Už ho máš na sobě.');
+        }, 700);
+      }
     }
     this.show('result');
     this.renderRewards();
+  },
+
+  // Zámek u tlačítka Příběh.
+  updateLocks() {
+    const l = document.getElementById('story-lock');
+    if (l) l.hidden = Unlocks.has('story');
+  },
+
+  showUnlock() {
+    const $ = (id) => document.getElementById(id);
+    $('unlock-code').value = '';
+    $('unlock-err').hidden = true;
+    this.show('unlock');
+    if (!Touch.enabled) $('unlock-code').focus({ preventScroll: true });
+  },
+
+  storySel: -1,
+
+  storyCycle(d) {
+    const id = cycleChar(Game.storyChar(), d);
+    Game.setStoryChar(id);
+    Sound.click();
+    this.showStory(true);
+  },
+
+  // Mapa příběhu: 10 úrovní, výběr hráče a zlatý dres.
+  showStory(keepSel) {
+    const $ = (id) => document.getElementById(id);
+    const st = Story.get(), me = Game.storyChar(), look = charById(me);
+    const d = duoOf(me), T = d >= 0 ? DUO_TEAMS[d] : look.kit || SIDE_COLORS[0];
+    const gold = mySkin() === 'gold';
+    const kit = gold ? GOLD_KIT : T;
+    $('story-prog').textContent = `${st.done} / ${STORY.length}`;
+    $('story-title').textContent = st.done >= STORY.length ? 'Příběh dokončen' : 'Příběh';
+    $('story-name').textContent = look.name;
+    const pw = POWERS[powerOf(me)];
+    $('story-power').textContent = `${pw.icon} ${pw.name}`;
+    document.querySelector('.story-me').style.setProperty('--me', kit.color);
+    requestAnimationFrame(() => Renderer.portrait($('story-pic'), me, kit, 1));
+    const gb = $('btn-gold');
+    gb.hidden = !Unlocks.has('gold');
+    gb.setAttribute('aria-pressed', String(gold));
+    $('gold-label').textContent = gold ? 'Zlatý dres: zapnutý' : 'Zlatý dres: vypnutý';
+    const cur = Math.min(st.done, STORY.length - 1);
+    if (!keepSel || this.storySel < 0 || this.storySel > cur) this.storySel = cur;
+    const map = $('story-map');
+    map.textContent = '';
+    STORY.forEach((lv, i) => {
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.type = 'button';
+      const opp = lv.opp === me ? STORY_ALT[lv.opp] || 'toma' : lv.opp;
+      const oc = charById(opp), od = duoOf(opp), oT = od >= 0 ? DUO_TEAMS[od] : oc.kit || SIDE_COLORS[1];
+      const locked = i > st.done;
+      b.className = 'sn' + (i < st.done ? ' done' : i === st.done ? ' cur' : ' locked') + (i === STORY.length - 1 ? ' boss' : '') + (i === this.storySel ? ' sel' : '');
+      b.disabled = locked;
+      b.setAttribute('aria-label', `Úroveň ${i + 1}: ${oc.name}${locked ? ' (zamčeno)' : ''}`);
+      const num = document.createElement('span');
+      num.className = 'sn-num';
+      num.textContent = i + 1;
+      const cv = document.createElement('canvas');
+      cv.className = 'sn-pic';
+      const nm = document.createElement('span');
+      nm.className = 'sn-name';
+      nm.textContent = i === STORY.length - 1 ? 'BOSS' : oc.name;
+      b.append(num, cv, nm);
+      if (lv.reward) {
+        const bd = document.createElement('span');
+        bd.className = 'sn-badge';
+        bd.textContent = lv.reward === 'gold' ? '👕' : '⭐';
+        b.appendChild(bd);
+      }
+      if (i < st.done) {
+        const ck = document.createElement('span');
+        ck.className = 'sn-check';
+        ck.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+        b.appendChild(ck);
+      }
+      if (locked) {
+        const lk = document.createElement('span');
+        lk.className = 'sn-lock';
+        lk.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+        b.appendChild(lk);
+      }
+      b.addEventListener('click', () => {
+        Sound.init();
+        Sound.click();
+        this.storySel = i;
+        this.showStory(true);
+      });
+      li.appendChild(b);
+      map.appendChild(li);
+      requestAnimationFrame(() => Renderer.portrait(cv, opp, oT, -1, undefined, { head: true }));
+    });
+    const lv = STORY[this.storySel];
+    const diff = { easy: 'Lehká', medium: 'Střední', hard: 'Těžká' }[lv.level];
+    const boss = this.storySel === STORY.length - 1;
+    $('si-kicker').textContent = `Úroveň ${this.storySel + 1} · ${boss ? 'Boss' : diff}${this.storySel < st.done ? ' · splněno ✓' : ''}`;
+    $('si-title').textContent = lv.title;
+    $('si-text').textContent = lv.text;
+    $('btn-story-play').textContent = this.storySel < st.done ? 'Hrát znovu' : 'Hrát';
+    if (Game.screen === 'story') this.show('story');
   },
 
   orient() {

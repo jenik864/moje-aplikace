@@ -1292,7 +1292,7 @@ const Renderer = {
       ctx.font = `800 26px ${FONT_U}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const label = g.setup && g.setup.stage ? `TURNAJ · ${g.setup.stage}` : `${g.setup ? (g.setup.format === '2v2' ? '2 V 2' : '1 V 1') : ''} · ZÁPAS ZAČÍNÁ`;
+      const label = g.setup && g.setup.label ? g.setup.label : g.setup && g.setup.stage ? `TURNAJ · ${g.setup.stage}` : `${g.setup ? (g.setup.format === '2v2' ? '2 V 2' : '1 V 1') : ''} · ZÁPAS ZAČÍNÁ`;
       const w = ctx.measureText(label).width + 40;
       ctx.fillStyle = 'rgba(8,13,26,.8)';
       rrect(ctx, W / 2 - w / 2, 130, w, 40, 20);
@@ -1512,6 +1512,17 @@ const Renderer = {
         this.drawPlayer(ctx, p, ball, kit, now);
       } finally {
         p._primeDraw = false;
+      }
+      return;
+    }
+    // zlatý dres (odměna z příběhu)
+    if (p.skin === 'gold' && !p._primeDraw && !p._goldDraw) {
+      const kit = p.team === 0 ? [GOLD_KIT, teams[1]] : [teams[0], GOLD_KIT];
+      p._goldDraw = true;
+      try {
+        this.drawPlayer(ctx, p, ball, kit, now);
+      } finally {
+        p._goldDraw = false;
       }
       return;
     }
@@ -3198,6 +3209,19 @@ const Renderer = {
       canvas._ph = Math.random() * 10;
     }
     const extra = (p.F - PHYS.footH) / PS; // vysoký hráč má delší nohy
+    if (opts && opts.head) {
+      // jen hlava (malé ikonky): přiblížit na obličej
+      const kh = (Math.min(w, h) * dpr) / (p.R * 2.5);
+      ctx.setTransform(kh, 0, 0, kh, canvas.width / 2, canvas.height / 2 + p.R * 0.12 * kh);
+      p.x = 0;
+      p.y = 0;
+      p.dir = facing;
+      p.blink = 0;
+      p.mood = 0;
+      p.homeX = (canvas._ph || 0) * 100;
+      this.drawPlayer(ctx, p, { x: facing * 300, y: -20 }, [team], 0);
+      return;
+    }
     const k = (Math.min(w / 126, h / (170 + extra)) * dpr) / PS;
     const live = typeof t === 'number';
     const ph = canvas._ph || 0;

@@ -68,6 +68,11 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v3a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 12v4M8 20h8M9.5 16h5v4h-5z"/></svg>
             Turnaj
           </button>
+          <button id="btn-story" class="btn-game orange" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V4M5 4h11l-2.5 4L16 12H5"/></svg>
+            <span>Příběh</span>
+            <svg id="story-lock" class="lock" viewBox="0 0 24 24" aria-label="Zamčeno"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          </button>
         </div>
         <div class="sponsors" aria-label="Partneři hry">
           <span class="sp-k">Partneři</span>
@@ -255,6 +260,61 @@
       <div class="dialog-buttons row">
         <button id="btn-cup-quit" class="btn-game" type="button">Ukončit turnaj</button>
         <button id="btn-cup-play" class="btn-play" type="button">Hrát semifinále</button>
+      </div>
+      <p id="cup-wait" class="status wait" hidden>Čeká se, až hostitel spustí další zápas…</p>
+    </div>
+  </section>
+
+  <!-- odemčení příběhu kódem -->
+  <section id="unlock" class="screen dim" aria-labelledby="unlock-title" hidden>
+    <form id="unlock-form" class="dialog unlock" autocomplete="off">
+      <svg class="big-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      <h2 id="unlock-title" class="screen-title">Příběh je zamčený</h2>
+      <p class="unlock-sub">Zadej tajný kód</p>
+      <input id="unlock-code" class="unlock-input" type="text" maxlength="16" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Kód">
+      <p id="unlock-err" class="status error" hidden>Špatný kód</p>
+      <div class="dialog-buttons row">
+        <button id="btn-unlock-back" class="btn-game" type="button">Zpět</button>
+        <button id="btn-unlock-go" class="btn-play" type="submit">Odemknout</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- příběh -->
+  <section id="story" class="screen story-screen" aria-labelledby="story-title" hidden>
+    <div class="dialog story">
+      <header class="story-head">
+        <button id="btn-story-back" class="btn-mini" type="button" aria-label="Zpět">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <h2 id="story-title" class="screen-title">Příběh</h2>
+        <span id="story-prog" class="story-prog">0 / 10</span>
+      </header>
+      <div class="story-body">
+        <div class="story-me">
+          <p class="mini-kicker">Tvůj hráč</p>
+          <div class="sm-pick">
+            <button id="btn-sc-prev" class="btn-mini sm-arr" type="button" aria-label="Předchozí hráč"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <canvas id="story-pic" class="story-pic" aria-hidden="true"></canvas>
+            <button id="btn-sc-next" class="btn-mini sm-arr" type="button" aria-label="Další hráč"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+          </div>
+          <p id="story-name" class="sm-name"></p>
+          <p id="story-power" class="sm-power"></p>
+          <button id="btn-gold" class="btn-chip gold" type="button" aria-pressed="false" hidden>
+            <span id="gold-label">Zlatý dres</span>
+          </button>
+        </div>
+        <div class="story-right">
+          <ol id="story-map" class="story-map" aria-label="Úrovně"></ol>
+          <div class="story-info">
+            <div class="si-text">
+              <p id="si-kicker" class="mini-kicker"></p>
+              <h3 id="si-title" class="si-title"></h3>
+              <p id="si-text" class="si-desc"></p>
+            </div>
+            <button id="btn-story-play" class="btn-play" type="button">Hrát</button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
