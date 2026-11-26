@@ -68,7 +68,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.28';
+const GAME_VERSION = '1.29';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -165,9 +165,10 @@ const charListed = (c) => !c.hidden || charAvailable(c);
 const MONCLER_KIT = { name: 'MONCLER-JENDA', short: 'Moncler-Jenda', color: '#f7f8fa', dark: '#cfd5de', light: '#1c2230', num: '#1c2230' };
 // Skiny postav: každý patří jedné postavě, zapíná se u ní (v lobby, v Příběhu nebo v Úkolech).
 const SKINS = {
-  moncler: { char: 'jenda', name: 'Moncler-Jenda', short: 'Moncler' },
+  moncler: { char: 'jenda', name: 'Moncler-Jenda', short: 'Moncler', kit: MONCLER_KIT },
   bikini: { char: 'kiki', name: 'Kiki v bikinách', short: 'Bikiny' },
-  michael: { char: 'bemic', name: 'Michael Bémič', short: 'Michael', look: { skin: '#7a4b30', hair: 'bald', brow: '#1d130c', eyes: '#2f1d12', hairColor: '#2a1a10', hairDark: '#120a05', hairLight: '#5a3a24' } },
+  // červený basketbalový dres bez rukávů s číslem 23 (bez loga klubu)
+  michael: { char: 'bemic', name: 'Michael Bémič', short: 'Michael', kit: { name: 'MICHAEL', short: 'Michael', color: '#ce1141', dark: '#8f0a2c', light: '#111111', num: '#ffffff' }, look: { num: 23, skin: '#7a4b30', hair: 'bald', brow: '#1d130c', eyes: '#2f1d12', hairColor: '#2a1a10', hairDark: '#120a05', hairLight: '#5a3a24' } },
 };
 const skinOwned = (id) => !!SKINS[id] && Unlocks.has(id);
 const skinOn = (id) => skinOwned(id) && Unlocks.has('on.' + id);
@@ -200,7 +201,7 @@ function lookFor(charId, skin) {
 const TASKS = [
   { id: 'milan', title: 'Odehraj 15 zápasů', goal: 15, reward: 'milan', kind: 'char', char: 'milan', name: 'MILAN VORAČKA', text: 'Rozhodčí jako hráč, schopnost Červená karta.' },
   { id: 'bikini', title: 'Dej 15 gólů v jednom zápase', goal: 15, reward: 'bikini', kind: 'skin', char: 'kiki', name: 'KIKI V BIKINÁCH', text: 'Plážový skin pro Kiki.' },
-  { id: 'michael', title: 'Dej 30 gólů za Bémiče', goal: 30, reward: 'michael', kind: 'skin', char: 'bemic', name: 'MICHAEL BÉMIČ', text: 'Skin pro Bémiče: holohlavý a s tmavou kůží.' },
+  { id: 'michael', title: 'Dej 30 gólů za Bémiče', goal: 30, reward: 'michael', kind: 'skin', char: 'bemic', name: 'MICHAEL BÉMIČ', text: 'Skin pro Bémiče: holohlavý, tmavá kůže a červený basketbalový dres s číslem 23.' },
 ];
 const TASK_KEY = 'hlavouni.ukoly';
 const Tasks = {

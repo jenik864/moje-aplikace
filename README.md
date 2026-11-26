@@ -98,7 +98,7 @@ Tlačítko *Úkoly* dole v hlavním menu. Postup se počítá ze všech zápasů
 | --- | --- |
 | Odehraj 15 zápasů | hráč **Milan Voračka** (do té doby je ve výběru se zámečkem „Úkol: 15 zápasů“) |
 | Dej 15 gólů v jednom zápase | skin **Kiki v bikinách** (sportovní dvoudílné plavky v barvě týmu) |
-| Dej 30 gólů za Bémiče | skin **Michael Bémič** (Bémič s tmavou kůží a holou hlavou) |
+| Dej 30 gólů za Bémiče | skin **Michael Bémič** (Bémič s tmavou kůží a holou hlavou, červený basketbalový dres bez rukávů s číslem 23, dlouhé trenky) |
 
 Skiny (Moncler-Jenda, Kiki v bikinách, Michael Bémič) se zapínají v Úkolech, v Příběhu nebo tlačítkem přímo na kartě své postavy v lobby a platí i online.
 
@@ -207,6 +207,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.29 – Michael Bémič v červeném basketbalovém dresu s číslem 23
 - 1.28 – Úkoly (Milan za 15 zápasů, skiny Kiki v bikinách a Michael Bémič), Sully přejmenována na Suli
 - 1.27 – automatická aktualizace na GitHub Pages (hra se sama obnoví, když je venku novější verze)
 - 1.26 – přehlednější hlavní menu (dlaždice Online / Turnaj / Příběh, sponzoři v jednom řádku), tlačítko Kód a hlavní kód na odemčení všeho

@@ -1524,8 +1524,9 @@ const Renderer = {
       return;
     }
     // skin Moncler-Jenda (odměna z příběhu): bílá bunda místo dresu
-    if (p.skin === 'moncler' && !p._primeDraw && !p._goldDraw) {
-      const kit = p.team === 0 ? [MONCLER_KIT, teams[1]] : [teams[0], MONCLER_KIT];
+    const sk = SKINS[p.skin];
+    if (sk && sk.kit && !p._primeDraw && !p._goldDraw) {
+      const kit = p.team === 0 ? [sk.kit, teams[1]] : [teams[0], sk.kit];
       p._goldDraw = true;
       try {
         this.drawPlayer(ctx, p, ball, kit, now);
@@ -1671,6 +1672,7 @@ const Renderer = {
     // Moncler-Jenda: péřová bunda, brýle, řetěz (při JENDA PRIME bílý dres Realu)
     this._drip = p.skin === 'moncler' && !(p.primeT > 0);
     this._beach = p.skin === 'bikini' && !(p.primeT > 0);
+    this._hoop = p.skin === 'michael' && !(p.primeT > 0);
     const ch = (L.chub || 1) * (p.growT > 0 ? 1.15 : 1); // Tlustej páv je širší (a při Obřím pávovi ještě víc)
     this.drawHair(ctx, p, T, 'back', now);
     this.drawArm(ctx, -12 * ch, R + 1, aBack, T, L, true);
@@ -1682,6 +1684,7 @@ const Renderer = {
     this.drawArm(ctx, 10 * ch, R + 1, aFront, T, L, false);
     this._drip = false;
     this._beach = false;
+    this._hoop = false;
     ctx.restore();
   },
 
@@ -2069,7 +2072,7 @@ const Renderer = {
     ctx.strokeStyle = skin;
     ctx.lineWidth = 6.5;
     line(ctx, mx, my, ex, ey);
-    if (this._beach) {
+    if (this._beach || this._hoop) {
       ctx.strokeStyle = skin;
       ctx.lineWidth = 6.5;
       line(ctx, sx, sy, mx, my);
@@ -2154,13 +2157,20 @@ const Renderer = {
       ctx.restore();
       return;
     }
-    // trenky
-    ctx.fillStyle = T.dark;
-    rrect(ctx, -15, R + 9, 29, 13, 4);
+    // trenky (basketbalové jsou delší a volné, s bílým lemem)
+    ctx.fillStyle = this._hoop ? T.color : T.dark;
+    if (this._hoop) rrect(ctx, -17, R + 9, 32, 19, 5);
+    else rrect(ctx, -15, R + 9, 29, 13, 4);
     ctx.fill();
     ctx.strokeStyle = OUTLINE;
     ctx.lineWidth = 2;
     ctx.stroke();
+    if (this._hoop) {
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.6;
+      line(ctx, -15, R + 25, 13, R + 25);
+      line(ctx, 12, R + 12, 12, R + 25);
+    }
     if (L.curvy) {
       // výrazné pozadí
       ctx.fillStyle = T.dark;
@@ -2196,6 +2206,16 @@ const Renderer = {
     ctx.strokeStyle = 'rgba(255,255,255,.6)';
     ctx.lineWidth = 2;
     line(ctx, 12, R + 2, 11, R + 13);
+    if (this._hoop) {
+      // dres bez rukávů: bílé lemy u krku a průramků
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(1, R - 9, 8, 0.12 * Math.PI, 0.88 * Math.PI);
+      ctx.stroke();
+      line(ctx, 15, R - 7, 15.5, R + 3);
+      line(ctx, -17.5, R - 7, -18.5, R + 2);
+    }
     if (L.curvy && !(p.selfieT > 0)) {
       // výrazné poprsí
       ctx.fillStyle = T.color;
