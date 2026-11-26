@@ -134,6 +134,10 @@ const Game = {
   },
 
   toHome() {
+    if (Updater.pending) {
+      Updater.reload(Updater.pending);
+      return;
+    }
     this.cup = null;
     this.story = null;
     if (Online.active) Online.leave();
@@ -3449,7 +3453,50 @@ function boot() {
   requestAnimationFrame(frame);
 
   window.hlavouni = { Game, Match, Renderer, Input, Online, Net };
+  Updater.init();
 }
+
+/*
+ * Automatická aktualizace (jen na GitHub Pages): telefon si stránku drží v paměti,
+ * takže se při spuštění a po návratu do aplikace zeptáme na version.json. Když je venku
+ * novější verze a hráč je v hlavním menu, stránka se sama načte znovu (s ?v=…, aby se
+ * nepoužila stará kopie). Na claude.ai a v souboru se nic nedělá.
+ */
+const Updater = {
+  busy: false,
+  init() {
+    if (!/^https?:$/.test(location.protocol) || !/github\.io$/.test(location.hostname)) return;
+    this.check();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) this.check(); });
+    setInterval(() => this.check(), 5 * 60 * 1000);
+  },
+  check() {
+    if (this.busy) return;
+    this.busy = true;
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((o) => {
+        this.busy = false;
+        const v = o && typeof o.v === 'string' ? o.v.slice(0, 12) : '';
+        if (!v || v === GAME_VERSION) return;
+        // jednou za verzi (kdyby server ještě chvíli posílal starou stránku, nezacyklí se to)
+        let tried = '';
+        try { tried = sessionStorage.getItem('hlavouni.upd') || ''; } catch (e) { /* nevadí */ }
+        if (tried === v) return;
+        if (Game.screen !== 'home' && Game.screen !== 'online') {
+          this.pending = v;
+          return;
+        }
+        this.reload(v);
+      })
+      .catch(() => { this.busy = false; });
+  },
+  reload(v) {
+    try { sessionStorage.setItem('hlavouni.upd', v); } catch (e) { /* nevadí */ }
+    UI.toast(`Stahuji novou verzi ${v}…`);
+    setTimeout(() => location.replace(location.pathname + '?v=' + encodeURIComponent(v) + location.hash), 600);
+  },
+};
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else boot();

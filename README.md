@@ -191,8 +191,11 @@ Hřiště má virtuální rozměr 1280 × 720. Na displeji jiného poměru stran
 
 ## Verze
 
+Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 minut stáhne `version.json`. Když je tam novější verze a hráč je v hlavním menu, stránka se sama načte znovu (`?v=…`, aby telefon nepoužil starou kopii); během zápasu počká do návratu do menu. Při vydání nové verze je potřeba změnit číslo v `js/config.js` (GAME_VERSION), v `version.json` a v `?v=` u souborů v `index.html`.
+
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.27 – automatická aktualizace na GitHub Pages (hra se sama obnoví, když je venku novější verze)
 - 1.26 – přehlednější hlavní menu (dlaždice Online / Turnaj / Příběh, sponzoři v jednom řádku), tlačítko Kód a hlavní kód na odemčení všeho
 - 1.25 – přehlednější lobby (nastavení dole v jednom řádku), schopnosti Obří páv a Flash, nový vzhled Páva a Sully
 - 1.24 – Příběh: úrovně 1 v 1 i 2 v 2 s úkoly, skin Moncler-Jenda, nová dvojice Tlustej páv & Sully, náhled odměn
