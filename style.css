@@ -1368,3 +1368,12 @@ kbd {
 :root.h320 .task-list { gap: 5px; }
 .task-row .rw-bar.wide { width: auto; flex: 1; }
 .tasks-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* trailer (?trailer) */
+body.trailer-mode #hud, body.trailer-mode #touch, body.trailer-mode .screen, body.trailer-mode #version,
+body.trailer-mode #rotate, body.trailer-mode #toast, body.trailer-mode #btn-skip, body.trailer-mode #profile-chip { display: none !important; }
+#trailer-ov { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 90; pointer-events: none; }
+#trailer-pics { position: fixed; left: -4000px; top: 0; visibility: hidden; }
+#trailer-play { position: fixed; z-index: 95; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 16px 34px 12px; border: 4px solid var(--ink); border-radius: 22px; background: linear-gradient(180deg, #ffe07a, var(--gold) 55%, #f2b21c); color: var(--ink); font-family: var(--font-display); font-size: clamp(24px, 6vw, 40px); box-shadow: 0 7px 0 var(--ink), 0 0 40px rgba(255, 201, 60, 0.6); }
+#trailer-play span { margin-right: 8px; }
+#trailer-game { position: fixed; z-index: 95; left: 50%; top: calc(50% + 70px); transform: translateX(-50%); color: #fff; font-weight: 800; letter-spacing: 0.12em; text-decoration: underline; }

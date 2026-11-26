@@ -203,12 +203,17 @@ js/main.js      herní smyčka, průběh zápasu, obrazovky, hostitel a host
 
 Hřiště má virtuální rozměr 1280 × 720. Na displeji jiného poměru stran se zobrazí víc okolí, takže nikde nejsou černé pruhy. Fyzika běží v pevném kroku 1/120 s.
 
+## Trailer
+
+Odkaz https://jenik864.github.io/moje-aplikace/?trailer přehraje 28s trailer přímo ve hře (tlačítkem *Pustit trailer*, se zvukem): nová dvojice Tlustej páv & Suli se schopnostmi, skiny Moncler-Jenda / Kiki v bikinách / Michael Bémič, Příběh s 10 zápasy a bossem Milanem, Úkoly a gól ve 2 v 2. Scénář je v `js/trailer.js` (skutečné zápasy ve hře, kamera, titulky a syntetizovaná hudba). Hotové video je v `trailer.mp4`; vyrábí se nahráním `?trailer=rec` snímek po snímku a složením přes ffmpeg.
+
 ## Verze
 
 Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 minut stáhne `version.json`. Když je tam novější verze a hráč je v hlavním menu, stránka se sama načte znovu (`?v=…`, aby telefon nepoužil starou kopii); během zápasu počká do návratu do menu. Při vydání nové verze je potřeba změnit číslo v `js/config.js` (GAME_VERSION), v `version.json` a v `?v=` u souborů v `index.html`.
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.32 – trailer k updatu (`?trailer`, video `trailer.mp4`)
 - 1.31 – hratelnost: větší míč, shovívavější kop (i volej a míč ve výšce hlavy), kop zmáčknutý o chvilku dřív počká na míč, pomoc s mířením na bránu, silnější hlavičky
 - 1.30 – Kiki v bikinách má sluneční brýle
 - 1.29 – Michael Bémič v červeném basketbalovém dresu s číslem 23

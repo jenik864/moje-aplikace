@@ -2025,6 +2025,21 @@ const Game = {
         speed = 1.6;
       }
     }
+    // trailer: kameru řídí scénář
+    const o = this.camOverride;
+    if (o) {
+      tx = o.x;
+      ty = o.y;
+      tz = o.z;
+      bars = o.bars || 0;
+      speed = o.speed || 3;
+      if (o.cut) {
+        c.x = tx;
+        c.y = ty;
+        c.z = tz;
+        o.cut = false;
+      }
+    }
     const k = 1 - Math.exp(-dt * speed);
     c.x += (tx - c.x) * k;
     c.y += (ty - c.y) * k;
@@ -3511,19 +3526,28 @@ function boot() {
   });
 
   let last = performance.now();
-  const frame = (now) => {
+  // jeden snímek hry (při nahrávání traileru ho volá nahrávací skript s přesným časem)
+  const tick = (now) => {
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
     last = now;
+    if (Trailer.on) Trailer.update(now);
     Game.update(dt);
     Renderer.draw(Game);
+    if (Trailer.on) Trailer.draw(now);
     if (Game.screen === 'home') Renderer.drawHero(heroCanvas, now);
     else if (Game.screen === 'lobby' && !UI.el.lobby.hidden) LobbyUI.animate(now / 1000);
+  };
+  window.hlavouniTick = tick;
+  const frame = (now) => {
+    if (Trailer.manual) return; // nahrávání: snímky řídí skript
+    tick(now);
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
 
-  window.hlavouni = { Game, Match, Renderer, Input, Online, Net };
+  window.hlavouni = { Game, Match, Renderer, Input, Online, Net, Trailer };
   Updater.init();
+  Trailer.init();
 }
 
 /*
