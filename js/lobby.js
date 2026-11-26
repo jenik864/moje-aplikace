@@ -271,8 +271,8 @@ const LobbyUI = {
 
     // hlavička
     if (ctx.mode === 'local') {
-      el.kicker.textContent = 'Hra proti počítači';
-      el.title.textContent = 'Výběr hráčů';
+      el.kicker.textContent = cup ? 'Turnaj proti počítači' : 'Hra proti počítači';
+      el.title.textContent = cup ? 'Vyber svůj tým' : 'Výběr hráčů';
       el.invite.hidden = true;
     } else {
       el.kicker.textContent = ctx.mode === 'host' ? 'Online hra · jsi hostitel' : 'Online hra';

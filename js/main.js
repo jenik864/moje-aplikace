@@ -185,9 +185,10 @@ const Game = {
     this.renderLobby();
   },
 
-  openLocalLobby() {
+  // mode: 'match' (Hrát) nebo 'cup' (Turnaj z hlavního menu)
+  openLocalLobby(mode) {
     this.mode = 'local';
-    this.lobby = newLobby(this.prefs, 'p1');
+    this.lobby = newLobby(Object.assign({}, this.prefs, mode ? { mode } : {}), 'p1');
     this.toLobby();
   },
 
@@ -2195,7 +2196,11 @@ const UI = {
     });
     click('btn-local', () => {
       this.goFullscreen();
-      Game.openLocalLobby();
+      Game.openLocalLobby('match');
+    });
+    click('btn-cup', () => {
+      this.goFullscreen();
+      Game.openLocalLobby('cup');
     });
     click('btn-online', () => {
       this.goFullscreen();
