@@ -1091,6 +1091,7 @@ const Renderer = {
       }
       const sp = b.superT > 0 && m.players[b.superBy];
       if (m.jet) this.drawJet(ctx, m, now);
+      if (m.arms) this.drawArms(ctx, m, now);
       if (g.state !== 'intro') {
         if (hoop) this.drawBasketball(ctx, b);
         else this.drawBall(ctx, b, sp ? superColor(sp.look.id) : null);
@@ -2763,6 +2764,44 @@ const Renderer = {
     ctx.strokeStyle = 'rgba(0,0,0,.35)';
     ctx.lineWidth = 0.8;
     ctx.strokeRect(x0, y0, sz * 4, sz * 2);
+  },
+
+  // Majdiny gumové ruce: od ramen k míči, vlní se jako guma, ruce drží míč.
+  drawArms(ctx, m, now) {
+    const A = m.arms, p = m.players[A.by], b = m.ball;
+    if (!p) return;
+    const L = p.look, T = m.teams[p.team], dir = p.dir || 1;
+    const k = A.t < 0.22 ? A.t / 0.22 : 1;
+    const tx = A.t < 0.22 ? A.bx : b.x, ty = A.t < 0.22 ? A.by0 : b.y;
+    for (const side of [-1, 1]) {
+      const sx = p.x + dir * (side < 0 ? -10 : 12) * PS, sy = p.y + p.R + 4 * PS;
+      const hx = lerp(sx, tx - dir * 6 + side * 4, k), hy = lerp(sy, ty + side * 8, k);
+      const mx = (sx + hx) / 2, my = (sy + hy) / 2 + Math.sin(now * 0.02 + side) * 18 - 20;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 13;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.quadraticCurveTo(mx, my, hx, hy);
+      ctx.stroke();
+      ctx.strokeStyle = side < 0 ? shade(L.skin, -0.12) : L.skin;
+      ctx.lineWidth = 8.5;
+      ctx.stroke();
+      // rukáv u ramene
+      ctx.strokeStyle = T.color;
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(lerp(sx, mx, 0.15), lerp(sy, my, 0.15));
+      ctx.stroke();
+      // dlaň
+      ctx.fillStyle = L.skin;
+      circle(ctx, hx, hy, 7);
+      ctx.fill();
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
   },
 
   // Soukromý tryskáč (Durcado byznysman) a provazový žebřík k Durcadovi.

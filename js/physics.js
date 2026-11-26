@@ -19,6 +19,7 @@ class Ball {
     this.superT = 0;   // jak dlouho ještě letí superstřela
     this.superBy = -1; // kdo ji vystřelil (index hráče)
     this.jetBy = -1;   // míč nese Durcadův tryskáč
+    this.armBy = -1;   // míč drží Majdiny gumové ruce
     this.held = true; // při výkopu visí míč nad středem hřiště
     this.lastTouch = null;
     this.lastHow = ''; // čím se ho naposledy dotkl: kick, head, super, body
@@ -311,6 +312,7 @@ class Match {
     this.celebrate = -1;
     this.blocks[0] = this.blocks[1] = 0;
     this.jet = null;
+    this.arms = null;
   }
 
   release() {
@@ -402,6 +404,7 @@ class Match {
     if (!pen) this.collidePlayers();
     if (pen) this.penKeeperBox();
     if (this.jet) this.updateJet(dt);
+    if (this.arms) this.updateArms(dt);
 
     if (b.held) {
       b.rot += dt * 0.8;
@@ -413,7 +416,7 @@ class Match {
     const px = b.x, py = b.y;
     this.moveBall(dt);
     for (const p of this.players) {
-      if (b.carryBy >= 0 || b.jetBy >= 0) break;
+      if (b.carryBy >= 0 || b.jetBy >= 0 || b.armBy >= 0) break;
       if (pen) continue;
       if (b.ghostT > 0 && this.players[b.ghostBy] === p) continue; // Durcado se shozeného míče nedotkne // při penaltě o zákroku rozhoduje hra (volba brankáře)
       // střelec se trojky nedotkne; co projde košem, propadne do brány
@@ -452,7 +455,7 @@ class Match {
     // a břevnem), vyskočí zpátky do hry.
     const moved = Math.abs(b.x - px) + Math.abs(b.y - py);
     const still = moved < 0.25;
-    b.stuck = still && b.carryBy < 0 && b.jetBy < 0 && b.y + b.r < GROUND_Y - 2 ? (b.stuck || 0) + dt : 0;
+    b.stuck = still && b.carryBy < 0 && b.jetBy < 0 && b.armBy < 0 && b.y + b.r < GROUND_Y - 2 ? (b.stuck || 0) + dt : 0;
     if (b.stuck > 0.4) {
       b.vy = -560;
       b.vx = (b.x < W / 2 ? 1 : -1) * 280;
@@ -611,6 +614,31 @@ class Match {
       p.boostT = BOOST_TIME;
     } else if (p.power === 'prime') {
       p.primeT = PRIME_TIME;
+    } else if (p.power === 'arms') {
+      // Gumové ruce: dosáhnou na míč skoro kdekoli a přitáhnou ho k nohám
+      const reach = Math.hypot(b.x - p.x, b.y - p.y);
+      if (this.arms || b.held || reach > ARM_REACH) {
+        p.superCharge = 1;
+        if (reach > ARM_REACH) this.onEvent('armsfar', { idx });
+        return false;
+      }
+      let from = '';
+      if (b.jetBy >= 0 && this.jet) {
+        this.jet.stolen = true;
+        from = 'jet';
+      }
+      if (b.carryBy >= 0 || b.basketT > 0) {
+        from = 'basket';
+        b.carryBy = -1;
+        b.basketT = 0;
+        b.swished = false;
+      }
+      b.jetBy = -1;
+      b.superT = 0;
+      b.armBy = idx;
+      p.dir = b.x >= p.x ? 1 : -1;
+      this.arms = { by: idx, t: 0, bx: b.x, by0: b.y, from };
+      if (from) this.onEvent('steal', { x: b.x, y: b.y, from, idx });
     } else if (p.power === 'jet') {
       if (this.jet) {
         p.superCharge = 1;
@@ -788,9 +816,9 @@ class Match {
 
   moveBall(dt) {
     const b = this.ball;
-    if (b.jetBy >= 0) {
+    if (b.jetBy >= 0 || b.armBy >= 0) {
       b.rot += dt * 4;
-      return; // míč visí pod tryskáčem (polohu nastavuje updateJet)
+      return; // míč nese tryskáč nebo gumové ruce (polohu nastavuje updateJet / updateArms)
     }
     if (b.ghostT > 0) b.ghostT = Math.max(0, b.ghostT - dt);
     if (b.carryBy >= 0) {
@@ -1018,6 +1046,37 @@ class Match {
     this.onEvent('kick', { x: b.x, y: b.y, dir: p.dir, power: clamp(power / PHYS.kickSpeed, 0.6, 1.2) });
   }
 
+  // Gumové ruce: natáhnou se k míči (0,22 s), přitáhnou ho k nohám (0,38 s) a pustí.
+  updateArms(dt) {
+    const A = this.arms, p = this.players[A.by], b = this.ball;
+    if (!p) {
+      this.arms = null;
+      b.armBy = -1;
+      return;
+    }
+    A.t += dt;
+    p.vx *= 0.5;
+    const fx = clamp(p.x + p.dir * (p.R + 22), b.r, W - b.r), fy = GROUND_Y - b.r;
+    b.vx = 0;
+    b.vy = 0;
+    if (A.t < 0.22) {
+      b.x = A.bx;
+      b.y = A.by0;
+    } else if (A.t < 0.6) {
+      const k = (A.t - 0.22) / 0.38, e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+      b.x = lerp(A.bx, fx, e);
+      b.y = lerp(A.by0, fy, e);
+    } else {
+      b.x = fx;
+      b.y = fy;
+      b.vx = p.vx;
+      b.armBy = -1;
+      b.lastTouch = p;
+      b.lastHow = 'arms';
+      this.arms = null;
+    }
+  }
+
   // Soukromý tryskáč: přilétne, nabere Durcada a míč, přeletí k bráně soupeře,
   // shodí míč těsně před ni (padá pod břevno do brány) a odletí.
   updateJet(dt) {
@@ -1064,8 +1123,8 @@ class Match {
       p.vx = dir * 160;
       p.vy = -120;
     }
-    // míč se k Durcadovi „dostane“ a visí mu u nohou
-    if (t >= 0.55 && !J.dropped) {
+    // míč se k Durcadovi „dostane“ a visí mu u nohou (pokud ho mezitím neukradla Majda)
+    if (t >= 0.55 && !J.dropped && !J.stolen) {
       if (!J.got) {
         J.got = true;
         this.onEvent('jetball', { x: b.x, y: b.y });
@@ -1081,7 +1140,7 @@ class Match {
       b.vx = 0;
       b.vy = 0;
     }
-    if (t >= 2.0 && !J.dropped) {
+    if (t >= 2.0 && !J.dropped && !J.stolen) {
       J.dropped = true;
       b.jetBy = -1;
       b.vx = dir * D.vx;

@@ -95,7 +95,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.38';
+const GAME_VERSION = '1.39';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -380,6 +380,7 @@ const POWERS = {
   cheese: { name: 'Obří hermelín', short: 'Hermelín', icon: '🧀', desc: 'Na 3 s zablokuje vaši bránu' },
   vo2: { name: 'VO2max 67', short: 'VO2max', icon: '💨', desc: '5 s běhá 2× rychleji' },
   prime: { name: 'JENDA PRIME', short: 'Prime', icon: '⭐', desc: '5 s v bílém dresu Realu Madrid: rychlejší, silnější, skáče výš' },
+  arms: { name: 'Gumové ruce', short: 'Ruce', icon: '🤲', desc: 'Ruce se natáhnou přes půl hřiště a přitáhnou míč k nohám – i z trojky nebo z tryskáče' },
   jet: { name: 'Byznysman', short: 'Tryskáč', icon: '🛩️', desc: 'V obleku nastoupí do soukromého tryskáče s míčem a shodí ho soupeři přímo před bránu' },
   grow: { name: 'Obří páv', short: 'Obr', icon: '🦚', desc: 'Na 3 s se zvětší a ztloustne, kdo do něj narazí, je omráčený' },
   flash: { name: 'Flash', short: 'Flash', icon: '😳', desc: 'Vyhrne triko a soupeři na 3 s ztuhnou s vyvalenýma očima' },
@@ -387,7 +388,8 @@ const POWERS = {
   basket: { name: 'Trojka', short: 'Trojka', icon: '🏀', desc: 'U míče: míč se změní v basketbalový a letí obloukem do brány soupeře' },
   penguin: { name: 'Skiper', short: 'Skiper', icon: '🐧', desc: 'Promění se v tučňáka, brána zamrzne na 3 s' },
 };
-const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime', milan: 'redcard', pav: 'grow', sully: 'flash', durcado: 'jet' };
+const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime', milan: 'redcard', pav: 'grow', sully: 'flash', durcado: 'jet', majda: 'arms' };
+const ARM_REACH = 760; // dosah gumových rukou (px)
 const JET_LEN = 3.3;  // jak dlouho je tryskáč na scéně (s)
 const SUIT_TIME = 6;  // Durcado v obleku (s)
 // shoz míče před bránou soupeře: vzdálenost od brankové čáry a rychlost míče

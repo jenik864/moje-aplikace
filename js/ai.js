@@ -209,6 +209,13 @@ class AIBrain {
       } else if (p.power === 'prime') {
         // JENDA PRIME, když jde o míč
         if (Math.abs(b.x - p.x) < 380 && Math.random() < L.kick * 0.7) this.out.super = true;
+      } else if (p.power === 'arms') {
+        // ruce: ukrást trojku nebo tryskáč, nebo míč, ke kterému je soupeř blíž
+        const d = Math.hypot(b.x - p.x, b.y - p.y);
+        const opp = m.players.filter((o) => o.team !== p.team);
+        const oppCloser = opp.some((o) => Math.abs(o.x - b.x) < Math.abs(p.x - b.x) - 60);
+        const danger = b.jetBy >= 0 || b.carryBy >= 0 || b.basketT > 0;
+        if (d < ARM_REACH - 40 && !b.held && (danger || (oppCloser && d > 160)) && Math.random() < L.kick * (danger ? 1 : 0.4)) this.out.super = true;
       } else if (p.power === 'jet') {
         // tryskáč, když je daleko od brány soupeře
         if (Math.abs(oppGoal - p.x) > 520 && !m.jet && Math.random() < L.kick * 0.5) this.out.super = true;

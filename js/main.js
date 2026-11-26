@@ -908,6 +908,12 @@ const Game = {
           Effects.say(a[0], 'STŘÍLIM TY TROJKY', col, 2.2);
           Effects.puff(m.ball.x, m.ball.y);
           if (live) Sound.dribble();
+        } else if (kind === 'arms') {
+          Effects.say(a[0], 'TOHLE JE MOJE!', col, 1.6);
+          if (live) {
+            Effects.pop('GUMOVÉ RUCE!', p.x, p.y - 150, col, 40);
+            Sound.whoosh();
+          }
         } else if (kind === 'jet') {
           Effects.puff(p.x, p.y);
           Effects.puff(p.x, p.y + 40);
@@ -987,6 +993,19 @@ const Game = {
           Sound.ooh();
           if (a[0] === 1) Effects.pop('CHYTIL!', right ? W - 260 : 260, BAR_Y - 20, '#53d2ff', 40);
         }
+        break;
+      }
+      case 'steal':
+        Effects.spark(a[0], a[1]);
+        Effects.rings.push({ x: a[0], y: a[1], t: 0, dur: 0.4, r0: 10, r1: 80, rgb: '232,107,255' });
+        if (live) {
+          Effects.pop(a[2] ? 'UKRADENO Z TRYSKÁČE!' : 'UKRADENO!', a[0], a[1] - 70, '#e86bff', 38);
+          Effects.shake(5);
+        }
+        break;
+      case 'armsfar': {
+        const p = m && m.players[a[0]];
+        if (p) Effects.say(a[0], 'MOC DALEKO!', '#e86bff', 1.2);
         break;
       }
       case 'jetgrab': {
@@ -1133,6 +1152,12 @@ const Game = {
         break;
       case 'jetgrab':
         this.fx('jetgrab', d.idx);
+        break;
+      case 'steal':
+        this.fx('steal', d.x, d.y, d.from === 'jet' ? 1 : 0);
+        break;
+      case 'armsfar':
+        this.fx('armsfar', d.idx);
         break;
       case 'jetball':
         this.fx('jetball', d.x, d.y);
@@ -1899,6 +1924,7 @@ const Game = {
       p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin, p.boostT, p.pengT, p.kneel, p.face, p.plane, p.shootT, p.primeT, p.flashT, p.growK || 1, p.selfieT, p.growT, p.suitT]),
       bk: [m.blocks[0], m.blocks[1]],
       j: m.jet ? [m.jet.x, m.jet.y, m.jet.dir, m.jet.t, m.jet.by, m.jet.hold ? 1 : 0] : null,
+      a: m.arms ? [m.arms.by, m.arms.t, m.arms.bx, m.arms.by0] : null,
     });
     while (this.rec.length && this.rec[0].t < this.gameT - 5) this.rec.shift();
   },
@@ -1928,6 +1954,7 @@ const Game = {
     this.replayIdx = i;
     const A = rec[i], B = rec[i + 1] || A;
     const k = B.t > A.t ? clamp((t - A.t) / (B.t - A.t), 0, 1) : 0;
+    m.arms = A.a && B.a ? { by: A.a[0], t: lerp(A.a[1], B.a[1], k), bx: A.a[2], by0: A.a[3] } : null;
     const ja = A.j, jb = B.j;
     m.jet = ja && jb ? { x: lerp(ja[0], jb[0], k), y: lerp(ja[1], jb[1], k), dir: ja[2], t: lerp(ja[3], jb[3], k), by: ja[4], hold: !!ja[5] } : null;
     m.players.forEach((p, j) => {
@@ -2152,6 +2179,7 @@ const Game = {
       bk: [r(m.blocks[0] * 100), r(m.blocks[1] * 100), m.blockKind[0] === 'ice' ? 1 : 0, m.blockKind[1] === 'ice' ? 1 : 0],
       wd: m.windDir,
       jt: m.jet ? [r(m.jet.x), r(m.jet.y), m.jet.dir, r(m.jet.t * 100), m.jet.by, m.jet.hold ? 1 : 0] : 0,
+      ar: m.arms ? [m.arms.by, r(m.arms.t * 100), r(m.arms.bx), r(m.arms.by0)] : 0,
       m: msg ? [msg.id, msg.text, msg.sub || '', msg.color, msg.size, Math.round(msg.dur * 10)] : 0,
       e: this.evq,
       rs: this.resultShown ? 1 : 0,
@@ -2511,6 +2539,8 @@ const Game = {
     this.predictMe(dt, it, buf[buf.length - 1]);
     // zablokované brány (hermelín, led)
     if (B.g.wd === 1 || B.g.wd === -1) m.windDir = B.g.wd;
+    const ar = B.g.ar;
+    m.arms = Array.isArray(ar) ? { by: Number(ar[0]) || 0, t: (Number(ar[1]) || 0) / 100, bx: Number(ar[2]) || 0, by0: Number(ar[3]) || 0 } : null;
     const jt = B.g.jt;
     m.jet = Array.isArray(jt) ? { x: Number(jt[0]) || 0, y: Number(jt[1]) || 0, dir: jt[2] === -1 ? -1 : 1, t: (Number(jt[3]) || 0) / 100, by: Number(jt[4]) || 0, hold: !!jt[5] } : null;
     const bk = B.g.bk;
