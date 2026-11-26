@@ -384,11 +384,14 @@ const STANDS_BOTTOM = 458;
 const JUMBO = { x: 528, y: 162, w: 224, h: 92 };
 const DEFAULT_CAM = { x: W / 2, y: H / 2, z: 1, bars: 0 };
 const AISLES = [-638, 214, 1066, 1918];
-const INTRO_DUR = 8.8;   // celý úvod zápasu
+const INTRO_DUR = 11.8;  // celý úvod zápasu
 const POSTER_END = 3.6;  // do kdy jsou vidět plakáty týmů
-const REF_AT = 3.6;      // představení rozhodčího
-const REF_END = 5.5;
-const TALK_AT = [5.75, 7.2]; // předzápasové hlášky: tým vlevo, tým vpravo
+const WARM_AT = 3.6;     // rozcvička
+const WARM_END = 6.6;
+const REF_AT = 6.6;      // představení rozhodčího
+const REF_END = 8.5;
+const TALK_AT = [8.75, 10.2]; // předzápasové hlášky: tým vlevo, tým vpravo
+const WARM_KINDS = ['juggle', 'jacks', 'stretch', 'sprint']; // co kdo dělá při rozcvičce
 const TALK_DUR = 1.35;
 
 const Renderer = {
@@ -777,6 +780,15 @@ const Renderer = {
       if (g.screen === 'match' && g.state === 'intro') this.drawReferee(ctx, g, b, now);
       for (const p of m.players) if (p.boostT > 0) this.drawBoost(ctx, p, now);
       for (const p of m.players) this.drawPlayer(ctx, p, b, m.teams, now);
+      // rozcvička: žonglování s vlastním míčem
+      if (g.state === 'intro') {
+        for (const p of m.players) {
+          if (!(p.jball >= 0)) continue;
+          const bx = p.x + p.dir * 34, by = GROUND_Y - 30 - p.jball;
+          this.drawShadow(ctx, bx, p.jball + 10, 14);
+          PenScene.drawBall(ctx, bx, by, 15, now * 0.012);
+        }
+      }
       const sp = b.superT > 0 && m.players[b.superBy];
       if (g.state !== 'intro') {
         if (hoop) this.drawBasketball(ctx, b);
@@ -813,6 +825,7 @@ const Renderer = {
       }
       if (g.state === 'intro') {
         this.drawIntro(ctx, g, now);
+        this.drawWarmBanner(ctx, g, now);
         this.drawRefBanner(ctx, g, now);
       }
       if (g.state === 'replay') this.drawReplayLabel(ctx, now);
@@ -1595,6 +1608,13 @@ const Renderer = {
       ctx.translate(0, -c);
     }
     if (kn > 0) ctx.translate(0, F * 0.36 * kn * PS);
+    if (p.lean) {
+      // protahování: náklon kolem chodidel
+      const c = p.R + p.F;
+      ctx.translate(0, c);
+      ctx.rotate(p.lean);
+      ctx.translate(0, -c);
+    }
     if (p.plane > 0) ctx.rotate(Math.sin(now * 0.008 + p.homeX) * 0.16 * p.plane);
     ctx.scale(p.dir * PS, PS);
     if (kn > 0) {
@@ -3360,6 +3380,33 @@ const Renderer = {
     if (x > W + 150) return;
     this.drawShadow(ctx, p.x, 0, 36 * PS);
     this.drawPlayer(ctx, p, { x: p.x + p.dir * 300, y: p.y - 10 }, [REF_T], now);
+  },
+
+  // Titulek rozcvičky.
+  drawWarmBanner(ctx, g, now) {
+    const t = g.stateT - WARM_AT, dur = WARM_END - WARM_AT;
+    if (t < 0 || t > dur) return;
+    const a = clamp(t / 0.3, 0, 1) * clamp((dur - t) / 0.3, 0, 1);
+    const v = this.view, cx = (v.x0 + v.x1) / 2;
+    ctx.save();
+    ctx.globalAlpha = a;
+    const y = v.y0 + 96 + (1 - easeOutBack(clamp(t / 0.4, 0, 1))) * -60;
+    ctx.font = `44px ${FONT_D}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const w = ctx.measureText('ROZCVIČKA').width + 70;
+    ctx.fillStyle = 'rgba(8,13,26,.85)';
+    rrect(ctx, cx - w / 2, y - 34, w, 68, 20);
+    ctx.fill();
+    ctx.strokeStyle = '#ffc93c';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.fillStyle = '#ffc93c';
+    ctx.fillText('ROZCVIČKA', cx, y - 4);
+    ctx.font = `800 17px ${FONT_U}`;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('Hráči se rozehřívají před zápasem', cx, y + 22);
+    ctx.restore();
   },
 
   // Titulek: rozhodčí dnešního zápasu.

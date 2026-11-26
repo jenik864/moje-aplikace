@@ -1541,18 +1541,58 @@ const Game = {
       p.mood = 0;
     }
     const t = this.stateT;
+    // rozcvička: každý dělá něco jiného, pak se vrátí na místo
+    if (t >= WARM_AT && t < WARM_END + 0.6) {
+      m.players.forEach((p, i) => {
+        const kind = WARM_KINDS[i % WARM_KINDS.length];
+        const wt = t - WARM_AT, back = t >= WARM_END;
+        if (kind === 'jacks' && !back) {
+          const hop = Math.abs(Math.sin(wt * 6.5)) * 24;
+          p.y = p.standY - hop;
+          p.vy = Math.cos(wt * 6.5) * -150;
+          p.onGround = hop < 3;
+          p.mood = 1;
+        } else if (kind === 'juggle' && !back) {
+          const ph = wt % 0.55;
+          p.kickT = ph < PHYS.kickDur ? ph : -1;
+        } else if (kind === 'sprint') {
+          // sprinty ke středu hřiště a zpátky
+          const nx = back ? lerp(p.x, p.homeX, Math.min(1, dt * 8)) : p.homeX + (0.5 - 0.5 * Math.cos(wt * 2.4)) * 170 * p.dir;
+          p.vx = dt > 0 ? (nx - p.x) / dt : 0;
+          p.x = nx;
+          p.runPhase += p.vx * p.dir * dt * 0.05;
+        }
+      });
+    }
+    this.warmPose(t);
     // mluvčí při hlášce mává rukama
     for (const k of this.introTalk || []) {
       if (t >= k.at && t < k.at + TALK_DUR && m.players[k.idx]) m.players[k.idx].mood = 1;
     }
     // ohňostroj a pokřiky tribun
-    const cues = [[REF_AT + 0.8, () => this.fx('whistle', 'short')], [REF_END, () => this.fx('pyro')], [5.9, () => this.shout('chant', 0)], [7.35, () => this.shout('chant', 1)], [8.2, () => this.shout('chant', 0)]];
+    const cues = [[WARM_AT + 0.4, () => this.shout('chant', 0)], [WARM_AT + 1.6, () => this.shout('chant', 1)], [REF_AT + 0.8, () => this.fx('whistle', 'short')], [REF_END, () => this.fx('pyro')],
+      [TALK_AT[0] + 0.15, () => this.shout('chant', 0)], [TALK_AT[1] + 0.15, () => this.shout('chant', 1)], [TALK_AT[1] + 1, () => this.shout('chant', 0)]];
     while (this.introCues < cues.length && t >= cues[this.introCues][0]) cues[this.introCues++][1]();
+  },
+
+  // Náklon při protahování a výška žonglovaného míče (počítá i kamarád podle času).
+  warmPose(t) {
+    const m = this.match;
+    const on = this.state === 'intro' && t >= WARM_AT && t < WARM_END;
+    m.players.forEach((p, i) => {
+      const kind = WARM_KINDS[i % WARM_KINDS.length], wt = t - WARM_AT;
+      p.lean = on && kind === 'stretch' ? Math.sin(wt * 2.2) * 0.38 : 0;
+      p.jball = on && kind === 'juggle' ? Math.abs(Math.sin((Math.PI * wt) / 0.55)) * 62 : -1;
+    });
   },
 
   endIntro() {
     const m = this.match;
-    for (const p of m.players) p.place(p.homeX);
+    for (const p of m.players) {
+      p.place(p.homeX);
+      p.lean = 0;
+      p.jball = -1;
+    }
     this.introCues = 99;
     this.nextShout = 3;
     this.state = 'countdown';
@@ -1694,6 +1734,12 @@ const Game = {
           tx = JUMBO.x + JUMBO.w / 2;
           ty = JUMBO.y + JUMBO.h / 2 + 30;
           tz = 1.75;
+        } else if (t >= WARM_AT - 0.2 && t < WARM_END - 0.1) {
+          // rozcvička: celé hřiště, kamera pomalu přejíždí
+          tx = W / 2 + Math.sin((t - WARM_AT) * 0.7) * 90;
+          ty = GROUND_Y - 150;
+          tz = 1.2;
+          speed = 2;
         } else if (t >= REF_AT - 0.2 && t < REF_END - 0.1) {
           // rozhodčí uprostřed hřiště (kamera trochu vlevo, ať ho nezakryje tlačítko Přeskočit)
           tx = W / 2 - 120;
@@ -2040,6 +2086,7 @@ const Game = {
     if (m.celebrate < 0 && this.state === 'over') m.celebrate = Math.max(0, m.winner());
     this.updateCam(dt);
     this.updateSuperUI();
+    this.warmPose(this.stateT);
     UI.setSkip(false);
     if ((this.state === 'goal' && Math.random() < dt * 22) || (this.state === 'over' && Math.random() < dt * 10)) Effects.flash();
     // vlastní ovládání hostiteli
