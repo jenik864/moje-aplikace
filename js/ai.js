@@ -209,6 +209,9 @@ class AIBrain {
       } else if (p.power === 'prime') {
         // JENDA PRIME, když jde o míč
         if (Math.abs(b.x - p.x) < 380 && Math.random() < L.kick * 0.7) this.out.super = true;
+      } else if (p.power === 'jet') {
+        // tryskáč, když je daleko od brány soupeře
+        if (Math.abs(oppGoal - p.x) > 520 && !m.jet && Math.random() < L.kick * 0.5) this.out.super = true;
       } else if (p.power === 'grow') {
         // zvětšit se, když je soupeř blízko nebo jde o míč
         const near = m.players.some((o) => o.team !== p.team && o.stunT <= 0 && Math.abs(o.x - p.x) < 260);

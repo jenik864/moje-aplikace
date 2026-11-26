@@ -95,7 +95,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.37';
+const GAME_VERSION = '1.38';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -380,13 +380,20 @@ const POWERS = {
   cheese: { name: 'Obří hermelín', short: 'Hermelín', icon: '🧀', desc: 'Na 3 s zablokuje vaši bránu' },
   vo2: { name: 'VO2max 67', short: 'VO2max', icon: '💨', desc: '5 s běhá 2× rychleji' },
   prime: { name: 'JENDA PRIME', short: 'Prime', icon: '⭐', desc: '5 s v bílém dresu Realu Madrid: rychlejší, silnější, skáče výš' },
+  jet: { name: 'Byznysman', short: 'Tryskáč', icon: '🛩️', desc: 'V obleku nastoupí do soukromého tryskáče s míčem a shodí ho soupeři přímo před bránu' },
   grow: { name: 'Obří páv', short: 'Obr', icon: '🦚', desc: 'Na 3 s se zvětší a ztloustne, kdo do něj narazí, je omráčený' },
   flash: { name: 'Flash', short: 'Flash', icon: '😳', desc: 'Vyhrne triko a soupeři na 3 s ztuhnou s vyvalenýma očima' },
   redcard: { name: 'Červená karta', short: 'Karta', icon: '🟥', desc: 'Soupeři na 2 s ztuhnou' },
   basket: { name: 'Trojka', short: 'Trojka', icon: '🏀', desc: 'U míče: míč se změní v basketbalový a letí obloukem do brány soupeře' },
   penguin: { name: 'Skiper', short: 'Skiper', icon: '🐧', desc: 'Promění se v tučňáka, brána zamrzne na 3 s' },
 };
-const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime', milan: 'redcard', pav: 'grow', sully: 'flash' };
+const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime', milan: 'redcard', pav: 'grow', sully: 'flash', durcado: 'jet' };
+const JET_LEN = 3.3;  // jak dlouho je tryskáč na scéně (s)
+const SUIT_TIME = 6;  // Durcado v obleku (s)
+// shoz míče před bránou soupeře: vzdálenost od brankové čáry a rychlost míče
+const JET_DROP = { off: 80, vx: 520, vy: 420 };
+// oblek byznysmana (tmavomodrý, bílá košile, červená kravata)
+const SUIT_KIT = { name: 'BYZNYSMAN', short: 'Byznysman', color: '#1d2a44', dark: '#121a2c', light: '#e9edf3', num: '#e9edf3' };
 const GROW_TIME = 3;   // Obří páv
 const GROW_K = 1.35;   // o kolik se zvětší
 const GROW_STUN = 1.6; // omráčení po nárazu

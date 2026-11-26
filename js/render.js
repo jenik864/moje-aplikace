@@ -1090,6 +1090,7 @@ const Renderer = {
         }
       }
       const sp = b.superT > 0 && m.players[b.superBy];
+      if (m.jet) this.drawJet(ctx, m, now);
       if (g.state !== 'intro') {
         if (hoop) this.drawBasketball(ctx, b);
         else this.drawBall(ctx, b, sp ? superColor(sp.look.id) : null);
@@ -1824,6 +1825,17 @@ const Renderer = {
       return;
     }
     // skin Moncler-Jenda (odměna z příběhu): bílá bunda místo dresu
+    // Durcado byznysman: tmavý oblek (kresba trupu přidá košili a kravatu)
+    if (p.suitT > 0 && !p._primeDraw && !p._goldDraw) {
+      const kit = p.team === 0 ? [SUIT_KIT, teams[1]] : [teams[0], SUIT_KIT];
+      p._goldDraw = true;
+      try {
+        this.drawPlayer(ctx, p, ball, kit, now);
+      } finally {
+        p._goldDraw = false;
+      }
+      return;
+    }
     const sk = SKINS[p.skin];
     if (sk && sk.kit && !p._primeDraw && !p._goldDraw) {
       const kit = p.team === 0 ? [sk.kit, teams[1]] : [teams[0], sk.kit];
@@ -1973,6 +1985,7 @@ const Renderer = {
     this._drip = p.skin === 'moncler' && !(p.primeT > 0);
     this._beach = p.skin === 'bikini' && !(p.primeT > 0);
     this._hoop = p.skin === 'michael' && !(p.primeT > 0);
+    this._suit = p.suitT > 0 && !(p.primeT > 0);
     const ch = (L.chub || 1) * (p.growT > 0 ? 1.15 : 1); // Tlustej páv je širší (a při Obřím pávovi ještě víc)
     this.drawHair(ctx, p, T, 'back', now);
     this.drawArm(ctx, -12 * ch, R + 1, aBack, T, L, true);
@@ -1986,6 +1999,7 @@ const Renderer = {
     this._drip = false;
     this._beach = false;
     this._hoop = false;
+    this._suit = false;
     ctx.restore();
   },
 
@@ -2517,6 +2531,32 @@ const Renderer = {
       line(ctx, 15, R - 7, 15.5, R + 3);
       line(ctx, -17.5, R - 7, -18.5, R + 2);
     }
+    if (this._suit) {
+      // bílá košile do V, klopy a červená kravata
+      ctx.fillStyle = '#f4f6fa';
+      ctx.beginPath();
+      ctx.moveTo(-6, R - 8);
+      ctx.lineTo(10, R - 8);
+      ctx.lineTo(2, R + 9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#0b1220';
+      ctx.lineWidth = 1.4;
+      line(ctx, -6, R - 8, 0, R + 8);
+      line(ctx, 10, R - 8, 4, R + 8);
+      ctx.fillStyle = '#d42a3a';
+      ctx.beginPath();
+      ctx.moveTo(1, R - 7);
+      ctx.lineTo(4, R - 7);
+      ctx.lineTo(5.5, R + 4);
+      ctx.lineTo(2.5, R + 8);
+      ctx.lineTo(-0.5, R + 4);
+      ctx.closePath();
+      ctx.fill();
+      // kapesníček
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-14, R - 1, 5, 2.5);
+    }
     if (L.curvy && !(p.selfieT > 0)) {
       // výrazné poprsí
       ctx.fillStyle = T.color;
@@ -2570,8 +2610,8 @@ const Renderer = {
       ctx.arc(2, R - 1, 7, 0.15 * Math.PI, 0.85 * Math.PI);
       ctx.stroke();
     }
-    // číslo (ne při vyhrnutém triku)
-    if (p.selfieT > 0 && L.flashPose) return;
+    // číslo (ne při vyhrnutém triku a v obleku)
+    if ((p.selfieT > 0 && L.flashPose) || this._suit) return;
     ctx.font = `800 13px ${FONT_U}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -2723,6 +2763,112 @@ const Renderer = {
     ctx.strokeStyle = 'rgba(0,0,0,.35)';
     ctx.lineWidth = 0.8;
     ctx.strokeRect(x0, y0, sz * 4, sz * 2);
+  },
+
+  // Soukromý tryskáč (Durcado byznysman) a provazový žebřík k Durcadovi.
+  drawJet(ctx, m, now) {
+    const J = m.jet, p = m.players[J.by];
+    const dir = J.dir || 1, x = J.x, y = J.y;
+    // žebřík
+    if (J.hold && p) {
+      const top = y + 16, bot = p.y - p.R * 0.6;
+      ctx.strokeStyle = '#8a6a3a';
+      ctx.lineWidth = 2.2;
+      line(ctx, x - dir * 18, top, p.x - 9, bot);
+      line(ctx, x - dir * 6, top, p.x + 9, bot);
+      for (let k = 1; k < 5; k++) {
+        const f = k / 5;
+        line(ctx, lerp(x - dir * 18, p.x - 9, f), lerp(top, bot, f), lerp(x - dir * 6, p.x + 9, f), lerp(top, bot, f));
+      }
+    }
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.sin(now * 0.004) * 0.03 - (J.t > 2 ? 0.18 * dir : 0));
+    ctx.scale(dir, 1);
+    // kondenzační stopa
+    for (let i = 1; i <= 5; i++) {
+      ctx.fillStyle = `rgba(255,255,255,${0.32 - i * 0.05})`;
+      circle(ctx, -125 - i * 26, -14 + Math.sin(now * 0.01 + i) * 2, 7 + i * 3);
+      ctx.fill();
+    }
+    // křídlo (zadní)
+    ctx.fillStyle = '#9aa3b5';
+    ctx.beginPath();
+    ctx.moveTo(10, -4);
+    ctx.lineTo(-55, -30);
+    ctx.lineTo(-35, -30);
+    ctx.lineTo(30, -4);
+    ctx.closePath();
+    ctx.fill();
+    // trup
+    const g = ctx.createLinearGradient(0, -24, 0, 24);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.6, '#e4e8ef');
+    g.addColorStop(1, '#aab2c0');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(130, 4);
+    ctx.quadraticCurveTo(118, -22, 60, -22);
+    ctx.lineTo(-100, -18);
+    ctx.lineTo(-128, -8);
+    ctx.lineTo(-128, 8);
+    ctx.lineTo(-100, 16);
+    ctx.lineTo(60, 20);
+    ctx.quadraticCurveTo(118, 20, 130, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#0b1220';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    // ocasní plocha
+    ctx.fillStyle = '#ffc93c';
+    ctx.beginPath();
+    ctx.moveTo(-92, -17);
+    ctx.lineTo(-122, -62);
+    ctx.lineTo(-104, -62);
+    ctx.lineTo(-70, -18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // motor
+    ctx.fillStyle = '#5b6478';
+    ctx.beginPath();
+    ctx.roundRect(-96, -32, 44, 14, 7);
+    ctx.fill();
+    ctx.stroke();
+    // zlatý pruh, okna, kokpit
+    ctx.fillStyle = '#ffc93c';
+    ctx.fillRect(-100, 4, 190, 4);
+    ctx.fillStyle = '#1c2a44';
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.ellipse(-50 + i * 22, -6, 5, 6, 0, 0, TAU);
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.moveTo(98, -14);
+    ctx.quadraticCurveTo(116, -12, 122, -2);
+    ctx.lineTo(100, -2);
+    ctx.closePath();
+    ctx.fill();
+    // křídlo (přední)
+    ctx.fillStyle = '#c4cad6';
+    ctx.beginPath();
+    ctx.moveTo(30, 8);
+    ctx.lineTo(-40, 44);
+    ctx.lineTo(-18, 44);
+    ctx.lineTo(52, 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // nápis (vždy čitelně)
+    ctx.scale(dir, 1);
+    ctx.fillStyle = '#1c2a44';
+    ctx.font = `800 11px ${FONT_U}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('DURCADO AIR', 5 * dir, 14);
+    ctx.restore();
   },
 
   // Mobil v ruce (selfie), na začátku s bleskem.

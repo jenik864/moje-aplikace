@@ -145,6 +145,7 @@ Nabíjí se časem (asi 15 s) a každým kopem do míče. Každá postava má sv
 | Marsal | **Trojka**: když je u míče, míč se změní v basketbalový, Marsal řekne „STŘÍLIM TY TROJKY“, chytí ho nad hlavu a hodí vysoký oblouk. Nad bránou soupeře se objeví basketbalový koš, míč jím propadne rovnou do brány. Chytit se dá jen před košem (hlavičkou nebo výskokem), hermelín a led ho zastaví. |
 | Bémič | **Skiper**: na 3 s se promění v tučňáka (jen vzhled), brána jeho týmu zamrzne ve velkém ledovém kráteru (nejde dát gól) a fanoušci řvou SKIPER. |
 | Jenda | **JENDA PRIME**: na 5 s se promění v hráče Realu Madrid – bílý dres se zlatým lemováním, zlatá záře a nápis JENDA PRIME. Běhá 1,5× rychleji, skáče výš, kope o 40 % silněji, silnější hlavičky, odstrčí soupeře a superstřela ho neodstřelí. |
+| Durcado | **Byznysman**: v oblaku se převlékne do tmavého obleku s bílou košilí a červenou kravatou („BYZNYSMAN!“), přiletí soukromý tryskáč DURCADO AIR, nabere ho na provazový žebřík („JEDU NA MEETING“) a míč se mu zázračně dostane k nohám. Tryskáč přeletí nad hřištěm a těsně před bránou soupeře míč shodí („DORUČENO!“) – padá pod břevno do brány, takže je velká šance na gól, nebo si ho soupeř srazí do vlastní brány; brankář ho ale může vyrazit. Pak Durcado seskočí v soupeřově polovině a tryskáč odletí. Kamera se během letu oddálí. V testu proti počítači padl gól v 87–97 % případů na lehkého a v 43–70 % na těžkého. |
 | Tlustej páv | **Obří páv**: na 3 s se zvětší a ztloustne (větší i pro míč a soupeře). Kdo do něj narazí, odletí a je omráčený. |
 | Suli | **Flash**: „PŘEDPLAŤ SI MĚ!“, vyhrne triko (místo detailů kreslená cenzura – mozaika), záblesk přes obrazovku a soupeři na 3 s ztuhnou s vyvalenýma očima (JENDA PRIME to ustojí). |
 | Milan (boss Příběhu) | **Červená karta**: písknutí, nápis ČERVENÁ KARTA a všichni soupeři na 2 s ztuhnou (JENDA PRIME a tučňák ji ustojí). |
@@ -227,6 +228,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.38 – Durcado má schopnost Byznysman (oblek a soukromý tryskáč, který shodí míč před bránu soupeře)
 - 1.37 – Příběh odemčený pro všechny bez kódu
 - 1.36 – nové arény Pláž, Měsíc a Vichřice (každá mění fyziku hry), některé úrovně Příběhu se hrají v nich
 - 1.35 – lobby má stálou velikost (bez nápovědy dole), v Příběhu jsou soupeři pevní (i zrcadlové zápasy)

@@ -908,6 +908,14 @@ const Game = {
           Effects.say(a[0], 'STŘÍLIM TY TROJKY', col, 2.2);
           Effects.puff(m.ball.x, m.ball.y);
           if (live) Sound.dribble();
+        } else if (kind === 'jet') {
+          Effects.puff(p.x, p.y);
+          Effects.puff(p.x, p.y + 40);
+          Effects.spark(p.x, p.y);
+          if (live) {
+            Effects.pop('BYZNYSMAN!', p.x, p.y - 150, '#cfe3ff', 40);
+            Sound.prime();
+          }
         } else if (kind === 'grow') {
           Effects.say(a[0], 'UHNĚTE!', col, 2);
           Effects.rings.push({ x: p.x, y: p.y, t: 0, dur: 0.5, r0: 20, r1: 180, rgb: hexRgb(col) });
@@ -981,6 +989,23 @@ const Game = {
         }
         break;
       }
+      case 'jetgrab': {
+        const p = m && m.players[a[0]];
+        if (p) Effects.say(a[0], 'JEDU NA MEETING', '#cfe3ff', 1.6);
+        if (live) Sound.whoosh();
+        break;
+      }
+      case 'jetball':
+        Effects.puff(a[0], a[1]);
+        Effects.spark(a[0], a[1]);
+        break;
+      case 'jetdrop':
+        Effects.rings.push({ x: a[0], y: a[1], t: 0, dur: 0.4, r0: 10, r1: 70, rgb: '207,227,255' });
+        if (live) {
+          Effects.pop('DORUČENO!', a[0], a[1] - 70, '#cfe3ff', 40);
+          Sound.whoosh();
+        }
+        break;
       case 'wind':
         if (live) {
           Sound.whoosh();
@@ -1105,6 +1130,15 @@ const Game = {
         break;
       case 'wind':
         this.fx('wind', d.dir);
+        break;
+      case 'jetgrab':
+        this.fx('jetgrab', d.idx);
+        break;
+      case 'jetball':
+        this.fx('jetball', d.x, d.y);
+        break;
+      case 'jetdrop':
+        this.fx('jetdrop', d.x, d.y);
         break;
     }
   },
@@ -1862,8 +1896,9 @@ const Game = {
     this.rec.push({
       t: this.gameT,
       b: [b.x, b.y, b.rot, b.superT, b.superBy, b.basketT, b.basketSide],
-      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin, p.boostT, p.pengT, p.kneel, p.face, p.plane, p.shootT, p.primeT, p.flashT, p.growK || 1, p.selfieT, p.growT]),
+      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin, p.boostT, p.pengT, p.kneel, p.face, p.plane, p.shootT, p.primeT, p.flashT, p.growK || 1, p.selfieT, p.growT, p.suitT]),
       bk: [m.blocks[0], m.blocks[1]],
+      j: m.jet ? [m.jet.x, m.jet.y, m.jet.dir, m.jet.t, m.jet.by, m.jet.hold ? 1 : 0] : null,
     });
     while (this.rec.length && this.rec[0].t < this.gameT - 5) this.rec.shift();
   },
@@ -1893,6 +1928,8 @@ const Game = {
     this.replayIdx = i;
     const A = rec[i], B = rec[i + 1] || A;
     const k = B.t > A.t ? clamp((t - A.t) / (B.t - A.t), 0, 1) : 0;
+    const ja = A.j, jb = B.j;
+    m.jet = ja && jb ? { x: lerp(ja[0], jb[0], k), y: lerp(ja[1], jb[1], k), dir: ja[2], t: lerp(ja[3], jb[3], k), by: ja[4], hold: !!ja[5] } : null;
     m.players.forEach((p, j) => {
       const a = A.p[j], b = B.p[j];
       if (!a || !b) return;
@@ -1913,6 +1950,7 @@ const Game = {
       p.flashT = b[15] || 0;
       p.selfieT = b[17] || 0;
       p.growT = b[18] || 0;
+      p.suitT = b[19] || 0;
       sizeGrow(p, b[16] || 1);
       p.spin = b[7] && a[7] && Math.sign(a[7]) === Math.sign(b[7]) ? lerp(a[7], b[7], k) : b[7] || 0;
       p.mood = 0;
@@ -1985,6 +2023,13 @@ const Game = {
         const hh = vh / (2 * tz);
         tx = W / 2;
         ty = clamp(m.ball.y + hh - 90, v.y0 + hh, v.y1 - hh);
+        // letí tryskáč: kamera se oddálí, ať je vidět celý i s Durcadem na žebříku
+        if (m.jet && m.jet.t < 2.6) {
+          tz = Math.max(1, fit * 0.82);
+          const h2 = vh / (2 * tz);
+          tx = clamp(lerp(W / 2, m.jet.x, 0.5), v.x0 + vw / (2 * tz), v.x1 - vw / (2 * tz));
+          ty = clamp(m.jet.y - 70 + h2, v.y0 + h2, v.y1 - h2);
+        }
         speed = 3.2;
       }
       if (st === 'intro') {
@@ -2103,9 +2148,10 @@ const Game = {
       pn: m.pens ? [m.pens[0], m.pens[1]] : 0,
       sc: [m.score[0], m.score[1]],
       b: [r(b.x), r(b.y), r(b.rot * 100), r(b.superT * 100), b.superBy, r(b.basketT * 100), b.basketSide, b.carryBy >= 0 ? 1 : 0],
-      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100), r(p.primeT * 100), r(p.flashT * 100), r((p.growK || 1) * 100), r(p.selfieT * 100), r(p.growT * 100)]),
+      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100), r(p.primeT * 100), r(p.flashT * 100), r((p.growK || 1) * 100), r(p.selfieT * 100), r(p.growT * 100), r(p.suitT * 10)]),
       bk: [r(m.blocks[0] * 100), r(m.blocks[1] * 100), m.blockKind[0] === 'ice' ? 1 : 0, m.blockKind[1] === 'ice' ? 1 : 0],
       wd: m.windDir,
+      jt: m.jet ? [r(m.jet.x), r(m.jet.y), m.jet.dir, r(m.jet.t * 100), m.jet.by, m.jet.hold ? 1 : 0] : 0,
       m: msg ? [msg.id, msg.text, msg.sub || '', msg.color, msg.size, Math.round(msg.dur * 10)] : 0,
       e: this.evq,
       rs: this.resultShown ? 1 : 0,
@@ -2449,6 +2495,7 @@ const Game = {
       p.flashT = (Number(pb[17]) || 0) / 100;
       p.selfieT = (Number(pb[19]) || 0) / 100;
       p.growT = (Number(pb[20]) || 0) / 100;
+      p.suitT = (Number(pb[21]) || 0) / 10;
       sizeGrow(p, clamp((Number(pb[18]) || 100) / 100, 1, GROW_K));
       const sa = Number(pa[9]) || 0, sb = Number(pb[9]) || 0;
       p.spin = sb === 0 || Math.sign(sa) !== Math.sign(sb) ? sb / 100 : lerp(sa, sb, k) / 100;
@@ -2464,6 +2511,8 @@ const Game = {
     this.predictMe(dt, it, buf[buf.length - 1]);
     // zablokované brány (hermelín, led)
     if (B.g.wd === 1 || B.g.wd === -1) m.windDir = B.g.wd;
+    const jt = B.g.jt;
+    m.jet = Array.isArray(jt) ? { x: Number(jt[0]) || 0, y: Number(jt[1]) || 0, dir: jt[2] === -1 ? -1 : 1, t: (Number(jt[3]) || 0) / 100, by: Number(jt[4]) || 0, hold: !!jt[5] } : null;
     const bk = B.g.bk;
     if (Array.isArray(bk)) {
       for (let t = 0; t < 2; t++) {

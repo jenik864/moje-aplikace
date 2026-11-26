@@ -18,6 +18,7 @@ class Ball {
     this.rot = 0;
     this.superT = 0;   // jak dlouho ještě letí superstřela
     this.superBy = -1; // kdo ji vystřelil (index hráče)
+    this.jetBy = -1;   // míč nese Durcadův tryskáč
     this.held = true; // při výkopu visí míč nad středem hřiště
     this.lastTouch = null;
     this.lastHow = ''; // čím se ho naposledy dotkl: kick, head, super, body
@@ -107,6 +108,7 @@ class Player {
     this.pengT = 0;
     this.primeT = 0;
     this.kickBuf = 0; // kop zmáčknutý o chvilku dřív (čeká na míč)
+    this.suitT = 0;   // Durcado v obleku (byznysman)
     this.growT = 0;   // Obří páv
     this.flashT = 0;  // oslněný bleskem (vyvalené oči)
     this.selfieT = 0; // Suli fotí selfie
@@ -308,6 +310,7 @@ class Match {
     this.goalTeam = -1;
     this.celebrate = -1;
     this.blocks[0] = this.blocks[1] = 0;
+    this.jet = null;
   }
 
   release() {
@@ -374,6 +377,7 @@ class Match {
         if (p.primeT === 0) this.onEvent('unprime', { idx: this.players.indexOf(p) });
       }
       if (p.flashT > 0) p.flashT = Math.max(0, p.flashT - dt);
+      if (p.suitT > 0) p.suitT = Math.max(0, p.suitT - dt);
       if (p.selfieT > 0) p.selfieT = Math.max(0, p.selfieT - dt);
       if (p.growT > 0 || (p.growK || 1) > 1) {
         p.growT = Math.max(0, p.growT - dt);
@@ -397,6 +401,7 @@ class Match {
     }
     if (!pen) this.collidePlayers();
     if (pen) this.penKeeperBox();
+    if (this.jet) this.updateJet(dt);
 
     if (b.held) {
       b.rot += dt * 0.8;
@@ -408,8 +413,9 @@ class Match {
     const px = b.x, py = b.y;
     this.moveBall(dt);
     for (const p of this.players) {
-      if (b.carryBy >= 0) break;
-      if (pen) continue; // při penaltě o zákroku rozhoduje hra (volba brankáře)
+      if (b.carryBy >= 0 || b.jetBy >= 0) break;
+      if (pen) continue;
+      if (b.ghostT > 0 && this.players[b.ghostBy] === p) continue; // Durcado se shozeného míče nedotkne // při penaltě o zákroku rozhoduje hra (volba brankáře)
       // střelec se trojky nedotkne; co projde košem, propadne do brány
       if (b.basketT > 0 && (b.lastTouch === p || b.swished)) continue;
       if (this.ballVsPlayer(p)) {
@@ -446,7 +452,7 @@ class Match {
     // a břevnem), vyskočí zpátky do hry.
     const moved = Math.abs(b.x - px) + Math.abs(b.y - py);
     const still = moved < 0.25;
-    b.stuck = still && b.carryBy < 0 && b.y + b.r < GROUND_Y - 2 ? (b.stuck || 0) + dt : 0;
+    b.stuck = still && b.carryBy < 0 && b.jetBy < 0 && b.y + b.r < GROUND_Y - 2 ? (b.stuck || 0) + dt : 0;
     if (b.stuck > 0.4) {
       b.vy = -560;
       b.vx = (b.x < W / 2 ? 1 : -1) * 280;
@@ -605,6 +611,15 @@ class Match {
       p.boostT = BOOST_TIME;
     } else if (p.power === 'prime') {
       p.primeT = PRIME_TIME;
+    } else if (p.power === 'jet') {
+      if (this.jet) {
+        p.superCharge = 1;
+        return false;
+      }
+      // Byznysman: oblek, přiletí soukromý tryskáč, nabere Durcada i s míčem
+      const dir = p.team === 0 ? 1 : -1;
+      p.suitT = SUIT_TIME;
+      this.jet = { by: idx, t: 0, dir, sx: dir > 0 ? -260 : W + 260, px: p.x, py: clamp(p.y - 230, 110, 260), x: dir > 0 ? -260 : W + 260, y: -80, hold: false, got: false, dropped: false };
     } else if (p.power === 'grow') {
       p.growT = GROW_TIME;
     } else if (p.power === 'flash') {
@@ -773,6 +788,11 @@ class Match {
 
   moveBall(dt) {
     const b = this.ball;
+    if (b.jetBy >= 0) {
+      b.rot += dt * 4;
+      return; // míč visí pod tryskáčem (polohu nastavuje updateJet)
+    }
+    if (b.ghostT > 0) b.ghostT = Math.max(0, b.ghostT - dt);
     if (b.carryBy >= 0) {
       // Marsal drží míč nad hlavou
       const p = this.players[b.carryBy];
@@ -996,6 +1016,83 @@ class Match {
     b.lastTouch = p;
     b.lastHow = 'kick';
     this.onEvent('kick', { x: b.x, y: b.y, dir: p.dir, power: clamp(power / PHYS.kickSpeed, 0.6, 1.2) });
+  }
+
+  // Soukromý tryskáč: přilétne, nabere Durcada a míč, přeletí k bráně soupeře,
+  // shodí míč těsně před ni (padá pod břevno do brány) a odletí.
+  updateJet(dt) {
+    const J = this.jet, p = this.players[J.by], b = this.ball;
+    if (!p) {
+      this.jet = null;
+      return;
+    }
+    J.t += dt;
+    const t = J.t, dir = J.dir;
+    const line = dir > 0 ? W - GOAL_W : GOAL_W;
+    const D = JET_DROP;
+    const dropX = line - dir * D.off;
+    const io = (k) => (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2);
+    if (t < 0.5) {
+      const k = 1 - (1 - t / 0.5) ** 3;
+      J.x = lerp(J.sx, J.px, k);
+      J.y = lerp(-80, J.py, k);
+    } else if (t < 0.8) {
+      J.x = J.px;
+      J.y = J.py;
+    } else if (t < 2.0) {
+      const k = io((t - 0.8) / 1.2);
+      J.x = lerp(J.px, dropX, k);
+      J.y = lerp(J.py, 150, k) - Math.sin(k * Math.PI) * 50;
+    } else {
+      J.x = dropX + (t - 2) * 720 * dir;
+      J.y = 150 - (t - 2) * 170;
+    }
+    // Durcado visí na žebříku
+    if (t >= 0.45 && t < 2.35) {
+      if (!J.hold) this.onEvent('jetgrab', { idx: J.by });
+      J.hold = true;
+      p.x = J.x - dir * 12;
+      p.y = J.y + 70 + p.R;
+      p.vx = 0;
+      p.vy = 0;
+      p.onGround = false;
+      p.shootT = 0.2;
+      p.kickT = -1;
+      p.dir = dir;
+    } else if (J.hold && t >= 2.35) {
+      J.hold = false;
+      p.vx = dir * 160;
+      p.vy = -120;
+    }
+    // míč se k Durcadovi „dostane“ a visí mu u nohou
+    if (t >= 0.55 && !J.dropped) {
+      if (!J.got) {
+        J.got = true;
+        this.onEvent('jetball', { x: b.x, y: b.y });
+      }
+      b.held = false;
+      b.jetBy = J.by;
+      b.carryBy = -1;
+      b.superT = 0;
+      b.basketT = 0;
+      // míč visí Durcadovi u nohou
+      b.x = clamp(p.x + dir * 14, b.r, W - b.r);
+      b.y = p.y + p.R + p.F - b.r + 6;
+      b.vx = 0;
+      b.vy = 0;
+    }
+    if (t >= 2.0 && !J.dropped) {
+      J.dropped = true;
+      b.jetBy = -1;
+      b.vx = dir * D.vx;
+      b.vy = D.vy;
+      b.lastTouch = p;
+      b.lastHow = 'jet';
+      b.ghostBy = J.by;
+      b.ghostT = 0.6;
+      this.onEvent('jetdrop', { x: b.x, y: b.y, team: p.team });
+    }
+    if (t > JET_LEN) this.jet = null;
   }
 
   // Míč je před hráčem v dosahu kopu (od výšky hlavy k trávníku).
