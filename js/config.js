@@ -70,10 +70,13 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.32';
+const GAME_VERSION = '1.33';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
+
+// Prázdná hodnota používá API serveru hry. Na GitHub Pages sem patří veřejná HTTPS adresa API s koncovým lomítkem.
+const SOCIAL_API = '';
 
 // Postavy. hair = účes, accent = doplněk (gumička, mašle, náušnice).
 const ROSTER = [

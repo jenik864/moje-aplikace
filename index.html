@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.32">
+<link rel="stylesheet" href="style.css?v=1.33">
 </head>
 <body>
 <!-- HRA:START -->
@@ -75,6 +75,10 @@
             <span>Příběh</span>
             <span id="story-lock" class="tile-lock" aria-label="Zamčeno"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
           </button>
+          <button id="btn-players" class="btn-game green tile" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V12h6v8m0 0V5h6v15m0 0V9h6v11M3 20h18"/></svg>
+            <span>Žebříček</span>
+          </button>
         </div>
         <div class="home-extra">
           <button id="btn-swap" class="btn-chip small" type="button" aria-pressed="false">
@@ -106,7 +110,7 @@
     <div class="online-grid">
       <div class="online-card create">
         <p class="card-kicker">Založ hru</p>
-        <label class="field" for="nick"><span>Tvoje jméno</span><input id="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="např. Honza"></label>
+        <label class="field" for="nick"><span>Tvoje přezdívka</span><input id="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="např. Honza"></label>
         <button id="btn-create" class="btn-play" type="button">Založit hru</button>
       </div>
       <div class="online-or">nebo</div>
@@ -355,25 +359,73 @@
     </div>
   </section>
 
-  <!-- profil -->
+  <section id="players" class="screen dim" aria-labelledby="players-title" hidden>
+    <div class="dialog players-dlg">
+      <header class="profile-head">
+        <h2 id="players-title" class="screen-title">Hráči</h2>
+        <button id="btn-players-close" class="btn-mini" type="button" aria-label="Zpět do menu">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+        </button>
+      </header>
+      <div class="players-tools">
+        <div class="seg" role="group" aria-label="Seznam hráčů">
+          <button id="btn-players-all" type="button" aria-pressed="true">Žebříček</button>
+          <button id="btn-players-friends" type="button" aria-pressed="false">Přátelé</button>
+        </div>
+        <form id="players-search-form" class="players-search" role="search">
+          <label class="field">
+            <input id="players-search" type="search" maxlength="12" aria-label="Přezdívka hráče" placeholder="Přezdívka" enterkeyhint="search">
+          </label>
+          <button class="btn-chip" type="submit">Hledat</button>
+        </form>
+      </div>
+      <p id="players-status" class="status players-status" role="status"></p>
+      <div id="players-results" class="players-results" hidden>
+        <div class="players-columns" aria-hidden="true"><span>Pořadí</span><span>Hráč</span><span>Pohárky</span></div>
+        <ol id="players-list" class="players-list" aria-label="Hráči podle pohárků"></ol>
+      </div>
+      <footer class="players-footer">
+        <button id="btn-players-join" class="btn-chip" type="button" hidden>Nastavit přezdívku</button>
+        <button id="btn-players-retry" class="btn-chip" type="button" hidden>Zkusit znovu</button>
+        <div class="players-pages" aria-label="Stránky">
+          <button id="btn-players-prev" class="btn-chip" type="button" hidden>Předchozí</button>
+          <button id="btn-players-next" class="btn-chip" type="button" hidden>Další</button>
+        </div>
+      </footer>
+    </div>
+  </section>
+
   <section id="profile" class="screen dim" aria-labelledby="profile-title" hidden>
     <div class="dialog profile">
       <header class="profile-head">
-        <h2 id="profile-title" class="screen-title">Tvoje liga</h2>
-        <button id="btn-profile-close" class="btn-mini" type="button" aria-label="Zavřít">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        <h2 id="profile-title" class="screen-title">Můj profil</h2>
+        <button id="btn-profile-close" class="btn-mini" type="button" aria-label="Zpět">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
         </button>
       </header>
-      <div class="profile-left">
+      <div id="pf-overview" class="profile-left">
         <span class="rank-emblem big" id="pf-emblem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8 3.6 5v6.2c0 5.3 3.6 9.6 8.4 11 4.8-1.4 8.4-5.7 8.4-11V5z"/><path class="st" d="m12 6.6 1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"/></svg></span>
         <p id="pf-rank" class="pf-rank">Nováček</p>
         <p class="pf-tro"><svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v2.5a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 14.6V17h3v3H8v-3h3v-2.4A5 5 0 0 1 8.4 11.5H8a4 4 0 0 1-4-4V5h3zm0 4H6v.5a2 2 0 0 0 1.2 1.8zm10 0v2.3A2 2 0 0 0 18 7.5V7z"/></svg><b id="pf-tro">0</b></p>
         <span class="rw-bar wide"><i id="pf-bar"></i></span>
         <p id="pf-next" class="pf-next"></p>
+        <p id="pf-place" class="pf-place" hidden></p>
       </div>
-      <div class="profile-right">
+      <div id="pf-details" class="profile-right">
         <div id="pf-stats" class="pf-stats"></div>
         <div id="pf-ladder" class="pf-ladder" aria-label="Ligy"></div>
+      </div>
+      <div class="profile-actions">
+        <form id="profile-name-form" class="profile-name-form">
+          <label class="field" for="profile-nick">
+            <span>Přezdívka</span>
+            <input id="profile-nick" type="text" maxlength="12" autocomplete="nickname" spellcheck="false" required aria-describedby="pf-hint">
+          </label>
+          <button id="btn-profile-save" class="btn-play" type="submit">Uložit</button>
+          <p id="pf-hint">Přezdívka a statistiky budou vidět v žebříčku.</p>
+        </form>
+        <button id="btn-friend" class="btn-game green" type="button" hidden>Přidat do přátel</button>
+        <p id="pf-status" class="status" role="status"></p>
       </div>
     </div>
   </section>
@@ -387,16 +439,17 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.32"></script>
-<script src="js/audio.js?v=1.32"></script>
-<script src="js/input.js?v=1.32"></script>
-<script src="js/ai.js?v=1.32"></script>
-<script src="js/physics.js?v=1.32"></script>
-<script src="js/render.js?v=1.32"></script>
-<script src="js/penalty.js?v=1.32"></script>
-<script src="js/net.js?v=1.32"></script>
-<script src="js/lobby.js?v=1.32"></script>
-<script src="js/trailer.js?v=1.32"></script>
-<script src="js/main.js?v=1.32"></script>
+<script src="js/config.js?v=1.33"></script>
+<script src="js/audio.js?v=1.33"></script>
+<script src="js/input.js?v=1.33"></script>
+<script src="js/ai.js?v=1.33"></script>
+<script src="js/physics.js?v=1.33"></script>
+<script src="js/render.js?v=1.33"></script>
+<script src="js/penalty.js?v=1.33"></script>
+<script src="js/net.js?v=1.33"></script>
+<script src="js/social.js?v=1.33"></script>
+<script src="js/lobby.js?v=1.33"></script>
+<script src="js/trailer.js?v=1.33"></script>
+<script src="js/main.js?v=1.33"></script>
 </body>
 </html>

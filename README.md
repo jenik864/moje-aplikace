@@ -11,6 +11,15 @@ python3 -m http.server 8000
 # potom http://localhost:8000 nebo z telefonu http://<adresa-počítače>:8000
 ```
 
+Pro vývoj a hraní se společným žebříčkem spusť s Node.js 24 z kořene repozitáře:
+
+```sh
+node server.mjs
+node --test tests/social.test.mjs  # v druhém terminálu
+```
+
+Server poskytuje hru i API na portu 8000. Hráči v místní síti mohou použít adresu počítače, kde server běží. Jiné nastavení portu a adresy umožňují proměnné `PORT` a `HOST`. Server ukládá profily a přátele do SQLite v adresáři `.fifa67/`. Při hostování nasměruj `FIFA67_DATA_DIR` na trvalé úložiště.
+
 ## Týmy a postavy
 
 Ve 2 v 2 se v lobby šipkami vybírají dvě z pěti dvojic:
@@ -142,7 +151,15 @@ Superstřela vystřelí míč skoro dvakrát rychleji s ohnivou stopou v barvě 
 
 ### Poháry a ligy
 
-Za každý zápas dostane hráč na svém zařízení poháry: za výhru +8 (proti lehkému počítači méně, proti těžkému víc, online +10), navíc za větší rozdíl skóre a za vlastní góly. Za prohru se 3 poháry ztratí. Podle pohárů postupuje ligami Nováček → Bronz → Stříbro → Zlato → Diamant → Mistr → Legenda. Liga a poháry jsou vidět vpravo nahoře v menu. Po klepnutí se ukáže profil se statistikami (zápasy, výhry, góly, superstřely, odstřelení, nejdelší série výher). Po zápase se ukáže hráč zápasu a kolik pohárů přibylo. Postup se ukládá v prohlížeči daného zařízení.
+Za každý zápas dostane hráč na svém zařízení poháry: za výhru +8 (proti lehkému počítači méně, proti těžkému víc, online +10), navíc za větší rozdíl skóre a za vlastní góly. Za prohru se 3 poháry ztratí. Podle pohárů postupuje ligami Nováček → Bronz → Stříbro → Zlato → Diamant → Mistr → Legenda. Vpravo nahoře v menu jsou poháry a vstup do profilu. Po zápase se ukáže hráč zápasu a kolik pohárů přibylo. Postup se ukládá v prohlížeči daného zařízení.
+
+### Žebříček a přátelé
+
+V **Můj profil** si hráč uloží přezdívku o 2–12 znacích. Přezdívky jsou jedinečné bez ohledu na velikost písmen a lze je upravit. Hra při uložení zveřejní dosavadní pohárky a statistiky z prohlížeče. Po dalších zápasech odešle nový stav. Změny zaznamenané bez připojení odešle po obnovení spojení.
+
+**Žebříček** seřadí hráče podle pohárků od nejvyššího počtu. Stejný počet pohárků znamená stejnou příčku. Hráče lze vyhledat podle přezdívky, otevřít jeho statistiky a přidat ho do záložky **Přátelé**. Seznam přátel je soukromý a přidání nevyžaduje potvrzení druhého hráče.
+
+Přístup k úpravám profilu a přátel je svázaný s prohlížečem. Smazáním dat webu se tento přístup ztratí. Žebříček používá pohárky získané v prohlížeči, včetně zápasů proti počítači.
 
 ### Celá obrazovka
 
@@ -170,6 +187,8 @@ GitHub Pages zdarma funguje jen pro veřejný repozitář.
 2. *Settings → Pages → Build and deployment*: Source **Deploy from a branch**, větev `claude/tender-maxwell-a4f0g0` (nebo `main` po sloučení), složka **/ (root)** → **Save**.
 3. Za minutu až dvě hra poběží na `https://jenik864.github.io/moje-aplikace/`.
 
+Společný žebříček potřebuje běžící `server.mjs`. Pokud hra běží na GitHub Pages, nasaď server na HTTPS host s trvalým diskem. Na serveru nastav `FIFA67_WEB_ORIGIN=https://jenik864.github.io`. V `js/config.js` nastav `SOCIAL_API` na veřejnou HTTPS adresu tohoto serveru včetně cesty `/api/social/`. Hráčům tak zůstanou data uložená pod původní adresou hry. Zahraješ si i při výpadku API a synchronizace počká na připojení.
+
 Pro testy lze v prohlížeči nastavit `window.HLAVOUNI_NET = 'bc'` (BroadcastChannel mezi panely), `window.HLAVOUNI_PEER = { host, port, path, secure }` (vlastní server PeerJS) nebo `window.HLAVOUNI_RELAY = ['ws://…']` (vlastní MQTT server pro záložní přenos).
 
 ## Jak funguje hra
@@ -196,9 +215,11 @@ js/physics.js   míč, hráči, kolize, góly
 js/render.js    stadion, postavy, míč, efekty, výsledková tabule, portréty
 js/penalty.js   penalty pohledem za střelcem (3D brána, brankář zepředu)
 js/net.js       online přenos (artifact room, PeerJS, BroadcastChannel)
+js/social.js    žebříček, veřejné profily a soukromý seznam přátel
 js/vendor/      PeerJS 1.5.4 (licence MIT)
 js/lobby.js     výběr hráčů
 js/main.js      herní smyčka, průběh zápasu, obrazovky, hostitel a host
+server.mjs      webový server a společné úložiště hráčů v SQLite
 ```
 
 Hřiště má virtuální rozměr 1280 × 720. Na displeji jiného poměru stran se zobrazí víc okolí, takže nikde nejsou černé pruhy. Fyzika běží v pevném kroku 1/120 s.
@@ -213,6 +234,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.33 – přezdívky, žebříček podle pohárků, profily hráčů a přátelé
 - 1.32 – trailer k updatu (`?trailer`, video `trailer.mp4`)
 - 1.31 – hratelnost: větší míč, shovívavější kop (i volej a míč ve výšce hlavy), kop zmáčknutý o chvilku dřív počká na míč, pomoc s mířením na bránu, silnější hlavičky
 - 1.30 – Kiki v bikinách má sluneční brýle

@@ -1755,6 +1755,7 @@ const Game = {
     prof.streak = win ? prof.streak + 1 : 0;
     prof.bestStreak = Math.max(prof.bestStreak, prof.streak);
     Profile.save(prof);
+    Social.sync().catch(() => {});
     const tasks = Tasks.record(me.look.id, st.goals);
     this.lastReward = { delta, before, after: prof.trophies, win, parts, streak: prof.streak, tasks };
     return this.lastReward;
@@ -2528,7 +2529,7 @@ const UI = {
       resKicker: $('res-kicker'), resTitle: $('res-title'), resA: $('res-a'), resB: $('res-b'), resSub: $('res-sub'),
       resMain: $('btn-res-main'), resSecond: $('btn-res-second'), resThird: $('btn-res-third'), resWait: $('res-wait'),
       pauseSecond: $('btn-restart'), pauseThird: $('btn-quit'),
-      profile: $('profile'), chip: $('profile-chip'), cup: $('cup'), half: $('half'),
+      profile: $('profile'), players: $('players'), chip: $('profile-chip'), cup: $('cup'), half: $('half'),
       story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'),
     };
     const click = (id, fn) => $(id).addEventListener('click', () => {
@@ -2595,8 +2596,9 @@ const UI = {
       if (this.storySel >= 0) Game.playStory(this.storySel);
     });
     click('btn-swap', () => this.setSwap(!Touch.swap));
-    click('profile-chip', () => this.openProfile());
-    click('btn-profile-close', () => this.show('home'));
+    click('profile-chip', () => PlayerUI.openOwn());
+    click('btn-players', () => PlayerUI.openList());
+    PlayerUI.init();
     click('btn-swap2', () => this.setSwap(!Touch.swap));
     const fs = $('btn-fs');
     const standalone = window.matchMedia && window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
@@ -2659,7 +2661,6 @@ const UI = {
       Sound.init();
       this.setMuted(!Sound.muted);
     });
-    this.el.nick.value = cleanName(store.get(STORE_NAME, ''));
     this.setSwap(store.get(STORE_SWAP, false) === true);
     $('public-url').textContent = PUBLIC_URL.replace(/^https:\/\//, '').replace(/\/$/, '');
     this.setMuted(store.get(STORE_MUTE, false) === true);
@@ -2684,19 +2685,22 @@ const UI = {
     const prof = Profile.get(), r = rankOf(prof.trophies);
     const $ = (id) => document.getElementById(id);
     $('pc-tro').textContent = prof.trophies;
-    $('pc-rank').textContent = r.rank.name;
+    $('pc-rank').textContent = Social.chosenName || r.rank.name;
+    this.el.chip.title = r.rank.name;
     $('pc-bar').style.width = `${Math.round(r.prog * 100)}%`;
     this.setEmblem($('pc-emblem'), r.rank);
   },
 
-  openProfile() {
-    const prof = Profile.get(), r = rankOf(prof.trophies);
+  renderProfileDetails(prof) {
+    const r = rankOf(prof.trophies);
     const $ = (id) => document.getElementById(id);
     $('pf-tro').textContent = prof.trophies;
     $('pf-rank').textContent = r.rank.name;
     $('pf-rank').style.color = r.rank.color;
     $('pf-bar').style.width = `${Math.round(r.prog * 100)}%`;
-    $('pf-next').textContent = r.next ? `Do ligy ${r.next.name} chybí ${r.next.min - prof.trophies} pohárů` : 'Nejvyšší liga! Jsi legenda.';
+    $('pf-next').textContent = r.next ? `Do ligy ${r.next.name} zbývá ${r.next.min - prof.trophies} pohárků` : 'Nejvyšší liga';
+    $('pf-place').hidden = !prof.place;
+    $('pf-place').textContent = prof.place ? `#${prof.place} v žebříčku` : '';
     this.setEmblem($('pf-emblem'), r.rank);
     const stats = [
       ['Zápasy', prof.played], ['Výhry', prof.wins], ['Góly', prof.goals],
@@ -2715,6 +2719,8 @@ const UI = {
       box.appendChild(d);
     }
     const lad = $('pf-ladder');
+    lad.hidden = !!prof.place;
+    if (lad.hidden) return;
     lad.textContent = '';
     RANKS.forEach((rk, i) => {
       const d = document.createElement('div');
@@ -2730,7 +2736,6 @@ const UI = {
       d.append(em, n, t);
       lad.appendChild(d);
     });
-    this.show('profile');
   },
 
   // Tabulka statistik obou týmů.
@@ -3026,14 +3031,20 @@ const UI = {
   },
 
   show(name) {
-    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks']) {
-      this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home') && !(name === 'reward' && key === 'story');
+    const playerPanel = name === 'profile' || name === 'players';
+    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'players', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks']) {
+      this.el[key].hidden = name !== key && !(playerPanel && key === 'home') && !(name === 'reward' && key === 'story');
     }
+    this.el.home.inert = playerPanel;
     this.el.chip.hidden = name !== 'home';
     document.getElementById('app').classList.toggle('on-home', name === 'home');
     // u velkých tabulek schovat ikony v rohu, ať nic nepřekrývají
-    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock', 'reward', 'tasks'].includes(name));
+    document.getElementById('app').classList.toggle('modal', playerPanel || ['result', 'cup', 'half', 'unlock', 'reward', 'tasks'].includes(name));
     if (name === 'home') this.updateLocks();
+    if (name === 'online') {
+      this.el.nick.value = Social.nickname;
+      this.el.nick.readOnly = !!Social.chosenName;
+    }
     this.measureHud();
     this.el.pauseBtn.hidden = !(Game.screen === 'match' && Game.mode !== 'guest' && (Game.inMatch() || Game.state === 'paused'));
     if (name === 'pause') {
@@ -3463,6 +3474,9 @@ function boot() {
   LobbyUI.init();
   UI.init();
   Game.init();
+  const syncPlayer = () => Social.sync().then(() => UI.renderProfile()).catch(() => {});
+  syncPlayer();
+  window.addEventListener('online', syncPlayer);
   // odkaz s kódem hry (#kod-ABCD) rovnou otevře připojení
   const joinFromHash = () => {
     const hm = /^#kod-([A-Za-z0-9]{4})$/.exec(location.hash || '');
@@ -3493,6 +3507,10 @@ function boot() {
   }
 
   window.addEventListener('keydown', (e) => {
+    if (e.code === 'Escape' && PlayerUI.close()) {
+      e.preventDefault();
+      return;
+    }
     if (e.target && e.target.tagName === 'INPUT') return;
     if (e.code === 'Escape' || e.code === 'KeyP') {
       if (Game.state === 'paused') Game.resume();
@@ -3520,6 +3538,7 @@ function boot() {
   });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && Game.mode === 'local') Game.pause();
+    if (!document.hidden) syncPlayer();
   });
   window.addEventListener('pagehide', () => {
     if (Online.active) Online.leave();
