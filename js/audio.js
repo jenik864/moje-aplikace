@@ -12,6 +12,10 @@ const Sound = {
   goalUntil: 0,
 
   init() {
+    // iPhone: zvuky hry se smíchají s hudbou z jiných aplikací (Spotify hraje dál)
+    try {
+      if (navigator.audioSession && navigator.audioSession.type !== 'ambient') navigator.audioSession.type = 'ambient';
+    } catch (e) { /* starší prohlížeč */ }
     if (this.ctx) {
       if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
       return;
