@@ -159,3 +159,13 @@ js/main.js      herní smyčka, průběh zápasu, obrazovky, hostitel a host
 ```
 
 Hřiště má virtuální rozměr 1280 × 720. Na displeji jiného poměru stran se zobrazí víc okolí, takže nikde nejsou černé pruhy. Fyzika běží v pevném kroku 1/120 s.
+
+## Verze
+
+Aktuální verze je vidět dole v rohu hlavního menu.
+
+- 1.22 – rozcvička na začátku zápasu
+- 1.21 – penalty pohledem za střelcem na 3D bránu
+- 1.20 – tlačítko Turnaj v hlavním menu
+- 1.19 – penaltový rozstřel při remíze
+- 1.16–1.18 – spolehlivější a plynulejší online hra
