@@ -442,11 +442,20 @@ const Game = {
     UI.showStory();
   },
 
+  // Kód: příběh, nebo hlavní kód, který odemkne úplně všechno. Vrací 'story', 'all' nebo ''.
   tryUnlock(code) {
     const norm = String(code || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').toUpperCase();
-    if (codeHash(norm) !== STORY_CODE) return false;
+    const h = codeHash(norm);
+    if (h === MASTER_CODE) {
+      for (const k of ['story', 'moncler', 'skinOn', 'pav', 'milan']) Unlocks.set(k);
+      const st = Story.get();
+      st.done = STORY.length;
+      Story.save(st);
+      return 'all';
+    }
+    if (h !== STORY_CODE) return '';
     Unlocks.set('story');
-    return true;
+    return 'story';
   },
 
   storyChar() {
@@ -2523,16 +2532,23 @@ const UI = {
       Game.openStory();
     });
     click('btn-unlock-back', () => this.show('home'));
+    click('btn-code', () => this.showUnlock(true));
     $('unlock-form').addEventListener('submit', (e) => {
       e.preventDefault();
       Sound.init();
       const input = $('unlock-code');
-      if (Game.tryUnlock(input.value)) {
+      const got = Game.tryUnlock(input.value);
+      if (got) {
         input.blur();
         this.updateLocks();
         Sound.fanfare();
-        this.toast('Příběh odemčen!');
-        Game.openStory();
+        if (got === 'all') {
+          this.toast('Odemčeno úplně všechno! Příběh, Moncler-Jenda, Páv & Sully i Milan.');
+          this.show('home');
+        } else {
+          this.toast('Příběh odemčen!');
+          Game.openStory();
+        }
       } else {
         $('unlock-err').hidden = false;
         const f = $('unlock-form');
@@ -3076,8 +3092,10 @@ const UI = {
     if (l) l.hidden = Unlocks.has('story');
   },
 
-  showUnlock() {
+  showUnlock(any) {
     const $ = (id) => document.getElementById(id);
+    $('unlock-title').textContent = any ? 'Tajný kód' : 'Příběh je zamčený';
+    $('unlock-sub').textContent = any ? 'Zadej kód a odemkni zamčené věci' : 'Zadej tajný kód';
     $('unlock-code').value = '';
     $('unlock-err').hidden = true;
     this.show('unlock');

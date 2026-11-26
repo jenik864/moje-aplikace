@@ -68,7 +68,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.25';
+const GAME_VERSION = '1.26';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -169,6 +169,7 @@ const MONCLER_KIT = { name: 'MONCLER-JENDA', short: 'Moncler-Jenda', color: '#f7
 
 // Příběh: 10 úrovní, každá jeden zápas 1 v 1. Odemyká se kódem (uložen jen hash).
 const STORY_CODE = 'a693ac71';
+const MASTER_CODE = '42369a8e'; // odemkne úplně všechno
 function codeHash(s) {
   let h = 0x811c9dc5;
   for (const ch of s) {

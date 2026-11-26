@@ -65,7 +65,7 @@ Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče,
 
 ## Příběh
 
-Tlačítko *Příběh* v hlavním menu. Je zamčený kódem (kód se zadává jednou, pak zůstane odemčený na tomto zařízení; v kódu se nekontrolují velká/malá písmena, mezery ani háčky). Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
+Tlačítko *Příběh* v hlavním menu (dokud je zamčený, má zámeček). Kódy se dají zadat i tlačítkem *Kód* dole v menu; **hlavní kód odemkne úplně všechno** (Příběh se všemi úrovněmi splněnými, Moncler-Jenda, Tlustej páv & Sully, Milan). Příběh je zamčený kódem (kód se zadává jednou, pak zůstane odemčený na tomto zařízení; v kódu se nekontrolují velká/malá písmena, mezery ani háčky). Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
 
 10 úrovní, každá je jeden zápas proti počítači – některé 1 v 1, některé 2 v 2 (spoluhráče máš z tvé dvojice, hraje za něj počítač). Vybereš si svého hráče a postupně odemykáš další úrovně (splněné jde hrát znovu, zamčené si můžeš prohlédnout). Každá úroveň má úkol, bez jeho splnění se nepostoupí; úkol je vidět i během zápasu pod tabulí:
 
@@ -193,6 +193,7 @@ Hřiště má virtuální rozměr 1280 × 720. Na displeji jiného poměru stran
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.26 – přehlednější hlavní menu (dlaždice Online / Turnaj / Příběh, sponzoři v jednom řádku), tlačítko Kód a hlavní kód na odemčení všeho
 - 1.25 – přehlednější lobby (nastavení dole v jednom řádku), schopnosti Obří páv a Flash, nový vzhled Páva a Sully
 - 1.24 – Příběh: úrovně 1 v 1 i 2 v 2 s úkoly, skin Moncler-Jenda, nová dvojice Tlustej páv & Sully, náhled odměn
 - 1.23 – Příběh (10 úrovní, zamčený kódem), zlatý dres, nový hráč Milan, turnaj i pro více hráčů a online

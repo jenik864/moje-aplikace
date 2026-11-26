@@ -1320,3 +1320,21 @@ kbd {
 :root.h320 .lobby-bottom .seg button { padding: 3px 6px; font-size: 12px; }
 :root.w700 .lobby-bottom .seg button { padding: 3px 6px; font-size: 12px; }
 :root.h380 .lobby-actions .btn-play { font-size: 24px; padding: 5px 22px 3px; }
+
+/* ---- hlavní menu: dlaždice, sponzoři v jednom řádku, malé volby dole ---- */
+.home-row .btn-game.tile { position: relative; flex-direction: column; gap: 2px; padding: clamp(5px, calc(var(--vh, 1vh) * 1.6), 9px) 4px clamp(4px, calc(var(--vh, 1vh) * 1.3), 8px); font-size: clamp(14px, calc(var(--vh, 1vh) * 4.2), 20px); line-height: 1; }
+.home-row .btn-game.tile > svg:not(.lock),
+:root.h380 .home-row .btn-game.tile > svg:not(.lock),
+:root.w700 .home-row .btn-game.tile > svg:not(.lock) { display: block; width: 1.35em; height: 1.35em; }
+:root.h320 .home-row .btn-game.tile > svg { width: 1.1em; height: 1.1em; }
+.home-row .btn-game.tile > span:not(.tile-lock) { overflow: visible; }
+.tile-lock { position: absolute; top: -9px; right: -7px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); border: 2px solid #ffb35c; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4); }
+.tile-lock svg { width: 14px; height: 14px; fill: none; stroke: #ffb35c; stroke-width: 2.6; stroke-linecap: round; }
+.sponsor-mini { margin: 2px 0 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; white-space: nowrap; }
+.sponsor-mini .sp-k { font-size: 10px; }
+.spm-hp { color: #ff6a3a; }
+.spm-rg { color: #6be39a; }
+.home-extra { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-chip.small { font-size: 12px; padding: 4px 10px; gap: 5px; }
+.btn-chip.small svg { width: 15px; height: 15px; }
+:root.h320 .sponsor-mini { font-size: 11px; }
