@@ -106,7 +106,8 @@ V lobby se kamarádi připojují kódem nebo odkazem s kódem (tlačítko *Pozva
 
 Přenos se volí podle toho, kde hra běží:
 
-- **Na webu (GitHub Pages), pro kohokoli bez účtu**: WebRTC přes knihovnu PeerJS (přibalená v `js/vendor/`) a její veřejný server pro navázání spojení. Když přímé spojení nejde, PeerJS použije své veřejné TURN servery.
+- **Na webu (GitHub Pages), pro kohokoli bez účtu**: nejdřív přímé spojení WebRTC přes knihovnu PeerJS (přibalená v `js/vendor/`), její veřejný server a veřejné STUN/TURN servery. Když přímé spojení nejde (typicky mobilní data 5G/LTE nebo přísná firemní síť), kamarád se automaticky připojí přes záložní přenos: veřejný MQTT server přes zabezpečený WebSocket (HiveMQ, EMQX nebo Mosquitto, zkouší se postupně), který projde téměř každou sítí. Hostitel naslouchá na obou cestách zároveň.
+- Hostitel i kamarádi musí mít hru otevřenou na stejné adrese – buď všichni na webu, nebo všichni na claude.ai.
 - **Na claude.ai (artifact)**: sdílená místnost artifactu. Hrát online tam můžou jen přihlášení lidé, kterým je artifact nasdílený. Ostatním hra ukáže adresu webové verze.
 
 ### Zveřejnění na GitHub Pages
@@ -117,7 +118,7 @@ GitHub Pages zdarma funguje jen pro veřejný repozitář.
 2. *Settings → Pages → Build and deployment*: Source **Deploy from a branch**, větev `claude/tender-maxwell-a4f0g0` (nebo `main` po sloučení), složka **/ (root)** → **Save**.
 3. Za minutu až dvě hra poběží na `https://jenik864.github.io/moje-aplikace/`.
 
-Pro testy lze v prohlížeči nastavit `window.HLAVOUNI_NET = 'bc'` (BroadcastChannel mezi panely) nebo `window.HLAVOUNI_PEER = { host, port, path, secure }` (vlastní server PeerJS).
+Pro testy lze v prohlížeči nastavit `window.HLAVOUNI_NET = 'bc'` (BroadcastChannel mezi panely), `window.HLAVOUNI_PEER = { host, port, path, secure }` (vlastní server PeerJS) nebo `window.HLAVOUNI_RELAY = ['ws://…']` (vlastní MQTT server pro záložní přenos).
 
 ## Jak funguje hra
 

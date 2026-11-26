@@ -9,13 +9,25 @@
  * Přenos podle toho, kde hra běží:
  *  - na claude.ai: schopnost artifactu `room` (kamarádi musí být přihlášení
  *    a mít k artifactu přístup),
- *  - jinde (např. GitHub Pages): PeerJS (WebRTC) přes veřejný server PeerJS,
+ *  - jinde (např. GitHub Pages): přímé spojení PeerJS (WebRTC); když nejde
+ *    (mobilní data, přísné NAT), záložní přenos přes veřejný MQTT server
+ *    (WebSocket), který projde téměř každou sítí,
  *  - testy: BroadcastChannel mezi panely jednoho prohlížeče.
  */
 
 const NET_V = 2;
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const PEERJS_SRC = 'js/vendor/peerjs.min.js'; // PeerJS 1.5.4 (MIT), přibalené ke hře
+// Servery pro navázání přímého spojení (STUN) a přeposílání, když přímé nejde (TURN).
+const ICE_SERVERS = [
+  { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+  { urls: 'stun:stun.cloudflare.com:3478' },
+  { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' },
+  { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' },
+];
+// Záložní přenos: veřejné MQTT servery přes WebSocket (zkouší se postupně).
+const RELAY_URLS = ['wss://broker.hivemq.com:8884/mqtt', 'wss://broker.emqx.io:8084/mqtt', 'wss://test.mosquitto.org:8081/mqtt'];
+const RELAY_NS = 'fifa67/v2/';
 
 function makeCode() {
   let s = '';
@@ -69,10 +81,13 @@ async function openPeerTransport(code, asHost) {
   if (!window.Peer) await loadScript(PEERJS_SRC);
   const hostId = 'hlavouni-' + code.toLowerCase();
   // window.HLAVOUNI_PEER umožní testům použít vlastní server PeerJS
-  const opts = Object.assign({ debug: 0 }, window.HLAVOUNI_PEER || {});
+  const opts = Object.assign({ debug: 0, config: { iceServers: ICE_SERVERS } }, window.HLAVOUNI_PEER || {});
   const peer = asHost ? new window.Peer(hostId, opts) : new window.Peer(opts);
   await new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error('timeout')), 12000);
+    const t = setTimeout(() => {
+      try { peer.destroy(); } catch (e) { /* nevadí */ }
+      reject(new Error('timeout'));
+    }, 9000);
     peer.on('open', () => { clearTimeout(t); resolve(); });
     peer.on('error', (e) => { clearTimeout(t); reject(e); });
   });
@@ -117,13 +132,18 @@ async function openPeerTransport(code, asHost) {
   if (asHost) {
     peer.on('connection', attach);
   } else {
-    const c = peer.connect(hostId, { serialization: 'json' });
+    const c = peer.connect(hostId, { serialization: 'json', reliable: true });
     attach(c);
-    await new Promise((resolve, reject) => {
-      const t = setTimeout(() => reject(new Error('notfound')), 10000);
-      c.on('open', () => { clearTimeout(t); resolve(); });
-      peer.on('error', (e) => { clearTimeout(t); reject(e); });
-    });
+    try {
+      await new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error('notfound')), 7000);
+        c.on('open', () => { clearTimeout(t); resolve(); });
+        peer.on('error', (e) => { clearTimeout(t); reject(e); });
+      });
+    } catch (e) {
+      try { peer.destroy(); } catch (err) { /* nevadí */ }
+      throw e;
+    }
   }
   return {
     kind: 'peer',
@@ -142,6 +162,263 @@ async function openPeerTransport(code, asHost) {
         try { c.close(); } catch (e) { /* nevadí */ }
       }
       peer.destroy();
+    },
+  };
+}
+
+/* ---------- záložní přenos přes MQTT (WebSocket) ---------- */
+
+// Minimální klient MQTT 3.1.1: připojení, odběr a zprávy bez potvrzování (QoS 0).
+function mqttConnect(url, clientId, onMessage) {
+  return new Promise((resolve, reject) => {
+    let ws;
+    try {
+      ws = new WebSocket(url, 'mqtt');
+    } catch (e) {
+      reject(e);
+      return;
+    }
+    ws.binaryType = 'arraybuffer';
+    const enc = new TextEncoder(), dec = new TextDecoder();
+    const str = (s) => {
+      const b = enc.encode(s);
+      return [b.length >> 8, b.length & 255, ...b];
+    };
+    const packet = (head, body) => {
+      const len = [];
+      let n = body.length;
+      do {
+        let d = n % 128;
+        n = Math.floor(n / 128);
+        if (n > 0) d |= 128;
+        len.push(d);
+      } while (n > 0);
+      const out = new Uint8Array(1 + len.length + body.length);
+      out[0] = head;
+      out.set(len, 1);
+      out.set(body, 1 + len.length);
+      return out;
+    };
+    const send = (p) => {
+      if (ws.readyState === 1) ws.send(p);
+    };
+    let buf = new Uint8Array(0), pid = 1, ping = 0, done = false;
+    const fail = (e) => {
+      if (done) return;
+      done = true;
+      clearTimeout(to);
+      try { ws.close(); } catch (err) { /* nevadí */ }
+      reject(e);
+    };
+    const to = setTimeout(() => fail(new Error('timeout')), 6000);
+    const api = {
+      publish(topic, text) {
+        const t = str(topic), p = enc.encode(text);
+        const body = new Uint8Array(t.length + p.length);
+        body.set(t, 0);
+        body.set(p, t.length);
+        send(packet(0x30, body));
+      },
+      subscribe(topic) {
+        const id = pid++;
+        send(packet(0x82, Uint8Array.from([id >> 8, id & 255, ...str(topic), 0])));
+      },
+      close() {
+        clearInterval(ping);
+        send(Uint8Array.from([0xe0, 0]));
+        try { ws.close(); } catch (e) { /* nevadí */ }
+      },
+      onClose: null,
+    };
+    ws.onopen = () => {
+      const body = [...str('MQTT'), 4, 0x02, 0, 30, ...str(clientId)];
+      send(packet(0x10, Uint8Array.from(body)));
+    };
+    ws.onerror = () => fail(new Error('network'));
+    ws.onclose = () => {
+      clearInterval(ping);
+      if (!done) fail(new Error('network'));
+      else if (api.onClose) api.onClose();
+    };
+    ws.onmessage = (ev) => {
+      const chunk = new Uint8Array(ev.data);
+      const all = new Uint8Array(buf.length + chunk.length);
+      all.set(buf, 0);
+      all.set(chunk, buf.length);
+      buf = all;
+      for (;;) {
+        if (buf.length < 2) return;
+        let len = 0, mul = 1, i = 1, d;
+        do {
+          if (i >= buf.length) return;
+          d = buf[i++];
+          len += (d & 127) * mul;
+          mul *= 128;
+        } while (d & 128);
+        if (buf.length < i + len) return;
+        const head = buf[0], type = head >> 4, body = buf.slice(i, i + len);
+        buf = buf.slice(i + len);
+        if (type === 2) {
+          // CONNACK
+          if (body[1] !== 0) {
+            fail(new Error('refused'));
+            return;
+          }
+          done = true;
+          clearTimeout(to);
+          ping = setInterval(() => send(Uint8Array.from([0xc0, 0])), 20000);
+          resolve(api);
+        } else if (type === 3) {
+          // PUBLISH (QoS 0)
+          const tl = (body[0] << 8) | body[1];
+          const topic = dec.decode(body.subarray(2, 2 + tl));
+          const qos = (head >> 1) & 3;
+          const off = 2 + tl + (qos ? 2 : 0);
+          onMessage(topic, dec.decode(body.subarray(off)));
+        }
+      }
+    };
+  });
+}
+
+// Presence přes MQTT: každý účastník posílá svůj stav na vlastní téma, odebírá všechna.
+// `lazy` (hostitel): plnou rychlostí posílá, jen když přes tenhle přenos někdo je.
+async function openRelayTransport(code, asHost) {
+  const me = (asHost ? 'h' : 'g') + randomId(10);
+  const base = RELAY_NS + code.toLowerCase() + '/';
+  const mine = {};
+  const others = new Map(); // id -> { p, seen }
+  const subs = new Set();
+  const list = () => [{ peer: me, presence: mine, isMe: true }]
+    .concat([...others].map(([id, o]) => ({ peer: id, presence: o.p, isMe: false })));
+  const notify = () => {
+    const l = list();
+    subs.forEach((fn) => fn(l));
+  };
+  const onMsg = (topic, text) => {
+    let d;
+    try { d = JSON.parse(text); } catch (e) { return; }
+    if (!d || typeof d.id !== 'string' || d.id === me) return;
+    if (d.bye) {
+      if (others.delete(d.id)) notify();
+      return;
+    }
+    if (!d.p || typeof d.p !== 'object') return;
+    const known = others.has(d.id);
+    others.set(d.id, { p: d.p, seen: Date.now() });
+    if (!known) send();
+    notify();
+  };
+  const urls = window.HLAVOUNI_RELAY || RELAY_URLS;
+  let client = null, lastErr = null;
+  for (const url of urls) {
+    try {
+      client = await mqttConnect(url, 'f67' + randomId(12), onMsg);
+      break;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  if (!client) throw lastErr || new Error('network');
+  client.subscribe(base + '+');
+  let alive = true;
+  client.onClose = () => {
+    alive = false;
+  };
+  const send = () => {
+    timer = 0;
+    if (alive) client.publish(base + me, JSON.stringify({ id: me, p: mine }));
+  };
+  let timer = 0;
+  const beat = setInterval(() => {
+    send();
+    const now = Date.now();
+    let changed = false;
+    for (const [id, o] of others) {
+      if (now - o.seen > 4500) {
+        others.delete(id);
+        changed = true;
+      }
+    }
+    if (changed) notify();
+  }, 1000);
+  return {
+    kind: 'relay',
+    peers: list,
+    count: () => others.size,
+    onPeers(fn) { subs.add(fn); return () => subs.delete(fn); },
+    setPresence(patch) {
+      for (const k in patch) {
+        if (patch[k] === null) delete mine[k];
+        else mine[k] = patch[k];
+      }
+      // hostitel bez nikoho na záložním přenosu posílá jen jednou za sekundu
+      if (asHost && !others.size) return;
+      if (!timer) timer = setTimeout(send, 33);
+    },
+    connected: () => alive,
+    close() {
+      clearInterval(beat);
+      if (alive) client.publish(base + me, JSON.stringify({ id: me, bye: 1 }));
+      setTimeout(() => client.close(), 150);
+    },
+  };
+}
+
+// Hostitel naslouchá na více přenosech zároveň (další se mohou přidat později).
+function combineTransports(first) {
+  const ts = [first];
+  const subs = new Set();
+  const state = {}; // celý vlastní stav, aby ho dostal i později přidaný přenos
+  let closed = false;
+  const list = () => {
+    const out = [];
+    let me = false;
+    for (const t of ts) {
+      for (const p of t.peers()) {
+        if (p.isMe) {
+          if (me) continue;
+          me = true;
+        }
+        out.push(p);
+      }
+    }
+    return out;
+  };
+  const notify = () => {
+    const l = list();
+    subs.forEach((fn) => fn(l));
+  };
+  first.onPeers(notify);
+  return {
+    get kind() {
+      return ts.map((t) => t.kind).join('+');
+    },
+    peers: list,
+    onPeers(fn) {
+      subs.add(fn);
+      return () => subs.delete(fn);
+    },
+    setPresence(patch) {
+      for (const k in patch) {
+        if (patch[k] === null) delete state[k];
+        else state[k] = patch[k];
+      }
+      ts.forEach((t) => t.setPresence(patch));
+    },
+    add(t) {
+      if (closed) {
+        t.close();
+        return;
+      }
+      ts.push(t);
+      t.setPresence(Object.assign({}, state));
+      t.onPeers(notify);
+    },
+    connected: () => ts.some((t) => t.connected()),
+    close() {
+      closed = true;
+      ts.forEach((t) => t.close());
     },
   };
 }
@@ -234,7 +511,37 @@ const Net = {
   async open(code, asHost) {
     const kind = await this.detect();
     if (kind === 'room') return openRoomTransport(this.room, code);
-    if (kind === 'peer') return openPeerTransport(code, asHost);
+    if (kind === 'peer') {
+      if (asHost) {
+        // hostitel: přímé spojení (rezervuje kód hry) + záložní přenos
+        const relayP = openRelayTransport(code, true).catch(() => null);
+        let peerT = null;
+        try {
+          peerT = await openPeerTransport(code, true);
+        } catch (e) {
+          if (e && e.type === 'unavailable-id') {
+            relayP.then((t) => t && t.close());
+            throw e;
+          }
+        }
+        if (peerT) {
+          // záložní přenos se přidá, až bude připravený
+          const hub = combineTransports(peerT);
+          relayP.then((t) => t && hub.add(t));
+          return hub;
+        }
+        const relayT = await relayP;
+        if (!relayT) throw new Error('network');
+        return combineTransports(relayT);
+      }
+      // kamarád: nejdřív přímé spojení, když nevyjde, záložní přenos
+      try {
+        return await openPeerTransport(code, false);
+      } catch (e) {
+        if (this.onFallback) this.onFallback();
+        return openRelayTransport(code, false);
+      }
+    }
     if (kind === 'bc') return openBroadcastTransport(code);
     throw new Error('unavailable');
   },

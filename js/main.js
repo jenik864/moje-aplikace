@@ -200,6 +200,7 @@ const Game = {
       return;
     }
     UI.onlineStatus('Připojuji se ke hře ' + code + '…');
+    Net.onFallback = () => UI.onlineStatus('Přímé spojení nejde, zkouším záložní spojení přes server…');
     try {
       await Online.join(code, name);
     } catch (e) {
@@ -214,7 +215,7 @@ const Game = {
 
   netError(e, code) {
     const msg = String((e && (e.type || e.message)) || e);
-    if (msg === 'notfound' || msg === 'peer-unavailable') return `Hra s kódem ${code} neexistuje nebo už skončila.`;
+    if (msg === 'notfound' || msg === 'peer-unavailable') return `Hru ${code} se nepodařilo najít. Zkontroluj kód a že hostitel i ty máte hru otevřenou na stejné adrese (${PUBLIC_URL.replace(/^https:\/\//, '').replace(/\/$/, '')}).`;
     if (msg === 'unavailable') return 'Online hra tady nejde. Na claude.ai musíš být přihlášený a mít k této hře přístup.';
     if (msg === 'timeout' || msg === 'network' || msg === 'server-error' || msg === 'socket-error') return 'Nepodařilo se spojit se serverem. Zkontroluj internet a zkus to znovu.';
     return 'Připojení se nepovedlo. Zkus to znovu.';
