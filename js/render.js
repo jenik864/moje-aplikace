@@ -143,7 +143,8 @@ const Effects = {
   },
   grass(x, n) {
     for (let i = 0; i < n; i++) {
-      this.add({ x: x + rand(-10, 10), y: GROUND_Y - 2, vx: rand(-160, 160), vy: rand(-360, -140), g: 1400, life: rand(0.35, 0.6), size: rand(2, 3.5), color: Math.random() < 0.5 ? '#6fcb5a' : '#3f9a3c' });
+      const ice = Renderer.arena === 'snow';
+      this.add({ x: x + rand(-10, 10), y: GROUND_Y - 2, vx: rand(-160, 160), vy: rand(-360, -140), g: 1400, life: rand(0.35, 0.6), size: rand(2, 3.5), color: ice ? (Math.random() < 0.5 ? '#ffffff' : '#bfe3fa') : Math.random() < 0.5 ? '#6fcb5a' : '#3f9a3c' });
     }
   },
   dust(x) {
@@ -397,6 +398,7 @@ const WARM_KINDS = ['juggle', 'jacks', 'stretch', 'sprint']; // co kdo dělá p�
 const TALK_DUR = 1.35;
 
 const Renderer = {
+  arena: 'stadium',
   canvas: null,
   ctx: null,
   bg: null,
@@ -473,6 +475,11 @@ const Renderer = {
     x.setTransform(s, 0, 0, s, -v.x0 * s, -v.y0 * s);
     this.drawSky(x);
     this.drawStandsBase(x);
+    if (this.arena === 'snow') {
+      // zasněžené tribuny: lehký opar
+      x.fillStyle = 'rgba(215,232,250,.16)';
+      x.fillRect(v.x0, v.y0, v.x1 - v.x0, 520 - v.y0);
+    }
     this.drawPitch(x);
     this.drawFences(x);
     this.drawGoalShadow(x, 0);
@@ -634,6 +641,10 @@ const Renderer = {
   },
 
   drawPitch(x) {
+    if (this.arena === 'snow') {
+      this.drawIcePitch(x);
+      return;
+    }
     const top = 510;
     const X0 = this.view.x0 - 4, X1 = this.view.x1 + 4, XW = X1 - X0;
     const YB = Math.max(H, this.view.y1);
@@ -697,6 +708,107 @@ const Renderer = {
     }
   },
 
+  // Sněžná aréna: ledová plocha s odlesky a stopami bruslí, modré čáry, sněhové návěje.
+  drawIcePitch(x) {
+    const top = 510;
+    const X0 = this.view.x0 - 4, X1 = this.view.x1 + 4, XW = X1 - X0;
+    const YB = Math.max(H, this.view.y1);
+    const g = x.createLinearGradient(0, top, 0, YB);
+    g.addColorStop(0, '#9cc9e6');
+    g.addColorStop(0.35 * (H - top) / (YB - top), '#cfe8f7');
+    g.addColorStop(1, '#eaf7ff');
+    x.fillStyle = g;
+    x.fillRect(X0, top, XW, YB - top);
+    // odlesky
+    x.fillStyle = 'rgba(255,255,255,.28)';
+    for (let i = -4; i < 14; i++) {
+      const bx = i * 120 + 30;
+      x.beginPath();
+      x.moveTo(persp(bx, top), top);
+      x.lineTo(persp(bx + 46, top), top);
+      x.lineTo(persp(bx - 30, H), H);
+      x.lineTo(persp(bx - 90, H), H);
+      x.closePath();
+      x.fill();
+    }
+    // stopy bruslí a škrábance
+    const rng = mulberry32(5);
+    for (let i = 0; i < 420 * XW / W; i++) {
+      const px = X0 + rng() * XW, py = top + 6 + rng() * (H - top - 6);
+      const k = (py - top) / (H - top);
+      x.strokeStyle = rng() < 0.5 ? `rgba(255,255,255,${0.35 + k * 0.3})` : `rgba(90,140,180,${0.12 + k * 0.12})`;
+      x.lineWidth = 0.7 + k * 0.8;
+      const len = 10 + rng() * 40, a = (rng() - 0.5) * 0.5;
+      x.beginPath();
+      x.moveTo(px, py);
+      x.quadraticCurveTo(px + len * 0.5, py + Math.sin(a) * 6 - 2, px + len, py + Math.sin(a) * len * 0.2);
+      x.stroke();
+    }
+    const sh = x.createLinearGradient(0, top, 0, top + 34);
+    sh.addColorStop(0, 'rgba(20,50,80,.32)');
+    sh.addColorStop(1, 'rgba(20,50,80,0)');
+    x.fillStyle = sh;
+    x.fillRect(X0, top, XW, 34);
+    // čáry (modré, jako na hokeji; uprostřed červená)
+    x.lineCap = 'round';
+    x.lineWidth = 3;
+    x.strokeStyle = 'rgba(40,100,200,.6)';
+    line(x, X0, 520, X1, 520);
+    x.strokeStyle = 'rgba(220,40,50,.55)';
+    x.lineWidth = 5;
+    line(x, W / 2, 520, W / 2, YB);
+    x.lineWidth = 3;
+    x.strokeStyle = 'rgba(40,100,200,.6)';
+    oval(x, W / 2, 602, 120, 36);
+    x.stroke();
+    x.fillStyle = 'rgba(40,100,200,.75)';
+    oval(x, W / 2, 602, 5, 2.5);
+    x.fill();
+    for (let side = 0; side < 2; side++) {
+      const gx = side === 0 ? GOAL_W : W - GOAL_W, sd = side === 0 ? 1 : -1;
+      line(x, persp(gx, 520), 520, persp(gx, H), H);
+      const box = (depth, y0, y1) => {
+        x.beginPath();
+        x.moveTo(persp(gx, y0), y0);
+        x.lineTo(persp(gx + sd * depth, y0), y0);
+        x.lineTo(persp(gx + sd * depth, y1), y1);
+        x.lineTo(persp(gx, y1), y1);
+        x.stroke();
+      };
+      box(190, 538, 676);
+      box(72, 560, 640);
+    }
+    // sněhová návěj podél mantinelu
+    x.fillStyle = '#f4fbff';
+    x.beginPath();
+    x.moveTo(X0, top + 12);
+    for (let px = X0; px <= X1 + 30; px += 30) x.quadraticCurveTo(px + 15, top - 4 - rng() * 8, px + 30, top + 8 + rng() * 6);
+    x.lineTo(X1, top - 20);
+    x.lineTo(X0, top - 20);
+    x.closePath();
+    x.fill();
+    x.strokeStyle = 'rgba(120,170,210,.5)';
+    x.lineWidth = 1.5;
+    x.stroke();
+  },
+
+  // Padající sníh (jen ve sněžné aréně), kreslí se přes hřiště.
+  drawSnow(ctx, now) {
+    const v = this.view, vw = v.x1 - v.x0, top = v.y0 - 30, hh = v.y1 - v.y0 + 60;
+    const t = now / 1000;
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    for (let i = 0; i < 150; i++) {
+      const r1 = ((i * 7919) % 1000) / 1000, r2 = ((i * 104729) % 1000) / 1000, r3 = ((i * 15485863) % 1000) / 1000;
+      const sp = 40 + r2 * 70, sz = 1.2 + r3 * 2.6;
+      const y = top + ((r2 * hh + t * sp) % hh);
+      const x = v.x0 + ((r1 * vw + Math.sin(t * (0.6 + r3) + i) * 18 + t * 12) % vw + vw) % vw;
+      ctx.globalAlpha = 0.45 + r3 * 0.5;
+      circle(ctx, x, y, sz);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  },
+
   // Záchytné sítě za brankami (sem až míč dolétne, dál ne).
   drawFences(x) {
     for (const side of [0, 1]) {
@@ -738,7 +850,15 @@ const Renderer = {
     return { x: (this.view.x0 + this.view.x1) / 2, y: (this.view.y0 + this.view.y1) / 2 };
   },
 
+  // přepnout vzhled hřiště podle zápasu (stadion / sněžná aréna)
+  setArena(a) {
+    if (a === this.arena) return;
+    this.arena = a;
+    if (this.bg) this.buildBg();
+  },
+
   draw(g) {
+    if (g.match) this.setArena(g.match.ice ? 'snow' : 'stadium');
     const ctx = this.ctx, s = this.scale, m = g.match, v = this.view;
     const cw = this.canvas.width, ch = this.canvas.height;
     const now = performance.now();
@@ -801,6 +921,7 @@ const Renderer = {
       this.drawGoalFront(ctx, 1);
       if (g.screen === 'match' && g.state === 'over') this.drawTrophy(ctx, g, now);
       Effects.draw(ctx);
+      if (this.arena === 'snow') this.drawSnow(ctx, now);
       Effects.drawTalks(ctx, m.players);
       for (const p of m.players) if (p.stunT > 0 && p.onGround && !(p.flashT > 0)) this.drawDizzy(ctx, p, now);
       if (g.screen === 'match' && g.state === 'intro') this.drawIntroTalk(ctx, g, now);

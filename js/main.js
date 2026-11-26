@@ -117,7 +117,7 @@ const Game = {
     const open = DUO_TEAMS.map((t, i) => i).filter((i) => !DUO_TEAMS[i].locked);
     const da = pick(open);
     const db = pick(open.filter((i) => i !== da));
-    const lobby = newLobby({ format: two ? '2v2' : '1v1', duos: [da, db] });
+    const lobby = newLobby({ format: two ? '2v2' : '1v1', duos: [da, db], arena: Math.random() < 0.3 ? 'snow' : 'stadium' });
     if (!two) {
       const pool = ROSTER.filter((c) => !c.locked);
       lobby.slots[0].char = pick(pool).id;
@@ -264,7 +264,7 @@ const Game = {
   savePrefs() {
     const l = this.lobby;
     if (!l) return;
-    this.prefs = { mode: this.mode === 'local' ? l.mode : this.prefs.mode, format: l.format, minutes: l.minutes, level: l.level, duos: l.duos.slice(), chars: l.format === '1v1' ? l.slots.map((s) => s.char) : this.prefs.chars };
+    this.prefs = { mode: this.mode === 'local' ? l.mode : this.prefs.mode, format: l.format, minutes: l.minutes, level: l.level, arena: validArena(l.arena), duos: l.duos.slice(), chars: l.format === '1v1' ? l.slots.map((s) => s.char) : this.prefs.chars };
     store.set(STORE_LOBBY, this.prefs);
   },
 
@@ -294,6 +294,8 @@ const Game = {
         l.format = a.value;
       } else if (a.key === 'mode') {
         l.mode = a.value === 'cup' ? 'cup' : 'match';
+      } else if (a.key === 'arena') {
+        l.arena = validArena(a.value);
       } else {
         l[a.key] = a.value;
       }
@@ -324,7 +326,7 @@ const Game = {
     const l = this.lobby;
     Online.publish({
       phase: 'lobby',
-      lobby: { mode: l.mode, format: l.format, minutes: l.minutes, level: l.level, duos: l.duos.slice(), slots: l.slots.map((s) => ({ team: s.team, char: s.char, ctrl: s.ctrl })), members: Online.members() },
+      lobby: { mode: l.mode, format: l.format, minutes: l.minutes, level: l.level, arena: validArena(l.arena), duos: l.duos.slice(), slots: l.slots.map((s) => ({ team: s.team, char: s.char, ctrl: s.ctrl })), members: Online.members() },
       setup: null,
       g: null,
     });
@@ -376,6 +378,7 @@ const Game = {
       format: lobby.format,
       level: lobby.level,
       minutes: lobby.minutes,
+      arena: validArena(lobby.arena),
       teams: teamsFor(lobby),
       players: lobby.slots.map((s) => ({ char: s.char, team: s.team, ctrl: s.ctrl, name: nameOf(s.ctrl), skin: skinOf(s.ctrl, s.char) })),
     };
@@ -499,14 +502,14 @@ const Game = {
     if (lv.format === '2v2') {
       let mine = duoOf(me);
       if (mine < 0) mine = 4; // postava bez dvojice hraje s Šimšou
-      lobby = newLobby({ format: '2v2', level: lv.level, duos: [mine, opp] }, null);
+      lobby = newLobby({ format: '2v2', level: lv.level, duos: [mine, opp], arena: lv.arena }, null);
       lobby.slots.forEach((s) => { s.ctrl = 'cpu'; });
       const team0 = lobby.slots.filter((s) => s.team === 0);
       const meSlot = team0.find((s) => s.char === me) || team0[0];
       meSlot.char = me;
       meSlot.ctrl = 'p1';
     } else {
-      lobby = newLobby({ format: '1v1', level: lv.level }, null);
+      lobby = newLobby({ format: '1v1', level: lv.level, arena: lv.arena }, null);
       const mine = lobby.slots.find((s) => s.team === 0), other = lobby.slots.find((s) => s.team === 1);
       mine.char = me;
       mine.ctrl = 'p1';
@@ -688,7 +691,7 @@ const Game = {
 
   netSetup() {
     const s = this.setup;
-    return { id: s.id, rev: s.rev, format: s.format, minutes: s.minutes, teams: s.teams, players: s.players, cup: s.cup ? 1 : 0, stage: s.stage || '', label: s.label || '' };
+    return { id: s.id, rev: s.rev, format: s.format, minutes: s.minutes, arena: s.arena, teams: s.teams, players: s.players, cup: s.cup ? 1 : 0, stage: s.stage || '', label: s.label || '' };
   },
 
   pause() {
@@ -2114,7 +2117,9 @@ const Game = {
     // vlastní pohyb jako ve fyzice hostitele
     const boost = (me.boostT > 0 ? BOOST_MUL : 1) * (me.primeT > 0 ? PRIME_SPEED : 1);
     const move = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
-    q.vx = approach(q.vx, move * PHYS.moveSpeed * boost, (q.onGround ? PHYS.accelGround : PHYS.accelAir) * boost * dt);
+    const onIce = q.onGround && this.match && this.match.ice;
+    const rate = onIce ? (move === 0 ? 1700 * ICE.brake : PHYS.accelGround * ICE.accel * boost) : (q.onGround ? PHYS.accelGround : PHYS.accelAir) * boost;
+    q.vx = approach(q.vx, move * PHYS.moveSpeed * boost, rate * dt);
     if (it.jump && q.onGround) {
       q.vy = -PHYS.jumpV * (me.primeT > 0 ? PRIME_JUMP : 1);
       q.onGround = false;
@@ -2470,6 +2475,7 @@ function sanitizeLobby(l) {
     format,
     minutes: [1, 2, 3].includes(l.minutes) ? l.minutes : 2,
     level: AI_LEVELS[l.level] ? l.level : 'medium',
+    arena: validArena(l.arena),
     duos: validDuos(l.duos),
     slots: l.slots.slice(0, 4).map((s) => ({
       team: s && s.team === 1 ? 1 : 0,
@@ -2488,6 +2494,7 @@ function sanitizeSetup(s) {
     rev: Number(s.rev) || 0,
     format: s.format === '1v1' ? '1v1' : '2v2',
     level: 'medium',
+    arena: validArena(s.arena),
     minutes: [1, 2, 3].includes(s.minutes) ? s.minutes : 2,
     teams: [0, 1].map((i) => {
       const t = s.teams[i] || {};

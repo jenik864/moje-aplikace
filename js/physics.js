@@ -224,6 +224,7 @@ class Match {
     this.penKeepIn = { high: false, low: false }; // co brankář právě mačká
     this.penJump = false; // brankář zvolil nahoru – skočí
     this.penKeeper = null; // ovládání brankáře počítače (nastavuje hra)
+    this.ice = setup.arena === 'snow'; // sněžná aréna: led, všichni kloužou
     this.blocks = [0, 0]; // jak dlouho je ještě zablokovaná brána týmu 0 / 1
     this.blockKind = ['', '']; // čím: 'cheese' (hermelín) nebo 'ice' (led)
     this._f = { x: 0, y: 0 };
@@ -477,8 +478,11 @@ class Match {
     const input = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
     const boost = (p.boostT > 0 ? BOOST_MUL : 1) * (p.primeT > 0 ? PRIME_SPEED : 1);
     const max = PHYS.moveSpeed * p.speedMul * boost;
-    if (!stunned && !p.celeb) p.vx = approach(p.vx, input * max, (p.onGround ? PHYS.accelGround : PHYS.accelAir) * boost * dt);
-    else if (p.onGround) p.vx = approach(p.vx, 0, 1700 * dt);
+    const ice = this.ice && p.onGround;
+    // na ledu: bez ovládání hráč dlouho dojíždí, změna směru trvá
+    const iceRate = input === 0 ? 1700 * ICE.brake : PHYS.accelGround * ICE.accel * boost;
+    if (!stunned && !p.celeb) p.vx = approach(p.vx, input * max, (ice ? iceRate : (p.onGround ? PHYS.accelGround : PHYS.accelAir) * boost) * dt);
+    else if (p.onGround) p.vx = approach(p.vx, 0, 1700 * (ice ? ICE.brake : 1) * dt);
 
     if (it.jump && p.onGround) {
       p.vy = -PHYS.jumpV * (p.primeT > 0 ? PRIME_JUMP : 1);
@@ -814,10 +818,10 @@ class Match {
           this.onEvent('unbasket', { x: b.x, y: b.y });
         }
         b.vy = imp > 90 ? -imp * PHYS.ballBounce : 0;
-        if (imp > 90) b.vx *= PHYS.groundGrip;
+        if (imp > 90) b.vx *= this.ice ? ICE.grip : PHYS.groundGrip;
         if (imp > 240) this.onEvent('bounce', { x: b.x, impact: imp });
       }
-      b.vx *= 1 - PHYS.rollFriction * dt;
+      b.vx *= 1 - PHYS.rollFriction * (this.ice ? ICE.roll : 1) * dt;
     }
     if (b.y - r < 0) {
       b.y = r;

@@ -61,6 +61,7 @@ Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče,
 ## Lobby (výběr hráčů)
 
 - **Hrát** (proti počítači): vyber 1 v 1 nebo 2 v 2 a obtížnost počítače (zápas trvá vždy 2 × 45 s). Klepnutím na postavu si vybereš, za koho hraješ, ostatní hraje počítač. V 1 v 1 se šipkami mění postava. Postavy v lobby jsou živé (dýchají, mrkají, rozhlížejí se, vybraná zamává), stojí na osvětleném pódiu, pod každou je štítek kdo za ni hraje a její superschopnost. Nahoře je jen nadpis (online i kód hry a kdo je připojený), dole v jednom řádku nastavení (Zápas/Turnaj, 1 v 1 / 2 v 2, obtížnost) a tlačítko Hrát.
+- **Aréna** (tlačítko 🏟️ Stadion / ❄️ Sníh dole v lobby, platí i online a pro turnaj): ve sněžné aréně je místo trávníku led – hráči se pomalu rozjíždějí, dlouho dojíždějí a těžko mění směr, míč po ledu skoro nebrzdí, padá sníh a při kopu odletují kousky ledu. Úroveň 5 Příběhu (Zimní stadion) se hraje na ledu.
 - **Turnaj** (tlačítko *Turnaj* v hlavním menu nebo přepínač *Zápas / Turnaj* v lobby, i online): oba týmy z lobby (i s lidmi, co za ně hrají) a dva vylosované týmy počítače. Semifinále: levý tým proti 3. týmu, pravý proti 4. týmu, takže se kamarádi můžou potkat ve finále. Zápasy bez lidí se odehrají „vedle“. Online spouští zápasy hostitel, kamarádi vidí pavouka a hrají své zápasy na svém telefonu (cizí zápas sledují). Ve finále je soupeř o stupeň těžší. Za vítězství v turnaji je +15 pohárů navíc a počítá se do profilu (Vyhrané turnaje).
 
 ## Příběh
@@ -213,6 +214,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.33 – sněžná aréna (led, všichni kloužou), zvuky hry se na iPhonu smíchají s hudbou ze Spotify
 - 1.32 – trailer k updatu (`?trailer`, video `trailer.mp4`)
 - 1.31 – hratelnost: větší míč, shovívavější kop (i volej a míč ve výšce hlavy), kop zmáčknutý o chvilku dřív počká na míč, pomoc s mířením na bránu, silnější hlavičky
 - 1.30 – Kiki v bikinách má sluneční brýle

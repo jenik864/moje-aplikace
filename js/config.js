@@ -50,6 +50,19 @@ const PHYS = {
   rollFriction: 1.1,
 };
 
+// Arény: stadion (tráva) nebo sněžná aréna (led – všichni kloužou).
+const ARENAS = {
+  stadium: { name: 'Stadion', icon: '🏟️' },
+  snow: { name: 'Sníh', icon: '❄️' },
+};
+const validArena = (a) => (a === 'snow' ? 'snow' : 'stadium');
+const ICE = {
+  accel: 0.3,  // rozjezd a zatáčení na ledu (část běžného)
+  brake: 0.22, // brzdění bez ovládání
+  roll: 0.2,   // tření míče po ledu
+  grip: 0.985, // míč po dopadu skoro neztrácí rychlost
+};
+
 // Barvy dresů v zápase 1 v 1 (vlevo, vpravo).
 const SIDE_COLORS = [
   { color: '#2f80ff', dark: '#1a4fb0', light: '#9cc2ff' },
@@ -70,7 +83,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.32';
+const GAME_VERSION = '1.33';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -258,7 +271,7 @@ const STORY = [
   { format: '1v1', opp: 'peli', level: 'easy', boost: 1.05, goal: { by: 2 }, title: 'Školní hřiště', text: 'Peli je rychlík. Tentokrát to musí být jasná výhra.' },
   { format: '2v2', duo: 2, level: 'medium', boost: 1, goal: {}, title: 'Odveta na sídlišti', text: 'Tóma a Peli si přivedli posilu. Hraje se 2 na 2, spoluhráče máš z tvé dvojice.' },
   { format: '1v1', opp: 'kiki', level: 'medium', boost: 1.05, goal: { clean: true }, title: 'Okresní přebor', text: 'Kiki nikdy neprohrává. Porazíš ji, ani když nedostaneš gól?' },
-  { format: '2v2', duo: 3, level: 'medium', boost: 1.1, goal: { by: 3 }, title: 'Zimní stadion', text: 'Bémič a Kiki. Pozor na Skipera a zmrzlou bránu!', reward: 'moncler' },
+  { format: '2v2', duo: 3, level: 'medium', boost: 1.1, goal: { by: 3 }, arena: 'snow', title: 'Zimní stadion', text: 'Bémič a Kiki. Pozor na Skipera a zmrzlou bránu!', reward: 'moncler' },
   { format: '1v1', opp: 'durcado', level: 'hard', boost: 1, goal: { goals: 3 }, title: 'Velké derby', text: 'Durcado hraje hlavou. Musíš mu dát aspoň 3 góly.' },
   { format: '2v2', duo: 1, level: 'hard', boost: 1.05, goal: { by: 2 }, title: 'Jižní supi', text: 'Marsal a Durcado. Trojky z dálky a hlavičky – vydržíš to?' },
   { format: '1v1', opp: 'simsa', level: 'hard', boost: 1.1, goal: { by: 3 }, title: 'Semifinále ligy', text: 'Šimša má VO2max 67. Uteče ti?' },

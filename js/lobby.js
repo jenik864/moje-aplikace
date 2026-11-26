@@ -50,6 +50,7 @@ function newLobby(prefs, firstCtrl) {
     format: prefs.format === '1v1' ? '1v1' : '2v2',
     minutes: [1, 2, 3].includes(prefs.minutes) ? prefs.minutes : 2,
     level: AI_LEVELS[prefs.level] ? prefs.level : 'medium',
+    arena: validArena(prefs.arena),
     duos: validDuos(prefs.duos),
     slots: [],
   };
@@ -131,7 +132,7 @@ function applyWant(lobby, uid, want) {
 // Oba týmy z lobby (i s lidmi, kteří za ně hrají) + 2 vylosované týmy počítače.
 // Semifinále: tým 1 – tým 3 a tým 2 – tým 4, ve finále se můžou potkat kamarádi.
 function newCup(lobby) {
-  const cup = { format: lobby.format, minutes: lobby.minutes, level: lobby.level, teams: [], res: { s1: null, s2: null, f: null }, stage: 's1' };
+  const cup = { format: lobby.format, minutes: lobby.minutes, level: lobby.level, arena: validArena(lobby.arena), teams: [], res: { s1: null, s2: null, f: null }, stage: 's1' };
   const ctrls = (team) => lobby.slots.filter((s) => s.team === team).map((s) => s.ctrl);
   if (lobby.format === '2v2') {
     const used = [lobby.duos[0], lobby.duos[1]];
@@ -190,11 +191,11 @@ function cupLobby(cup, key) {
   const [a, b] = cupPair(cup, key);
   const A = cup.teams[a], B = cup.teams[b];
   if (cup.format === '2v2') {
-    const lobby = { format: '2v2', minutes: cup.minutes, level, duos: [A.duo, B.duo], slots: duoSlots([A.duo, B.duo]) };
+    const lobby = { format: '2v2', minutes: cup.minutes, level, arena: validArena(cup.arena), duos: [A.duo, B.duo], slots: duoSlots([A.duo, B.duo]) };
     lobby.slots.forEach((s, k) => { s.ctrl = (k < 2 ? A.ctrls[k] : B.ctrls[k - 2]) || 'cpu'; });
     return lobby;
   }
-  return { format: '1v1', minutes: cup.minutes, level, duos: [0, 1], slots: [{ team: 0, char: A.char, ctrl: A.ctrls[0] || 'cpu' }, { team: 1, char: B.char, ctrl: B.ctrls[0] || 'cpu' }] };
+  return { format: '1v1', minutes: cup.minutes, level, arena: validArena(cup.arena), duos: [0, 1], slots: [{ team: 0, char: A.char, ctrl: A.ctrls[0] || 'cpu' }, { team: 1, char: B.char, ctrl: B.ctrls[0] || 'cpu' }] };
 }
 
 // Turnaj od hostitele (nedůvěryhodná data).
@@ -262,6 +263,10 @@ const LobbyUI = {
         if (this.onAction) this.onAction({ type: 'setting', key, value: v });
       });
     });
+    document.getElementById('btn-arena').addEventListener('click', () => {
+      const l = this.lastLobby;
+      if (this.onAction && l) this.onAction({ type: 'setting', key: 'arena', value: l.arena === 'snow' ? 'stadium' : 'snow' });
+    });
     this.el.arena.addEventListener('click', (e) => {
       const b = e.target.closest('button');
       if (!b || b.disabled || !this.onAction) return;
@@ -305,6 +310,7 @@ const LobbyUI = {
 
   render(lobby, ctx) {
     this.ctx = ctx;
+    this.lastLobby = lobby;
     const el = this.el;
     // nastavení
     document.querySelectorAll('#lobby .seg').forEach((seg) => {
@@ -315,6 +321,13 @@ const LobbyUI = {
       });
     });
     el.levelRow.hidden = !lobby.slots.some((s) => s.ctrl === 'cpu');
+    const ar = ARENAS[validArena(lobby.arena)];
+    const ab = document.getElementById('btn-arena');
+    if (ab) {
+      ab.textContent = `${ar.icon} ${ar.name}`;
+      ab.classList.toggle('snow', lobby.arena === 'snow');
+      ab.disabled = !ctx.canEdit;
+    }
     el.modeRow.hidden = ctx.mode === 'guest';
     const cup = lobby.mode === 'cup';
 
