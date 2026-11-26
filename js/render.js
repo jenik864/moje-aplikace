@@ -775,6 +775,7 @@ const Renderer = {
         else this.drawBall(ctx, b, sp ? superColor(sp.look.id) : null);
       }
       if (hoop) this.drawHoop(ctx, b, now, true);
+      if (g.state === 'shootout' && g.pen) this.drawPenAim(ctx, g, now);
       this.drawGoalFront(ctx, 0);
       this.drawGoalFront(ctx, 1);
       if (g.screen === 'match' && g.state === 'over') this.drawTrophy(ctx, g, now);
@@ -798,6 +799,7 @@ const Renderer = {
         ctx.globalAlpha = a;
         ctx.setTransform(s, 0, 0, s, this.ox, 0);
         this.drawHUD(ctx, g);
+        if (g.state === 'shootout' && g.pen) this.drawPenHUD(ctx, g, now);
         ctx.setTransform(s, 0, 0, s, this.ox, this.oy);
         ctx.globalAlpha = 1;
       }
@@ -947,7 +949,7 @@ const Renderer = {
       ctx.fillStyle = '#ffffff';
       ctx.fillText('ZÁZNAM', cx + 14, cy + 2);
     } else if (st === 'over') {
-      const win = m.score[0] > m.score[1] ? 0 : 1, T = m.teams[win];
+      const win = Math.max(0, m.winner()), T = m.teams[win];
       const gr = ctx.createLinearGradient(0, y, 0, y + h);
       gr.addColorStop(0, T.color);
       gr.addColorStop(1, T.dark);
@@ -1357,7 +1359,7 @@ const Renderer = {
     const t = g.stateT;
     if (t < 1.6) return;
     const m = g.match;
-    const win = m.score[0] > m.score[1] ? 0 : 1;
+    const win = Math.max(0, m.winner());
     const ps = m.players.filter((p) => p.team === win);
     if (!ps.length) return;
     const cx = ps.reduce((a, p) => a + p.x, 0) / ps.length;
@@ -3183,6 +3185,89 @@ const Renderer = {
     this.drawPlayer(ctx, p, eye, [team], live ? t * 1000 : 0);
   },
 
+  /* ---- penalty ---- */
+
+  // Zaměřovač: jen pro střelce na tomto zařízení (brankář ho nevidí).
+  drawPenAim(ctx, g, now) {
+    const P = g.pen, m = g.match;
+    if (P.phase !== 'aim') return;
+    const me = g.myPlayer && g.myPlayer();
+    if (!me || m.players.indexOf(me) !== P.shooter) return;
+    const right = me.team === 0, gl = right ? W - GOAL_W : GOAL_W, x = gl - (right ? 14 : -14);
+    const top = BAR_Y - 46, bot = GROUND_Y - 22, y = lerp(bot, top, P.aim);
+    ctx.save();
+    // dráha zaměřovače: zelená v bráně, červená nad břevnem
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = 'rgba(255,255,255,.35)';
+    line(ctx, x, BAR_Y + 4, x, bot);
+    ctx.strokeStyle = 'rgba(255,80,70,.55)';
+    line(ctx, x, top, x, BAR_Y - 4);
+    // terčík
+    const over = y < BAR_Y;
+    ctx.strokeStyle = over ? '#ff5a4f' : '#ffd23f';
+    ctx.lineWidth = 4;
+    circle(ctx, x, y, 17 + Math.sin(now * 0.02) * 1.5);
+    ctx.stroke();
+    ctx.lineWidth = 3;
+    line(ctx, x - 26, y, x - 10, y);
+    line(ctx, x + 10, y, x + 26, y);
+    line(ctx, x, y - 26, x, y - 10);
+    line(ctx, x, y + 10, x, y + 26);
+    ctx.fillStyle = over ? '#ff5a4f' : '#ffd23f';
+    circle(ctx, x, y, 4);
+    ctx.fill();
+    ctx.restore();
+  },
+
+  // Penaltová tabulka pod skóre a nápověda dole.
+  drawPenHUD(ctx, g, now) {
+    const P = g.pen, m = g.match, cx = W / 2, y = 96;
+    const n = Math.max(PEN_ROUNDS, P.kicks[0].length, P.kicks[1].length);
+    const dot = 15, gap = 5, rowW = n * (dot + gap);
+    ctx.save();
+    ctx.fillStyle = 'rgba(8,13,26,.85)';
+    rrect(ctx, cx - rowW - 34, y - 14, rowW * 2 + 68, 28, 10);
+    ctx.fill();
+    for (let t = 0; t < 2; t++) {
+      const ks = P.kicks[t];
+      for (let i = 0; i < n; i++) {
+        const dx = t === 0 ? cx - 24 - (n - i) * (dot + gap) + dot / 2 : cx + 24 + i * (dot + gap) + dot / 2;
+        const v = ks[i];
+        ctx.fillStyle = v === undefined ? 'rgba(255,255,255,.18)' : v ? '#3ee08f' : '#ff5a4f';
+        circle(ctx, dx, y, dot / 2);
+        ctx.fill();
+        if (v === undefined && P.turn === t && i === ks.length && Math.floor(now / 300) % 2) {
+          ctx.strokeStyle = '#ffd23f';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.font = `800 16px ${FONT_U}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffd23f';
+    ctx.fillText(`${m.pens ? m.pens[0] : 0}:${m.pens ? m.pens[1] : 0}`, cx, y + 1);
+    // nápověda pro hráče na tomto zařízení
+    const me = g.myPlayer && g.myPlayer();
+    const idx = me ? m.players.indexOf(me) : -1;
+    let tip = '';
+    const touch = typeof Touch !== 'undefined' && Touch.enabled;
+    if (idx === P.shooter && P.phase === 'aim') tip = touch ? 'Zmáčkni STŘELA, až bude terčík tam, kam chceš střílet' : 'Zmáčkni mezerník, až bude terčík tam, kam chceš střílet';
+    else if (idx === P.keeper && (P.phase === 'aim' || P.phase === 'flight')) tip = touch ? 'Chytáš! Joystick nahoru = vysoko, dolů = nízko, nic = střed' : 'Chytáš! W = vysoko, S = nízko, nic = střed';
+    if (tip) {
+      ctx.font = `800 20px ${FONT_U}`;
+      const tw = ctx.measureText(tip).width + 30, ty = this.canvas.height / this.scale - 46;
+      ctx.fillStyle = 'rgba(8,13,26,.82)';
+      rrect(ctx, cx - tw / 2, ty - 17, tw, 34, 17);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(tip, cx, ty + 1);
+    }
+    ctx.restore();
+  },
+
   /* ---- Marsalova trojka ---- */
 
   drawBasketball(ctx, b) {
@@ -3442,7 +3527,7 @@ const Renderer = {
     ctx.fillStyle = g.golden ? '#ffc93c' : urgent ? '#ff6b62' : '#f3f6ef';
     ctx.fillText(fbClock(g.clock), x + timeW / 2, iy + ih / 2 + 2);
     // poločas pod hodinami
-    const lab = g.golden ? 'ZLATÝ GÓL' : g.half === 1 ? '1. POLOČAS' : '2. POLOČAS';
+    const lab = g.state === 'shootout' ? 'PENALTY' : g.golden ? 'ZLATÝ GÓL' : g.half === 1 ? '1. POLOČAS' : '2. POLOČAS';
     ctx.font = `800 15px ${FONT_U}`;
     const lw = ctx.measureText(lab).width + 18;
     ctx.fillStyle = g.golden ? '#ffc93c' : 'rgba(8,13,26,.85)';

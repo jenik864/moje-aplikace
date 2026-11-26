@@ -199,11 +199,24 @@ class Match {
     this.touchAt = [-9, -9]; // kdy se míče naposledy dotkl každý tým
     this.lowT = 0;
     this.pinchT = 0;
+    this.pens = null;     // penalty [tým 0, tým 1] (po remíze)
+    this.penPair = null;  // [střelec, brankář] při penaltě, ostatní stojí stranou
+    this.penKick = false; // střelec zmáčkl střelu
+    this.penKeepIn = { high: false, low: false }; // co brankář právě mačká
+    this.penJump = false; // brankář zvolil nahoru – skočí
+    this.penKeeper = null; // ovládání brankáře počítače (nastavuje hra)
     this.blocks = [0, 0]; // jak dlouho je ještě zablokovaná brána týmu 0 / 1
     this.blockKind = ['', '']; // čím: 'cheese' (hermelín) nebo 'ice' (led)
     this._f = { x: 0, y: 0 };
     this.build();
     this.kickoff();
+  }
+
+  // Kdo vyhrál (i na penalty), -1 = nerozhodnuto.
+  winner() {
+    if (this.score[0] !== this.score[1]) return this.score[0] > this.score[1] ? 0 : 1;
+    if (this.pens && this.pens[0] !== this.pens[1]) return this.pens[0] > this.pens[1] ? 0 : 1;
+    return -1;
   }
 
   get level() {
@@ -279,9 +292,37 @@ class Match {
   // mode: 'play' (hraje se), 'freeze' (všichni stojí), 'celebrate' (oslava gólu / konec)
   step(dt, mode) {
     const b = this.ball;
+    const pen = mode === 'pen' && this.penPair;
     for (const p of this.players) {
       let it = IDLE;
-      if (mode === 'play') {
+      if (pen) {
+        const idx = this.players.indexOf(p);
+        if (idx === this.penPair[0] || idx === this.penPair[1]) {
+          if (p.brain) it = idx === this.penPair[1] && this.penKeeper ? this.penKeeper(p) : IDLE;
+          else if (p.remote) it = this.remoteIntent ? this.remoteIntent(p.remote) : IDLE;
+          else it = Input.intent(p.slot);
+          if (idx === this.penPair[0]) {
+            // střelec: stisk střely = penalta (pohyb nic); kamarád posílá i výšku zaměření
+            if (it.kick || it.super) {
+              this.penKick = true;
+              this.penAim = typeof it.aim === 'number' ? it.aim : null;
+            }
+            it = IDLE;
+          } else {
+            // brankář: volí výšku (nahoru / dolů / nic = střed), skáče jen když zvolí nahoru
+            this.penKeepIn.high = !!(it.jump || it.kick || it.super) && !it.down;
+            this.penKeepIn.low = !!it.down;
+            const o = this._pk || (this._pk = { left: false, right: false, jump: false, kick: false, super: false, move: 0 });
+            o.move = 0;
+            o.jump = this.penJump;
+            it = o;
+          }
+        } else if (p.human) {
+          Input.intent(p.slot);
+        } else if (p.remote && this.remoteIntent) {
+          this.remoteIntent(p.remote);
+        }
+      } else if (mode === 'play') {
         if (p.brain) it = p.brain.update(dt, this);
         else if (p.remote) it = this.remoteIntent ? this.remoteIntent(p.remote) : IDLE;
         else it = Input.intent(p.slot);
@@ -296,6 +337,7 @@ class Match {
       }
       p.mood = (mode === 'celebrate' || mode === 'ceremony') && this.celebrate >= 0 ? (p.team === this.celebrate ? 1 : -1) : 0;
       if (mode === 'play') p.superCharge = Math.min(1, p.superCharge + dt / PHYS.superCharge);
+      if (pen) p.mood = 0;
       if (p.boostT > 0) p.boostT = Math.max(0, p.boostT - dt);
       if (p.pengT > 0) p.pengT = Math.max(0, p.pengT - dt);
       if (p.primeT > 0) {
@@ -310,7 +352,8 @@ class Match {
         if (this.blocks[t] === 0) this.onEvent('unblock', { team: t, kind: this.blockKind[t] });
       }
     }
-    this.collidePlayers();
+    if (!pen) this.collidePlayers();
+    if (pen) this.penKeeperBox();
 
     if (b.held) {
       b.rot += dt * 0.8;
@@ -323,6 +366,7 @@ class Match {
     this.moveBall(dt);
     for (const p of this.players) {
       if (b.carryBy >= 0) break;
+      if (pen) continue; // při penaltě o zákroku rozhoduje hra (volba brankáře)
       // střelec se trojky nedotkne; co projde košem, propadne do brány
       if (b.basketT > 0 && (b.lastTouch === p || b.swished)) continue;
       if (this.ballVsPlayer(p)) {
@@ -352,7 +396,7 @@ class Match {
     } else if (!low) {
       this.pinchT = 0;
     }
-    this.settleBall();
+    if (!pen) this.settleBall();
     if (this.goalTeam < 0 && !this.locked) this.checkGoal();
 
     // Míč, který se nehýbe, i když by měl padat (zaklíněný mezi hlavou, stěnou
@@ -458,6 +502,17 @@ class Match {
       p.blinkT = rand(2, 5);
     }
     if (p.blink > 0) p.blink -= dt;
+  }
+
+  // Brankář při penaltě zůstává v bráně a kousek před ní.
+  penKeeperBox() {
+    const k = this.players[this.penPair[1]], s = this.players[this.penPair[0]];
+    if (!k || !s) return;
+    const right = s.team === 0; // tým 0 střílí na pravou bránu
+    const line = right ? W - GOAL_W : GOAL_W;
+    const lo = right ? line - 150 : line + k.R * 0.6, hi = right ? line - k.R * 0.6 : line + 150;
+    if (k.x < lo) { k.x = lo; if (k.vx < 0) k.vx = 0; }
+    if (k.x > hi) { k.x = hi; if (k.vx > 0) k.vx = 0; }
   }
 
   // Superschopnost postavy (kromě superstřely, ta se spouští švihem).

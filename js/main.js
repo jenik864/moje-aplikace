@@ -35,8 +35,20 @@ const Profile = {
   },
 };
 
-const STATE_CODE = { intro: 'i', countdown: 'c', kickoff: 'k', play: 'p', goal: 'g', replay: 'r', over: 'o', paused: 'z', halftime: 'h' };
-const CODE_STATE = { i: 'intro', c: 'countdown', k: 'kickoff', p: 'play', g: 'goal', r: 'replay', o: 'over', z: 'paused', h: 'halftime' };
+const STATE_CODE = { intro: 'i', countdown: 'c', kickoff: 'k', play: 'p', goal: 'g', replay: 'r', over: 'o', paused: 'z', halftime: 'h', shootout: 's' };
+const CODE_STATE = { i: 'intro', c: 'countdown', k: 'kickoff', p: 'play', g: 'goal', r: 'replay', o: 'over', z: 'paused', h: 'halftime', s: 'shootout' };
+// Penalty
+const PEN_ROUNDS = 5;
+const PEN_PHASE = { intro: 0, aim: 1, flight: 2, result: 3 };
+const PEN_PHASES = ['intro', 'aim', 'flight', 'result'];
+const penAimY = (a) => lerp(GROUND_Y - 22, BAR_Y - 34, a); // výška zaměření (nahoře nad břevnem = vedle)
+// Kam střela míří: nízko, střed, vysoko, nebo nad břevno.
+function penZone(y) {
+  if (y < BAR_Y + 8) return 'over';
+  const u = (GROUND_Y - y) / GOAL_H;
+  return u < 0.36 ? 'low' : u < 0.62 ? 'mid' : 'high';
+}
+const penAimAt = (t) => (Math.sin(t * 3.4 - Math.PI / 2) + 1) / 2;
 const HALF_SHOW = 1.6; // za jak dlouho po hvizdu se ukáže poločasová přestávka
 // Statistiky týmu: góly, držení míče (s), střely, na bránu, hlavičky, superschopnosti, odstřelení
 const ST_POS = 1, ST_SHOT = 2, ST_ON = 3, ST_HEAD = 4, ST_POW = 5, ST_KNOCK = 6;
@@ -103,7 +115,7 @@ const Game = {
   },
 
   inMatch() {
-    return this.screen === 'match' && ['intro', 'countdown', 'kickoff', 'play', 'goal', 'replay'].includes(this.state);
+    return this.screen === 'match' && ['intro', 'countdown', 'kickoff', 'play', 'goal', 'replay', 'shootout'].includes(this.state);
   },
 
   /* ---------------- obrazovky ---------------- */
@@ -419,17 +431,20 @@ const Game = {
   // Výsledek mého zápasu do pavouka (jednou za zápas).
   cupRecord() {
     const cup = this.cup, m = this.match;
-    if (!cup || !this.setup || !this.setup.cup || cup.lastId === this.setup.id || m.score[0] === m.score[1]) return;
+    if (!cup || !this.setup || !this.setup.cup || cup.lastId === this.setup.id || m.winner() < 0) return;
     cup.lastId = this.setup.id;
+    // po penaltách se do pavouka zapíše o gól víc vítězi (aby bylo vidět, kdo postoupil)
+    const w = m.winner();
     const sc = [m.score[0], m.score[1]];
+    if (sc[0] === sc[1]) sc[w] += 0.5;
     if (cup.stage === 's1') {
       cup.res.s1 = sc;
       cup.res.s2 = simCupMatch();
-      cup.stage = sc[0] > sc[1] ? 'f' : 'done';
+      cup.stage = w === 0 ? 'f' : 'done';
     } else if (cup.stage === 'f') {
       cup.res.f = sc;
       cup.stage = 'done';
-      cup.won = sc[0] > sc[1];
+      cup.won = w === 0;
     }
   },
 
@@ -723,6 +738,21 @@ const Game = {
         }
         break;
       }
+      case 'penres': {
+        const right = a[1] === 0;
+        if (a[0] === 0) {
+          Renderer.netHit(right ? 1 : 0, m ? m.ball.y : 520, 11);
+          if (m) Effects.confetti(a[1], m.teams[a[1]]);
+          if (live) {
+            Sound.goal();
+            Effects.shake(10);
+          }
+        } else if (live) {
+          Sound.ooh();
+          if (a[0] === 1) Effects.pop('CHYTIL!', right ? W - 260 : 260, BAR_Y - 20, '#53d2ff', 40);
+        }
+        break;
+      }
       case 'unprime': {
         const p = m && m.players[a[0]];
         if (p) Effects.puff(p.x, p.y);
@@ -882,16 +912,208 @@ const Game = {
     Touch.show(!!this.myPlayer());
   },
 
+  /* ---------------- penalty ---------------- */
+
+  startShootout() {
+    const m = this.match;
+    m.pens = [0, 0];
+    m.locked = true; // góly ze hry se už nepočítají
+    m.penKeeper = (p) => this.penKeeperIntent(p);
+    this.pen = { kicks: [[], []], turn: 0, phase: 'intro', t: 0, shooter: -1, keeper: -1, aim: 0, target: 0, plan: null };
+    this.state = 'shootout';
+    this.stateT = 0;
+    this.rec = [];
+    this.showMsg('PENALTY', 'Remíza – rozhodne penaltový rozstřel', 2.2, '#ffc93c', 110);
+    this.fx('whistle', 'long');
+    this.penSetup();
+    this.pen.phase = 'intro';
+    this.pen.t = -0.6;
+  },
+
+  // Rozestavení na další penaltu.
+  penSetup() {
+    const m = this.match, P = this.pen, team = P.turn, opp = 1 - team;
+    const shooters = m.players.filter((p) => p.team === team);
+    const sh = shooters[P.kicks[team].length % shooters.length];
+    const keepers = m.players.filter((p) => p.team === opp);
+    // chytá člověk, pokud v týmu nějaký je (ať si to užije)
+    const kp = keepers.find((p) => p.isHuman) || keepers.find((p) => p.role === 'defender') || keepers[0];
+    const right = team === 0, dir = right ? 1 : -1;
+    const line = right ? W - GOAL_W : GOAL_W, spot = line - dir * 330;
+    let k = 0;
+    for (const p of m.players) {
+      if (p === sh || p === kp) continue;
+      p.place(clamp(spot - dir * (250 + k * 95), p.R, W - p.R));
+      k++;
+    }
+    sh.place(spot - dir * 58);
+    kp.place(line - dir * (kp.R + 8));
+    m.blocks[0] = m.blocks[1] = 0;
+    m.ball.reset(spot, GROUND_Y - m.ball.r);
+    m.penPair = [m.players.indexOf(sh), m.players.indexOf(kp)];
+    m.penKick = false;
+    m.penJump = false;
+    m.penKeepIn.high = m.penKeepIn.low = false;
+    P.choice = null;
+    P.resolved = false;
+    P.shooter = m.penPair[0];
+    P.keeper = m.penPair[1];
+    P.phase = 'aim';
+    P.t = 0;
+    P.aim = 0;
+    P.plan = null;
+    P.cpuAt = rand(1.1, 2.1);
+  },
+
+  updateShootout(dt) {
+    const m = this.match, P = this.pen;
+    if (!P) return;
+    P.t += dt;
+    const sh = m.players[P.shooter];
+    if (P.phase === 'intro') {
+      if (P.t > 1.6) {
+        P.phase = 'aim';
+        P.t = 0;
+      }
+      m.penKick = false;
+    } else if (P.phase === 'aim') {
+      P.aim = penAimAt(P.t);
+      if (sh.brain ? P.t > P.cpuAt : m.penKick && P.t > 0.25) this.penShoot();
+      m.penKick = false;
+    } else if (P.phase === 'flight') {
+      this.penCheck();
+    } else if (P.phase === 'result' && P.t > 1.9) {
+      if (this.penDecided()) {
+        this.finish();
+        return;
+      }
+      P.turn = P.kicks[0].length > P.kicks[1].length ? 1 : 0;
+      this.penSetup();
+    }
+  },
+
+  penShoot() {
+    const m = this.match, P = this.pen, sh = m.players[P.shooter], kp = m.players[P.keeper];
+    const level = this.setup.level || 'medium';
+    let target;
+    if (sh.brain) {
+      // počítač: nízko / střed / vysoko, občas přestřelí
+      const miss = { easy: 0.16, medium: 0.09, hard: 0.05 }[level] || 0.09, r = Math.random();
+      if (r < miss) target = BAR_Y - rand(5, 30);
+      else if (r < miss + (1 - miss) * 0.38) target = GROUND_Y - GOAL_H * rand(0.06, 0.3);
+      else if (r < miss + (1 - miss) * 0.62) target = GROUND_Y - GOAL_H * rand(0.4, 0.58);
+      else target = GROUND_Y - GOAL_H * rand(0.68, 0.9);
+    } else {
+      const aim = typeof m.penAim === 'number' ? m.penAim : P.aim;
+      target = penAimY(aim);
+    }
+    m.penAim = null;
+    const b = m.ball, right = sh.team === 0, dir = right ? 1 : -1;
+    const line = right ? W - GOAL_W : GOAL_W, tx = line + dir * 24;
+    const vx = 800, dx = Math.abs(tx - b.x), t = dx / vx, g = PHYS.ballGravity;
+    b.held = false;
+    b.vx = dir * vx;
+    b.vy = (target - b.y - 0.5 * g * t * t) / t;
+    b.lastTouch = sh;
+    b.superT = 0;
+    sh.kickT = 0;
+    sh.kickHit = true;
+    P.target = target;
+    P.phase = 'flight';
+    P.t = 0;
+    P.touched = false;
+    this.fx('kick', b.x, b.y, dir, 1.1);
+    // brankář počítače: tipne si výšku (lepší brankář častěji správně)
+    if (kp.brain) {
+      const read = { easy: 0, medium: 0.1, hard: 0.22 }[level] || 0.1;
+      const zone = penZone(target);
+      const opts = ['low', 'mid', 'high'];
+      let pick = Math.random() < read && zone !== 'over' ? zone : opts[Math.floor(Math.random() * 3)];
+      P.plan = { choice: pick, at: rand(0.06, 0.16) };
+    }
+  },
+
+  // Ovládání brankáře počítače při penaltě.
+  penKeeperIntent() {
+    const o = this._pki || (this._pki = { left: false, right: false, jump: false, kick: false, super: false, move: 0 });
+    const P = this.pen;
+    o.move = 0;
+    const go = !!(P && P.plan && P.phase === 'flight' && P.t >= P.plan.at);
+    o.jump = go && P.plan.choice === 'high';
+    o.down = go && P.plan.choice === 'low';
+    return o;
+  },
+
+  penCheck() {
+    const m = this.match, P = this.pen, b = m.ball, sh = m.players[P.shooter], kp = m.players[P.keeper];
+    const right = sh.team === 0, dir = right ? 1 : -1, line = right ? W - GOAL_W : GOAL_W;
+    // volba brankáře (první stisk platí; nic = zůstane ve středu)
+    if (!P.choice && !P.resolved) {
+      if (m.penKeepIn.low) P.choice = 'low';
+      else if (m.penKeepIn.high) {
+        P.choice = 'high';
+        m.penJump = true;
+      }
+    }
+    if (P.choice === 'low') kp.kneel = Math.min(1, (kp.kneel || 0) + 0.25);
+    // míč doletěl k brankáři: chytil, když zvolil správnou výšku
+    const atKeeper = right ? b.x >= kp.x - kp.R * 0.4 : b.x <= kp.x + kp.R * 0.4;
+    if (!P.resolved && atKeeper) {
+      P.resolved = true;
+      const zone = penZone(P.target), choice = P.choice || 'mid';
+      if (zone !== 'over' && zone === choice) {
+        P.touched = true;
+        b.vx = -dir * rand(260, 380);
+        b.vy = -rand(220, 420);
+        b.lastTouch = kp;
+        this.fx('head', b.x, b.y, 1);
+      }
+    }
+    const past = right ? b.x - b.r > line : b.x + b.r < line;
+    let res = '';
+    if (past && b.y > BAR_Y + BAR_T * 0.5) res = 'goal';
+    else if ((right ? b.x > line : b.x < line) && b.y <= BAR_Y) res = 'miss';
+    else if (P.touched && P.t > 0.55) res = 'save';
+    else if (!P.touched && P.t > 0.2 && b.vx * dir < 0) res = 'post';
+    else if (P.t > 2.2) res = P.touched ? 'save' : 'miss';
+    if (!res) return;
+    const team = sh.team;
+    P.kicks[team].push(res === 'goal');
+    if (res === 'goal') m.pens[team]++;
+    P.phase = 'result';
+    P.t = 0;
+    const T = m.teams[team];
+    if (res === 'goal') {
+      this.showMsg('GÓL!', `Penaltu proměnil ${sh.look.name}`, 1.7, T.color, 130);
+      this.shout('goal', team);
+    } else if (res === 'save') {
+      this.showMsg('CHYTIL!', `${kp.look.name} penaltu chytil${kp.look.girl ? 'a' : ''}`, 1.7, m.teams[kp.team].color, 120);
+    } else {
+      this.showMsg(res === 'post' ? 'TYČKA!' : 'VEDLE!', `${sh.look.name} penaltu neproměnil${sh.look.girl ? 'a' : ''}`, 1.7, '#f3f6ef', 120);
+    }
+    this.fx('penres', res === 'goal' ? 0 : res === 'save' ? 1 : 2, team);
+  },
+
+  // Je rozhodnuto? (5 penalt na tým, pak náhlá smrt)
+  penDecided() {
+    const [a, b] = this.pen.kicks;
+    const ga = a.filter(Boolean).length, gb = b.filter(Boolean).length;
+    if (a.length <= PEN_ROUNDS && b.length <= PEN_ROUNDS) {
+      if (ga + (PEN_ROUNDS - a.length) < gb || gb + (PEN_ROUNDS - b.length) < ga) return true;
+      if (a.length === PEN_ROUNDS && b.length === PEN_ROUNDS) return ga !== gb;
+      return false;
+    }
+    return a.length === b.length && ga !== gb;
+  },
+
+  // Konec 90. minuty: při remíze rozhodnou penalty.
   timeUp() {
     const m = this.match;
     if (m.score[0] !== m.score[1]) {
       this.finish();
       return;
     }
-    this.golden = true;
-    this.half = 3;
-    this.showMsg('ZLATÝ GÓL', 'Kdo dá další gól, vyhrává', 2.4, '#ffc93c', 100);
-    this.fx('whistle', 'long');
+    this.startShootout();
   },
 
   finish() {
@@ -901,7 +1123,8 @@ const Game = {
       p.celeb = '';
       p.kneel = p.plane = p.face = 0;
     }
-    m.celebrate = m.score[0] > m.score[1] ? 0 : 1;
+    m.penPair = null;
+    m.celebrate = Math.max(0, m.winner());
     // ceremoniál: vítězové doprostřed, poražení ke své brance
     const win = m.celebrate;
     const wins = m.players.filter((p) => p.team === win), loss = m.players.filter((p) => p.team !== win);
@@ -924,6 +1147,7 @@ const Game = {
       case 'play': return 'play';
       case 'goal': return 'celebrate';
       case 'over': return 'ceremony';
+      case 'shootout': return 'pen';
       default: return 'freeze';
     }
   },
@@ -1054,6 +1278,11 @@ const Game = {
         break;
       }
 
+      case 'shootout':
+        this.physics(dt, 1);
+        this.updateShootout(dt);
+        break;
+
       case 'halftime':
         this.physics(dt, 1);
         if (!this.halfShown && this.stateT > HALF_SHOW) {
@@ -1114,6 +1343,14 @@ const Game = {
     Touch.setCharge(c);
     Touch.setColor(this.myColor);
     Touch.setPower(me ? me.power : 'shot');
+    // penalty: jen potřebné ovládání, na straně bez brány
+    if (this.state === 'shootout' && this.pen && me) {
+      const idx = this.match.players.indexOf(me);
+      const role = idx === this.pen.shooter ? 'shoot' : idx === this.pen.keeper ? 'keep' : 'watch';
+      Touch.setPen(role, this.pen.turn === 0);
+    } else {
+      Touch.setPen(null);
+    }
     this.myPower = me ? me.power : 'shot';
     if (me && c >= 1 && (this._lastCharge || 0) < 1 && this.state === 'play') Sound.charged();
     this._lastCharge = c;
@@ -1231,7 +1468,7 @@ const Game = {
   computeMvp() {
     const m = this.match;
     if (!m || !this.stats) return null;
-    const win = m.score[0] === m.score[1] ? -1 : m.score[0] > m.score[1] ? 0 : 1;
+    const win = m.winner();
     let best = -1, bestScore = -1;
     m.players.forEach((p, i) => {
       const st = this.stats[i];
@@ -1251,11 +1488,11 @@ const Game = {
     if (!m || !setup) return null;
     if (this.awardedId === setup.id) return this.lastReward;
     const me = this.myPlayer();
-    if (!me || m.score[0] === m.score[1]) return null;
+    if (!me || m.winner() < 0) return null;
     this.awardedId = setup.id;
     const idx = m.players.indexOf(me);
     const st = (this.stats && this.stats[idx]) || { goals: 0, knocks: 0, supers: 0 };
-    const win = (m.score[0] > m.score[1] ? 0 : 1) === me.team;
+    const win = m.winner() === me.team;
     const prof = Profile.get();
     const before = prof.trophies;
     const mult = this.mode === 'local' ? { easy: 0.5, medium: 1, hard: 1.5 }[setup.level] || 1 : 1.25;
@@ -1263,7 +1500,7 @@ const Game = {
     let delta;
     if (win) {
       const base = Math.round(8 * mult);
-      const big = Math.min(3, Math.abs(m.score[0] - m.score[1]) - 1);
+      const big = Math.max(0, Math.min(3, Math.abs(m.score[0] - m.score[1]) - 1));
       const goals = Math.min(3, st.goals);
       delta = base + big + goals;
       parts.push(`výhra +${base}`);
@@ -1488,6 +1725,12 @@ const Game = {
         ty = 470;
         tz = 1.3;
         speed = 3;
+      } else if (st === 'shootout' && this.pen) {
+        const right = this.pen.turn === 0;
+        tx = right ? W - 330 : 330;
+        ty = 465;
+        tz = 1.3;
+        speed = 2.6;
       } else if (st === 'replay') {
         // míč i hráči v záběru; vysoký míč = širší záběr
         tx = m.ball.x;
@@ -1537,6 +1780,8 @@ const Game = {
       hf: this.half,
       gd: this.golden ? 1 : 0,
       ts: this.tstats ? this.tstats.map((a) => a.map((v) => r(v))) : 0,
+      po: this.pen && this.state === 'shootout' ? [this.pen.turn, PEN_PHASE[this.pen.phase], this.pen.shooter, this.pen.keeper, this.pen.kicks[0].map(Number).join(''), this.pen.kicks[1].map(Number).join('')] : 0,
+      pn: m.pens ? [m.pens[0], m.pens[1]] : 0,
       sc: [m.score[0], m.score[1]],
       b: [r(b.x), r(b.y), r(b.rot * 100), r(b.superT * 100), b.superBy, r(b.basketT * 100), b.basketSide, b.carryBy >= 0 ? 1 : 0],
       p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100), r(p.primeT * 100)]),
@@ -1759,6 +2004,24 @@ const Game = {
     this.clock = (Number(g.t) || 0) / 10;
     this.half = [1, 2, 3].includes(g.hf) ? g.hf : 1;
     this.golden = !!g.gd;
+    // penalty
+    if (Array.isArray(g.pn)) this.match.pens = [Number(g.pn[0]) || 0, Number(g.pn[1]) || 0];
+    if (Array.isArray(g.po)) {
+      const old = this.pen;
+      const ks = (v) => String(v || '').slice(0, 30).split('').map((c) => c === '1');
+      const P = {
+        turn: g.po[0] === 1 ? 1 : 0, phase: PEN_PHASES[g.po[1]] || 'aim',
+        shooter: Number(g.po[2]) || 0, keeper: Number(g.po[3]) || 0, kicks: [ks(g.po[4]), ks(g.po[5])],
+      };
+      // zaměřování si kamarád počítá sám (aby mířil podle toho, co vidí)
+      const key = P.kicks[0].length + ':' + P.kicks[1].length;
+      P.key = key;
+      P.lt = old && old.key === key && old.phase === 'aim' && P.phase === 'aim' ? old.lt : 0;
+      P.aim = old ? old.aim : 0;
+      this.pen = P;
+    } else if (this.state !== 'over') {
+      this.pen = null;
+    }
     if (Array.isArray(g.ts) && g.ts.length === 2) this.tstats = g.ts.map((a) => (Array.isArray(a) ? a.slice(0, 7).map((v) => Number(v) || 0) : [0, 0, 0, 0, 0, 0, 0]));
     if (g.rs && !this.resultShown) {
       this.resultShown = true;
@@ -1771,14 +2034,19 @@ const Game = {
     this.stateT += dt;
     const m = this.match;
     if (!m) return;
-    if (m.celebrate < 0 && this.state === 'over') m.celebrate = m.score[0] > m.score[1] ? 0 : 1;
+    if (m.celebrate < 0 && this.state === 'over') m.celebrate = Math.max(0, m.winner());
     this.updateCam(dt);
     this.updateSuperUI();
     UI.setSkip(false);
     if ((this.state === 'goal' && Math.random() < dt * 22) || (this.state === 'over' && Math.random() < dt * 10)) Effects.flash();
     // vlastní ovládání hostiteli
     const it = this.state !== 'over' ? Input.intent(0) : null;
-    if (it) Online.sendInput(it);
+    let aim;
+    if (this.state === 'shootout' && this.pen && this.pen.phase === 'aim') {
+      this.pen.lt = (this.pen.lt || 0) + dt;
+      this.pen.aim = aim = penAimAt(this.pen.lt);
+    }
+    if (it) Online.sendInput(it, aim);
     const buf = this.buf;
     if (!buf.length || this.offset === null) return;
     const target = performance.now() - this.offset - (this.interpMs || INTERP_MS);
@@ -2171,7 +2439,7 @@ const UI = {
         nm.textContent = name + (ti === 0 ? ' (TY)' : '');
         const sc = document.createElement('b');
         sc.className = 'br-score';
-        sc.textContent = r ? r[k] : '–';
+        sc.textContent = r ? (r[k] % 1 ? `${Math.floor(r[k])}p` : r[k]) : '–';
         row.append(pics, nm, sc);
         el.appendChild(row);
       });
@@ -2366,8 +2634,9 @@ const UI = {
   showResult() {
     const m = Game.match, setup = Game.setup;
     const [a, b] = m.score;
-    const win = a > b ? 0 : 1;
+    const win = Math.max(0, m.winner());
     const T = m.teams[win];
+    const pens = a === b && m.pens ? ` · na penalty ${m.pens[0]} : ${m.pens[1]}` : '';
     // můj tým: kde hraje člověk z tohoto zařízení (když jsou všichni v jednom týmu)
     const mine = Game.mode === 'local' ? ['p1'] : [Game.mode === 'host' ? 'host' : Online.uid];
     const myTeams = new Set(setup.players.filter((sp) => mine.includes(sp.ctrl)).map((sp) => sp.team));
@@ -2377,12 +2646,12 @@ const UI = {
     const winnerName = winners ? winners.name : T.short;
     if (myTeams.size === 1) {
       title = myTeams.has(win) ? 'Výhra!' : 'Prohra';
-      sub = `${verb} ${winnerName}`;
+      sub = `${verb} ${winnerName}${pens}`;
     } else {
       title = `${verb} ${winnerName}`;
-      sub = `${m.teams[0].short} ${a} : ${b} ${m.teams[1].short}`;
+      sub = `${m.teams[0].short} ${a} : ${b} ${m.teams[1].short}${pens}`;
     }
-    this.el.resKicker.textContent = Game.golden ? 'Rozhodl zlatý gól' : 'Konec zápasu';
+    this.el.resKicker.textContent = pens ? 'Rozhodly penalty' : 'Konec zápasu';
     this.el.resTitle.textContent = title;
     this.el.resTitle.style.color = T.light;
     this.el.resA.textContent = a;
@@ -2399,7 +2668,7 @@ const UI = {
     this.el.resThird.textContent = Game.mode === 'host' ? 'Ukončit online hru' : 'Hlavní menu';
     if (Game.cup && setup.cup) {
       Game.cupRecord();
-      const cup = Game.cup, won = a > b;
+      const cup = Game.cup, won = m.winner() === 0;
       this.el.resKicker.textContent = `Turnaj · ${setup.stage}`;
       this.el.resTitle.textContent = cup.stage === 'f' ? 'Postup do finále!' : cup.won ? 'Turnaj vyhrán!' : setup.stage === 'FINÁLE' ? 'Prohra ve finále' : 'Konec turnaje';
       this.el.resTitle.style.color = won ? '#ffc93c' : T.light;

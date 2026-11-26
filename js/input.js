@@ -16,8 +16,8 @@ const Input = {
   held: new Set(),
   kickQ: false,
   superQ: false,
-  touch: { move: 0, jump: false },
-  out: { left: false, right: false, jump: false, kick: false, super: false, move: 0 },
+  touch: { move: 0, jump: false, down: false },
+  out: { left: false, right: false, jump: false, kick: false, super: false, move: 0, down: false },
 
   down(code, repeat) {
     const a = KEYMAP[code];
@@ -47,6 +47,7 @@ const Input = {
     o.left = o.move < -0.01;
     o.right = o.move > 0.01;
     o.jump = j || t.jump;
+    o.down = t.down || this.held.has('KeyS') || this.held.has('ArrowDown');
     o.kick = this.kickQ;
     o.super = this.superQ;
     this.kickQ = false;
@@ -59,6 +60,7 @@ const Input = {
     this.kickQ = this.superQ = false;
     this.touch.move = 0;
     this.touch.jump = false;
+    this.touch.down = false;
   },
 };
 
@@ -178,6 +180,27 @@ const Touch = {
     st.knob.style.transform = 'translate(-50%, -50%)';
     Input.touch.move = 0;
     Input.touch.jump = false;
+    Input.touch.down = false;
+  },
+
+  // Penalty: střelec má jen tlačítko, brankář jen joystick; obojí na straně bez brány.
+  setPen(role, goalRight) {
+    const r = this.root;
+    if (!r) return;
+    const key = role ? role + (goalRight ? 'R' : 'L') : '';
+    if (key === this._pen) return;
+    this._pen = key;
+    r.classList.toggle('pen-shoot', role === 'shoot');
+    r.classList.toggle('pen-keep', role === 'keep');
+    r.classList.toggle('pen-watch', role === 'watch');
+    r.classList.toggle('pen-gr', !!role && goalRight);
+    r.classList.toggle('pen-gl', !!role && !goalRight);
+    const kick = this.btns.find((b) => b.act === 'kick');
+    if (kick) {
+      const lbl = kick.el.querySelector('.lbl');
+      if (lbl) lbl.textContent = 'Střela';
+    }
+    this.reset();
   },
 
   down(e) {
@@ -232,6 +255,7 @@ const Touch = {
     mx = Math.abs(mx) < STICK_DEAD ? 0 : (mx - Math.sign(mx) * STICK_DEAD) / (1 - STICK_DEAD);
     Input.touch.move = clamp(mx * 1.15, -1, 1);
     Input.touch.jump = dy / STICK_R < -STICK_JUMP;
+    Input.touch.down = dy / STICK_R > STICK_JUMP;
     st.base.classList.toggle('jump', Input.touch.jump);
   },
 

@@ -1123,3 +1123,15 @@ kbd {
 :root.h320 .home-help { display: none; }
 
 .member.via { color: var(--mute); font-size: 12px; border-style: dashed; }
+
+/* penalty: střelec jen tlačítko, brankář jen joystick, vždy na straně bez brány */
+#touch.pen-shoot .stick-zone, #touch.pen-watch .stick-zone, #touch.pen-watch .action-pad, #touch.pen-keep .action-pad { display: none; }
+#touch.pen-shoot .tbtn.super { display: none; }
+#touch.pen-shoot.pen-gr .action-pad { right: auto; left: max(18px, var(--safe-l)); }
+#touch.pen-shoot.pen-gr .tbtn.kick { right: auto; left: 0; }
+#touch.pen-shoot.pen-gl .action-pad { left: auto; right: max(18px, var(--safe-r)); }
+#touch.pen-shoot.pen-gl .tbtn.kick { left: auto; right: 0; }
+#touch.pen-keep.pen-gr .stick-zone { left: 0; right: auto; }
+#touch.pen-keep.pen-gr .stick-base { left: calc(126px + var(--safe-l)); }
+#touch.pen-keep.pen-gl .stick-zone { left: auto; right: 0; }
+#touch.pen-keep.pen-gl .stick-base { left: calc(100% - 126px - var(--safe-r)); }

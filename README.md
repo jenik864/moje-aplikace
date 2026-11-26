@@ -43,7 +43,16 @@ Partneři hry HOT PEPPERS a RADEGAST jsou na každé druhé reklamní tabuli kol
 
 ## Čas a poločasy
 
-Zápas má dva poločasy po 45 sekundách. Hodiny ukazují čas jako ve fotbale: první poločas 0:00 → 45:00, druhý 45:00 → 90:00 (1 sekunda hry = 1 minuta na hodinách). Pod hodinami je, který poločas se hraje. O poločase rozhodčí zapíská, hráči se vrátí na místa a ukáže se přestávka se skóre, rozhodčím a statistikami, druhý poločas začne tlačítkem *Druhý poločas* (online ho spouští hostitel). Při remíze po 90. minutě se hraje na zlatý gól.
+Zápas má dva poločasy po 45 sekundách. Hodiny ukazují čas jako ve fotbale: první poločas 0:00 → 45:00, druhý 45:00 → 90:00 (1 sekunda hry = 1 minuta na hodinách). Pod hodinami je, který poločas se hraje. O poločase rozhodčí zapíská, hráči se vrátí na místa a ukáže se přestávka se skóre, rozhodčím a statistikami, druhý poločas začne tlačítkem *Druhý poločas* (online ho spouští hostitel). Při remíze po 90. minutě rozhodnou penalty.
+
+### Penalty
+
+Když je po 90. minutě remíza, následuje penaltový rozstřel: týmy se střídají, každý kope 5 penalt, pak náhlá smrt. Střílí všichni hráči týmu postupně, chytá brankář soupeře (když je v týmu člověk, chytá on).
+
+- **Střelec**: u brány soupeře se nahoru a dolů pohybuje terčík. Zmáčkni STŘELA (mezerník), až bude tam, kam chceš střílet – nízko, doprostřed, nebo vysoko. Nad břevnem (červeně) je to vedle. Terčík vidí jen střelec.
+- **Brankář**: zvol výšku – joystick nahoru (W) = vysoko, dolů (S) = nízko, nic = střed. Platí první volba; když se trefíš do výšky střely, chytíš.
+- Na telefonu je při penaltě jen potřebné ovládání, vždy na straně, kde není brána. Pod skóre jsou tečky s výsledky penalt (zelená = gól, červená = neproměněná).
+- Počítač kope do všech výšek a občas přestřelí, brankář počítače si tipuje (těžký častěji správně).
 
 Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče, střely, střely na bránu, hlavičky, použité superschopnosti a odstřelení.
 

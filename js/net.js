@@ -726,12 +726,14 @@ const Online = {
     o.left = o.move < 0;
     o.right = o.move > 0;
     o.jump = !!(i && i.j);
+    o.down = !!(i && i.d);
     const k = i ? Number(i.k) || 0 : 0;
     o.kick = !!g && k > g.kick;
     if (g && k > g.kick) g.kick = k;
     const sp = i ? Number(i.s) || 0 : 0;
     o.super = !!g && sp > g.sup;
     if (g && sp > g.sup) g.sup = sp;
+    o.aim = i && typeof i.a === 'number' ? clamp(i.a / 1000, 0, 1) : undefined;
     return o;
   },
 
@@ -767,15 +769,18 @@ const Online = {
   },
 
   // Poslat vlastní ovládání hostiteli (jen když se změní).
-  sendInput(it) {
+  sendInput(it, aim) {
     if (it.kick) this.kickSeq++;
     if (it.super) this.superSeq = (this.superSeq || 0) + 1;
     const m = Math.round(clamp(it.move || 0, -1, 1) * 4) / 4;
     const j = it.jump ? 1 : 0;
+    const dn = it.down ? 1 : 0;
     const sp = this.superSeq || 0;
-    const key = m + ':' + j + ':' + this.kickSeq + ':' + sp;
+    const key = m + ':' + j + ':' + dn + ':' + this.kickSeq + ':' + sp;
     if (key === this.lastIn) return;
     this.lastIn = key;
-    this.publish({ in: { m, j, k: this.kickSeq, s: sp } });
+    const msg = { m, j, d: dn, k: this.kickSeq, s: sp };
+    if (typeof aim === 'number') msg.a = Math.round(clamp(aim, 0, 1) * 1000);
+    this.publish({ in: msg });
   },
 };
