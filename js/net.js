@@ -164,7 +164,7 @@ async function openPeerTransport(code, asHost) {
         clearTimeout(timer);
         flush();
       } else if (!timer) {
-        timer = setTimeout(flush, 33);
+        timer = setTimeout(flush, 25); // přímé spojení: 40 snímků za sekundu
       }
     },
     connected: () => !peer.disconnected,
@@ -460,8 +460,8 @@ function openBroadcastTransport(code) {
     ch.postMessage({ id: me, p: mine });
   };
   // window.HLAVOUNI_LAG: umělé zpoždění sítě pro testy (ms)
-  const lag = Number(window.HLAVOUNI_LAG) || 0;
-  ch.onmessage = (e) => (lag ? setTimeout(() => recv(e), lag) : recv(e));
+  const lag = Number(window.HLAVOUNI_LAG) || 0, jit = Number(window.HLAVOUNI_JITTER) || 0;
+  ch.onmessage = (e) => (lag || jit ? setTimeout(() => recv(e), lag + Math.random() * jit) : recv(e));
   const recv = (e) => {
     const d = e.data;
     if (!d || d.id === me) return;

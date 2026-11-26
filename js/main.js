@@ -1663,6 +1663,8 @@ const Game = {
     this.screen = 'match';
     this.state = 'countdown';
     this.buf = [];
+    this.jit = [];
+    this.interpMs = 0;
     this.offset = null;
     this.lastEvN = Infinity; // staré efekty nepřehrávat
     this.lastSnapN = -1;
@@ -1692,6 +1694,16 @@ const Game = {
     const d = now - g.ht;
     if (this.offset === null || d < this.offset) this.offset = d;
     else this.offset += (d - this.offset) * 0.002;
+    // přizpůsobivá vyrovnávací paměť: podle toho, jak nepravidelně snímky chodí
+    const jit = this.jit || (this.jit = []);
+    jit.push(d - this.offset);
+    if (jit.length > 90) jit.shift();
+    if (jit.length >= 10 && (this.jitN = (this.jitN || 0) + 1) % 10 === 0) {
+      const sorted = jit.slice().sort((x, y) => x - y);
+      const p90 = sorted[Math.floor(sorted.length * 0.9)];
+      const want = clamp(p90 + 40, 55, 240);
+      this.interpMs = this.interpMs ? this.interpMs + (want - this.interpMs) * 0.35 : want;
+    }
     const buf = this.buf;
     if (buf.length && g.ht <= buf[buf.length - 1].ht) {
       if (g.ht < buf[buf.length - 1].ht - 1000) buf.length = 0; // hostitel začal nový zápas
@@ -1769,7 +1781,7 @@ const Game = {
     if (it) Online.sendInput(it);
     const buf = this.buf;
     if (!buf.length || this.offset === null) return;
-    const target = performance.now() - this.offset - INTERP_MS;
+    const target = performance.now() - this.offset - (this.interpMs || INTERP_MS);
     let a = buf[0], b = null;
     for (let i = buf.length - 1; i >= 0; i--) {
       if (buf[i].ht <= target) {
@@ -1778,13 +1790,23 @@ const Game = {
         break;
       }
     }
-    const k = b ? clamp((target - a.ht) / Math.max(1, b.ht - a.ht), 0, 1) : 0;
+    let k = b ? clamp((target - a.ht) / Math.max(1, b.ht - a.ht), 0, 1) : 0;
+    // snímek se opozdil: pohyb na chvíli dopočítat podle posledních dvou (místo zaseknutí)
+    if (!b && buf.length >= 2 && a === buf[buf.length - 1]) {
+      const a0 = buf[buf.length - 2], span = Math.max(1, a.ht - a0.ht);
+      const over = Math.min(target - a.ht, 140);
+      if (over > 0 && span < 200) {
+        b = a;
+        a = a0;
+        k = 1 + over / span;
+      }
+    }
     const B = b || a;
     m.players.forEach((p, i) => {
       const pa = a.g.p[i], pb = B.g.p[i] || pa;
       if (!pa) return;
-      p.x = lerp(pa[0], pb[0], k);
-      p.y = lerp(pa[1], pb[1], k);
+      p.x = clamp(lerp(pa[0], pb[0], k), p.R, W - p.R);
+      p.y = Math.min(lerp(pa[1], pb[1], k), p.standY);
       p.kickT = pb[2] < 0 ? -1 : pb[2] / 1000;
       p.mood = pb[3];
       p.onGround = !!pb[4];
@@ -1821,8 +1843,8 @@ const Game = {
     }
     const ba = a.g.b, bb = B.g.b;
     if (Array.isArray(ba) && Array.isArray(bb)) {
-      m.ball.x = lerp(ba[0], bb[0], k);
-      m.ball.y = lerp(ba[1], bb[1], k);
+      m.ball.x = clamp(lerp(ba[0], bb[0], k), m.ball.r, W - m.ball.r);
+      m.ball.y = Math.min(lerp(ba[1], bb[1], k), GROUND_Y - m.ball.r);
       m.ball.rot = lerp(ba[2], bb[2], k) / 100;
       m.ball.superT = (Number(bb[3]) || 0) / 100;
       m.ball.superBy = Number.isInteger(bb[4]) ? bb[4] : -1;

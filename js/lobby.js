@@ -294,6 +294,12 @@ const LobbyUI = {
         li.appendChild(this.el2('span', 'm-state', isHost ? 'hostitel' : ok ? 'připraven' : 'vybírá'));
         el.members.appendChild(li);
       }
+      // jak je kamarád připojený (pro případné hledání potíží)
+      const kind = Online.t && Online.t.kind;
+      if (ctx.mode === 'guest' && kind) {
+        const via = kind.includes('relay') ? 'spojení přes server' : kind === 'peer' ? 'přímé spojení' : '';
+        if (via) el.members.appendChild(this.el2('li', 'member via', via));
+      }
     }
 
     // aréna: dva týmy a VS

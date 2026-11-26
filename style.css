@@ -1122,3 +1122,4 @@ kbd {
 /* dříve @media (max-height: 320px) */
 :root.h320 .home-help { display: none; }
 
+.member.via { color: var(--mute); font-size: 12px; border-style: dashed; }
