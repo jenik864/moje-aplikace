@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.46">
+<link rel="stylesheet" href="style.css?v=1.47">
 </head>
 <body>
 <!-- HRA:START -->
@@ -84,6 +84,10 @@
           <button id="btn-board" class="btn-chip small" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V11h4v9M10 20V5h4v15M16 20v-6h4v6"/></svg>
             <span>Žebříček</span>
+          </button>
+          <button id="btn-account" class="btn-chip small" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>
+            <span id="acc-chip">Účet</span>
           </button>
           <button id="btn-tasks" class="btn-chip small" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
@@ -371,6 +375,37 @@
     </div>
   </section>
 
+  <!-- účet s heslem -->
+  <section id="account" class="screen dim" aria-labelledby="acc-title" hidden>
+    <div class="dialog acc-dlg">
+      <header class="tasks-head">
+        <h2 id="acc-title" class="screen-title">Účet</h2>
+        <button id="btn-acc-close" class="btn-mini" type="button" aria-label="Zavřít">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <form id="acc-form" class="acc-form" autocomplete="on">
+        <p class="acc-tip">Přihlas se stejnou přezdívkou a heslem na jiném telefonu a postup (poháry, Příběh, skiny, odemčené hráče, úkoly, Vietnam, přátele) budeš mít všude.</p>
+        <label class="acc-field"><span>Přezdívka</span><input id="acc-nick" type="text" maxlength="12" autocomplete="username" autocapitalize="words" required></label>
+        <label class="acc-field"><span>Heslo</span><input id="acc-pass" type="password" maxlength="64" autocomplete="current-password" required></label>
+        <div class="dialog-buttons row">
+          <button id="btn-acc-register" class="btn-game" type="button">Vytvořit účet</button>
+          <button class="btn-play" type="submit">Přihlásit</button>
+        </div>
+      </form>
+      <div id="acc-in" class="acc-in" hidden>
+        <p class="mini-kicker">Přihlášen jako</p>
+        <p id="acc-who" class="acc-who"></p>
+        <p id="acc-last" class="acc-last"></p>
+        <div class="dialog-buttons row">
+          <button id="btn-acc-logout" class="btn-game" type="button">Odhlásit</button>
+          <button id="btn-acc-sync" class="btn-play" type="button">Synchronizovat</button>
+        </div>
+      </div>
+      <p id="acc-status" class="status" hidden></p>
+    </div>
+  </section>
+
   <!-- výzva Vietnam -->
   <section id="viet" class="screen dim" aria-labelledby="viet-title" hidden>
     <div class="dialog viet-dlg">
@@ -475,17 +510,18 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.46"></script>
-<script src="js/audio.js?v=1.46"></script>
-<script src="js/input.js?v=1.46"></script>
-<script src="js/ai.js?v=1.46"></script>
-<script src="js/physics.js?v=1.46"></script>
-<script src="js/render.js?v=1.46"></script>
-<script src="js/penalty.js?v=1.46"></script>
-<script src="js/net.js?v=1.46"></script>
-<script src="js/lobby.js?v=1.46"></script>
-<script src="js/board.js?v=1.46"></script>
-<script src="js/trailer.js?v=1.46"></script>
-<script src="js/main.js?v=1.46"></script>
+<script src="js/config.js?v=1.47"></script>
+<script src="js/audio.js?v=1.47"></script>
+<script src="js/input.js?v=1.47"></script>
+<script src="js/ai.js?v=1.47"></script>
+<script src="js/physics.js?v=1.47"></script>
+<script src="js/render.js?v=1.47"></script>
+<script src="js/penalty.js?v=1.47"></script>
+<script src="js/net.js?v=1.47"></script>
+<script src="js/lobby.js?v=1.47"></script>
+<script src="js/board.js?v=1.47"></script>
+<script src="js/account.js?v=1.47"></script>
+<script src="js/trailer.js?v=1.47"></script>
+<script src="js/main.js?v=1.47"></script>
 </body>
 </html>

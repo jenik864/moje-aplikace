@@ -100,6 +100,12 @@ Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhl
 Soupeři jsou pevní – když hraješ za stejnou postavu nebo dvojici jako soupeř, hraje se zrcadlový zápas (třeba Tóma proti Tómovi; soupeřova dvojice má dres v jiné barvě). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, odemčené věci `hlavouni.odemceno`).
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
+## Účet s heslem (víc zařízení)
+
+Tlačítko *Účet* dole v hlavním menu. Napíšeš přezdívku a heslo (aspoň 4 znaky) a dáš *Vytvořit účet*; na jiném telefonu se stejnými údaji dáš *Přihlásit*. Synchronizuje se všechen postup: poháry a statistiky, Příběh, odemčené hráče a skiny (i který je zapnutý), úkoly, výzva Vietnam, přátelé a stejné id v žebříčku. Postup ze dvou zařízení se sloučí (odemčené věci a počty se sčítají, poháry podle novějšího). Synchronizace běží sama po spuštění, po zápase, každých 30 s v menu a při zavření aplikace; jde i ručně tlačítkem *Synchronizovat*. Na tlačítku v menu je pak vidět přezdívka účtu.
+
+Jak to funguje: hra nemá vlastní server. Uložená hra se v prohlížeči zašifruje heslem (PBKDF2 se 150 000 opakováními + AES-256-GCM) a uloží jako uložená zpráva na stejných veřejných MQTT serverech jako online hra (téma `fifa67/ucty/v1/<otisk přezdívky>`). Heslo se nikam neposílá a bez něj uloženou hru nikdo nepřečte. Omezení: kdo zná přezdívku, nemůže účet přečíst, ale mohl by ho na veřejném serveru přepsat (a veřejné servery můžou uložené zprávy po restartu ztratit – další synchronizace je nahraje znovu); proto nedávej heslo, které používáš jinde. Zapomenuté heslo nejde obnovit.
+
 ## Žebříček, profily a přátelé
 
 Tlačítko *Žebříček* dole v hlavním menu. Nahoře si nastavíš přezdívku (stejné jméno se používá i v online hře) a uložíš ji – tím se objevíš v žebříčku. Hráči jsou seřazení podle pohárů (🥇🥈🥉 pro první tři). Klepnutím na hráče se otevře jeho profil: liga, poháry, místo v žebříčku, zápasy, výhry, úspěšnost, góly, turnaje, postup v Příběhu, za koho nejčastěji hraje (i se skinem) a kdy naposledy hrál. Tlačítkem *Přidat do přátel* si ho přidáš; záložka *Přátelé* ukáže jen tvoje přátele a tebe.
@@ -244,6 +250,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.47 – účet s heslem a synchronizace postupu mezi zařízeními
 - 1.46 – nový design výzvy Vietnam (cesta 5 zápasů, karta odměny, info o dalším zápase)
 - 1.45 – okno výzvy Vietnam přes celou obrazovku
 - 1.44 – výzva Vietnam (5 zápasů 2 v 2 jen s parťákem online, od 12:00), nový hráč Tráňa; přepínač joysticku je jen v pauze

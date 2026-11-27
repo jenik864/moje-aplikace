@@ -2705,7 +2705,7 @@ const UI = {
       resMain: $('btn-res-main'), resSecond: $('btn-res-second'), resThird: $('btn-res-third'), resWait: $('res-wait'),
       pauseSecond: $('btn-restart'), pauseThird: $('btn-quit'),
       profile: $('profile'), chip: $('profile-chip'), cup: $('cup'), half: $('half'),
-      story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'), board: $('board'), player: $('player'), viet: $('viet'),
+      story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'), board: $('board'), player: $('player'), viet: $('viet'), account: $('account'),
     };
     const click = (id, fn) => $(id).addEventListener('click', () => {
       Sound.init();
@@ -2731,6 +2731,7 @@ const UI = {
     click('btn-code', () => this.showUnlock(true));
     click('btn-tasks', () => this.showTasks());
     Board.initUI();
+    Account.initUI();
     click('btn-tasks-close', () => this.show('home'));
     $('unlock-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -3217,14 +3218,18 @@ const UI = {
   },
 
   show(name) {
-    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks', 'board', 'player', 'viet']) {
+    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks', 'board', 'player', 'viet', 'account']) {
       this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home') && !(name === 'reward' && key === 'story');
     }
     this.el.chip.hidden = name !== 'home';
     document.getElementById('app').classList.toggle('on-home', name === 'home');
     // u velkých tabulek schovat ikony v rohu, ať nic nepřekrývají
-    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock', 'reward', 'tasks', 'board', 'player', 'viet'].includes(name));
-    if (name === 'home') this.updateLocks();
+    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock', 'reward', 'tasks', 'board', 'player', 'viet', 'account'].includes(name));
+    if (name === 'home') {
+      this.updateLocks();
+      const ac = document.getElementById('acc-chip');
+      if (ac) ac.textContent = Account.logged ? Account.state.nick : 'Účet';
+    }
     this.measureHud();
     this.el.pauseBtn.hidden = !(Game.screen === 'match' && Game.mode !== 'guest' && (Game.inMatch() || Game.state === 'paused'));
     if (name === 'pause') {
@@ -3837,6 +3842,7 @@ function boot() {
   window.hlavouni = { Game, Match, Renderer, Input, Online, Net, Trailer };
   Updater.init();
   Trailer.init();
+  Account.init();
 }
 
 /*

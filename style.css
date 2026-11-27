@@ -1527,3 +1527,22 @@ body.trailer-mode #rotate, body.trailer-mode #toast, body.trailer-mode #btn-skip
 :root.h380 .viet-pic { height: calc(var(--vh, 1vh) * 36); width: calc(var(--vh, 1vh) * 30); }
 :root.h380 .vr-sub { display: none; }
 :root.h380 .viet-reward { padding-top: 14px; }
+
+/* účet */
+.dialog.acc-dlg { width: min(520px, 100%); gap: 8px; padding: clamp(10px, calc(var(--vh, 1vh) * 3), 18px) 18px; border-radius: 24px; border: 3px solid var(--ink); background: linear-gradient(160deg, #2a2a52, #121a2c); box-shadow: 0 6px 0 var(--ink); justify-items: stretch; text-align: left; }
+.acc-form, .acc-in { display: grid; gap: 8px; }
+.acc-form.busy { opacity: 0.6; pointer-events: none; }
+.acc-tip { margin: 0; font-size: 13px; font-weight: 600; color: #d8e1f2; line-height: 1.35; }
+.acc-field { display: grid; grid-template-columns: 90px minmax(0, 1fr); align-items: center; gap: 8px; }
+.acc-field span { font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+.acc-field input { min-width: 0; padding: 7px 10px; border-radius: 12px; border: 2px solid var(--line); background: rgba(0, 0, 0, 0.4); color: var(--chalk); font: 700 18px/1.2 var(--font-ui); -webkit-user-select: text; user-select: text; }
+.acc-who { margin: 0; font-family: var(--font-display); font-size: 30px; line-height: 1; }
+.acc-last { margin: 0; font-size: 13px; color: var(--mute); }
+.acc-dlg .dialog-buttons.row { justify-content: flex-start; }
+#acc-status { text-align: left; }
+#nick-form.locked .nick-input { opacity: 0.7; }
+#nick-form.locked .btn-game { display: none; }
+:root.h380 .acc-tip { font-size: 12px; }
+.home-extra { gap: 6px; flex-wrap: nowrap; }
+.home-extra .btn-chip.small { padding: 4px 8px; }
+#acc-chip { max-width: 7em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

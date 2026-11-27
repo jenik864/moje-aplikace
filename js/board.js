@@ -86,6 +86,7 @@ const Board = {
       localStorage.setItem(LB_CHARS_KEY, JSON.stringify(o));
     } catch (e) { /* nevadí */ }
     if (this.nick() && Date.now() - this.lastPub > 20000) this.publish();
+    if (Account.logged) setTimeout(() => Account.sync(), 1500);
   },
 
   /* ---------- servery ---------- */
@@ -190,6 +191,9 @@ const Board = {
     UI.show('board');
     const $ = (id) => document.getElementById(id);
     $('nick-input').value = this.nick();
+    // přihlášený hráč má přezdívku z účtu
+    $('nick-input').readOnly = Account.logged;
+    $('nick-form').classList.toggle('locked', Account.logged);
     this.renderList();
     this.refresh();
   },

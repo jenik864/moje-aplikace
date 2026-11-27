@@ -4197,8 +4197,10 @@ const Renderer = {
     ctx.clearRect(0, 0, cv.width, cv.height);
     const k = Math.min(w / 520, h / 380) * dpr;
     ctx.setTransform(k, 0, 0, k, cv.width / 2 - 260 * k, cv.height - 380 * k);
-    const per = 5200, idx = Math.floor(now / per) % DUO_TEAMS.length, t = now % per;
-    const T = DUO_TEAMS[idx];
+    // v menu se střídají jen dvojice, které hráč zná (bez Vietnamců a zamčených)
+    const shown = DUO_TEAMS.filter((d) => !d.viet && (!d.locked || Unlocks.has(d.locked)));
+    const per = 5200, idx = Math.floor(now / per) % shown.length, t = now % per;
+    const T = shown[idx];
     const enter = easeOutBack(clamp(t / 500, 0, 1)), exit = clamp((t - per + 420) / 420, 0, 1);
     const a = clamp(enter, 0, 1) * (1 - exit);
     // pódium a světlo
