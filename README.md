@@ -102,7 +102,7 @@ Soupeři jsou pevní – když hraješ za stejnou postavu nebo dvojici jako soup
 
 ## Účet s heslem (víc zařízení)
 
-Tlačítko *Účet* dole v hlavním menu. Napíšeš přezdívku a heslo (aspoň 4 znaky) a dáš *Vytvořit účet*; na jiném telefonu se stejnými údaji dáš *Přihlásit*. Synchronizuje se všechen postup: poháry a statistiky, Příběh, odemčené hráče a skiny (i který je zapnutý), úkoly, výzva Vietnam, přátelé a stejné id v žebříčku. Postup ze dvou zařízení se sloučí (odemčené věci a počty se sčítají, poháry podle novějšího). Synchronizace běží sama po spuštění, po zápase, každých 30 s v menu a při zavření aplikace; jde i ručně tlačítkem *Synchronizovat*. Na tlačítku v menu je pak vidět přezdívka účtu.
+Tlačítko *Účet* dole v hlavním menu. Napíšeš přezdívku a heslo (aspoň 8 znaků) a dáš *Vytvořit účet*; na jiném telefonu se stejnými údaji dáš *Přihlásit*. Synchronizuje se všechen postup: poháry a statistiky, Příběh, odemčené hráče a skiny (i který je zapnutý), úkoly, výzva Vietnam, přátelé a stejné id v žebříčku. Postup ze dvou zařízení se sloučí (odemčené věci a počty se sčítají, poháry podle novějšího). Synchronizace běží sama po spuštění, po zápase, každých 30 s v menu a při zavření aplikace; jde i ručně tlačítkem *Synchronizovat*. Na tlačítku v menu je pak vidět přezdívka účtu.
 
 Jak to funguje: hra nemá vlastní server. Uložená hra se v prohlížeči zašifruje heslem (PBKDF2 se 150 000 opakováními + AES-256-GCM) a uloží jako uložená zpráva na stejných veřejných MQTT serverech jako online hra (téma `fifa67/ucty/v1/<otisk přezdívky>`). Heslo se nikam neposílá a bez něj uloženou hru nikdo nepřečte. Omezení: kdo zná přezdívku, nemůže účet přečíst, ale mohl by ho na veřejném serveru přepsat (a veřejné servery můžou uložené zprávy po restartu ztratit – další synchronizace je nahraje znovu); proto nedávej heslo, které používáš jinde. Zapomenuté heslo nejde obnovit.
 
@@ -251,6 +251,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.51 – heslo k účtu musí mít aspoň 8 znaků (kvůli hádání hrubou silou)
 - 1.50 – plynulá jízda na sushi (Tráňa už nepadá a necuká, surfařský postoj, rozpažené ruce, zrnka rýže)
 - 1.49 – Tráňa má schopnost Obří sushi
 - 1.48 – online: menší snímky hry pro kamaráda (méně dat, plynulejší hlavně ve 2 v 2 a ve výzvě Vietnam)

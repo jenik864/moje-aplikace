@@ -12,6 +12,7 @@
 const ACC_TOPIC = 'fifa67/ucty/v1/';
 const ACC_KEY = 'hlavouni.ucet';
 const ACC_ITER = 150000;
+const ACC_MIN_PASS = 8; // kratší heslo jde u zašifrované uložené hry uhodnout hrubou silou
 // co se synchronizuje (všechen postup hráče)
 const ACC_SYNC = ['hlavouni.profil', 'hlavouni.odemceno', 'hlavouni.pribeh', 'hlavouni.ukoly', 'hlavouni.vietnam', 'hlavouni.pratele', 'hlavouni.postavy', 'hlavouni.hracId'];
 
@@ -175,7 +176,7 @@ const Account = {
   async register(nick, pass) {
     nick = cleanName(nick);
     if (!nick) throw new Error('nick');
-    if (String(pass || '').length < 4) throw new Error('short');
+    if (String(pass || '').length < ACC_MIN_PASS) throw new Error('short');
     const id = await this.idOf(nick);
     const old = await this.fetch(id);
     if (old) throw new Error('taken');
@@ -312,7 +313,7 @@ const Account = {
         this.show();
       }).catch((e) => {
         $('acc-form').classList.remove('busy');
-        const m = { nick: 'Napiš přezdívku.', short: 'Heslo musí mít aspoň 4 znaky.', taken: 'Tahle přezdívka už má účet – přihlas se.', missing: 'Účet s touhle přezdívkou neexistuje – vytvoř ho.', password: 'Špatné heslo.', offline: 'Nepodařilo se připojit, zkus to za chvíli.' }[e.message];
+        const m = { nick: 'Napiš přezdívku.', short: `Heslo musí mít aspoň ${ACC_MIN_PASS} znaků.`, taken: 'Tahle přezdívka už má účet – přihlas se.', missing: 'Účet s touhle přezdívkou neexistuje – vytvoř ho.', password: 'Špatné heslo.', offline: 'Nepodařilo se připojit, zkus to za chvíli.' }[e.message];
         this.status(m || 'Něco se pokazilo, zkus to znovu.', true);
       });
     };
