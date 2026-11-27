@@ -147,6 +147,14 @@ Nové dvojice jsou ve výběru hráčů vidět od začátku se zámečkem („Od
 Soupeři jsou pevní – když hraješ za stejnou postavu nebo dvojici jako soupeř, hraje se zrcadlový zápas (třeba Tóma proti Tómovi; soupeřova dvojice má dres v jiné barvě). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, Točná `hlavouni.tocna`, Petr Kuba `hlavouni.kuba`, vybraná kampaň `hlavouni.kampan`, odemčené věci `hlavouni.odemceno`) a s účtem se synchronizuje.
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
+## FIFAgram
+
+Tlačítko *📸 FIFAgram* v hlavním menu otevře sociální síť hráčů FIFA67 (vlastní, ne Instagram). Každý hráč má profil se svou postavou (nejhranější) a přezdívkou ze žebříčku, kterou si jde nastavit přímo v profilu.
+- *Příspěvky*: fotky vyfocené ve hře (📸 v klubu Hot Peppers – po vyfocení tlačítko *📲 Na FIFAgram*, posledních 12 fotek se ukládá do galerie) nebo textové příspěvky s barevným pozadím; ke všemu popisek. Fotky z galerie telefonu nahrát nejde – jen to, co vznikne ve hře.
+- *Feed* (🏠) se všemi příspěvky od všech hráčů, nejnovější nahoře; *lajk* srdíčkem nebo dvojitým klepnutím na fotku, *komentáře*, smazání vlastního příspěvku.
+- *Profil* (👤): počet příspěvků, lajků a komentářů a mřížka příspěvků; klepnutím na jméno u příspěvku se otevře profil toho hráče. Odznak na ikoně profilu ukazuje nové lajky a komentáře.
+- Data jsou uložené zprávy na stejných MQTT serverech jako žebříček (`fifa67/gram/v1/…`): příspěvky `p/<hráč>/<id>`, lajky `l/<příspěvek>/<hráč>`, komentáře `c/<příspěvek>/<id>`. Fotky se posílají zmenšené (JPEG do ~140 kB).
+
 ## Klub Hot Peppers
 
 Tlačítko *🌶️ Hot Peppers 18+* dole v hlavním menu otevře strip club pro dospělé – při prvním vstupu se potvrzuje věk 18+. Nejdřív si vybereš, za koho jdeš – do klubu chodí jen kluci. Zamčené postavy mají zámeček. Pak *Vstoupit* a v klubu chodíš joystickem (kdekoli na levé části obrazovky; na počítači šipky nebo WASD) – pohled shora jako v Brawl Stars. U obsluhy se objeví velké tlačítko vpravo dole (na počítači E, mezerník nebo Enter).
@@ -350,6 +358,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.70 – FIFAgram: profily hráčů, fotky z klubu a textové příspěvky, lajky a komentáře od ostatních
 - 1.69 – jízda autem po nočním městě do Hot Peppers s navigací a provozem, garáž se 6 auty za poháry; kód na +500 pohárů
 - 1.68 – prémiový vzhled klubu Hot Peppers (mramor, kůže, zlato, neon, lustr, černozlaté menu); Příběh začíná úvodní obrazovkou s kartami kampaní
 - 1.67 – pryč taneční souboj a čísla od holek; VIP prémium: větší VIP, vířivka s VIP holkami, šampus s prskavkami, VIP ohňostroj, zlatý VIP odznak

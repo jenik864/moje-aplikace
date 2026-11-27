@@ -2757,7 +2757,7 @@ const UI = {
       resMain: $('btn-res-main'), resSecond: $('btn-res-second'), resThird: $('btn-res-third'), resWait: $('res-wait'),
       pauseSecond: $('btn-restart'), pauseThird: $('btn-quit'),
       profile: $('profile'), chip: $('profile-chip'), cup: $('cup'), half: $('half'),
-      story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'), board: $('board'), player: $('player'), viet: $('viet'), account: $('account'), club: $('club'),
+      story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'), board: $('board'), player: $('player'), viet: $('viet'), account: $('account'), club: $('club'), gram: $('gram'),
     };
     const click = (id, fn) => $(id).addEventListener('click', () => {
       Sound.init();
@@ -2797,6 +2797,10 @@ const UI = {
     click('btn-unlock-back', () => this.show('home'));
     click('btn-code', () => this.showUnlock(true));
     click('btn-tasks', () => this.showTasks());
+    click('btn-gram', () => {
+      this.goFullscreen();
+      Gram.open('feed');
+    });
     click('btn-club', () => {
       this.goFullscreen();
       Club.open();
@@ -3306,7 +3310,7 @@ const UI = {
   },
 
   show(name) {
-    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks', 'board', 'player', 'viet', 'account', 'club']) {
+    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks', 'board', 'player', 'viet', 'account', 'club', 'gram']) {
       this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home') && !(name === 'reward' && key === 'story');
     }
     this.el.chip.hidden = name !== 'home';

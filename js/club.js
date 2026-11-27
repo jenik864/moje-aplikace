@@ -224,6 +224,11 @@ const Club = {
     });
     click('club-photo-close', () => { this.el('club-photo').hidden = true; });
     click('club-photo-share', () => this.sharePhoto());
+    click('club-photo-gram', () => {
+      const img = this.photoSmall;
+      this.close();
+      Gram.compose(img);
+    });
     click('club-cam', () => {
       if (this.phase === 'in' && !this.overlayOpen()) this.takePhoto();
     });
@@ -2004,6 +2009,7 @@ const Club = {
     p.fillText(stamp, W2 - 34, H2 - 26);
     p.shadowBlur = 0;
     this.photoCanvas = P;
+    this.photoSmall = Gram.savePhoto(P); // do galerie pro FIFAgram
     const url = P.toDataURL('image/jpeg', 0.9);
     this.el('club-photo-img').src = url;
     this.el('club-photo-save').href = url;
