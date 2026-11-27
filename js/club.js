@@ -12,6 +12,13 @@ const CLUB_K = 0.5;       // velikost postav v klubu
 const CLUB_R = 22;        // poloměr hráče (kolize)
 const CLUB_SPEED = 320;
 const CLUB_VIEW_H = 560;  // kolik klubu je vidět na výšku
+// styly hudby u DJe
+const CLUB_STYLES = {
+  house: { name: 'House', bpm: 122, icon: '🏠', desc: 'Klasika klubu: rovný kopák a basa.' },
+  techno: { name: 'Techno', bpm: 132, icon: '⚡', desc: 'Rychlé, tvrdé a temné.' },
+  hiphop: { name: 'Hip-hop', bpm: 92, icon: '🎤', desc: 'Pomalý groove a těžká 808 basa.' },
+  reggaeton: { name: 'Reggaeton', bpm: 96, icon: '🌴', desc: 'Dembow rytmus, ať se vlní boky.' },
+};
 
 // Co se dá koupit (cena v pohárech).
 const CLUB_SHOP = {
@@ -25,7 +32,10 @@ const CLUB_SHOP = {
   },
   dj: {
     title: 'DJ pult', who: 'Chceš bombu?',
-    items: [{ id: 'hit', icon: '🎧', name: 'Pustit hit', price: 15, t: 20, desc: 'DJ pustí pecku: světla, konfety a celý klub 20 s šílí.' }],
+    items: [
+      { id: 'hit', icon: '🎧', name: 'Pustit hit', price: 15, t: 20, desc: 'DJ pustí pecku: lasery, dým, konfety a celý klub 20 s šílí.' },
+      ...Object.keys(CLUB_STYLES).map((k) => ({ id: 'st_' + k, style: k, icon: CLUB_STYLES[k].icon, name: CLUB_STYLES[k].name, price: 0, desc: CLUB_STYLES[k].desc })),
+    ],
   },
   vip: {
     title: 'VIP', who: 'Jen pro VIP!',
@@ -45,6 +55,7 @@ const CLUB_SHOP = {
   },
 };
 
+const CLUB_BOOTH = { x0: 1330, y0: 790, x1: 1460, y1: 900 }; // fotokoutek
 // Překážky (obdélníky x0, y0, x1, y1 a kruhy x, y, r).
 const CLUB_RECTS = [
   { x0: 40, y0: 250, x1: 460, y1: 300, kind: 'bar' },
@@ -56,9 +67,19 @@ const CLUB_RECTS = [
   { x0: 1104, y0: 150, x1: 1116, y1: 380, kind: 'rope' },
   { x0: 1104, y0: 470, x1: 1116, y1: 620, kind: 'rope' },
   { x0: 1104, y0: 612, x1: 1470, y1: 624, kind: 'rope' },
+  Object.assign({ kind: 'booth' }, CLUB_BOOTH),
 ];
 const CLUB_GATE = { x0: 1100, y0: 380, x1: 1120, y1: 470 };
-const CLUB_TABLES = [{ x: 360, y: 520 }, { x: 390, y: 770 }, { x: 1190, y: 790 }, { x: 1370, y: 750 }, { x: 1300, y: 390, vip: true }];
+const CLUB_TABLES = [{ x: 360, y: 520 }, { x: 390, y: 770 }, { x: 1180, y: 800 }, { x: 1250, y: 690 }, { x: 1300, y: 390, vip: true }];
+const CLUB_RING = { x: 750, y: 485, r: 62 };   // kruh na parketu: taneční souboj
+const CLUB_MOVES = ['Pohupování', 'Robot', 'Točení', 'Skoky'];
+const CLUB_DAY_CAP = 40; // kolik pohárů jde v klubu vyhrát za den
+const CLUB_LANES = [
+  { key: 'arrowleft', col: '#ff4d9a', rot: Math.PI },
+  { key: 'arrowdown', col: '#4fe0ff', rot: Math.PI / 2 },
+  { key: 'arrowup', col: '#3dff7a', rot: -Math.PI / 2 },
+  { key: 'arrowright', col: '#ffb02e', rot: 0 },
+];
 const CLUB_DANCE = { x0: 520, y0: 330, x1: 980, y1: 640 };
 const CLUB_ZONES = [
   { id: 'exit', label: 'Odejít', x: 750, y: 915, r: 70 },
@@ -67,6 +88,7 @@ const CLUB_ZONES = [
   { id: 'vip', label: 'VIP', x: 1050, y: 425, r: 85 },
   { id: 'lounge', label: 'VIP bar', x: 1300, y: 470, r: 110 },
   { id: 'wardrobe', label: 'Šatna', x: 170, y: 760, r: 100 },
+  { id: 'photo', label: 'Fotka', x: 1280, y: 860, r: 75 },
 ];
 
 // Holky v klubu: nejsou ze hry, jen hosté klubu (dospělé, v šatech na večer).
@@ -81,7 +103,7 @@ const CLUB_GIRLS = [
   { id: 'g_kristyna', name: 'Kristýna', skin: '#f3cfb4', hair: 'longhair', fringe: 'curtain', hairColor: '#e9e4dc', hairDark: '#a8a094', hairLight: '#ffffff', eyes: '#4a7aa8', brow: '#b0a890', lipstick: '#ff4d6d', shadow: '#4fc3ff', necklace: '#4fe0ff', dress: { color: '#2fb8ff', dark: '#1a6aa8', light: '#b8ecff', style: 'sequin', shoe: '#e9edf3' } },
 ].map((g) => Object.assign({ girl: true, num: 0, noBow: true, accent: '#ffd24a', lid: 0.22 }, g));
 const CLUB_PODIUMS = [{ x: 455, y: 615 }, { x: 1045, y: 615 }];
-const CLUB_GIRL_LINES = ['Ahoj fešáku', 'Zatančíš si?', 'Pěkně se hýbeš!', 'Koupíš mi drink?', 'Ty jsi tu poprvé?', 'Jsi fotbalista?'];
+const CLUB_GIRL_LINES = ['Ahoj fešáku', 'Zatančíš si?', 'Pěkně se hýbeš!', 'Koupíš mi drink?', 'Ty jsi tu poprvé?', 'Jsi fotbalista?', 'Hezky voníš', 'Vyzvi je na souboj!', 'Ty máš styl', 'Nechceš fotku?'];
 
 const Club = {
   on: false,
@@ -108,9 +130,15 @@ const Club = {
   state() {
     try {
       const o = JSON.parse(localStorage.getItem(CLUB_KEY));
-      if (o && typeof o === 'object') return { char: o.char || 'jenda', vip: !!o.vip, own: o.own || {}, wear: o.wear || {}, adult: !!o.adult };
+      if (o && typeof o === 'object') {
+        return {
+          char: o.char || 'jenda', vip: !!o.vip, own: o.own || {}, wear: o.wear || {}, adult: !!o.adult,
+          nums: o.nums || {}, style: CLUB_STYLES[o.style] ? o.style : 'house', wins: Math.max(0, Number(o.wins) || 0),
+          day: o.day || '', earned: Math.max(0, Number(o.earned) || 0),
+        };
+      }
     } catch (e) { /* nic */ }
-    return { char: 'jenda', vip: false, own: {}, wear: {}, adult: false };
+    return { char: 'jenda', vip: false, own: {}, wear: {}, adult: false, nums: {}, style: 'house', wins: 0, day: '', earned: 0 };
   },
   save(s) {
     try { localStorage.setItem(CLUB_KEY, JSON.stringify(s)); } catch (e) { /* nevadí */ }
@@ -155,6 +183,18 @@ const Club = {
       this.el('club-age').hidden = true;
     });
     click('club-age-no', () => this.close());
+    click('club-res-ok', () => this.finishBattle());
+    click('club-nums', () => this.openContacts());
+    click('club-contacts-close', () => { this.el('club-contacts').hidden = true; });
+    click('club-photo-close', () => { this.el('club-photo').hidden = true; });
+    click('club-photo-share', () => this.sharePhoto());
+    for (const b of this.el('club-pads').querySelectorAll('button[data-lane]')) {
+      b.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        Sound.init();
+        this.hitLane(Number(b.dataset.lane));
+      });
+    }
     this.el('club-shop').addEventListener('click', (e) => { if (e.target.id === 'club-shop') this.closeShop(); });
     this.el('club-shop-items').addEventListener('click', (e) => {
       const b = e.target.closest('button[data-item]');
@@ -174,7 +214,7 @@ const Club = {
     // joystick: kdekoli na levé části obrazovky
     const cv = this.cv;
     cv.addEventListener('pointerdown', (e) => {
-      if (this.phase !== 'in' || this.shopOpen) return;
+      if (this.phase !== 'in' || this.overlayOpen()) return;
       const r = cv.getBoundingClientRect();
       if (e.clientX - r.left > r.width * 0.62) return;
       e.preventDefault();
@@ -193,13 +233,25 @@ const Club = {
     window.addEventListener('keydown', (e) => {
       if (!this.on) return;
       const k = e.key.toLowerCase();
+      if (this.battle && !this.battle.done) {
+        const lane = CLUB_LANES.findIndex((l) => l.key === k);
+        const alt = ['a', 's', 'w', 'd'].indexOf(k);
+        if (lane >= 0 || alt >= 0) {
+          e.preventDefault();
+          if (!e.repeat) this.hitLane(lane >= 0 ? lane : alt);
+        }
+        return;
+      }
       if (k === 'escape') {
-        if (this.shopOpen) this.closeShop();
+        if (!this.el('club-contacts').hidden) this.el('club-contacts').hidden = true;
+        else if (!this.el('club-photo').hidden) this.el('club-photo').hidden = true;
+        else if (this.battle) this.finishBattle();
+        else if (this.shopOpen) this.closeShop();
         else if (this.phase === 'in') this.leave();
         else this.close();
         return;
       }
-      if (this.phase !== 'in' || this.shopOpen) return;
+      if (this.phase !== 'in' || this.overlayOpen()) return;
       if (k === 'e' || k === ' ' || k === 'enter') {
         e.preventDefault();
         this.act();
@@ -215,6 +267,7 @@ const Club = {
     const s = this.state();
     const ok = (id) => this.males().some((c) => c.id === id && charAvailable(c));
     this.pick = ok(s.char) ? s.char : 'jenda';
+    this.style = s.style;
     this.on = true;
     this.quiet0 = Sound.quiet;
     Sound.quiet = false;
@@ -233,6 +286,7 @@ const Club = {
   },
 
   close() {
+    if (this.battle) this.finishBattle();
     this.on = false;
     Sound.quiet = this.quiet0 !== undefined ? this.quiet0 : true;
     this.stopMusic();
@@ -253,12 +307,15 @@ const Club = {
     this.build(this.pick);
     this.applyGear();
     this.renderTro();
+    this.renderNums();
     this.startMusic(false);
     Sound.whoosh();
     UI.toast('Vítej v HOT PEPPERS! 🌶️');
   },
 
   leave() {
+    this.finishBattle();
+    for (const id of ['club-contacts', 'club-photo']) this.el(id).hidden = true;
     this.closeShop();
     this.phase = 'select';
     this.el('club-select').hidden = false;
@@ -436,10 +493,13 @@ const Club = {
       if (this.fx[k] <= 0) delete this.fx[k];
     }
     this.pulse = Math.max(0, this.pulse - dt * 3.2);
+    this.whiteT = Math.max(0, (this.whiteT || 0) - dt * 2.5);
+    if (this.battle) this.updateBattle(dt);
     const party = this.fx.hit > 0;
     const me = this.me;
+    if (me) me.poseT = Math.max(0, (me.poseT || 0) - dt);
     if (me && this.phase === 'in') {
-      const { mx, my } = this.shopOpen ? { mx: 0, my: 0 } : this.input();
+      const { mx, my } = this.overlayOpen() ? { mx: 0, my: 0 } : this.input();
       const sp = CLUB_SPEED * (this.fx.limo > 0 ? 1.55 : 1);
       me.vx = approach(me.vx, mx * sp, 2600 * dt);
       me.vy = approach(me.vy, my * sp * 0.8, 2600 * dt);
@@ -451,10 +511,11 @@ const Club = {
         if (d > 0.01 && d < min) this.moveEnt(me, (dx / d) * (min - d) * 0.5, (dy / d) * (min - d) * 0.3);
       }
       if (Math.abs(me.vx) > 20) me.dir = me.vx > 0 ? 1 : -1;
-      this.anim(me, dt, Math.hypot(me.vx, me.vy), this.dance || party);
-      this.cam.x = lerp(this.cam.x, me.x, Math.min(1, dt * 6));
-      this.cam.y = lerp(this.cam.y, me.y - 40, Math.min(1, dt * 6));
-      this.findZone();
+      this.anim(me, dt, Math.hypot(me.vx, me.vy), this.dance || party || !!this.battle);
+      const fx = this.battle ? CLUB_RING.x : me.x, fy = this.battle ? CLUB_RING.y - 70 : me.y - 40;
+      this.cam.x = lerp(this.cam.x, fx, Math.min(1, dt * 6));
+      this.cam.y = lerp(this.cam.y, fy, Math.min(1, dt * 6));
+      if (!this.battle) this.findZone();
       // efekty hráče
       if (this.fx.shot > 0) this.spawnFire(me, dt);
       if (this.fx.limo > 0 && Math.random() < dt * 10) this.parts.push({ k: 'bub', x: me.x + rand(-18, 18), y: me.y - 70, vx: rand(-10, 10), vy: -rand(40, 80), t: 0, life: 1.2, s: rand(3, 6) });
@@ -503,7 +564,6 @@ const Club = {
   // Holky v klubu: mluví, když přijdeš, posílají srdíčka, když tančíš, a jdou s tebou tančit.
   updateLady(n, dt, party) {
     const me = this.phase === 'in' ? this.me : null;
-    n.lineT = Math.max(0, (n.lineT || 0) - dt);
     n.cool = Math.max(0, (n.cool || 0) - dt);
     const d = me ? Math.hypot(me.x - n.x, (me.y - n.y) * 1.4) : 1e9;
     if (me && d < 120 && n.cool <= 0 && this.follower !== n) {
@@ -531,6 +591,10 @@ const Club = {
         n.dir = me.x >= n.x ? 1 : -1;
         this.anim(n, dt, 0, true);
         if (Math.random() < dt * (this.dance ? 2.4 : 0.8)) this.heart(n);
+        if (this.dance) {
+          n.danceT = (n.danceT || 0) + dt;
+          if (n.danceT >= 10) this.giveNumber(n);
+        }
       }
       return true;
     }
@@ -574,6 +638,13 @@ const Club = {
   },
 
   updateNpc(n, dt, party) {
+    n.lineT = Math.max(0, (n.lineT || 0) - dt);
+    n.poseT = Math.max(0, (n.poseT || 0) - dt);
+    if (n.battleOpp) {
+      n.dir = -1;
+      this.anim(n, dt, 0, true);
+      return;
+    }
     if (n.lady && !n.staff && this.updateLady(n, dt, party)) return;
     if (n.staff) {
       const near = this.me && this.phase === 'in' && Math.hypot(this.me.x - n.x, this.me.y - n.y) < 230;
@@ -666,7 +737,8 @@ const Club = {
       }
     }
     const onFloor = me.x > CLUB_DANCE.x0 && me.x < CLUB_DANCE.x1 && me.y > CLUB_DANCE.y0 && me.y < CLUB_DANCE.y1;
-    if (!best && onFloor) best = { id: 'dance', label: this.dance ? 'Dost' : 'Tančit' };
+    if (!best && Math.hypot(me.x - CLUB_RING.x, (me.y - CLUB_RING.y) * 1.4) < CLUB_RING.r) best = { id: 'battle', label: 'Taneční souboj' };
+    if (!best && onFloor) best = { id: 'dance', label: this.dance ? 'Další pohyb' : 'Tančit' };
     const key = best ? best.id + best.label + (best.n ? best.n.id : '') : '';
     if (key !== this._zoneKey) {
       this._zoneKey = key;
@@ -682,8 +754,16 @@ const Club = {
     if (!z || this.phase !== 'in') return;
     if (z.id === 'exit') this.leave();
     else if (z.id === 'girl') this.invite(z.n);
+    else if (z.id === 'battle') this.startBattle();
+    else if (z.id === 'photo') this.takePhoto();
     else if (z.id === 'dance') {
-      this.dance = !this.dance;
+      if (!this.dance) {
+        this.dance = true;
+        this.move = 0;
+      } else {
+        this.move = ((this.move || 0) + 1) % CLUB_MOVES.length;
+        UI.toast(`${CLUB_MOVES[this.move]}!`);
+      }
       this._zoneKey = '';
     } else this.openShop(z.id);
   },
@@ -712,7 +792,8 @@ const Club = {
     this.el('club-shop-items').innerHTML = S.items.map((it) => {
       const owned = it.once && (it.id === 'vip' ? s.vip : s.own[it.id]);
       let btn;
-      if (owned && it.gear) btn = `<button type="button" class="club-buy ${s.wear[it.id] ? 'on' : ''}" data-item="${it.id}">${s.wear[it.id] ? 'Sundat' : 'Nasadit'}</button>`;
+      if (it.style) btn = (this.style || 'house') === it.style ? '<span class="club-owned">Hraje ♪</span>' : `<button type="button" class="club-buy" data-item="${it.id}">Pustit</button>`;
+      else if (owned && it.gear) btn = `<button type="button" class="club-buy ${s.wear[it.id] ? 'on' : ''}" data-item="${it.id}">${s.wear[it.id] ? 'Sundat' : 'Nasadit'}</button>`;
       else if (owned) btn = '<span class="club-owned">Máš ✓</span>';
       else btn = `<button type="button" class="club-buy" data-item="${it.id}" ${have < it.price ? 'data-poor="1"' : ''}><span aria-hidden="true">🏆</span> ${it.price}</button>`;
       const run = this.fx[it.id] > 0 ? ' running' : '';
@@ -724,6 +805,16 @@ const Club = {
     const it = S && S.items.find((x) => x.id === itemId);
     if (!it) return;
     const s = this.state();
+    if (it.style) {
+      this.style = it.style;
+      s.style = it.style;
+      this.save(s);
+      this.pulse = 1;
+      Sound.click();
+      UI.toast(`DJ pouští ${CLUB_STYLES[it.style].name} ${CLUB_STYLES[it.style].icon}`);
+      this.renderShop();
+      return;
+    }
     if (it.once && it.gear && s.own[it.id]) {
       // nasadit / sundat
       s.wear[it.id] = !s.wear[it.id];
@@ -763,8 +854,7 @@ const Club = {
     this.renderTro();
     if (this.shopOpen) this.renderShop();
     // poháry se hned propíšou do žebříčku a účtu
-    if (Board.nick()) Board.publish();
-    if (Account.logged) setTimeout(() => Account.sync(), 800);
+    this.syncOut();
   },
   applyGear() {
     if (!this.me) return;
@@ -775,7 +865,8 @@ const Club = {
   /* ---------- hudba (skládaná ve Web Audio) ---------- */
 
   bpm() {
-    return this.fx.hit > 0 ? 128 : 122;
+    const b = CLUB_STYLES[this.style || 'house'].bpm;
+    return this.fx.hit > 0 ? b + 6 : b;
   },
   beatPhase() {
     return this.beatPos % 1;
@@ -865,13 +956,49 @@ const Club = {
       n.start(t, Math.random());
       n.stop(t + dur + 0.05);
     };
-    const q = s % 16;
+    const q = s % 16, style = this.style || 'house';
+    const root = [55, 43.65, 65.41, 49][Math.floor(s / 16) % 4];
+    if (style === 'techno') {
+      osc('sine', 150, 40, q % 4 === 0 ? 0.25 : 0.01, q % 4 === 0 ? 1 : 0.0002);
+      if (q % 4 === 2) noise('highpass', 8000, 0.16, 0.2);
+      noise('highpass', 10000, 0.02, q % 2 ? 0.05 : 0.09);
+      if (q === 4 || q === 12) noise('bandpass', 1900, 0.1, 0.3);
+      osc('sawtooth', root * 2 * (q % 8 === 6 ? 1.5 : 1), 0, 0.08, q % 4 === 0 ? 0.03 : 0.12);
+      if (party && q % 8 === 7) osc('square', root * 8, root * 4, 0.2, 0.05);
+      return;
+    }
+    if (style === 'hiphop') {
+      if (q === 0 || q === 7 || q === 10) {
+        osc('sine', 120, 42, 0.3, 0.95);
+        osc('sine', root * 2, root * 1.6, 0.6, 0.35); // 808
+      }
+      if (q === 4 || q === 12) {
+        noise('bandpass', 2200, 0.16, 0.45);
+        osc('triangle', 210, 160, 0.08, 0.2);
+      }
+      if (q % 2 === 0 || (party && q % 4 === 3)) noise('highpass', 9000, 0.03, 0.09);
+      if (q === 0 || q === 8) {
+        const ch = [[220, 261.6, 329.6], [174.6, 220, 261.6], [196, 261.6, 329.6], [196, 246.9, 293.7]][Math.floor(s / 16) % 4];
+        for (const f of ch) osc('triangle', f, 0, 0.5, 0.05);
+      }
+      return;
+    }
+    if (style === 'reggaeton') {
+      if (q % 4 === 0) osc('sine', 140, 45, 0.22, 0.95);
+      if (q === 3 || q === 6 || q === 11 || q === 14) noise('bandpass', 1800, 0.1, 0.38);
+      if (q % 2 === 0) noise('highpass', 8500, 0.03, 0.08);
+      if (q === 0 || q === 3 || q === 8 || q === 11) osc('triangle', root * 2, 0, 0.18, 0.3);
+      if (q === 2 || q === 10) {
+        const ch = [[220, 261.6, 329.6], [174.6, 220, 261.6], [196, 261.6, 329.6], [196, 246.9, 293.7]][Math.floor(s / 16) % 4];
+        for (const f of ch) osc('sine', f * 2, 0, 0.14, 0.05);
+      }
+      return;
+    }
     if (q % 4 === 0) osc('sine', 155, 44, 0.22, 0.95); // kopák
     if (q % 4 === 2) noise('highpass', 7500, party ? 0.14 : 0.09, 0.16); // hi-hat
     if (party && q % 2 === 1) noise('highpass', 9000, 0.03, 0.07);
     if (q === 4 || q === 12) noise('bandpass', 1600, 0.14, party ? 0.42 : 0.26); // tlesk
     // basa: Am – F – C – G
-    const root = [55, 43.65, 65.41, 49][Math.floor(s / 16) % 4];
     if (q % 4 === 2 || q === 15) osc('sawtooth', root * 2, 0, 0.16, 0.16);
     if (q % 4 === 2) osc('triangle', root, 0, 0.18, 0.3);
     // akordy (víc, když jede hit)
@@ -879,6 +1006,344 @@ const Club = {
       const ch = [[220, 261.6, 329.6], [174.6, 220, 261.6], [196, 261.6, 329.6], [196, 246.9, 293.7]][Math.floor(s / 16) % 4];
       for (const f of ch) osc('square', f * 2, 0, 0.1, 0.035);
     }
+  },
+
+  /* ---------- taneční souboj (rytmická minihra) ---------- */
+
+  startBattle() {
+    if (this.battle) return;
+    const opps = this.npcs.filter((n) => !n.lady && !n.staff && (n.dancer || n.walker) && !n.vipGuest);
+    const opp = opps[Math.floor(Math.random() * opps.length)];
+    if (!opp) return;
+    const s = this.state(), lvl = Math.min(8, s.wins);
+    const beat = 60 / this.bpm(), lead = 4, notes = [];
+    let last = -1;
+    for (let i = 0; i < 32; i++) {
+      const subs = i >= 8 && Math.random() < 0.12 + lvl * 0.04 ? [0, 0.5] : [0];
+      for (const o of subs) {
+        let lane = Math.floor(Math.random() * 4);
+        if (lane === last && Math.random() < 0.6) lane = (lane + 1 + Math.floor(Math.random() * 3)) % 4;
+        last = lane;
+        notes.push({ t: (lead + i + o) * beat, lane, j: '' });
+      }
+    }
+    this.battle = {
+      t: -(1 - this.beatPhase()) * beat, beat, lead, notes, score: 0, combo: 0, best: 0, perfect: 0, good: 0, miss: 0,
+      judge: '', judgeCol: '#fff', judgeT: 0, flash: [0, 0, 0, 0], opp, done: false,
+      oppAcc: clamp(0.58 + lvl * 0.035 + rand(-0.07, 0.07), 0.5, 0.93), end: notes[notes.length - 1].t + 1.2,
+    };
+    opp.battleOpp = true;
+    opp.sx = opp.x;
+    opp.sy = opp.y;
+    opp.x = CLUB_RING.x + 78;
+    opp.y = CLUB_RING.y;
+    opp.line = 'Pojď na mě!';
+    opp.lineT = 2;
+    const me = this.me;
+    me.x = CLUB_RING.x - 78;
+    me.y = CLUB_RING.y;
+    me.dir = 1;
+    me.vx = me.vy = 0;
+    this.dance = false;
+    this.stick.id = null;
+    this.el('club-act').hidden = true;
+    this._zoneKey = 'battle';
+    this.el('club-pads').hidden = false;
+    this.el('club-hud').classList.add('battling');
+    Sound.whistle('short');
+  },
+
+  updateBattle(dt) {
+    const b = this.battle;
+    if (b.done) return;
+    b.t += dt;
+    b.judgeT = Math.max(0, b.judgeT - dt);
+    for (let i = 0; i < 4; i++) b.flash[i] = Math.max(0, b.flash[i] - dt * 4);
+    for (const n of b.notes) {
+      if (!n.j && b.t - n.t > 0.2) {
+        n.j = 'miss';
+        b.miss++;
+        b.combo = 0;
+        this.judge('MIMO', '#ff5a6e');
+      }
+      // soupeř tančí podle stejných šipek (někdy se splete)
+      if (!n.oppDone && n.t <= b.t) {
+        n.oppDone = true;
+        if (Math.random() < b.oppAcc) {
+          b.opp.pose = n.lane;
+          b.opp.poseT = 0.22;
+        }
+      }
+    }
+    if (b.combo >= 8 && Math.random() < dt * 3) {
+      const g = this.npcs.filter((x) => x.lady);
+      if (g.length) this.heart(g[Math.floor(Math.random() * g.length)]);
+    }
+    if (b.t >= b.end) this.endBattle();
+  },
+
+  judge(text, col) {
+    const b = this.battle;
+    b.judge = text;
+    b.judgeCol = col;
+    b.judgeT = 0.55;
+  },
+
+  hitLane(lane) {
+    const b = this.battle;
+    if (!b || b.done) return;
+    b.flash[lane] = 1;
+    this.me.pose = lane;
+    this.me.poseT = 0.22;
+    let best = null, bd = 1;
+    for (const n of b.notes) {
+      if (n.j || n.lane !== lane) continue;
+      const d = Math.abs(n.t - b.t);
+      if (d < bd) {
+        bd = d;
+        best = n;
+      }
+    }
+    if (!best || bd > 0.2) {
+      b.combo = 0; // ťuk mimo rytmus
+      return;
+    }
+    if (bd < 0.075) {
+      best.j = 'p';
+      b.perfect++;
+      b.combo++;
+      b.score += 100 + b.combo * 5;
+      this.judge('PERFEKT!', '#3dff7a');
+    } else {
+      best.j = 'g';
+      b.good++;
+      b.combo++;
+      b.score += 50 + b.combo * 2;
+      this.judge('DOBŘE', '#4fe0ff');
+    }
+    b.best = Math.max(b.best, b.combo);
+  },
+
+  battleAcc(b) {
+    const done = b.perfect + b.good + b.miss;
+    return done ? (b.perfect + b.good * 0.6) / done : 1;
+  },
+
+  endBattle() {
+    const b = this.battle;
+    b.done = true;
+    const acc = (b.perfect + b.good * 0.6) / b.notes.length;
+    const win = acc > b.oppAcc;
+    const s = this.state();
+    const today = new Date().toISOString().slice(0, 10);
+    if (s.day !== today) {
+      s.day = today;
+      s.earned = 0;
+    }
+    let reward = 0;
+    if (win) {
+      s.wins++;
+      reward = Math.max(0, Math.min(CLUB_DAY_CAP - s.earned, 3 + Math.round(acc * 9)));
+      s.earned += reward;
+    }
+    this.save(s);
+    if (reward > 0) {
+      const prof = Profile.get();
+      prof.trophies += reward;
+      Profile.save(prof);
+      this.renderTro();
+      this.syncOut();
+    }
+    const cand = win ? this.npcs.filter((n) => n.lady && !s.nums[n.look.id]) : [];
+    const girl = cand.length ? cand[Math.floor(Math.random() * cand.length)] : null;
+    this.el('club-pads').hidden = true;
+    const opp = charById(b.opp.id).name;
+    this.el('club-res-title').textContent = win ? 'VÝHRA!' : 'PROHRA';
+    this.el('club-res-title').className = win ? 'win' : 'lose';
+    const lines = [`Ty <b>${Math.round(acc * 100)} %</b> : <b>${Math.round(b.oppAcc * 100)} %</b> ${opp}`, `Nejdelší série: ${b.best} · perfektních ${b.perfect}`];
+    if (reward > 0) lines.push(`<span class="gold">+${reward} 🏆</span>`);
+    else if (win) lines.push(`Dnes už jsi v klubu vyhrál max pohárů (${CLUB_DAY_CAP}). Zítra zase!`);
+    else lines.push('Zkus to znovu – trefuj šipky přesně do rytmu.');
+    if (girl) lines.push(`📱 ${girl.look.name} ti dala číslo!`);
+    this.el('club-res-lines').innerHTML = lines.map((l) => `<p>${l}</p>`).join('');
+    this.el('club-res').hidden = false;
+    if (win) {
+      Sound.fanfare();
+      this.fx.hit = Math.max(this.fx.hit || 0, 6);
+      this.pulse = 1;
+      if (girl) this.giveNumber(girl, true);
+    } else {
+      Sound.whistle('long');
+      b.opp.line = 'Na mě nemáš!';
+      b.opp.lineT = 2.5;
+    }
+  },
+
+  finishBattle() {
+    const b = this.battle;
+    if (!b) return;
+    const o = b.opp;
+    o.battleOpp = false;
+    o.poseT = 0;
+    o.x = o.sx;
+    o.y = o.sy;
+    o.tx = undefined;
+    this.battle = null;
+    this._zoneKey = '';
+    this.el('club-res').hidden = true;
+    this.el('club-pads').hidden = true;
+    this.el('club-hud').classList.remove('battling');
+  },
+
+  /* ---------- kontakty (čísla od holek) ---------- */
+
+  giveNumber(n, quiet) {
+    const s = this.state(), id = n.look.id;
+    if (s.nums[id]) return false;
+    s.nums[id] = true;
+    this.save(s);
+    const cnt = Object.keys(s.nums).filter((k) => CLUB_GIRLS.some((g) => g.id === k)).length;
+    n.line = 'Tady máš moje číslo';
+    n.lineT = 2.8;
+    n.cool = 12;
+    for (let i = 0; i < 6; i++) this.heart(n);
+    if (!quiet) UI.toast(`📱 ${n.look.name} ti dala číslo! (${cnt}/${CLUB_GIRLS.length})`);
+    if (cnt >= CLUB_GIRLS.length && !s.own.crown) {
+      s.own.crown = true;
+      s.wear.crown = true;
+      this.save(s);
+      this.applyGear();
+      setTimeout(() => UI.toast('Máš čísla od všech holek! Koruna krále klubu je tvoje 👑'), 1800);
+    }
+    this.renderNums();
+    Sound.fanfare();
+    return true;
+  },
+
+  renderNums() {
+    const s = this.state();
+    const cnt = CLUB_GIRLS.filter((g) => s.nums[g.id]).length;
+    this.el('club-nums-n').textContent = `${cnt}/${CLUB_GIRLS.length}`;
+  },
+
+  openContacts() {
+    const s = this.state(), grid = this.el('club-contacts-grid');
+    grid.innerHTML = CLUB_GIRLS.map((g) => `<div class="club-ccard${s.nums[g.id] ? '' : ' unknown'}"><canvas data-g="${g.id}" aria-hidden="true"></canvas><b>${s.nums[g.id] ? g.name : '???'}</b><span>${s.nums[g.id] ? '📱 číslo máš' : 'zatím nic'}</span></div>`).join('');
+    this.el('club-contacts').hidden = false;
+    for (const c of grid.querySelectorAll('canvas')) {
+      const g = CLUB_GIRLS.find((x) => x.id === c.dataset.g), D = g.dress;
+      Renderer.portrait(c, g, { color: D.color, dark: D.dark, light: D.light }, 1, undefined, { head: true });
+    }
+    this.stick.id = null;
+  },
+
+  overlayOpen() {
+    return !!(this.battle || this.shopOpen || !this.el('club-contacts').hidden || !this.el('club-photo').hidden);
+  },
+
+  /* ---------- fotokoutek ---------- */
+
+  takePhoto() {
+    const me = this.me;
+    if (!me) return;
+    const s = this.state();
+    const W2 = 1200, H2 = 800, cv = document.createElement('canvas');
+    cv.width = W2;
+    cv.height = H2;
+    const c = cv.getContext('2d');
+    const g = c.createLinearGradient(0, 0, W2, H2);
+    g.addColorStop(0, '#2a0a2e');
+    g.addColorStop(0.5, '#5a0f3a');
+    g.addColorStop(1, '#140c24');
+    c.fillStyle = g;
+    c.fillRect(0, 0, W2, H2);
+    for (let i = 0; i < 46; i++) {
+      c.fillStyle = `hsla(${Math.floor(rand(0, 360))},100%,65%,${rand(0.12, 0.4)})`;
+      circle(c, rand(0, W2), rand(0, H2 * 0.72), rand(6, 30));
+      c.fill();
+    }
+    c.fillStyle = 'rgba(0,0,0,.35)';
+    c.fillRect(0, H2 * 0.8, W2, H2 * 0.2);
+    this.neonText(c, 'HOT PEPPERS', W2 / 2, 96, 86, '#ff3d5a', 0.6);
+    const partner = this.follower || this.npcs.find((n) => n.lady && s.nums[n.look.id] && !n.staff) || this.npcs.find((n) => n.lady && !n.staff);
+    const draw = (e, x, dir) => {
+      const p = e.pl, k = 2.2;
+      c.save();
+      c.translate(x, H2 * 0.86);
+      c.fillStyle = 'rgba(0,0,0,.4)';
+      oval(c, 0, 0, 92, 20);
+      c.fill();
+      c.scale(k, k);
+      const od = p.dir, om = p.mood, ox = p.x, oy = p.y;
+      p.x = 0;
+      p.y = -(p.R + p.F);
+      p.dir = dir;
+      p.mood = 1;
+      p.gear = e.gear || null;
+      Renderer.drawPlayer(c, p, { x: dir * 300, y: p.y - 20 }, [e.kit, e.kit], performance.now());
+      p.dir = od;
+      p.mood = om;
+      p.x = ox;
+      p.y = oy;
+      c.restore();
+    };
+    draw(me, partner ? W2 * 0.4 : W2 / 2, 1);
+    if (partner) {
+      draw(partner, W2 * 0.6, -1);
+      for (let i = 0; i < 7; i++) {
+        c.save();
+        c.translate(W2 / 2 + rand(-60, 60), rand(250, 420));
+        c.scale(2.4, 2.4);
+        c.fillStyle = '#ff4d8a';
+        c.beginPath();
+        c.moveTo(0, 5);
+        c.bezierCurveTo(-9, -2, -5, -10, 0, -5);
+        c.bezierCurveTo(5, -10, 9, -2, 0, 5);
+        c.fill();
+        c.restore();
+      }
+    }
+    c.lineWidth = 14;
+    c.strokeStyle = '#ff3d5a';
+    rrect(c, 14, 14, W2 - 28, H2 - 28, 30);
+    c.stroke();
+    c.lineWidth = 4;
+    c.strokeStyle = '#ffd0d8';
+    c.stroke();
+    c.font = `34px ${FONT_D}`;
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillStyle = '#ffffff';
+    c.fillText(`${charById(me.id).name}${partner ? ' & ' + partner.look.name : ''} · ${new Date().toLocaleDateString('cs-CZ')}`, W2 / 2, H2 - 52);
+    this.photoCanvas = cv;
+    const url = cv.toDataURL('image/png');
+    this.el('club-photo-img').src = url;
+    this.el('club-photo-save').href = url;
+    this.el('club-photo').hidden = false;
+    this.whiteT = 1;
+    this.stick.id = null;
+    if (Sound.ctx && !Sound.muted) {
+      Sound.hiss(0.05, 0.3, 'highpass', 3000);
+      Sound.hiss(0.08, 0.25, 'bandpass', 1200, 1, 0.09);
+    }
+    if (partner && partner.lady) {
+      partner.line = 'Pošli mi ji!';
+      partner.lineT = 2.4;
+    }
+  },
+
+  async sharePhoto() {
+    try {
+      const blob = await new Promise((res) => this.photoCanvas.toBlob(res, 'image/png'));
+      const file = new File([blob], 'hot-peppers.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: 'Hot Peppers' });
+      else this.el('club-photo-save').click();
+    } catch (e) { /* zrušeno */ }
+  },
+
+  syncOut() {
+    if (Board.nick()) Board.publish();
+    if (Account.logged) setTimeout(() => Account.sync(), 800);
   },
 
   /* ---------- kreslení ---------- */
@@ -919,6 +1384,7 @@ const Club = {
     for (const d of list) d.f();
     for (const q of this.parts) if (!(q.k === 'cup' && q.vy === 0)) this.drawPart(ctx, q);
     this.drawLights(ctx, now);
+    this.drawDisco(ctx, now);
     // bubliny obsluhy
     for (const n of this.npcs) {
       const text = n.talk && n.say ? n.say : n.lineT > 0 ? n.line : '';
@@ -935,7 +1401,157 @@ const Club = {
     vg.addColorStop(1, 'rgba(0,0,0,.55)');
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, w, h);
-    if (this.phase === 'in') this.drawStick(ctx, dpr);
+    if (this.whiteT > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${this.whiteT * 0.85})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+    if (this.battle) this.drawBattle(ctx, w, h, dpr);
+    else if (this.phase === 'in') {
+      this.drawStick(ctx, dpr);
+      // co hraje
+      const st = CLUB_STYLES[this.style || 'house'];
+      ctx.font = `${13 * dpr}px ${FONT_D}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = 'rgba(255,255,255,.75)';
+      ctx.fillText(`♪ ${st.name} · ${this.bpm()} BPM${this.dance ? ' · ' + CLUB_MOVES[this.move || 0] : ''}`, w / 2, h - 12 * dpr);
+    }
+  },
+
+  // Šipka (vyplněná = nota, obrys = cíl).
+  arrow(ctx, x, y, s, rot, fill, stroke, glow, dim) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.beginPath();
+    ctx.moveTo(s, 0);
+    ctx.lineTo(0, -s);
+    ctx.lineTo(0, -s * 0.45);
+    ctx.lineTo(-s, -s * 0.45);
+    ctx.lineTo(-s, s * 0.45);
+    ctx.lineTo(0, s * 0.45);
+    ctx.lineTo(0, s);
+    ctx.closePath();
+    if (fill) {
+      ctx.fillStyle = dim ? 'rgba(110,110,130,.55)' : fill;
+      ctx.fill();
+      ctx.lineWidth = s * 0.14;
+      ctx.strokeStyle = '#0b1220';
+      ctx.stroke();
+    } else {
+      if (glow > 0) {
+        ctx.fillStyle = hexA(stroke, glow * 0.7);
+        ctx.fill();
+      }
+      ctx.lineWidth = s * 0.16;
+      ctx.strokeStyle = hexA(stroke, 0.55 + glow * 0.45);
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+
+  // Dráha se šipkami, skóre a odpočet tanečního souboje.
+  drawBattle(ctx, w, h, dpr) {
+    const b = this.battle;
+    if (b.done) return;
+    const pads = this.el('club-pads').getBoundingClientRect(), r = this.cv.getBoundingClientRect();
+    const gap = 80 * dpr;
+    const cx = pads.width ? (pads.left + pads.width / 2 - r.left) * dpr : w / 2;
+    const hitY = pads.width ? (pads.top - r.top - 34) * dpr : h - 140 * dpr;
+    const topY = 64 * dpr, speed = (hitY - topY) / 1.5;
+    ctx.fillStyle = 'rgba(5,3,10,.6)';
+    rrect(ctx, cx - 2 * gap, topY - 14 * dpr, 4 * gap, hitY - topY + 48 * dpr, 18 * dpr);
+    ctx.fill();
+    for (let i = 0; i < 4; i++) {
+      const x = cx + (i - 1.5) * gap;
+      ctx.fillStyle = 'rgba(255,255,255,.05)';
+      ctx.fillRect(x - 1 * dpr, topY, 2 * dpr, hitY - topY);
+      this.arrow(ctx, x, hitY, 26 * dpr, CLUB_LANES[i].rot, null, CLUB_LANES[i].col, b.flash[i]);
+    }
+    for (const n of b.notes) {
+      if (n.j === 'p' || n.j === 'g') continue;
+      const y = hitY - (n.t - b.t) * speed;
+      if (y < topY - 30 * dpr || y > hitY + 50 * dpr) continue;
+      this.arrow(ctx, cx + (n.lane - 1.5) * gap, y, 24 * dpr, CLUB_LANES[n.lane].rot, CLUB_LANES[n.lane].col, null, 0, n.j === 'miss');
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    const big = (text, y, size, col) => {
+      ctx.font = `${size * dpr}px ${FONT_D}`;
+      ctx.lineWidth = size * 0.22 * dpr;
+      ctx.strokeStyle = '#0b1220';
+      ctx.strokeText(text, cx, y);
+      ctx.fillStyle = col;
+      ctx.fillText(text, cx, y);
+    };
+    // odpočet
+    if (b.t < b.lead * b.beat) {
+      const k = Math.ceil(b.lead - b.t / b.beat - 0.001);
+      big(k > 3 ? 'PŘIPRAV SE!' : k > 0 ? String(k) : 'TEĎ!', (topY + hitY) / 2, k > 3 ? 34 : 60, '#ffc93c');
+    } else if (b.judgeT > 0) {
+      big(b.judge, (topY + hitY) / 2 - 20 * dpr, 30 + b.judgeT * 20, b.judgeCol);
+    }
+    if (b.combo >= 3) big(`${b.combo}× SÉRIE`, (topY + hitY) / 2 + 30 * dpr, 20, '#ffffff');
+    // skóre nahoře: já vs. soupeř
+    const acc = Math.round(this.battleAcc(b) * 100), oppAcc = Math.round(clamp(b.oppAcc + Math.sin(b.t * 1.3) * 0.04, 0, 1) * 100);
+    ctx.font = `${18 * dpr}px ${FONT_D}`;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ffc93c';
+    ctx.fillText(`TY ${acc} %`, cx - 2.2 * gap, 18 * dpr);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ff9aac';
+    ctx.fillText(`${oppAcc} % ${charById(b.opp.id).name.toUpperCase()}`, cx + 2.2 * gap, 18 * dpr);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('TANEČNÍ SOUBOJ', cx, 18 * dpr);
+    // průběh
+    const prog = clamp(b.t / b.end, 0, 1);
+    ctx.fillStyle = 'rgba(255,255,255,.15)';
+    ctx.fillRect(cx - 2 * gap, 44 * dpr, 4 * gap, 5 * dpr);
+    ctx.fillStyle = '#ff3d5a';
+    ctx.fillRect(cx - 2 * gap, 44 * dpr, 4 * gap * prog, 5 * dpr);
+  },
+
+  // Disco koule nad parketem (odlesky na podlaze kreslí drawRoom).
+  drawDisco(ctx, now) {
+    const x = 750, y = 262, r = 24, rot = now * 0.0012;
+    ctx.strokeStyle = 'rgba(200,200,220,.6)';
+    ctx.lineWidth = 2;
+    line(ctx, x, y - r, x, y - 120);
+    ctx.save();
+    circle(ctx, x, y, r);
+    ctx.clip();
+    const g = ctx.createRadialGradient(x - 8, y - 8, 2, x, y, r);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.5, '#a8b0c8');
+    g.addColorStop(1, '#4a5068');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    for (let i = -4; i <= 4; i++) {
+      for (let j = -4; j <= 4; j++) {
+        const lit = Math.sin(i * 1.7 + j * 2.3 + rot * 6) > 0.6;
+        if (!lit) continue;
+        ctx.fillStyle = `hsla(${(i * 40 + j * 70 + now * 0.05) % 360},80%,85%,.9)`;
+        ctx.fillRect(x + i * 5.6 - 2.4 + ((rot * 20) % 5.6), y + j * 5.6 - 2.4, 4.4, 4.4);
+      }
+    }
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,.5)';
+    ctx.lineWidth = 1.5;
+    circle(ctx, x, y, r);
+    ctx.stroke();
+    // záblesky kolem koule
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 4; i++) {
+      const a = rot * 3 + i * 1.6, sx = x + Math.cos(a) * (r + 6), sy = y + Math.sin(a) * (r + 6);
+      ctx.fillStyle = 'rgba(255,255,255,.7)';
+      star(ctx, sx, sy, 5, 1.6);
+      ctx.fill();
+    }
+    ctx.restore();
   },
 
   drawRoom(ctx, now) {
@@ -969,6 +1585,36 @@ const Club = {
         ctx.fill();
       }
     }
+    // kruh pro taneční souboj
+    const R0 = CLUB_RING;
+    ctx.strokeStyle = `rgba(255,201,60,${0.55 + beat * 0.4})`;
+    ctx.lineWidth = 5;
+    oval(ctx, R0.x, R0.y, R0.r * 1.5, R0.r * 0.95);
+    ctx.stroke();
+    ctx.setLineDash([10, 10]);
+    ctx.lineWidth = 2;
+    oval(ctx, R0.x, R0.y, R0.r * 1.5 - 10, R0.r * 0.95 - 7);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.save();
+    ctx.font = `16px ${FONT_D}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(255,201,60,.85)';
+    ctx.fillText('DANCE BATTLE', R0.x, R0.y + R0.r * 0.95 + 14);
+    ctx.restore();
+    // odlesky disco koule po parketu
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 26; i++) {
+      const a = now * 0.0004 + i * 2.4, rr = 60 + ((i * 53) % 220);
+      const sx = 750 + Math.cos(a) * rr * 1.3, sy = 485 + Math.sin(a) * rr * 0.6;
+      if (sy < CLUB_WALL + 10) continue;
+      ctx.fillStyle = `hsla(${(i * 47) % 360},90%,80%,${0.16 + this.pulse * 0.12})`;
+      oval(ctx, sx, sy, 7, 3.5);
+      ctx.fill();
+    }
+    ctx.restore();
     // zadní stěna
     const wg = ctx.createLinearGradient(0, 0, 0, CLUB_WALL);
     wg.addColorStop(0, '#120a1d');
@@ -1141,6 +1787,20 @@ const Club = {
       this.neonText(ctx, 'ŠATNA', (q.x0 + q.x1) / 2, ry - 26, 24, '#ff7ad9', this.pulse);
       for (const n of this.npcs) if (n.staff === 'wardrobe') this.drawChar(ctx, n, now);
       box(q.x0, q.y1 - 40, q.x1, q.y1, 40, '#4a3a5e', '#251c33', '#ff7ad9');
+    } else if (q.kind === 'booth') {
+      // fotokoutek: budka se závěsem a bleskem
+      box(q.x0, q.y0, q.x1, q.y1, 120, '#2b1a3a', '#1a0f26', '#ff4d9a');
+      ctx.fillStyle = '#c0283d';
+      for (let i = 0; i < 5; i++) {
+        rrect(ctx, q.x0 + 10 + i * 22, q.y1 - 108, 20, 100, 8);
+        ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(0,0,0,.25)';
+      for (let i = 0; i < 5; i++) ctx.fillRect(q.x0 + 26 + i * 22, q.y1 - 104, 3, 94);
+      this.neonText(ctx, 'FOTO', (q.x0 + q.x1) / 2, q.y0 - 140, 22, '#4fe0ff', this.pulse);
+      ctx.fillStyle = this.whiteT > 0 ? '#ffffff' : '#8a93a8';
+      circle(ctx, q.x1 - 18, q.y0 - 112, 7);
+      ctx.fill();
     } else if (q.kind === 'sofa') {
       box(q.x0, q.y0, q.x1, q.y1, 40, '#c8961c', '#8a6200', '#ffe08a');
       ctx.fillStyle = '#b8860b';
@@ -1252,6 +1912,25 @@ const Club = {
     ctx.translate(e.x, e.y - e.bob - e.lift);
     // holky se při tanci vlní v bocích
     if (e.lady && p.mood > 0) ctx.rotate(Math.sin(this.beatPos * Math.PI) * 0.09);
+    if (e.me && this.dance) {
+      // taneční pohyby
+      const ph = this.beatPos, mv = this.move || 0;
+      if (mv === 1) {
+        ctx.rotate((Math.floor(ph * 2) % 2 ? 1 : -1) * 0.08);
+        p.dir = Math.floor(ph) % 2 ? 1 : -1;
+      } else if (mv === 2) {
+        const c = Math.cos(ph * Math.PI);
+        ctx.scale(Math.abs(c) < 0.15 ? (c < 0 ? -0.15 : 0.15) : c, 1);
+      } else if (mv === 3) ctx.translate(0, -Math.abs(Math.sin(ph * Math.PI)) * 24);
+    }
+    if (e.poseT > 0) {
+      // póza v tanečním souboji podle šipky
+      const u = e.poseT / 0.22;
+      if (e.pose === 0) ctx.rotate(-0.28 * u);
+      else if (e.pose === 3) ctx.rotate(0.28 * u);
+      else if (e.pose === 1) ctx.scale(1 + 0.1 * u, 1 - 0.14 * u);
+      else ctx.translate(0, -28 * u);
+    }
     ctx.scale(k, k);
     p.x = 0;
     p.y = -(p.R + p.F);
@@ -1346,6 +2025,24 @@ const Club = {
     const party = this.fx.hit > 0;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
+    // dým nad parketem
+    for (let i = 0; i < 6; i++) {
+      const fx = 560 + ((now * 0.012 * (1 + i * 0.2) + i * 170) % 520), fy = 420 + (i % 3) * 90;
+      const g = ctx.createRadialGradient(fx, fy, 10, fx, fy, 150);
+      g.addColorStop(0, `rgba(170,120,255,${party ? 0.12 : 0.05})`);
+      g.addColorStop(1, 'rgba(170,120,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(fx - 150, fy - 150, 300, 300);
+    }
+    // lasery z DJ pultu (při hitu)
+    if (party) {
+      for (let i = 0; i < 10; i++) {
+        const a = Math.PI * 0.12 + (i / 9) * Math.PI * 0.76 + Math.sin(now * 0.002 + i) * 0.18;
+        ctx.strokeStyle = i % 2 ? 'rgba(61,255,122,.55)' : 'rgba(255,61,90,.55)';
+        ctx.lineWidth = 2.2;
+        line(ctx, 750, 200, 750 + Math.cos(a) * 1100, 200 + Math.sin(a) * 900);
+      }
+    }
     const n = party ? 5 : 3;
     for (let i = 0; i < n; i++) {
       const sx = 600 + i * (300 / Math.max(1, n - 1)), sy = CLUB_WALL - 20;

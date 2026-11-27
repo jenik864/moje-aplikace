@@ -158,14 +158,23 @@ V klubu se **utrácí poháry** (ubydou z profilu, takže klesne i liga a místo
 | Bar | Pepper shot | 5 🏆 | 10 s chrlíš oheň |
 | Bar | Limo Hlavička | 3 🏆 | 12 s běháš rychleji (bublinky) |
 | Bar | Neonový koktejl | 8 🏆 | 15 s záříš v barvách |
-| DJ pult | Pustit hit | 15 🏆 | 20 s rychlejší hudba, strobo, konfety a celý klub tančí |
+| DJ pult | Pustit hit | 15 🏆 | 20 s rychlejší hudba, lasery, dým, strobo, konfety a celý klub tančí |
+| DJ pult | Styl hudby: House / Techno / Hip-hop / Reggaeton | zdarma | každý styl má vlastní rytmus a tempo (122 / 132 / 92 / 96 BPM) |
 | Ochranka u VIP | Vstup do VIP | 60 🏆 | natrvalo otevře VIP (zlatý gauč, VIP bar) |
 | VIP bar | Déšť pohárků | 25 🏆 | 8 s na tebe prší zlaté poháry |
 | Šatna | Černé brýle / Zlatý řetěz / Koruna | 20 / 35 / 120 🏆 | natrvalo v klubu, v šatně se nasazují a sundávají |
 
 Ze hry jsou v klubu jen klučičí postavy (barman, DJ, ochranka, tanečníci a lidi, co se procházejí). K nim je tu 8 holek, které ve hře nejsou – jen hosté klubu: dospělé ženy v upnutých minišatech na podpatcích (flitry, ramínka, šněrování), s rtěnkou, očními stíny a náušnicemi. Dvě tancují na pódiích, další na parketu, u baru, ve VIP a jedna je šatnářka. Když k nim přijdeš, prohodí něco („Ahoj fešáku“, „Zatančíš si?“), když tančíš poblíž, posílají srdíčka, a tlačítkem *Zatančit spolu* jde holka 25 s s tebou (chodí za tebou a tančí). Nic explicitního – jen tanec a flirt.
 
-Na tanečním parketu jde zdarma *Tančit*. Hudbu klub skládá sám ve Web Audio (u vchodu je slyšet jen přes zeď). Koupené věci a VIP se ukládají v prohlížeči (`hlavouni.klub`) a synchronizují s účtem.
+Na tanečním parketu jde zdarma *Tančit*; dalším klepnutím se mění pohyb (Pohupování, Robot, Točení, Skoky).
+
+**Taneční souboj** – zlatý kruh *DANCE BATTLE* uprostřed parketu. Vyzveš náhodného kluka z parketu, ten se postaví naproti a jede rytmická minihra: šipky padají do rytmu hudby a mačkají se čtyři barevná tlačítka dole (na počítači šipky nebo WASD). PERFEKT / DOBŘE / MIMO, série, průběh a procenta obou soupeřů nahoře. Kdo má vyšší přesnost, vyhrává. Výhra dá 3–12 pohárů (v klubu jde vyhrát nejvýš 40 pohárů za den, ať se nedá vyhrabat žebříček), spustí krátkou party a jedna z holek ti dá číslo. Soupeři jsou s každou výhrou o kousek lepší.
+
+**Kontakty** – tlačítko 📱 vpravo nahoře ukazuje, od kolika holek máš číslo (0/8). Číslo dá holka za výhru v souboji nebo když s ní (po *Zatančit spolu*) aspoň 10 s tančíš. Za všech 8 čísel je zdarma *Koruna krále klubu*.
+
+**Fotokoutek** – budka *FOTO* vpravo dole: vyfotí tvou postavu s holkou, se kterou tančíš (nebo s tou, od které máš číslo), v rámečku Hot Peppers s datem. Fotka jde *Uložit* nebo *Poslat* (sdílení v telefonu).
+
+Klub má disco kouli nad parketem s odlesky po podlaze, dým, reflektory a při hitu lasery z DJ pultu. Hudbu klub skládá sám ve Web Audio (u vchodu je slyšet jen přes zeď). Koupené věci a VIP se ukládají v prohlížeči (`hlavouni.klub`) a synchronizují s účtem.
 
 ## Účet s heslem (víc zařízení)
 
@@ -320,6 +329,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.60 – klub: taneční souboj (rytmická minihra, výhra = poháry a číslo), kontakty 0/8 s korunou, fotokoutek, styly hudby u DJe, taneční pohyby, disco koule, lasery a dým
 - 1.59 – klub Hot Peppers je 18+: potvrzení věku, NPC ze hry jen kluci, 8 nových holek (šaty, podpatky, pódia), flirt a společný tanec
 - 1.58 – noční klub Hot Peppers: výběr kluka, chození joystickem po klubu, bar, DJ, VIP a šatna za poháry
 - 1.57 – blokace znovu pro všechny (nový tajný kód, dřívější odemknutí přestala platit); blokace se už nedá obejít adresou s ?trailer

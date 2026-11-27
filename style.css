@@ -1694,7 +1694,8 @@ body.game-blocked .screen, body.game-blocked #hud, body.game-blocked #touch, bod
 .club-hud { position: absolute; inset: 0; pointer-events: none; }
 .club-hud > * { pointer-events: auto; }
 .club-x { position: absolute; left: max(12px, var(--safe-l)); top: max(10px, var(--safe-t)); }
-.club-tro-in { position: absolute; right: max(12px, var(--safe-r)); top: max(10px, var(--safe-t)); }
+.club-topr { position: absolute; right: max(12px, var(--safe-r)); top: max(10px, var(--safe-t)); display: flex; gap: 8px; }
+.club-nums { cursor: pointer; border-color: rgba(255, 77, 154, 0.7); color: #ffd0e4; }
 .club-act {
   position: absolute;
   right: max(22px, calc(var(--safe-r) + 10px));
@@ -1806,3 +1807,47 @@ body.game-blocked .screen, body.game-blocked #hud, body.game-blocked #touch, bod
   box-shadow: 0 0 18px rgba(255, 61, 90, 0.6);
 }
 .club-age-btns { display: flex; gap: 12px; align-items: center; margin-top: 4px; }
+
+.club-pads {
+  position: absolute;
+  left: 50%;
+  bottom: max(14px, calc(var(--safe-b) + 6px));
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+.club-pads button {
+  width: 70px;
+  height: 70px;
+  display: grid;
+  place-items: center;
+  border: 4px solid var(--ink);
+  border-radius: 20px;
+  background: var(--c);
+  background: radial-gradient(circle at 40% 30%, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 55%, color-mix(in srgb, var(--c) 55%, #000));
+  box-shadow: 0 5px 0 var(--ink), 0 0 18px color-mix(in srgb, var(--c) 60%, transparent);
+  touch-action: none;
+}
+.club-pads button:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink); }
+.club-pads svg { width: 38px; height: 38px; fill: #fff; stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
+.club-res-card { display: grid; justify-items: center; gap: 8px; text-align: center; width: min(440px, 100%); }
+.club-res-card h3 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 40px; color: #fff; }
+.club-res-card h3.win { color: #3dff7a; text-shadow: 0 0 16px rgba(61, 255, 122, 0.6); }
+.club-res-card h3.lose { color: #ff5a6e; }
+.club-res-lines { display: grid; gap: 4px; }
+.club-res-lines p { margin: 0; font-size: 17px; font-weight: 700; color: #e6dcf5; }
+.club-res-lines b { color: #fff; }
+.club-res-lines .gold { font-family: var(--font-display); font-size: 26px; color: var(--gold); }
+.club-note { margin: 0 0 8px; font-size: 14px; font-weight: 700; color: #c9bddc; }
+.club-cgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.club-ccard { display: grid; justify-items: center; gap: 2px; padding: 6px; border-radius: 14px; border: 2px solid rgba(255, 77, 154, 0.5); background: rgba(8, 13, 26, 0.55); }
+.club-ccard canvas { width: 64px; height: 64px; }
+.club-ccard b { font-size: 16px; color: #fff; }
+.club-ccard span { font-size: 12px; font-weight: 700; color: #ff9ac8; }
+.club-ccard.unknown { border-color: rgba(255, 255, 255, 0.1); }
+.club-ccard.unknown canvas { filter: brightness(0) opacity(0.6); }
+.club-ccard.unknown span { color: var(--mute); }
+.club-photo-card { display: grid; justify-items: center; gap: 10px; width: min(620px, 100%); }
+.club-photo-img { width: 100%; max-height: calc(var(--vh, 1vh) * 62); object-fit: contain; border-radius: 14px; display: block; }
+.club-photo-card .btn-chip { text-decoration: none; color: #fff; }
+.club-hud.battling .club-topr { display: none; }

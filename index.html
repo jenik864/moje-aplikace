@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.59">
+<link rel="stylesheet" href="style.css?v=1.60">
 </head>
 <body>
 <!-- HRA:START -->
@@ -544,8 +544,46 @@
       <button id="club-exit" class="btn-mini club-x" type="button" aria-label="Odejít z klubu">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
-      <div class="club-tro club-tro-in" aria-label="Moje poháry"><span aria-hidden="true">🏆</span><b id="club-tro2">0</b></div>
+      <div class="club-topr">
+        <button id="club-nums" class="club-tro club-nums" type="button" aria-label="Kontakty – čísla od holek"><span aria-hidden="true">📱</span><b id="club-nums-n">0/8</b></button>
+        <div class="club-tro" aria-label="Moje poháry"><span aria-hidden="true">🏆</span><b id="club-tro2">0</b></div>
+      </div>
       <button id="club-act" class="club-act" type="button" hidden><span id="club-act-lbl">Bar</span></button>
+      <div id="club-pads" class="club-pads" hidden>
+        <button type="button" data-lane="0" aria-label="Doleva" style="--c:#ff4d9a"><svg viewBox="0 0 24 24" aria-hidden="true"><path transform="rotate(180 12 12)" d="M21 12l-8-8v4.5H3v7h10V20z"/></svg></button>
+        <button type="button" data-lane="1" aria-label="Dolů" style="--c:#4fe0ff"><svg viewBox="0 0 24 24" aria-hidden="true"><path transform="rotate(90 12 12)" d="M21 12l-8-8v4.5H3v7h10V20z"/></svg></button>
+        <button type="button" data-lane="2" aria-label="Nahoru" style="--c:#3dff7a"><svg viewBox="0 0 24 24" aria-hidden="true"><path transform="rotate(-90 12 12)" d="M21 12l-8-8v4.5H3v7h10V20z"/></svg></button>
+        <button type="button" data-lane="3" aria-label="Doprava" style="--c:#ffb02e"><svg viewBox="0 0 24 24" aria-hidden="true"><path transform="rotate(0 12 12)" d="M21 12l-8-8v4.5H3v7h10V20z"/></svg></button>
+      </div>
+      <div id="club-res" class="club-shop" hidden>
+        <div class="club-shop-card club-res-card" role="dialog" aria-labelledby="club-res-title">
+          <h3 id="club-res-title">VÝHRA!</h3>
+          <div id="club-res-lines" class="club-res-lines"></div>
+          <button id="club-res-ok" class="btn-play club-enter" type="button">Pokračovat</button>
+        </div>
+      </div>
+      <div id="club-contacts" class="club-shop" hidden>
+        <div class="club-shop-card" role="dialog" aria-labelledby="club-contacts-title">
+          <header class="club-shop-head">
+            <h3 id="club-contacts-title">Kontakty</h3>
+            <button id="club-contacts-close" class="btn-mini" type="button" aria-label="Zavřít">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </header>
+          <p class="club-note">Holky ti dají číslo, když vyhraješ taneční souboj nebo když s nimi chvíli tančíš. Za všech 8 je koruna krále klubu.</p>
+          <div id="club-contacts-grid" class="club-cgrid"></div>
+        </div>
+      </div>
+      <div id="club-photo" class="club-shop" hidden>
+        <div class="club-shop-card club-photo-card" role="dialog" aria-label="Fotka z klubu">
+          <img id="club-photo-img" class="club-photo-img" alt="Fotka z klubu Hot Peppers">
+          <div class="club-age-btns">
+            <button id="club-photo-close" class="btn-chip small" type="button">Zavřít</button>
+            <a id="club-photo-save" class="btn-chip small" href="#" download="hot-peppers.png">Uložit</a>
+            <button id="club-photo-share" class="btn-play club-enter" type="button">Poslat</button>
+          </div>
+        </div>
+      </div>
       <div id="club-shop" class="club-shop" hidden>
         <div class="club-shop-card" role="dialog" aria-labelledby="club-shop-title">
           <header class="club-shop-head">
@@ -586,19 +624,19 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.59"></script>
-<script src="js/audio.js?v=1.59"></script>
-<script src="js/input.js?v=1.59"></script>
-<script src="js/ai.js?v=1.59"></script>
-<script src="js/physics.js?v=1.59"></script>
-<script src="js/render.js?v=1.59"></script>
-<script src="js/penalty.js?v=1.59"></script>
-<script src="js/net.js?v=1.59"></script>
-<script src="js/lobby.js?v=1.59"></script>
-<script src="js/board.js?v=1.59"></script>
-<script src="js/account.js?v=1.59"></script>
-<script src="js/trailer.js?v=1.59"></script>
-<script src="js/club.js?v=1.59"></script>
-<script src="js/main.js?v=1.59"></script>
+<script src="js/config.js?v=1.60"></script>
+<script src="js/audio.js?v=1.60"></script>
+<script src="js/input.js?v=1.60"></script>
+<script src="js/ai.js?v=1.60"></script>
+<script src="js/physics.js?v=1.60"></script>
+<script src="js/render.js?v=1.60"></script>
+<script src="js/penalty.js?v=1.60"></script>
+<script src="js/net.js?v=1.60"></script>
+<script src="js/lobby.js?v=1.60"></script>
+<script src="js/board.js?v=1.60"></script>
+<script src="js/account.js?v=1.60"></script>
+<script src="js/trailer.js?v=1.60"></script>
+<script src="js/club.js?v=1.60"></script>
+<script src="js/main.js?v=1.60"></script>
 </body>
 </html>

@@ -154,6 +154,9 @@ const Account = {
         v = Object.assign({}, B, A);
         v.own = Object.assign({}, B.own || {}, A.own || {});
         v.vip = !!(A.vip || B.vip);
+        v.nums = Object.assign({}, B.nums || {}, A.nums || {});
+        v.wins = Math.max(Number(A.wins) || 0, Number(B.wins) || 0);
+        v.adult = !!(A.adult || B.adult);
       } else if (k === 'hlavouni.vietnam') {
         v = Math.max(Number(a) || 0, Number(b) || 0);
       } else if (k === 'hlavouni.pratele') {
