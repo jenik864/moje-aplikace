@@ -161,7 +161,9 @@ V klubu se **utrácí poháry** (ubydou z profilu, takže klesne i liga a místo
 | Bar | Neonový koktejl | 8 🏆 | 15 s záříš v barvách |
 | DJ pult | Pustit hit | 15 🏆 | 20 s rychlejší hudba, lasery, dým, strobo, konfety a celý klub tančí |
 | DJ pult | Styl hudby: House / Techno / Hip-hop / Reggaeton | zdarma | každý styl má vlastní rytmus a tempo (122 / 132 / 92 / 96 BPM) |
-| Ochranka u VIP | Vstup do VIP | 60 🏆 | natrvalo otevře VIP (zlatý gauč, VIP bar) |
+| Ochranka u VIP | Vstup do VIP | 60 🏆 | natrvalo otevře VIP (vířivka, VIP bar, soukromá show, separé, zlatý VIP odznak) |
+| VIP bar | Šampus s prskavkami | 30 🏆 | lahev s prskavkami na VIP stůl, pak postříkáš VIP šampusem a klub šílí |
+| VIP bar | VIP ohňostroj | 50 🏆 | ohňostroj pod stropem, CO2 výtrysky z pódií a od DJe, konfety |
 | VIP bar | Déšť pohárků | 25 🏆 | 8 s na tebe prší zlaté poháry |
 | Šatna | Černé brýle / Zlatý řetěz / Koruna | 20 / 35 / 120 🏆 | natrvalo v klubu, v šatně se nasazují a sundávají |
 
@@ -169,11 +171,12 @@ Ze hry jsou v klubu jen klučičí postavy (barman, DJ, ochranka, tanečníci a 
 
 Na tanečním parketu jde zdarma *Tančit*; dalším klepnutím se mění pohyb (Pohupování, Robot, Točení, Skoky).
 
-**Taneční souboj** – zlatý kruh *DANCE BATTLE* uprostřed parketu. Vyzveš náhodného kluka z parketu, ten se postaví naproti a jede rytmická minihra: šipky padají do rytmu hudby a mačkají se čtyři barevná tlačítka dole (na počítači šipky nebo WASD). PERFEKT / DOBŘE / MIMO, série, průběh a procenta obou soupeřů nahoře. Kdo má vyšší přesnost, vyhrává. Výhra dá 3–12 pohárů (v klubu jde vyhrát nejvýš 40 pohárů za den, ať se nedá vyhrabat žebříček), spustí krátkou party a jedna z holek ti dá číslo. Soupeři jsou s každou výhrou o kousek lepší.
+**Fotka** – tlačítko 📸 vlevo nahoře (nebo budka *FOTO* vlevo dole) vyfotí skutečnou scénu z klubu kolem tebe jako z opravdového foťáku: ty s holkou, se kterou tančíš (nebo s tou nejbližší), lidi a světla kolem, blesk, rozmazané pozadí, zrno, viněta, lehce nakřivo a oranžové datum v rohu jako na digitálu. Každá fotka je jiná. Jde *Uložit* nebo *Poslat* (sdílení v telefonu).
 
-**Kontakty** – tlačítko 📱 vpravo nahoře ukazuje, od kolika holek máš číslo (0/8). Číslo dá holka za výhru v souboji nebo když s ní (po *Zatančit spolu*) aspoň 10 s tančíš. Za všech 8 čísel je zdarma *Koruna krále klubu*.
-
-**Fotka** – tlačítko 📸 vlevo nahoře (nebo budka *FOTO* vpravo dole) vyfotí skutečnou scénu z klubu kolem tebe jako z opravdového foťáku: ty s holkou, se kterou tančíš (nebo s tou nejbližší), lidi a světla kolem, blesk, rozmazané pozadí, zrno, viněta, lehce nakřivo a oranžové datum v rohu jako na digitálu. Každá fotka je jiná. Jde *Uložit* nebo *Poslat* (sdílení v telefonu).
+**VIP (prémium)** – VIP je větší (sahá až dolů k fotokoutku) a má:
+- *Vířivku* se dvěma exkluzivními VIP holkami v plavkách (Diamond a Rubi – nejsou nikde jinde). Tlačítkem *Vířivka* do ní vlezeš, ve vodě je vidět jen to nad hladinou, bublinky, pára, srdíčka a holky kecají („Voda je teplá“, „VIP život“). *Vylézt* tě vrátí ven.
+- *Šampus s prskavkami* a *VIP ohňostroj* ve VIP baru (viz tabulka), *soukromou show* a *separé*.
+- Zlatý odznak „TY · VIP“ nad postavou a ochranka tě zdraví „Vítejte, pane!“.
 
 **Strip club**
 - *Opilost*: každé pití přidá promile (ukazuje se nahoře). Od ~0,5 ‰ se obraz houpe, od 1 ‰ vidíš dvojitě, joystick ujíždí, postava se motá a škytá. Promile pomalu klesají.
@@ -181,8 +184,8 @@ Na tanečním parketu jde zdarma *Tančit*; dalším klepnutím se mění pohyb 
 - *Strčit*: do kluka jde strčit – zapotácí se a někdy ránu vrátí. Po druhé strkanici ochranka varuje, po třetí letíš ven.
 - *Tanečnice u tyče*: na pódiích jsou chromové tyče, holky v třpytivém topu a kraťáskách se kolem nich točí a vyšvihují. *Hodit 5 🏆* – poháry letí na pódium, tanečnice se rozjede a na 2 s flashne jako Suli (záblesk, poprsí zakryté mozaikou).
 - *Show*: zhruba každou minutu DJ ohlásí tanečnici („SHOW · LOLA“), na pódium svítí reflektory a kluci se seběhnou fandit. Ve finále tanečnice odhodí top – poprsí zakrývá mozaika (stejně jako u Suliiny schopnosti).
-- *Soukromá show* ve VIP (VIP bar, 40 🏆): kamera se přiblíží na VIP pódium s tyčí, zbytek klubu potemní a tanečnice tančí jen pro tebe s péřovými vějíři a třpytkami. Během show jde *Hodit 5 🏆*; ve vyvrcholení odhodí top (cenzura mozaikou). Když hodíš aspoň dvakrát, dá ti číslo.
-- *Soukromý tanec* v separé ve VIP: s holkou, která jde s tebou (*Zatančit spolu*) – 25 🏆, zdarma s tou, co ti dala číslo. Zatáhne se závěs a je vidět jen její stín.
+- *Soukromá show* ve VIP (VIP bar, 40 🏆): kamera se přiblíží na VIP pódium s tyčí, zbytek klubu potemní a tanečnice tančí jen pro tebe s péřovými vějíři a třpytkami. Během show jde *Hodit 5 🏆*; ve vyvrcholení odhodí top (cenzura mozaikou).
+- *Soukromý tanec* v separé ve VIP: s holkou, která jde s tebou (*Zatančit spolu*) – 25 🏆. Zatáhne se závěs a je vidět jen její stín.
 - *Dealer* u záchodů (WC vedle východu) prodává vymyšlené drogy, které jsou jen ve hře: *Pepřák* (15 🏆, 20 s jízda – duhové barvy, rychlost, tanec samo, pak 15 s šedý dojezd a zpomalení) *Smajlík* (10 🏆, 25 s růžová láska a srdíčka všude, pak únava), *Kouzelná houbička* (12 🏆, 25 s se celý obraz vlní a přelévá v barvách, pak 15 s ovládání naruby), *Zelenáč* (8 🏆, 30 s zpomalený čas, zelený opar a kouř, pak se klíží oči) a *Turbo* (12 🏆, 15 s rychlost ×2,4 s duchy za postavou, pak třes a zpomalení). Ochranka tě u dealera může načapat (vyhazov) a dvě dávky naráz = kolaps a vyhazov.
 - Nic explicitního se ve hře neukazuje – odhalená místa jsou vždy zakrytá mozaikou.
 
@@ -341,6 +344,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.67 – pryč taneční souboj a čísla od holek; VIP prémium: větší VIP, vířivka s VIP holkami, šampus s prskavkami, VIP ohňostroj, zlatý VIP odznak
 - 1.66 – mozaika u tanečnic je větší a kreslí se úplně navrch (přes hlavu i ruce), takže je vždycky vidět
 - 1.65 – za každý hod 5 pohárů tanečnice na chvilku flashne (záblesk a mozaika)
 - 1.64 – soukromá show ve VIP (vlastní pódium, vějíře, reflektor), finále show s odhozeným topem a mozaikou
