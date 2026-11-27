@@ -337,7 +337,7 @@ const Club = {
     this.el('club-skip').hidden = false;
     this._zoneKey = 'drive';
     this.startMusic(true);
-    Drive.start(s.car, () => this.enterClub());
+    Drive.start(s.car, () => this.enterClub(), this.pick, mySkinFor(this.pick));
   },
 
   enterClub() {
@@ -392,7 +392,7 @@ const Club = {
       cv.height = 56 * dpr;
       const x = cv.getContext('2d'), k = c.len > 70 ? 0.95 : 1.4;
       x.setTransform(dpr * k, 0, 0, dpr * k, 60 * dpr, 28 * dpr);
-      Drive.drawCar(x, 0, 0, 0, c, false, true);
+      Drive.drawCar(x, 0, 0, 0, c, false, true, lookFor(this.pick, mySkinFor(this.pick)));
     }
     this.el('club-garage-btn').textContent = `🚗 ${carById(s.car).name}`;
   },
