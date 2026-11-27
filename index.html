@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.57">
+<link rel="stylesheet" href="style.css?v=1.58">
 </head>
 <body>
 <!-- HRA:START -->
@@ -88,6 +88,10 @@
           <button id="btn-tasks" class="btn-chip small" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
             <span>Úkoly</span>
+          </button>
+          <button id="btn-club" class="btn-chip small hot" type="button">
+            <span class="chip-emoji" aria-hidden="true">🌶️</span>
+            <span>Hot Peppers</span>
           </button>
         </div>
       </div>
@@ -504,6 +508,46 @@
   </section>
 
   <!-- hra zablokovaná: najdi si práci -->
+  <!-- noční klub Hot Peppers -->
+  <section id="club" class="club" aria-labelledby="club-title" hidden>
+    <canvas id="club-cv" class="club-cv" aria-label="Klub Hot Peppers"></canvas>
+    <div id="club-select" class="club-select">
+      <header class="club-head">
+        <button id="club-back" class="btn-mini" type="button" aria-label="Zpět do menu">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <div class="club-brand">
+          <p class="club-kicker">Noční klub · jen pro kluky</p>
+          <h2 id="club-title" class="club-title">HOT PEPPERS</h2>
+        </div>
+        <div class="club-tro" aria-label="Moje poháry"><span aria-hidden="true">🏆</span><b id="club-tro1">0</b></div>
+      </header>
+      <div id="club-grid" class="club-grid" role="group" aria-label="Za koho jdeš do klubu"></div>
+      <div class="club-foot">
+        <p class="club-hint">U baru, DJe, ve VIP a v šatně se platí poháry.</p>
+        <button id="club-enter" class="btn-play club-enter" type="button">Vstoupit</button>
+      </div>
+    </div>
+    <div id="club-hud" class="club-hud" hidden>
+      <button id="club-exit" class="btn-mini club-x" type="button" aria-label="Odejít z klubu">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div class="club-tro club-tro-in" aria-label="Moje poháry"><span aria-hidden="true">🏆</span><b id="club-tro2">0</b></div>
+      <button id="club-act" class="club-act" type="button" hidden><span id="club-act-lbl">Bar</span></button>
+      <div id="club-shop" class="club-shop" hidden>
+        <div class="club-shop-card" role="dialog" aria-labelledby="club-shop-title">
+          <header class="club-shop-head">
+            <h3 id="club-shop-title">Bar</h3>
+            <button id="club-shop-close" class="btn-mini" type="button" aria-label="Zavřít">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </header>
+          <div id="club-shop-items" class="club-items"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="blocked" class="blocked" aria-labelledby="blk-title" hidden>
     <div class="blk-card">
       <canvas id="blk-pic" class="blk-pic" aria-hidden="true"></canvas>
@@ -530,18 +574,19 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.57"></script>
-<script src="js/audio.js?v=1.57"></script>
-<script src="js/input.js?v=1.57"></script>
-<script src="js/ai.js?v=1.57"></script>
-<script src="js/physics.js?v=1.57"></script>
-<script src="js/render.js?v=1.57"></script>
-<script src="js/penalty.js?v=1.57"></script>
-<script src="js/net.js?v=1.57"></script>
-<script src="js/lobby.js?v=1.57"></script>
-<script src="js/board.js?v=1.57"></script>
-<script src="js/account.js?v=1.57"></script>
-<script src="js/trailer.js?v=1.57"></script>
-<script src="js/main.js?v=1.57"></script>
+<script src="js/config.js?v=1.58"></script>
+<script src="js/audio.js?v=1.58"></script>
+<script src="js/input.js?v=1.58"></script>
+<script src="js/ai.js?v=1.58"></script>
+<script src="js/physics.js?v=1.58"></script>
+<script src="js/render.js?v=1.58"></script>
+<script src="js/penalty.js?v=1.58"></script>
+<script src="js/net.js?v=1.58"></script>
+<script src="js/lobby.js?v=1.58"></script>
+<script src="js/board.js?v=1.58"></script>
+<script src="js/account.js?v=1.58"></script>
+<script src="js/trailer.js?v=1.58"></script>
+<script src="js/club.js?v=1.58"></script>
+<script src="js/main.js?v=1.58"></script>
 </body>
 </html>

@@ -14,7 +14,7 @@ const ACC_KEY = 'hlavouni.ucet';
 const ACC_ITER = 150000;
 const ACC_MIN_PASS = 8; // kratší heslo jde u zašifrované uložené hry uhodnout hrubou silou
 // co se synchronizuje (všechen postup hráče)
-const ACC_SYNC = ['hlavouni.profil', 'hlavouni.odemceno', 'hlavouni.pribeh', 'hlavouni.tocna', 'hlavouni.kuba', 'hlavouni.kampan', 'hlavouni.ukoly', 'hlavouni.vietnam', 'hlavouni.pratele', 'hlavouni.postavy', 'hlavouni.hracId'];
+const ACC_SYNC = ['hlavouni.profil', 'hlavouni.odemceno', 'hlavouni.pribeh', 'hlavouni.tocna', 'hlavouni.kuba', 'hlavouni.klub', 'hlavouni.kampan', 'hlavouni.ukoly', 'hlavouni.vietnam', 'hlavouni.pratele', 'hlavouni.postavy', 'hlavouni.hracId'];
 
 const b64 = (u8) => {
   let s = '';
@@ -148,6 +148,12 @@ const Account = {
       } else if (k === 'hlavouni.ukoly' || k === 'hlavouni.postavy') {
         v = Object.assign({}, b || {});
         for (const f in a || {}) v[f] = Math.max(Number(a[f]) || 0, Number(v[f]) || 0);
+      } else if (k === 'hlavouni.klub') {
+        // klub: koupené věci a VIP se sčítají, co mám na sobě podle novějšího
+        const A = a || {}, B = b || {};
+        v = Object.assign({}, B, A);
+        v.own = Object.assign({}, B.own || {}, A.own || {});
+        v.vip = !!(A.vip || B.vip);
       } else if (k === 'hlavouni.vietnam') {
         v = Math.max(Number(a) || 0, Number(b) || 0);
       } else if (k === 'hlavouni.pratele') {

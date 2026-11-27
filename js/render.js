@@ -2012,6 +2012,7 @@ const Renderer = {
     this.drawHead(ctx, p, ball, T, now);
     if (this._drip) this.drawShades(ctx, p);
     else if (this._beach) this.drawShades(ctx, p, true);
+    if (p.gear) this.drawGear(ctx, p, R, now);
     this.drawArm(ctx, 10 * ch, R + 1, aFront, T, L, false);
     this._drip = false;
     this._beach = false;
@@ -3155,6 +3156,34 @@ const Renderer = {
     ctx.strokeStyle = 'rgba(255,255,255,.55)';
     ctx.lineWidth = 1.4;
     line(ctx, -12, R - 1, 11, R - 1);
+  },
+
+  // Doplňky z klubu Hot Peppers: brýle, zlatý řetěz, koruna.
+  drawGear(ctx, p, R, now) {
+    const g = p.gear;
+    if (g.chain && !this._drip) {
+      ctx.save();
+      ctx.strokeStyle = '#7a5a10';
+      ctx.lineWidth = 3.4;
+      ctx.beginPath();
+      ctx.moveTo(-10, R + 1);
+      ctx.quadraticCurveTo(0, R + 16, 12, R + 2);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffd24a';
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([2.2, 1.2]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ffd24a';
+      circle(ctx, 1.5, R + 10, 3.4);
+      ctx.fill();
+      ctx.strokeStyle = '#7a5a10';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (g.shades && !this._drip && !this._beach) this.drawShades(ctx, p);
+    if (g.crown && !p.look.crown) this.drawCrown(ctx, R, now);
   },
 
   // Moncler-Jenda: černé brýle a diamant v uchu.

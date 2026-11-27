@@ -2745,7 +2745,7 @@ const UI = {
       resMain: $('btn-res-main'), resSecond: $('btn-res-second'), resThird: $('btn-res-third'), resWait: $('res-wait'),
       pauseSecond: $('btn-restart'), pauseThird: $('btn-quit'),
       profile: $('profile'), chip: $('profile-chip'), cup: $('cup'), half: $('half'),
-      story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'), board: $('board'), player: $('player'), viet: $('viet'), account: $('account'),
+      story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'), board: $('board'), player: $('player'), viet: $('viet'), account: $('account'), club: $('club'),
     };
     const click = (id, fn) => $(id).addEventListener('click', () => {
       Sound.init();
@@ -2770,6 +2770,10 @@ const UI = {
     click('btn-unlock-back', () => this.show('home'));
     click('btn-code', () => this.showUnlock(true));
     click('btn-tasks', () => this.showTasks());
+    click('btn-club', () => {
+      this.goFullscreen();
+      Club.open();
+    });
     Board.initUI();
     Account.initUI();
     click('btn-tasks-close', () => this.show('home'));
@@ -3272,7 +3276,7 @@ const UI = {
   },
 
   show(name) {
-    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks', 'board', 'player', 'viet', 'account']) {
+    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks', 'board', 'player', 'viet', 'account', 'club']) {
       this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home') && !(name === 'reward' && key === 'story');
     }
     this.el.chip.hidden = name !== 'home';
@@ -3935,6 +3939,10 @@ function boot() {
     last = now;
     if (Trailer.on) Trailer.update(now);
     if (UI.blockedAnim) return; // hra zablokovaná: zápas pod výzvou neběží (šetří telefon)
+    if (Club.on) {
+      Club.frame(dt, now); // klub Hot Peppers má vlastní scénu
+      return;
+    }
     Game.update(dt);
     Renderer.draw(Game);
     if (Trailer.on) Trailer.draw(now);

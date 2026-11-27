@@ -147,6 +147,24 @@ Nové dvojice jsou ve výběru hráčů vidět od začátku se zámečkem („Od
 Soupeři jsou pevní – když hraješ za stejnou postavu nebo dvojici jako soupeř, hraje se zrcadlový zápas (třeba Tóma proti Tómovi; soupeřova dvojice má dres v jiné barvě). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, Točná `hlavouni.tocna`, Petr Kuba `hlavouni.kuba`, vybraná kampaň `hlavouni.kampan`, odemčené věci `hlavouni.odemceno`) a s účtem se synchronizuje.
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
+## Klub Hot Peppers
+
+Tlačítko *🌶️ Hot Peppers* dole v hlavním menu otevře noční klub. Nejdřív si vybereš, za koho jdeš – do klubu chodí jen kluci (holky v klubu tancují jako hosté). Zamčené postavy mají zámeček. Pak *Vstoupit* a v klubu chodíš joystickem (kdekoli na levé části obrazovky; na počítači šipky nebo WASD) – pohled shora jako v Brawl Stars. U obsluhy se objeví velké tlačítko vpravo dole (na počítači E, mezerník nebo Enter).
+
+V klubu se **utrácí poháry** (ubydou z profilu, takže klesne i liga a místo v žebříčku):
+
+| Kde | Co | Cena | Co to udělá |
+| --- | --- | --- | --- |
+| Bar | Pepper shot | 5 🏆 | 10 s chrlíš oheň |
+| Bar | Limo Hlavička | 3 🏆 | 12 s běháš rychleji (bublinky) |
+| Bar | Neonový koktejl | 8 🏆 | 15 s záříš v barvách |
+| DJ pult | Pustit hit | 15 🏆 | 20 s rychlejší hudba, strobo, konfety a celý klub tančí |
+| Ochranka u VIP | Vstup do VIP | 60 🏆 | natrvalo otevře VIP (zlatý gauč, VIP bar) |
+| VIP bar | Déšť pohárků | 25 🏆 | 8 s na tebe prší zlaté poháry |
+| Šatna | Černé brýle / Zlatý řetěz / Koruna | 20 / 35 / 120 🏆 | natrvalo v klubu, v šatně se nasazují a sundávají |
+
+Na tanečním parketu jde zdarma *Tančit*. Hudbu klub skládá sám ve Web Audio (u vchodu je slyšet jen přes zeď). Koupené věci a VIP se ukládají v prohlížeči (`hlavouni.klub`) a synchronizují s účtem.
+
 ## Účet s heslem (víc zařízení)
 
 Tlačítko *Účet* dole v hlavním menu. Napíšeš přezdívku a heslo (aspoň 8 znaků) a dáš *Vytvořit účet*; na jiném telefonu se stejnými údaji dáš *Přihlásit*. Synchronizuje se všechen postup: poháry a statistiky, Příběh, odemčené hráče a skiny (i který je zapnutý), úkoly, výzva Vietnam, přátelé a stejné id v žebříčku. Postup ze dvou zařízení se sloučí (odemčené věci a počty se sčítají, poháry podle novějšího). Synchronizace běží sama po spuštění, po zápase, každých 30 s v menu a při zavření aplikace; jde i ručně tlačítkem *Synchronizovat*. Na tlačítku v menu je pak vidět přezdívka účtu.
@@ -284,6 +302,7 @@ js/penalty.js   penalty pohledem za střelcem (3D brána, brankář zepředu)
 js/net.js       online přenos (artifact room, PeerJS, BroadcastChannel)
 js/vendor/      PeerJS 1.5.4 (licence MIT)
 js/lobby.js     výběr hráčů
+js/club.js      noční klub Hot Peppers (pohled shora, joystick, obchod za poháry, hudba)
 js/main.js      herní smyčka, průběh zápasu, obrazovky, hostitel a host
 ```
 
@@ -291,7 +310,7 @@ Hřiště má virtuální rozměr 1280 × 720. Na displeji jiného poměru stran
 
 ## Trailer
 
-Odkaz https://jenik864.github.io/moje-aplikace/?trailer přehraje 28s trailer přímo ve hře (tlačítkem *Pustit trailer*, se zvukem): nová dvojice Tlustej páv & Suli se schopnostmi, skiny Moncler-Jenda / Kiki v bikinách / Michael Bémič, Příběh s 10 zápasy a bossem Milanem, Úkoly a gól ve 2 v 2. Scénář je v `js/trailer.js` (skutečné zápasy ve hře, kamera, titulky a syntetizovaná hudba). Hotové video je v `trailer.mp4`; vyrábí se nahráním `?trailer=rec` snímek po snímku a složením přes ffmpeg.
+Odkaz https://jenik864.github.io/moje-aplikace/?trailer (když hra není pozastavená obrazovkou STOP) přehraje 28s trailer přímo ve hře (tlačítkem *Pustit trailer*, se zvukem): nová dvojice Tlustej páv & Suli se schopnostmi, skiny Moncler-Jenda / Kiki v bikinách / Michael Bémič, Příběh s 10 zápasy a bossem Milanem, Úkoly a gól ve 2 v 2. Scénář je v `js/trailer.js` (skutečné zápasy ve hře, kamera, titulky a syntetizovaná hudba). Hotové video je v `trailer.mp4`; vyrábí se nahráním `?trailer=rec` snímek po snímku a složením přes ffmpeg.
 
 ## Verze
 
@@ -299,6 +318,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.58 – noční klub Hot Peppers: výběr kluka, chození joystickem po klubu, bar, DJ, VIP a šatna za poháry
 - 1.57 – blokace znovu pro všechny (nový tajný kód, dřívější odemknutí přestala platit); blokace se už nedá obejít adresou s ?trailer
 - 1.56 – kampaň Petr Kuba (7 úrovní): nový hráč Petr Kuba se schopností Žlutá karta, dvojice Petr Kuba & Milan a skin Petr Kuba MS
 - 1.55 – blokace znovu pro všechny: nový tajný kód a odemknutí platí jen v daném zařízení (nepřenáší se přes účet)
