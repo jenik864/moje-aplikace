@@ -86,7 +86,7 @@ class Player {
   }
 
   get standY() {
-    return GROUND_Y - this.F - this.R;
+    return GROUND_Y - this.F - this.R - (this.lift || 0);
   }
 
   get human() {
@@ -110,6 +110,8 @@ class Player {
     this.primeT = 0;
     this.kickBuf = 0; // kop zmáčknutý o chvilku dřív (čeká na míč)
     this.suitT = 0;   // Durcado v obleku (byznysman)
+    this.sushiT = 0;  // Tráňa jede na obřím sushi
+    this.lift = 0;
     this.growT = 0;   // Obří páv
     this.flashT = 0;  // oslněný bleskem (vyvalené oči)
     this.selfieT = 0; // Suli fotí selfie
@@ -380,6 +382,7 @@ class Match {
       }
       if (p.flashT > 0) p.flashT = Math.max(0, p.flashT - dt);
       if (p.suitT > 0) p.suitT = Math.max(0, p.suitT - dt);
+      if (p.sushiT > 0 || p.lift > 0) this.updateSushi(p, dt);
       if (p.selfieT > 0) p.selfieT = Math.max(0, p.selfieT - dt);
       if (p.growT > 0 || (p.growK || 1) > 1) {
         p.growT = Math.max(0, p.growT - dt);
@@ -502,7 +505,10 @@ class Match {
     const ice = this.ice && p.onGround;
     // na ledu: bez ovládání hráč dlouho dojíždí, změna směru trvá
     const iceRate = input === 0 ? 1700 * ICE.brake : PHYS.accelGround * ICE.accel * boost;
-    if (!stunned && !p.celeb) p.vx = approach(p.vx, input * max, (ice ? iceRate : (p.onGround ? PHYS.accelGround : PHYS.accelAir) * boost) * dt);
+    if (p.sushiT > 0 && !stunned) {
+      // jízda na sushi: sushi jede samo dopředu, Tráňa jen balancuje (a může skočit)
+      p.vx = approach(p.vx, p.dir * SUSHI_SPEED, 3000 * dt);
+    } else if (!stunned && !p.celeb) p.vx = approach(p.vx, input * max, (ice ? iceRate : (p.onGround ? PHYS.accelGround : PHYS.accelAir) * boost) * dt);
     else if (p.onGround) p.vx = approach(p.vx, 0, 1700 * (ice ? ICE.brake : 1) * dt);
 
     if (it.jump && p.onGround) {
@@ -614,6 +620,9 @@ class Match {
       p.boostT = BOOST_TIME;
     } else if (p.power === 'prime') {
       p.primeT = PRIME_TIME;
+    } else if (p.power === 'sushi') {
+      p.sushiT = SUSHI_TIME;
+      p.sushiHit = [];
     } else if (p.power === 'arms') {
       // Gumové ruce: dosáhnou na míč skoro kdekoli a přitáhnou ho k nohám
       const reach = Math.hypot(b.x - p.x, b.y - p.y);
@@ -1044,6 +1053,52 @@ class Match {
     b.lastTouch = p;
     b.lastHow = 'kick';
     this.onEvent('kick', { x: b.x, y: b.y, dir: p.dir, power: clamp(power / PHYS.kickSpeed, 0.6, 1.2) });
+  }
+
+  // Obří sushi: zvedne Tráňu, jede s ním dopředu, srazí soupeře a tlačí míč.
+  updateSushi(p, dt) {
+    if (p.sushiT > 0) {
+      p.sushiT = Math.max(0, p.sushiT - dt);
+      // u brankové čáry soupeře sushi zastaví
+      const line = p.dir > 0 ? W - GOAL_W - 70 : GOAL_W + 70;
+      if ((p.x - line) * p.dir > 0) p.sushiT = Math.min(p.sushiT, 0.05);
+    }
+    const target = p.sushiT > 0 ? SUSHI_H : 0;
+    const was = p.lift || 0;
+    p.lift = approach(was, target, dt * 260);
+    if (p.onGround) p.y = p.standY;
+    if (p.sushiT <= 0) return;
+    const front = p.x + p.dir * 70, top = GROUND_Y - SUSHI_H - 6;
+    // soupeři před sushi: odletí a jsou omráčení
+    for (const o of this.players) {
+      if (o.team === p.team || o.stunT > 0 || o.primeT > 0 || (p.sushiHit || []).includes(o)) continue;
+      const dx = (o.x - p.x) * p.dir;
+      if (dx > -60 && dx < 70 + o.R && o.y + o.R + o.F > top) {
+        (p.sushiHit = p.sushiHit || []).push(o);
+        o.vx = p.dir * PHYS.knockVX * 0.75;
+        o.vy = -PHYS.knockVY * 0.6;
+        o.onGround = false;
+        o.y -= 4;
+        o.stunT = GROW_STUN;
+        o.knockDir = p.dir;
+        o.kickT = -1;
+        o.superKick = false;
+        this.onEvent('ram', { x: o.x, y: o.y, idx: this.players.indexOf(o), by: this.players.indexOf(p) });
+      }
+    }
+    // míč před sushi jede s ním
+    const b = this.ball;
+    if (!b.held && b.carryBy < 0 && b.jetBy < 0 && b.armBy < 0) {
+      const dx = (b.x - p.x) * p.dir;
+      if (dx > 0 && dx < 70 + b.r + 6 && b.y + b.r > top) {
+        b.x = p.x + p.dir * (70 + b.r + 6);
+        if (b.vx * p.dir < SUSHI_SPEED + 80) b.vx = p.dir * (SUSHI_SPEED + 80);
+        if (b.vy > -120) b.vy = -160;
+        b.lastTouch = p;
+        b.lastHow = 'kick';
+      }
+    }
+    void front;
   }
 
   // Gumové ruce: natáhnou se k míči (0,22 s), přitáhnou ho k nohám (0,38 s) a pustí.

@@ -1079,6 +1079,7 @@ const Renderer = {
       if (hoop) this.drawHoop(ctx, b, now, false);
       if (g.screen === 'match' && g.state === 'intro') this.drawReferee(ctx, g, b, now);
       for (const p of m.players) if (p.boostT > 0) this.drawBoost(ctx, p, now);
+      for (const p of m.players) if ((p.lift || 0) > 1) this.drawSushi(ctx, p, now);
       for (const p of m.players) this.drawPlayer(ctx, p, b, m.teams, now);
       // rozcvička: žonglování s vlastním míčem
       if (g.state === 'intro') {
@@ -1967,11 +1968,13 @@ const Renderer = {
       ctx.translate(0, -c);
     }
     if (kn > 0) ctx.translate(0, F * 0.36 * kn * PS);
-    if (p.lean) {
+    // balancování na sushi (kymácí se kolem chodidel)
+    const lean = (p.lean || 0) + (p.sushiT > 0 ? Math.sin(now * 0.014) * 0.16 + Math.sin(now * 0.031) * 0.06 : 0);
+    if (lean) {
       // protahování: náklon kolem chodidel
       const c = p.R + p.F;
       ctx.translate(0, c);
-      ctx.rotate(p.lean);
+      ctx.rotate(lean);
       ctx.translate(0, -c);
     }
     if (p.plane > 0) ctx.rotate(Math.sin(now * 0.008 + p.homeX) * 0.16 * p.plane);
@@ -2764,6 +2767,68 @@ const Renderer = {
     ctx.strokeStyle = 'rgba(0,0,0,.35)';
     ctx.lineWidth = 0.8;
     ctx.strokeRect(x0, y0, sz * 4, sz * 2);
+  },
+
+  // Obří sushi pod Tráňou: rýže, plátek lososa s pruhy a pásek nori.
+  drawSushi(ctx, p, now) {
+    const h = p.lift, w = 150, x = p.x, y = GROUND_Y - h;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.22)';
+    oval(ctx, x, GROUND_Y + 2, w * 0.55, 7);
+    ctx.fill();
+    if (p.sushiT > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,.55)';
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 4; i++) {
+        const ly = y + 8 + i * (h / 4), lx = x - p.dir * (w / 2 + 14 + ((now * 0.4 + i * 37) % 40));
+        line(ctx, lx, ly, lx - p.dir * 34, ly);
+      }
+    }
+    // rýže
+    ctx.fillStyle = '#fbfbf6';
+    ctx.beginPath();
+    ctx.roundRect(x - w / 2, y + 10, w, Math.max(4, h - 8), 16);
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(200,200,190,.7)';
+    const rng = mulberry32(17);
+    for (let i = 0; i < 24; i++) {
+      oval(ctx, x - w / 2 + 10 + rng() * (w - 20), y + 16 + rng() * Math.max(1, h - 20), 3.2, 1.8, rng() * 3);
+      ctx.fill();
+    }
+    // losos
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2 - 6, y + 14);
+    ctx.quadraticCurveTo(x - w / 2 - 4, y - 2, x - w / 2 + 20, y - 2);
+    ctx.lineTo(x + w / 2 - 6, y - 4);
+    ctx.quadraticCurveTo(x + w / 2 + 12, y + 2, x + w / 2 + 4, y + 16);
+    ctx.quadraticCurveTo(x, y + 22, x - w / 2 - 6, y + 14);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(0, y - 4, 0, y + 20);
+    g.addColorStop(0, '#ff9a6b');
+    g.addColorStop(1, '#f2643c');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,240,225,.85)';
+    ctx.lineWidth = 2.4;
+    for (let i = 0; i < 6; i++) {
+      const sx = x - w / 2 + 14 + i * 24;
+      ctx.beginPath();
+      ctx.moveTo(sx, y);
+      ctx.quadraticCurveTo(sx + 8, y + 7, sx + 4, y + 16);
+      ctx.stroke();
+    }
+    // nori
+    ctx.fillStyle = '#1d2b22';
+    ctx.fillRect(x - 13, y - 4, 26, h + 4);
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - 13, y - 4, 26, h + 4);
+    ctx.restore();
   },
 
   // Majdiny gumové ruce: od ramen k míči, vlní se jako guma, ruce drží míč.

@@ -157,6 +157,7 @@ Nabíjí se časem (asi 15 s) a každým kopem do míče. Každá postava má sv
 | Marsal | **Trojka**: když je u míče, míč se změní v basketbalový, Marsal řekne „STŘÍLIM TY TROJKY“, chytí ho nad hlavu a hodí vysoký oblouk. Nad bránou soupeře se objeví basketbalový koš, míč jím propadne rovnou do brány. Chytit se dá jen před košem (hlavičkou nebo výskokem), hermelín a led ho zastaví. |
 | Bémič | **Skiper**: na 3 s se promění v tučňáka (jen vzhled), brána jeho týmu zamrzne ve velkém ledovém kráteru (nejde dát gól) a fanoušci řvou SKIPER. |
 | Jenda | **JENDA PRIME**: na 5 s se promění v hráče Realu Madrid – bílý dres se zlatým lemováním, zlatá záře a nápis JENDA PRIME. Běhá 1,5× rychleji, skáče výš, kope o 40 % silněji, silnější hlavičky, odstrčí soupeře a superstřela ho neodstřelí. |
+| Tráňa | **Obří sushi**: „JEDEEEM!“ – pod Tráňou vyroste obří nigiri (rýže, plátek lososa, pásek nori), Tráňa na něm stojí, kymácí se a sushi s ním asi 2,6 s jede dopředu na bránu soupeře (zastaví u brankové čáry). Každý soupeř, kterého srazí, odletí a je omráčený („SLAJZNUL DO BAHNA“); míč před sushi tlačí před sebou. Může na něm i skákat. |
 | Majda | **Gumové ruce**: „TOHLE JE MOJE!“ – ruce se jí natáhnou přes půl hřiště (dosah 760 px), chytí míč, ať je kdekoli (ve vzduchu, u soupeře), a přitáhnou ho k nohám. Ukradne i Marsalovu trojku (míč nad hlavou i v letu) a míč z Durcadova tryskáče („UKRADENO Z TRYSKÁČE!“ – tryskáč pak nic neshodí). Když je míč moc daleko, schopnost se nevyplýtvá („MOC DALEKO!“). |
 | Durcado | **Byznysman**: v oblaku se převlékne do tmavého obleku s bílou košilí a červenou kravatou („BYZNYSMAN!“), přiletí soukromý tryskáč DURCADO AIR, nabere ho na provazový žebřík („JEDU NA MEETING“) a míč se mu zázračně dostane k nohám. Tryskáč přeletí nad hřištěm a těsně před bránou soupeře míč shodí („DORUČENO!“) – padá pod břevno do brány, takže je velká šance na gól, nebo si ho soupeř srazí do vlastní brány; brankář ho ale může vyrazit. Pak Durcado seskočí v soupeřově polovině a tryskáč odletí. Kamera se během letu oddálí. V testu proti počítači padl gól v 87–97 % případů na lehkého a v 43–70 % na těžkého. |
 | Tlustej páv | **Obří páv**: na 3 s se zvětší a ztloustne (větší i pro míč a soupeře). Kdo do něj narazí, odletí a je omráčený. |
@@ -250,6 +251,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.49 – Tráňa má schopnost Obří sushi
 - 1.48 – online: menší snímky hry pro kamaráda (méně dat, plynulejší hlavně ve 2 v 2 a ve výzvě Vietnam)
 - 1.47 – účet s heslem a synchronizace postupu mezi zařízeními
 - 1.46 – nový design výzvy Vietnam (cesta 5 zápasů, karta odměny, info o dalším zápase)

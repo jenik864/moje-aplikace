@@ -101,7 +101,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.48';
+const GAME_VERSION = '1.49';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -436,7 +436,7 @@ function seedOf(str) {
 
 const SUPER_COLORS = {
   nelcis: '#ff5fb0', majda: '#e86bff', marsal: '#3fa2ff', durcado: '#4fe0c0', toma: '#5fe36b',
-  peli: '#b07bff', bemic: '#ff7a1f', kiki: '#53d2ff', simsa: '#c6ff3d', jenda: '#ff4d4d', milan: '#ff2d2d', pav: '#14b8a6', sully: '#7ee8d8',
+  peli: '#b07bff', bemic: '#ff7a1f', kiki: '#53d2ff', simsa: '#c6ff3d', jenda: '#ff4d4d', milan: '#ff2d2d', pav: '#14b8a6', sully: '#7ee8d8', trana: '#ff8a5b',
 };
 const superColor = (id) => SUPER_COLORS[id] || '#ffc93c';
 
@@ -450,6 +450,7 @@ const POWERS = {
   cheese: { name: 'Obří hermelín', short: 'Hermelín', icon: '🧀', desc: 'Na 3 s zablokuje vaši bránu' },
   vo2: { name: 'VO2max 67', short: 'VO2max', icon: '💨', desc: '5 s běhá 2× rychleji' },
   prime: { name: 'JENDA PRIME', short: 'Prime', icon: '⭐', desc: '5 s v bílém dresu Realu Madrid: rychlejší, silnější, skáče výš' },
+  sushi: { name: 'Obří sushi', short: 'Sushi', icon: '🍣', desc: 'Pod Tráňou vyroste obří sushi, balancuje na něm, jede dopředu a omráčí každého, koho srazí' },
   arms: { name: 'Gumové ruce', short: 'Ruce', icon: '🤲', desc: 'Ruce se natáhnou přes půl hřiště a přitáhnou míč k nohám – i z trojky nebo z tryskáče' },
   jet: { name: 'Byznysman', short: 'Tryskáč', icon: '🛩️', desc: 'V obleku nastoupí do soukromého tryskáče s míčem a shodí ho soupeři přímo před bránu' },
   grow: { name: 'Obří páv', short: 'Obr', icon: '🦚', desc: 'Na 3 s se zvětší a ztloustne, kdo do něj narazí, je omráčený' },
@@ -458,7 +459,10 @@ const POWERS = {
   basket: { name: 'Trojka', short: 'Trojka', icon: '🏀', desc: 'U míče: míč se změní v basketbalový a letí obloukem do brány soupeře' },
   penguin: { name: 'Skiper', short: 'Skiper', icon: '🐧', desc: 'Promění se v tučňáka, brána zamrzne na 3 s' },
 };
-const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime', milan: 'redcard', pav: 'grow', sully: 'flash', durcado: 'jet', majda: 'arms' };
+const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime', milan: 'redcard', pav: 'grow', sully: 'flash', durcado: 'jet', majda: 'arms', trana: 'sushi' };
+const SUSHI_TIME = 2.6;  // jak dlouho Tráňa jede na sushi (s)
+const SUSHI_SPEED = 640; // rychlost jízdy
+const SUSHI_H = 44;      // výška sushi pod nohama
 const ARM_REACH = 760; // dosah gumových rukou (px)
 const JET_LEN = 3.3;  // jak dlouho je tryskáč na scéně (s)
 const SUIT_TIME = 6;  // Durcado v obleku (s)

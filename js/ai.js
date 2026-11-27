@@ -209,6 +209,10 @@ class AIBrain {
       } else if (p.power === 'prime') {
         // JENDA PRIME, když jde o míč
         if (Math.abs(b.x - p.x) < 380 && Math.random() < L.kick * 0.7) this.out.super = true;
+      } else if (p.power === 'sushi') {
+        // jízda, když je míč nebo soupeř před ním a cesta k bráně je dlouhá
+        const ahead = (b.x - p.x) * dir;
+        if (ahead > 20 && ahead < 420 && Math.abs(oppGoal - p.x) > 380 && Math.random() < L.kick * 0.6) this.out.super = true;
       } else if (p.power === 'arms') {
         // ruce: ukrást trojku nebo tryskáč, nebo míč, ke kterému je soupeř blíž
         const d = Math.hypot(b.x - p.x, b.y - p.y);
