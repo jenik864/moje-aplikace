@@ -149,7 +149,7 @@ Soupeři jsou pevní – když hraješ za stejnou postavu nebo dvojici jako soup
 
 ## Klub Hot Peppers
 
-Tlačítko *🌶️ Hot Peppers* dole v hlavním menu otevře noční klub. Nejdřív si vybereš, za koho jdeš – do klubu chodí jen kluci (holky v klubu tancují jako hosté). Zamčené postavy mají zámeček. Pak *Vstoupit* a v klubu chodíš joystickem (kdekoli na levé části obrazovky; na počítači šipky nebo WASD) – pohled shora jako v Brawl Stars. U obsluhy se objeví velké tlačítko vpravo dole (na počítači E, mezerník nebo Enter).
+Tlačítko *🌶️ Hot Peppers 18+* dole v hlavním menu otevře noční klub pro dospělé – při prvním vstupu se potvrzuje věk 18+. Nejdřív si vybereš, za koho jdeš – do klubu chodí jen kluci. Zamčené postavy mají zámeček. Pak *Vstoupit* a v klubu chodíš joystickem (kdekoli na levé části obrazovky; na počítači šipky nebo WASD) – pohled shora jako v Brawl Stars. U obsluhy se objeví velké tlačítko vpravo dole (na počítači E, mezerník nebo Enter).
 
 V klubu se **utrácí poháry** (ubydou z profilu, takže klesne i liga a místo v žebříčku):
 
@@ -162,6 +162,8 @@ V klubu se **utrácí poháry** (ubydou z profilu, takže klesne i liga a místo
 | Ochranka u VIP | Vstup do VIP | 60 🏆 | natrvalo otevře VIP (zlatý gauč, VIP bar) |
 | VIP bar | Déšť pohárků | 25 🏆 | 8 s na tebe prší zlaté poháry |
 | Šatna | Černé brýle / Zlatý řetěz / Koruna | 20 / 35 / 120 🏆 | natrvalo v klubu, v šatně se nasazují a sundávají |
+
+Ze hry jsou v klubu jen klučičí postavy (barman, DJ, ochranka, tanečníci a lidi, co se procházejí). K nim je tu 8 holek, které ve hře nejsou – jen hosté klubu: dospělé ženy v upnutých minišatech na podpatcích (flitry, ramínka, šněrování), s rtěnkou, očními stíny a náušnicemi. Dvě tancují na pódiích, další na parketu, u baru, ve VIP a jedna je šatnářka. Když k nim přijdeš, prohodí něco („Ahoj fešáku“, „Zatančíš si?“), když tančíš poblíž, posílají srdíčka, a tlačítkem *Zatančit spolu* jde holka 25 s s tebou (chodí za tebou a tančí). Nic explicitního – jen tanec a flirt.
 
 Na tanečním parketu jde zdarma *Tančit*. Hudbu klub skládá sám ve Web Audio (u vchodu je slyšet jen přes zeď). Koupené věci a VIP se ukládají v prohlížeči (`hlavouni.klub`) a synchronizují s účtem.
 
@@ -318,6 +320,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.59 – klub Hot Peppers je 18+: potvrzení věku, NPC ze hry jen kluci, 8 nových holek (šaty, podpatky, pódia), flirt a společný tanec
 - 1.58 – noční klub Hot Peppers: výběr kluka, chození joystickem po klubu, bar, DJ, VIP a šatna za poháry
 - 1.57 – blokace znovu pro všechny (nový tajný kód, dřívější odemknutí přestala platit); blokace se už nedá obejít adresou s ?trailer
 - 1.56 – kampaň Petr Kuba (7 úrovní): nový hráč Petr Kuba se schopností Žlutá karta, dvojice Petr Kuba & Milan a skin Petr Kuba MS

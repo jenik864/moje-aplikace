@@ -69,6 +69,20 @@ const CLUB_ZONES = [
   { id: 'wardrobe', label: 'Šatna', x: 170, y: 760, r: 100 },
 ];
 
+// Holky v klubu: nejsou ze hry, jen hosté klubu (dospělé, v šatech na večer).
+const CLUB_GIRLS = [
+  { id: 'g_bella', name: 'Bella', skin: '#f3cfb4', hair: 'longhair', fringe: 'side', wavy: true, hairColor: '#f6e3a8', hairDark: '#b99a52', hairLight: '#fffbe6', eyes: '#3d6f8f', brow: '#a8894f', lipstick: '#d81b4a', shadow: '#c2185b', hoops: '#ffd24a', dress: { color: '#e0204f', dark: '#8a0f2c', light: '#ff7a9a', style: 'sequin', shoe: '#1a0a12' } },
+  { id: 'g_vanessa', name: 'Vanessa', skin: '#c98e62', hair: 'longhair', fringe: 'curtain', wavy: true, hairColor: '#1c1210', hairDark: '#060404', hairLight: '#4a342a', eyes: '#3a2416', brow: '#1c1210', lipstick: '#9e1f3a', shadow: '#c79a2a', hoops: '#ffd24a', necklace: '#ffd24a', dress: { color: '#ffcf3a', dark: '#a87412', light: '#fff3b0', style: 'slip' } },
+  { id: 'g_lola', name: 'Lola', skin: '#f5d2b6', hair: 'longhair', fringe: 'bangs', hairColor: '#ff6fb5', hairDark: '#b8357a', hairLight: '#ffc2e0', eyes: '#5a4126', brow: '#7a4a3a', lipstick: '#ff2d7a', shadow: '#ff6fb5', hoops: '#e9edf3', dress: { color: '#1b1b24', dark: '#0a0a10', light: '#5a5a72', style: 'cut', shoe: '#ff2d7a' } },
+  { id: 'g_nikki', name: 'Nikki', skin: '#f0c8a8', hair: 'longhair', fringe: 'side', hairColor: '#b8401c', hairDark: '#6e1e0a', hairLight: '#f08a52', eyes: '#3d8f6c', brow: '#8a3014', lipstick: '#c2102e', shadow: '#2e8a5a', dress: { color: '#16a36a', dark: '#0b5c3a', light: '#7dffc0', style: 'sequin', shoe: '#1a0a12' } },
+  { id: 'g_jasmina', name: 'Jasmína', skin: '#8a5a3a', hair: 'longhair', fringe: 'curtain', wavy: true, hairColor: '#2a1810', hairDark: '#0c0604', hairLight: '#6a4a30', eyes: '#2a1a10', brow: '#1a0e08', lipstick: '#b0306a', shadow: '#d4a017', hoops: '#ffd24a', dress: { color: '#f7f8fa', dark: '#c9ced8', light: '#ffffff', style: 'slip', shoe: '#ffd24a' } },
+  { id: 'g_sabrina', name: 'Sabrina', skin: '#f6d8c2', hair: 'longhair', fringe: 'bangs', hairColor: '#141214', hairDark: '#040304', hairLight: '#3a3640', eyes: '#3a5d7a', brow: '#141214', lipstick: '#8a0f2c', shadow: '#5a2a8a', necklace: '#e9edf3', dress: { color: '#7a2cff', dark: '#3e1294', light: '#c9a8ff', style: 'cut' } },
+  { id: 'g_mia', name: 'Mia', skin: '#efc6a2', hair: 'longhair', fringe: 'side', wavy: true, hairColor: '#8a5a2c', hairDark: '#4a2c12', hairLight: '#d6a06a', eyes: '#5a6a3e', brow: '#5a3618', lipstick: '#e0405a', shadow: '#c47a3a', hoops: '#ffd24a', dress: { color: '#ff6a3d', dark: '#b83c18', light: '#ffc2a8', style: 'slip', shoe: '#1a0a12' } },
+  { id: 'g_kristyna', name: 'Kristýna', skin: '#f3cfb4', hair: 'longhair', fringe: 'curtain', hairColor: '#e9e4dc', hairDark: '#a8a094', hairLight: '#ffffff', eyes: '#4a7aa8', brow: '#b0a890', lipstick: '#ff4d6d', shadow: '#4fc3ff', necklace: '#4fe0ff', dress: { color: '#2fb8ff', dark: '#1a6aa8', light: '#b8ecff', style: 'sequin', shoe: '#e9edf3' } },
+].map((g) => Object.assign({ girl: true, num: 0, noBow: true, accent: '#ffd24a', lid: 0.22 }, g));
+const CLUB_PODIUMS = [{ x: 455, y: 615 }, { x: 1045, y: 615 }];
+const CLUB_GIRL_LINES = ['Ahoj fešáku', 'Zatančíš si?', 'Pěkně se hýbeš!', 'Koupíš mi drink?', 'Ty jsi tu poprvé?', 'Jsi fotbalista?'];
+
 const Club = {
   on: false,
   phase: 'select', // 'select' výběr postavy, 'in' v klubu
@@ -94,14 +108,18 @@ const Club = {
   state() {
     try {
       const o = JSON.parse(localStorage.getItem(CLUB_KEY));
-      if (o && typeof o === 'object') return { char: o.char || 'jenda', vip: !!o.vip, own: o.own || {}, wear: o.wear || {} };
+      if (o && typeof o === 'object') return { char: o.char || 'jenda', vip: !!o.vip, own: o.own || {}, wear: o.wear || {}, adult: !!o.adult };
     } catch (e) { /* nic */ }
-    return { char: 'jenda', vip: false, own: {}, wear: {} };
+    return { char: 'jenda', vip: false, own: {}, wear: {}, adult: false };
   },
   save(s) {
     try { localStorage.setItem(CLUB_KEY, JSON.stringify(s)); } catch (e) { /* nevadí */ }
   },
 
+  // Do klubu jdou jen kluci ze hry (bez mazlíčků a schovaných postav).
+  maleIds() {
+    return this.males().map((c) => c.id);
+  },
   // Do klubu jdou jen kluci (bez mazlíčků a schovaných postav).
   males() {
     return ROSTER.filter((c) => !c.girl && !c.hidden && !c.viet && !c.bunny);
@@ -120,10 +138,23 @@ const Club = {
     this.ctx = this.cv.getContext('2d');
     const click = (id, fn) => this.el(id).addEventListener('click', () => { Sound.init(); fn(); });
     click('club-back', () => this.close());
-    click('club-enter', () => this.enter());
+    click('club-enter', () => {
+      if (!this.state().adult) {
+        this.el('club-age').hidden = false;
+        return;
+      }
+      this.enter();
+    });
     click('club-exit', () => this.leave());
     click('club-act', () => this.act());
     click('club-shop-close', () => this.closeShop());
+    click('club-age-yes', () => {
+      const s = this.state();
+      s.adult = true;
+      this.save(s);
+      this.el('club-age').hidden = true;
+    });
+    click('club-age-no', () => this.close());
     this.el('club-shop').addEventListener('click', (e) => { if (e.target.id === 'club-shop') this.closeShop(); });
     this.el('club-shop-items').addEventListener('click', (e) => {
       const b = e.target.closest('button[data-item]');
@@ -192,6 +223,7 @@ const Club = {
     UI.show('club');
     this.el('club-select').hidden = false;
     this.el('club-hud').hidden = true;
+    this.el('club-age').hidden = s.adult;
     this.closeShop();
     this.build('');
     this.renderGrid();
@@ -280,12 +312,13 @@ const Club = {
   /* ---------- postavy v klubu ---------- */
 
   mk(id, x, y, o = {}) {
-    const look = lookFor(id, o.skin || '');
+    const look = o.look || lookFor(id, o.skin || '');
     const pl = new Player({ team: 0, x: 0, look, role: 'attacker', ctrl: 'cpu' });
     pl.skin = o.skin || '';
     pl.onGround = true;
     pl.mood = 0;
-    return Object.assign({ id, x, y, vx: 0, vy: 0, dir: 1, pl, kit: this.kitOf(id, o.skin), bob: 0, ph: Math.random() * 10 }, o);
+    const kit = o.look && o.look.dress ? { color: o.look.dress.color, dark: o.look.dress.dark, light: o.look.dress.light } : this.kitOf(id, o.skin);
+    return Object.assign({ id, x, y, vx: 0, vy: 0, dir: 1, pl, kit, bob: 0, lift: 0, ph: Math.random() * 10 }, o);
   },
 
   build(meId) {
@@ -293,8 +326,14 @@ const Club = {
     this.fx = {};
     this.dance = false;
     const s = this.state();
-    const avoid = new Set([meId]);
-    const pool = shuffle(ROSTER.filter((c) => !c.hidden && !c.viet && !avoid.has(c.id)).map((c) => c.id));
+    // NPC ze hry jsou jen kluci; holky jsou hosté klubu (nejsou ze hry)
+    const pool = shuffle(this.maleIds().filter((id) => id !== meId));
+    const girls = shuffle(CLUB_GIRLS.slice());
+    const girl = (x, y, o = {}) => {
+      const g = girls.shift();
+      if (g) this.npcs.push(this.mk(g.id, x, y, Object.assign({ look: g, lady: true, dir: Math.random() < 0.5 ? -1 : 1, hx: x, hy: y }, o)));
+    };
+    this.follower = null;
     const take = (pref) => {
       const i = pool.indexOf(pref);
       if (i >= 0 && pref !== meId) return pool.splice(i, 1)[0];
@@ -305,9 +344,14 @@ const Club = {
     this.npcs.push(this.mk(take('peli'), 250, 238, { staff: 'bar', dir: 1, say: CLUB_SHOP.bar.who }));
     this.npcs.push(this.mk(take('durcado'), 750, 182, { staff: 'dj', dir: 1, dj: true, say: CLUB_SHOP.dj.who }));
     this.npcs.push(this.mk(take('ludan'), 1072, 352, { staff: 'vip', dir: -1, say: CLUB_SHOP.vip.who, gear: { shades: true } }));
-    this.npcs.push(this.mk(take('kiki'), 170, 636, { staff: 'wardrobe', dir: 1, say: CLUB_SHOP.wardrobe.who }));
+    girl(170, 636, { staff: 'wardrobe', dir: 1, say: CLUB_SHOP.wardrobe.who });
+    // holky na pódiích, na parketu, u baru a ve VIP
+    for (const q of CLUB_PODIUMS) girl(q.x, q.y, { podium: true, dancer: true, lift: 34 });
+    for (const [x, y] of [[680, 450], [860, 520], [600, 590]]) girl(x, y, { dancer: true });
+    girl(120, 335, { atBar: true, dir: 1 });
+    girl(1330, 300, { vipGirl: true, dancer: true });
     // tanečníci na parketu
-    const spots = [[600, 400], [720, 380], [860, 410], [640, 520], [800, 500], [910, 560], [700, 600]];
+    const spots = [[600, 400], [760, 380], [900, 420], [760, 560]];
     for (const [x, y] of spots) if (pool.length) this.npcs.push(this.mk(pool.shift(), x, y, { dancer: true, hx: x, hy: y, dir: Math.random() < 0.5 ? -1 : 1 }));
     // dva se procházejí po klubu
     for (let i = 0; i < 2 && pool.length; i++) this.npcs.push(this.mk(pool.shift(), 360 + i * 700, 640, { walker: true, tx: 0, ty: 0, wait: rand(0, 2) }));
@@ -334,6 +378,7 @@ const Club = {
       if ((x - cx) ** 2 + ((y - cy) * 1.6) ** 2 < r * r) return true;
     }
     for (const t of CLUB_TABLES) if ((x - t.x) ** 2 + ((y - t.y) * 1.6) ** 2 < (r + 26) ** 2) return true;
+    for (const t of CLUB_PODIUMS) if ((x - t.x) ** 2 + ((y - t.y) * 1.6) ** 2 < (r + 40) ** 2) return true;
     return false;
   },
 
@@ -455,7 +500,81 @@ const Club = {
     e.bob = dancing ? Math.abs(Math.sin(this.beatPhase() * Math.PI)) * (this.fx.hit > 0 ? 12 : 6) : 0;
   },
 
+  // Holky v klubu: mluví, když přijdeš, posílají srdíčka, když tančíš, a jdou s tebou tančit.
+  updateLady(n, dt, party) {
+    const me = this.phase === 'in' ? this.me : null;
+    n.lineT = Math.max(0, (n.lineT || 0) - dt);
+    n.cool = Math.max(0, (n.cool || 0) - dt);
+    const d = me ? Math.hypot(me.x - n.x, (me.y - n.y) * 1.4) : 1e9;
+    if (me && d < 120 && n.cool <= 0 && this.follower !== n) {
+      n.line = CLUB_GIRL_LINES[Math.floor(Math.random() * CLUB_GIRL_LINES.length)];
+      if (me.gear && me.gear.chain && Math.random() < 0.4) n.line = 'Hezkej řetěz!';
+      n.lineT = 2.4;
+      n.cool = rand(7, 12);
+    }
+    if (me && d < 200 && (this.dance || party) && Math.random() < dt * 1.6) this.heart(n);
+    if (this.follower === n) {
+      n.followT -= dt;
+      if (n.followT <= 0 || !me) {
+        this.follower = null;
+        n.back = true;
+        return true;
+      }
+      const tx = me.x - me.dir * 58, ty = me.y + 4;
+      const dx = tx - n.x, dy = ty - n.y, dd = Math.hypot(dx, dy);
+      if (dd > 26) {
+        const sp = Math.min(380, dd * 4);
+        this.moveEnt(n, (dx / dd) * sp * dt, (dy / dd) * sp * dt);
+        n.dir = dx >= 0 ? 1 : -1;
+        this.anim(n, dt, sp, false);
+      } else {
+        n.dir = me.x >= n.x ? 1 : -1;
+        this.anim(n, dt, 0, true);
+        if (Math.random() < dt * (this.dance ? 2.4 : 0.8)) this.heart(n);
+      }
+      return true;
+    }
+    if (n.back) {
+      const dx = n.hx - n.x, dy = n.hy - n.y, dd = Math.hypot(dx, dy);
+      if (dd < 14) {
+        n.back = false;
+        n.tx = undefined;
+        return false;
+      }
+      const ox = n.x, oy = n.y;
+      this.moveEnt(n, (dx / dd) * 200 * dt, (dy / dd) * 200 * dt);
+      if (Math.hypot(n.x - ox, n.y - oy) < 0.5) {
+        n.x = n.hx; // zasekla se: vrátí se rovnou na místo
+        n.y = n.hy;
+      }
+      n.dir = dx >= 0 ? 1 : -1;
+      this.anim(n, dt, 200, false);
+      return true;
+    }
+    if (me && d < 140 && !n.podium) n.dir = me.x >= n.x ? 1 : -1;
+    return false;
+  },
+
+  heart(n) {
+    this.parts.push({ k: 'heart', x: n.x + rand(-12, 12), y: n.y - n.lift - (n.pl.R * 2 + n.pl.F) * CLUB_K, vx: rand(-15, 15), vy: -rand(45, 70), t: 0, life: 1.5, s: rand(5, 8) });
+  },
+
+  invite(n) {
+    if (this.follower && this.follower !== n) this.follower.back = true;
+    this.follower = n;
+    n.back = false;
+    n.followT = 25;
+    n.line = 'Jdeme na to!';
+    n.lineT = 2;
+    n.cool = 10;
+    for (let i = 0; i < 4; i++) this.heart(n);
+    Sound.click();
+    UI.toast(`${n.look.name} s tebou jde tančit 💃`);
+    this._zoneKey = '';
+  },
+
   updateNpc(n, dt, party) {
+    if (n.lady && !n.staff && this.updateLady(n, dt, party)) return;
     if (n.staff) {
       const near = this.me && this.phase === 'in' && Math.hypot(this.me.x - n.x, this.me.y - n.y) < 230;
       if (n.dj) {
@@ -473,7 +592,7 @@ const Club = {
       if (this.beatN !== n.lastBeat) {
         n.lastBeat = this.beatN;
         if (Math.random() < (party ? 0.6 : 0.3)) n.dir = -n.dir;
-        if (Math.random() < 0.25) {
+        if (Math.random() < 0.25 && !n.podium) {
           n.tx = n.hx + rand(-30, 30);
           n.ty = n.hy + rand(-20, 20);
         }
@@ -509,7 +628,9 @@ const Club = {
       if (Math.hypot(n.x - ox, n.y - oy) < sp * dt * 0.3) n.tx = 0; // zasekl se
       n.dir = dx >= 0 ? 1 : -1;
       this.anim(n, dt, sp, false);
+      return;
     }
+    this.anim(n, dt, 0, party); // stojí (třeba u baru)
   },
 
   spawnFire(e, dt) {
@@ -533,9 +654,20 @@ const Club = {
         bd = d;
       }
     }
+    if (!best) {
+      let gd = 80;
+      for (const n of this.npcs) {
+        if (!n.lady || n.staff || n.podium || n.back || n === this.follower) continue;
+        const d = Math.hypot(me.x - n.x, (me.y - n.y) * 1.4);
+        if (d < gd) {
+          gd = d;
+          best = { id: 'girl', label: 'Zatančit spolu', n };
+        }
+      }
+    }
     const onFloor = me.x > CLUB_DANCE.x0 && me.x < CLUB_DANCE.x1 && me.y > CLUB_DANCE.y0 && me.y < CLUB_DANCE.y1;
     if (!best && onFloor) best = { id: 'dance', label: this.dance ? 'Dost' : 'Tančit' };
-    const key = best ? best.id + best.label : '';
+    const key = best ? best.id + best.label + (best.n ? best.n.id : '') : '';
     if (key !== this._zoneKey) {
       this._zoneKey = key;
       const btn = this.el('club-act');
@@ -549,6 +681,7 @@ const Club = {
     const z = this.zone;
     if (!z || this.phase !== 'in') return;
     if (z.id === 'exit') this.leave();
+    else if (z.id === 'girl') this.invite(z.n);
     else if (z.id === 'dance') {
       this.dance = !this.dance;
       this._zoneKey = '';
@@ -778,6 +911,7 @@ const Club = {
     if (!this.state().vip) list.push({ y: CLUB_GATE.y1, f: () => this.drawGate(ctx) });
     this.drawRopes(ctx);
     for (const t of CLUB_TABLES) list.push({ y: t.y + 8, f: () => this.drawTable(ctx, t, now) });
+    for (const q of CLUB_PODIUMS) list.push({ y: q.y - 0.5, f: () => this.drawPodium(ctx, q, now) });
     for (const n of this.npcs) if (n.staff !== 'wardrobe') list.push({ y: n.y, f: () => this.drawChar(ctx, n, now) });
     if (this.me && this.phase === 'in') list.push({ y: this.me.y, f: () => this.drawChar(ctx, this.me, now) });
     for (const q of this.parts) if (q.k === 'cup' && q.vy === 0) list.push({ y: q.y, f: () => this.drawPart(ctx, q) });
@@ -786,7 +920,10 @@ const Club = {
     for (const q of this.parts) if (!(q.k === 'cup' && q.vy === 0)) this.drawPart(ctx, q);
     this.drawLights(ctx, now);
     // bubliny obsluhy
-    for (const n of this.npcs) if (n.talk && n.say) drawSpeech(ctx, n.say, n.x, n.y - (n.pl.R + n.pl.F) * CLUB_K - 34, '#ff3d5a', 15, 0);
+    for (const n of this.npcs) {
+      const text = n.talk && n.say ? n.say : n.lineT > 0 ? n.line : '';
+      if (text) drawSpeech(ctx, text, n.x, n.y - n.lift - (n.pl.R + n.pl.F) * CLUB_K - 34, n.lady ? '#ff4d9a' : '#ff3d5a', 15, 0);
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     // strobo při hitu
     if (this.fx.hit > 0 && this.pulse > 0.6) {
@@ -1049,6 +1186,30 @@ const Club = {
     ctx.stroke();
   },
 
+  // Kulaté pódium s neonovým okrajem.
+  drawPodium(ctx, q, now) {
+    const h = 34, r = 46;
+    ctx.fillStyle = 'rgba(0,0,0,.4)';
+    oval(ctx, q.x, q.y + 6, r + 6, 16);
+    ctx.fill();
+    ctx.fillStyle = '#1c1228';
+    ctx.fillRect(q.x - r, q.y - h, r * 2, h);
+    oval(ctx, q.x, q.y, r, 15);
+    ctx.fill();
+    const hue = (this.beatN * 50 + q.x) % 360;
+    ctx.strokeStyle = `hsla(${hue},100%,62%,${0.6 + this.pulse * 0.4})`;
+    ctx.lineWidth = 3;
+    oval(ctx, q.x, q.y - h, r, 15);
+    ctx.stroke();
+    ctx.fillStyle = '#2a1c3c';
+    oval(ctx, q.x, q.y - h, r - 2, 13);
+    ctx.fill();
+    ctx.strokeStyle = `hsla(${hue},100%,62%,.5)`;
+    ctx.lineWidth = 2;
+    line(ctx, q.x - r, q.y - h + 6, q.x - r, q.y - 2);
+    line(ctx, q.x + r, q.y - h + 6, q.x + r, q.y - 2);
+  },
+
   drawTable(ctx, t, now) {
     ctx.fillStyle = 'rgba(0,0,0,.35)';
     oval(ctx, t.x, t.y + 4, 30, 11);
@@ -1071,7 +1232,7 @@ const Club = {
     const k = CLUB_K, p = e.pl;
     // stín
     ctx.fillStyle = 'rgba(0,0,0,.38)';
-    oval(ctx, e.x, e.y, 26, 8);
+    oval(ctx, e.x, e.y - e.lift, 26, 8);
     ctx.fill();
     if (e.me && this.fx.neon > 0) {
       const g = ctx.createRadialGradient(e.x, e.y - 40, 6, e.x, e.y - 40, 80);
@@ -1088,7 +1249,9 @@ const Club = {
       ctx.stroke();
     }
     ctx.save();
-    ctx.translate(e.x, e.y - e.bob);
+    ctx.translate(e.x, e.y - e.bob - e.lift);
+    // holky se při tanci vlní v bocích
+    if (e.lady && p.mood > 0) ctx.rotate(Math.sin(this.beatPos * Math.PI) * 0.09);
     ctx.scale(k, k);
     p.x = 0;
     p.y = -(p.R + p.F);
@@ -1129,6 +1292,19 @@ const Club = {
       const s = q.s * (1 + q.t * 3);
       ctx.fillStyle = `rgba(255,${Math.floor(200 * a)},40,${a * 0.85})`;
       circle(ctx, q.x, q.y, s);
+      ctx.fill();
+      ctx.restore();
+    } else if (q.k === 'heart') {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, a * 1.6);
+      ctx.translate(q.x, q.y);
+      const s = q.s / 6;
+      ctx.scale(s, s);
+      ctx.fillStyle = '#ff4d8a';
+      ctx.beginPath();
+      ctx.moveTo(0, 5);
+      ctx.bezierCurveTo(-9, -2, -5, -10, 0, -5);
+      ctx.bezierCurveTo(5, -10, 9, -2, 0, 5);
       ctx.fill();
       ctx.restore();
     } else if (q.k === 'bub') {

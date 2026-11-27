@@ -1767,3 +1767,42 @@ body.game-blocked .screen, body.game-blocked #hud, body.game-blocked #touch, bod
 .club-buy[data-poor] { filter: grayscale(0.8) brightness(0.75); }
 .club-buy.on { background: linear-gradient(180deg, #8ea3c2, #5a6c8a); color: #fff; }
 .club-owned { font-family: var(--font-display); font-size: 17px; color: #3dff7a; padding: 0 6px; }
+.chip-18 { margin-left: 2px; padding: 1px 6px 0; border-radius: 6px; background: #fff; color: #c41634; font-size: 12px; letter-spacing: 0.02em; }
+.club-age {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: max(10px, var(--safe-t)) max(16px, var(--safe-r)) max(10px, var(--safe-b)) max(16px, var(--safe-l));
+  background: rgba(5, 3, 10, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.club-age-card {
+  width: min(480px, 100%);
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 16px 20px 18px;
+  text-align: center;
+  border: 4px solid var(--ink);
+  border-radius: 24px;
+  background: linear-gradient(160deg, #3a1230, #140c24 70%);
+  box-shadow: 0 8px 0 var(--ink), 0 0 40px rgba(255, 61, 90, 0.35);
+}
+.club-age-card h3 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 26px; color: #fff; }
+.club-age-card p { margin: 0; font-size: 16px; font-weight: 700; color: #d8c9ec; line-height: 1.25; }
+.club-age-card .club-age-badge {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 4px solid #ff3d5a;
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: #fff;
+  box-shadow: 0 0 18px rgba(255, 61, 90, 0.6);
+}
+.club-age-btns { display: flex; gap: 12px; align-items: center; margin-top: 4px; }

@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.58">
+<link rel="stylesheet" href="style.css?v=1.59">
 </head>
 <body>
 <!-- HRA:START -->
@@ -92,6 +92,7 @@
           <button id="btn-club" class="btn-chip small hot" type="button">
             <span class="chip-emoji" aria-hidden="true">🌶️</span>
             <span>Hot Peppers</span>
+            <span class="chip-18">18+</span>
           </button>
         </div>
       </div>
@@ -517,7 +518,7 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
         </button>
         <div class="club-brand">
-          <p class="club-kicker">Noční klub · jen pro kluky</p>
+          <p class="club-kicker">Noční klub 18+ · vstup jen kluci</p>
           <h2 id="club-title" class="club-title">HOT PEPPERS</h2>
         </div>
         <div class="club-tro" aria-label="Moje poháry"><span aria-hidden="true">🏆</span><b id="club-tro1">0</b></div>
@@ -526,6 +527,17 @@
       <div class="club-foot">
         <p class="club-hint">U baru, DJe, ve VIP a v šatně se platí poháry.</p>
         <button id="club-enter" class="btn-play club-enter" type="button">Vstoupit</button>
+      </div>
+    </div>
+    <div id="club-age" class="club-age" hidden>
+      <div class="club-age-card" role="dialog" aria-labelledby="club-age-title">
+        <p class="club-age-badge" aria-hidden="true">18+</p>
+        <h3 id="club-age-title">Jen pro dospělé</h3>
+        <p>Klub Hot Peppers je 18+: sexy tanečnice, flirtování a noční život. Je ti 18 let nebo víc?</p>
+        <div class="club-age-btns">
+          <button id="club-age-no" class="btn-chip small" type="button">Ne, zpět</button>
+          <button id="club-age-yes" class="btn-play club-enter" type="button">Je mi 18+</button>
+        </div>
       </div>
     </div>
     <div id="club-hud" class="club-hud" hidden>
@@ -574,19 +586,19 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.58"></script>
-<script src="js/audio.js?v=1.58"></script>
-<script src="js/input.js?v=1.58"></script>
-<script src="js/ai.js?v=1.58"></script>
-<script src="js/physics.js?v=1.58"></script>
-<script src="js/render.js?v=1.58"></script>
-<script src="js/penalty.js?v=1.58"></script>
-<script src="js/net.js?v=1.58"></script>
-<script src="js/lobby.js?v=1.58"></script>
-<script src="js/board.js?v=1.58"></script>
-<script src="js/account.js?v=1.58"></script>
-<script src="js/trailer.js?v=1.58"></script>
-<script src="js/club.js?v=1.58"></script>
-<script src="js/main.js?v=1.58"></script>
+<script src="js/config.js?v=1.59"></script>
+<script src="js/audio.js?v=1.59"></script>
+<script src="js/input.js?v=1.59"></script>
+<script src="js/ai.js?v=1.59"></script>
+<script src="js/physics.js?v=1.59"></script>
+<script src="js/render.js?v=1.59"></script>
+<script src="js/penalty.js?v=1.59"></script>
+<script src="js/net.js?v=1.59"></script>
+<script src="js/lobby.js?v=1.59"></script>
+<script src="js/board.js?v=1.59"></script>
+<script src="js/account.js?v=1.59"></script>
+<script src="js/trailer.js?v=1.59"></script>
+<script src="js/club.js?v=1.59"></script>
+<script src="js/main.js?v=1.59"></script>
 </body>
 </html>

@@ -106,7 +106,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.58';
+const GAME_VERSION = '1.59';
 // Hra je zablokovaná: po otevření se ukáže jen výzva, ať si hráč najde práci.
 // Kdo třikrát rychle klepne na hlavu rozhodčího a zadá tajný kód, hraje dál (na tom zařízení).
 const GAME_BLOCKED = true;

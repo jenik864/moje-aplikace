@@ -2003,6 +2003,7 @@ const Renderer = {
     this._beach = p.skin === 'bikini' && !(p.primeT > 0);
     this._hoop = p.skin === 'michael' && !(p.primeT > 0);
     this._suit = p.suitT > 0 && !(p.primeT > 0);
+    this._dress = !!L.dress && !(p.primeT > 0); // holky v klubu: minišaty a podpatky
     const ch = (L.chub || 1) * (p.growT > 0 ? 1.15 : 1); // Tlustej páv je širší (a při Obřím pávovi ještě víc)
     this.drawHair(ctx, p, T, 'back', now);
     this.drawArm(ctx, -12 * ch, R + 1, aBack, T, L, true);
@@ -2018,6 +2019,7 @@ const Renderer = {
     this._beach = false;
     this._hoop = false;
     this._suit = false;
+    this._dress = false;
     ctx.restore();
   },
 
@@ -2405,7 +2407,7 @@ const Renderer = {
     ctx.strokeStyle = skin;
     ctx.lineWidth = 6.5;
     line(ctx, mx, my, ex, ey);
-    if (this._beach || this._hoop) {
+    if (this._beach || this._hoop || this._dress) {
       ctx.strokeStyle = skin;
       ctx.lineWidth = 6.5;
       line(ctx, sx, sy, mx, my);
@@ -2432,7 +2434,7 @@ const Renderer = {
     ctx.lineWidth = 6.5;
     line(ctx, hx, hy, ax, ay);
     const sx = lerp(hx, ax, 0.4), sy = lerp(hy, ay, 0.4);
-    if (!this._beach) {
+    if (!this._beach && !this._dress) {
       ctx.strokeStyle = back ? '#c4cad3' : '#f2f4f7';
       ctx.lineWidth = 7;
       line(ctx, sx, sy, ax, ay);
@@ -2442,8 +2444,37 @@ const Renderer = {
     ctx.save();
     ctx.translate(fx, fy);
     ctx.rotate(rot);
-    this.drawBoot(ctx, T, back);
+    if (this._dress) this.drawHeel(ctx, L.dress, back);
+    else this.drawBoot(ctx, T, back);
     ctx.restore();
+  },
+
+  // Lodičky na podpatku (holky v klubu).
+  drawHeel(ctx, D, back) {
+    const c = back ? D.dark : D.shoe || D.color;
+    ctx.beginPath();
+    ctx.moveTo(-7, -4);
+    ctx.quadraticCurveTo(4, -3, 11, 3);
+    ctx.quadraticCurveTo(13.5, 6.5, 9.5, 6.8);
+    ctx.lineTo(-3, 4);
+    ctx.quadraticCurveTo(-8, 2.5, -7, -4);
+    ctx.closePath();
+    ctx.fillStyle = c;
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-7.5, 1);
+    ctx.lineTo(-4, 2.5);
+    ctx.lineTo(-5.5, 7);
+    ctx.lineTo(-7.5, 7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.45)';
+    ctx.lineWidth = 1.2;
+    line(ctx, 0, -1.5, 6, 1.5);
   },
 
   drawBoot(ctx, T, back) {
@@ -2487,6 +2518,11 @@ const Renderer = {
     }
     if (this._beach) {
       this.drawBikini(ctx, R, T, L);
+      ctx.restore();
+      return;
+    }
+    if (this._dress) {
+      this.drawDress(ctx, R, L);
       ctx.restore();
       return;
     }
@@ -3158,6 +3194,101 @@ const Renderer = {
     line(ctx, -12, R - 1, 11, R - 1);
   },
 
+  // Upnuté minišaty (holky v klubu Hot Peppers): odhalená ramena, výstřih, výrazná postava.
+  drawDress(ctx, R, L) {
+    const D = L.dress;
+    // ramena a paže v barvě kůže
+    ctx.beginPath();
+    ctx.moveTo(-16, R - 8);
+    ctx.lineTo(14, R - 8);
+    ctx.quadraticCurveTo(17, R - 6, 15, R + 2);
+    ctx.lineTo(-18, R + 2);
+    ctx.quadraticCurveTo(-19, R - 6, -16, R - 8);
+    ctx.closePath();
+    ctx.fillStyle = L.skin;
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+    // pozadí
+    ctx.fillStyle = D.dark;
+    oval(ctx, -16, R + 16, 10, 9);
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(-16, R + 16, 10, 9, 0, Math.PI * 0.4, Math.PI * 1.6);
+    ctx.stroke();
+    // šaty: od výstřihu po půl stehen
+    ctx.beginPath();
+    ctx.moveTo(-17, R - 2);
+    ctx.quadraticCurveTo(-2, R - 5, 14, R - 3);
+    ctx.quadraticCurveTo(18, R + 5, 13, R + 11);
+    ctx.quadraticCurveTo(17, R + 18, 15, R + 26);
+    ctx.lineTo(-18, R + 26);
+    ctx.quadraticCurveTo(-22, R + 16, -18, R + 9);
+    ctx.quadraticCurveTo(-20, R + 2, -17, R - 2);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(-20, 0, 17, 0);
+    g.addColorStop(0, D.dark);
+    g.addColorStop(0.55, D.color);
+    g.addColorStop(1, D.light);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+    // poprsí
+    ctx.fillStyle = D.color;
+    oval(ctx, 15, R + 3, 8.5, 7.5);
+    ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.ellipse(15, R + 3, 8.5, 7.5, 0, -Math.PI * 0.6, Math.PI * 0.6);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.4)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(15, R + 3, 5, -1.2, -0.2);
+    ctx.stroke();
+    if (D.style === 'slip') {
+      // tenká ramínka
+      ctx.strokeStyle = D.dark;
+      ctx.lineWidth = 1.6;
+      line(ctx, -9, R - 8, -9, R - 3);
+      line(ctx, 8, R - 8, 10, R - 3);
+    } else if (D.style === 'sequin') {
+      // flitry
+      ctx.fillStyle = 'rgba(255,255,255,.75)';
+      for (const [x, y] of [[-12, 4], [-6, 10], [0, 3], [5, 14], [-10, 18], [9, 8], [-2, 21], [11, 20], [-15, 11]]) {
+        circle(ctx, x, R + y, 0.9);
+        ctx.fill();
+      }
+    } else if (D.style === 'cut') {
+      // šněrování na boku
+      ctx.strokeStyle = D.light;
+      ctx.lineWidth = 1.2;
+      for (let i = 0; i < 3; i++) line(ctx, -14, R + 6 + i * 5, -8, R + 9 + i * 5);
+    }
+    // lesk po straně
+    ctx.strokeStyle = 'rgba(255,255,255,.45)';
+    ctx.lineWidth = 2;
+    line(ctx, 12, R + 13, 12.5, R + 23);
+    // řetízek na krku
+    if (L.necklace) {
+      ctx.strokeStyle = L.necklace;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-7, R - 8);
+      ctx.quadraticCurveTo(1, R - 1, 9, R - 8);
+      ctx.stroke();
+      ctx.fillStyle = L.necklace;
+      circle(ctx, 1, R - 3, 1.8);
+      ctx.fill();
+    }
+  },
+
   // Doplňky z klubu Hot Peppers: brýle, zlatý řetěz, koruna.
   drawGear(ctx, p, R, now) {
     const g = p.gear;
@@ -3267,6 +3398,12 @@ const Renderer = {
       ctx.fillStyle = L.accent;
       circle(ctx, -16, 11.5, 2.2);
       ctx.fill();
+      if (L.hoops) {
+        ctx.strokeStyle = L.hoops;
+        ctx.lineWidth = 1.8;
+        circle(ctx, -16, 17, 5.2);
+        ctx.stroke();
+      }
     }
 
     ctx.lineWidth = 3;
@@ -4155,6 +4292,14 @@ const Renderer = {
       }
     }
 
+    // oční stíny (holky v klubu)
+    if (L.shadow && !(p.stunT > 0) && !(p.flashT > 0)) {
+      ctx.fillStyle = hexA(L.shadow, 0.45);
+      oval(ctx, 8, -8.5, 7.5, 4.5, -0.15);
+      ctx.fill();
+      oval(ctx, 27.5, -9, 8.5, 5, 0.1);
+      ctx.fill();
+    }
     // oči (odstřelený hráč má spirály)
     if (p.flashT > 0) {
       // vyvalené oči, trochu pulzují
@@ -4195,7 +4340,7 @@ const Renderer = {
     ctx.stroke();
 
     // pusa
-    const lip = L.girl ? '#c23d5a' : '#8a3a2c';
+    const lip = L.lipstick || (L.girl ? '#c23d5a' : '#8a3a2c');
     const open = p.mood > 0 || p.kickT >= 0 || p.flashT > 0 || (!p.onGround && p.vy < -200);
     if (open) {
       ctx.fillStyle = '#5a1a1c';
@@ -4206,6 +4351,27 @@ const Renderer = {
       ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(21.5, 14, 7, 1.8);
+      if (L.lipstick) {
+        ctx.strokeStyle = L.lipstick;
+        ctx.lineWidth = 2.6;
+        oval(ctx, 25, 18.5, 6, p.mood > 0 ? 6 : 4.5);
+        ctx.stroke();
+      }
+    } else if (L.lipstick && !(p.mood < 0)) {
+      // plné namalované rty
+      ctx.fillStyle = L.lipstick;
+      ctx.beginPath();
+      ctx.moveTo(19.5, 19);
+      ctx.quadraticCurveTo(22, 15.4, 25, 17.3);
+      ctx.quadraticCurveTo(28, 15.4, 30.5, 19);
+      ctx.quadraticCurveTo(25, 25.5, 19.5, 19);
+      ctx.fill();
+      ctx.strokeStyle = shade(L.lipstick, -0.4);
+      ctx.lineWidth = 1;
+      line(ctx, 20.5, 19.2, 29.5, 19.2);
+      ctx.fillStyle = 'rgba(255,255,255,.5)';
+      oval(ctx, 26.5, 21, 1.7, 0.8);
+      ctx.fill();
     } else if (p.mood < 0) {
       ctx.strokeStyle = lip;
       ctx.lineWidth = 2.4;
