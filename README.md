@@ -250,6 +250,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.48 – online: menší snímky hry pro kamaráda (méně dat, plynulejší hlavně ve 2 v 2 a ve výzvě Vietnam)
 - 1.47 – účet s heslem a synchronizace postupu mezi zařízeními
 - 1.46 – nový design výzvy Vietnam (cesta 5 zápasů, karta odměny, info o dalším zápase)
 - 1.45 – okno výzvy Vietnam přes celou obrazovku

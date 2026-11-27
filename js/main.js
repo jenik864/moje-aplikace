@@ -2241,7 +2241,7 @@ const Game = {
       pn: m.pens ? [m.pens[0], m.pens[1]] : 0,
       sc: [m.score[0], m.score[1]],
       b: [r(b.x), r(b.y), r(b.rot * 100), r(b.superT * 100), b.superBy, r(b.basketT * 100), b.basketSide, b.carryBy >= 0 ? 1 : 0],
-      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100), r(p.primeT * 100), r(p.flashT * 100), r((p.growK || 1) * 100), r(p.selfieT * 100), r(p.growT * 100), r(p.suitT * 10)]),
+      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100), r(p.primeT * 100), r(p.flashT * 100), r(((p.growK || 1) - 1) * 100), r(p.selfieT * 100), r(p.growT * 100), r(p.suitT * 10)]).map(trimSnap),
       bk: [r(m.blocks[0] * 100), r(m.blocks[1] * 100), m.blockKind[0] === 'ice' ? 1 : 0, m.blockKind[1] === 'ice' ? 1 : 0],
       wd: m.windDir,
       jt: m.jet ? [r(m.jet.x), r(m.jet.y), m.jet.dir, r(m.jet.t * 100), m.jet.by, m.jet.hold ? 1 : 0] : 0,
@@ -2572,11 +2572,11 @@ const Game = {
       if (!pa) return;
       p.x = clamp(lerp(pa[0], pb[0], k), p.R, W - p.R);
       p.y = Math.min(lerp(pa[1], pb[1], k), p.standY);
-      p.kickT = pb[2] < 0 ? -1 : pb[2] / 1000;
-      p.mood = pb[3];
+      p.kickT = pb[2] < 0 ? -1 : (Number(pb[2]) || 0) / 1000;
+      p.mood = Number(pb[3]) || 0;
       p.onGround = !!pb[4];
-      p.vx = pb[5] * 10;
-      p.vy = pb[6] * 10;
+      p.vx = (Number(pb[5]) || 0) * 10;
+      p.vy = (Number(pb[6]) || 0) * 10;
       p.superCharge = (Number(pb[7]) || 0) / 100;
       p.stunT = (Number(pb[8]) || 0) / 100;
       p.boostT = (Number(pb[10]) || 0) / 100;
@@ -2590,7 +2590,7 @@ const Game = {
       p.selfieT = (Number(pb[19]) || 0) / 100;
       p.growT = (Number(pb[20]) || 0) / 100;
       p.suitT = (Number(pb[21]) || 0) / 10;
-      sizeGrow(p, clamp((Number(pb[18]) || 100) / 100, 1, GROW_K));
+      sizeGrow(p, clamp(1 + (Number(pb[18]) || 0) / 100, 1, GROW_K));
       const sa = Number(pa[9]) || 0, sb = Number(pb[9]) || 0;
       p.spin = sb === 0 || Math.sign(sa) !== Math.sign(sb) ? sb / 100 : lerp(sa, sb, k) / 100;
       p._srv = buf[buf.length - 1].g.p[i];
@@ -2652,6 +2652,13 @@ function sanitizeLobby(l) {
     })),
     members: Array.isArray(l.members) ? l.members.slice(0, 8).map((m) => ({ uid: String(m && m.uid || '').slice(0, 16), name: cleanName(m && m.name), ready: !!(m && m.ready) })) : [],
   };
+}
+
+// Snímek hráče pro kamarády: nuly na konci (schopnosti, které zrovna neběží) se neposílají.
+function trimSnap(a) {
+  let n = a.length;
+  while (n > 8 && !a[n - 1]) n--;
+  return n === a.length ? a : a.slice(0, n);
 }
 
 function sanitizeSetup(s) {
