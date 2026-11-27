@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.45">
+<link rel="stylesheet" href="style.css?v=1.46">
 </head>
 <body>
 <!-- HRA:START -->
@@ -374,30 +374,39 @@
   <!-- výzva Vietnam -->
   <section id="viet" class="screen dim" aria-labelledby="viet-title" hidden>
     <div class="dialog viet-dlg">
-      <header class="tasks-head">
-        <h2 id="viet-title" class="screen-title">🇻🇳 Výzva: Vietnam</h2>
+      <header class="viet-head">
+        <h2 id="viet-title" class="screen-title"><span class="vn-flag" aria-hidden="true">★</span>Výzva Vietnam</h2>
+        <span class="viet-tag">5 zápasů · 2 v 2 · jen s parťákem online</span>
         <button id="btn-viet-close" class="btn-mini" type="button" aria-label="Zavřít">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
         </button>
       </header>
-      <p class="viet-sub">5 zápasů 2 v 2 proti vietnamské reprezentaci. Hraje se <b>jen s parťákem online</b> – s počítačem v týmu to nejde.</p>
-      <div class="viet-body">
-        <ol id="viet-map" class="viet-map" aria-label="Zápasy"></ol>
+      <div class="viet-main">
+        <div class="viet-left">
+          <ol id="viet-map" class="viet-map" aria-label="Zápasy"></ol>
+          <div class="viet-next">
+            <p id="viet-next-k" class="mini-kicker">Další zápas</p>
+            <h3 id="viet-next-t" class="viet-next-t"></h3>
+            <p id="viet-info" class="viet-info"></p>
+          </div>
+        </div>
         <div class="viet-reward">
+          <span class="vr-ribbon">Odměna</span>
           <canvas id="viet-pic" class="viet-pic" aria-hidden="true"></canvas>
-          <p class="mini-kicker">Odměna za 5. zápas</p>
           <p id="viet-rw" class="viet-rw">TRÁŇA</p>
+          <p id="viet-rw-sub" class="vr-sub">za vítězství ve finále</p>
         </div>
       </div>
-      <p id="viet-info" class="viet-info"></p>
-      <div id="viet-locked" class="viet-locked" hidden>
-        <p id="viet-count" class="viet-count"></p>
-        <button id="btn-viet-code" class="btn-game" type="button">Mám kód</button>
-      </div>
-      <div id="viet-actions" class="dialog-buttons row">
-        <button id="btn-viet-join" class="btn-game blue" type="button">Připojit se ke hře</button>
-        <button id="btn-viet-host" class="btn-play" type="button">Založit hru s parťákem</button>
-      </div>
+      <footer class="viet-foot">
+        <div id="viet-locked" class="viet-locked" hidden>
+          <p id="viet-count" class="viet-count"></p>
+          <button id="btn-viet-code" class="btn-game" type="button">Mám kód</button>
+        </div>
+        <div id="viet-actions" class="viet-actions">
+          <button id="btn-viet-join" class="btn-game blue" type="button">Připojit se</button>
+          <button id="btn-viet-host" class="btn-play" type="button">Založit hru s parťákem</button>
+        </div>
+      </footer>
     </div>
   </section>
 
@@ -466,17 +475,17 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.45"></script>
-<script src="js/audio.js?v=1.45"></script>
-<script src="js/input.js?v=1.45"></script>
-<script src="js/ai.js?v=1.45"></script>
-<script src="js/physics.js?v=1.45"></script>
-<script src="js/render.js?v=1.45"></script>
-<script src="js/penalty.js?v=1.45"></script>
-<script src="js/net.js?v=1.45"></script>
-<script src="js/lobby.js?v=1.45"></script>
-<script src="js/board.js?v=1.45"></script>
-<script src="js/trailer.js?v=1.45"></script>
-<script src="js/main.js?v=1.45"></script>
+<script src="js/config.js?v=1.46"></script>
+<script src="js/audio.js?v=1.46"></script>
+<script src="js/input.js?v=1.46"></script>
+<script src="js/ai.js?v=1.46"></script>
+<script src="js/physics.js?v=1.46"></script>
+<script src="js/render.js?v=1.46"></script>
+<script src="js/penalty.js?v=1.46"></script>
+<script src="js/net.js?v=1.46"></script>
+<script src="js/lobby.js?v=1.46"></script>
+<script src="js/board.js?v=1.46"></script>
+<script src="js/trailer.js?v=1.46"></script>
+<script src="js/main.js?v=1.46"></script>
 </body>
 </html>

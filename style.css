@@ -1444,58 +1444,86 @@ body.trailer-mode #rotate, body.trailer-mode #toast, body.trailer-mode #btn-skip
 .arena-btn.moon { background: linear-gradient(180deg, #4a5068, #1c2033); color: #e8ecff; border-color: #9aa3c7; }
 .arena-btn.wind { background: linear-gradient(180deg, #8fa3bf, #4d5d78); color: #ffffff; border-color: #cfe3ff; }
 
-/* výzva Vietnam */
+
+/* ---- výzva Vietnam (celá obrazovka) ---- */
 .viet-chip { border-color: rgba(255, 216, 74, 0.7); background: linear-gradient(180deg, rgba(218, 37, 29, 0.85), rgba(155, 20, 16, 0.85)); color: #ffe27a; }
 .chip-lock { margin-left: 2px; }
-.dialog.viet-dlg {
-  width: min(760px, 100%);
-  gap: 8px;
-  padding: clamp(10px, calc(var(--vh, 1vh) * 3), 18px) 16px;
-  border-radius: 24px;
-  border: 3px solid var(--ink);
-  background: radial-gradient(ellipse at 85% 20%, rgba(255, 216, 74, 0.22), transparent 55%), linear-gradient(160deg, #6e1210, #1a1420 70%);
-  box-shadow: 0 6px 0 var(--ink);
-  justify-items: stretch;
-  text-align: left;
-}
-.viet-sub { margin: 0; font-size: 14px; font-weight: 600; color: #f3e6d0; }
-.viet-sub b { color: #ffe27a; }
-.viet-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
-.viet-map { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-.vn { position: relative; display: grid; justify-items: center; gap: 2px; padding: 6px 4px 5px; border-radius: 14px; border: 3px solid var(--ink); background: linear-gradient(180deg, #34425f, #222c44); box-shadow: 0 4px 0 var(--ink); }
-.vn.done { background: linear-gradient(180deg, #2e6b52, #1d3f34); }
-.vn.cur { background: linear-gradient(180deg, #b3261e, #6e1210); animation: sn-glow 1.4s ease-in-out infinite; }
-.vn.locked { filter: grayscale(0.6) brightness(0.7); }
-.vn .sn-pic { width: clamp(24px, calc(var(--vh, 1vh) * 9), 40px); height: clamp(24px, calc(var(--vh, 1vh) * 9), 40px); }
-.vn .sn-pic + .sn-pic { margin-left: -8px; }
-.vn-name { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; text-align: center; line-height: 1.1; color: #f3e6d0; }
-.viet-reward { display: grid; justify-items: center; gap: 2px; padding: 4px 10px; border-radius: 16px; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(255, 216, 74, 0.5); }
-.viet-pic { width: clamp(60px, calc(var(--vh, 1vh) * 22), 100px); height: clamp(76px, calc(var(--vh, 1vh) * 28), 128px); display: block; }
-.viet-rw { margin: 0; font-family: var(--font-display); font-size: 20px; color: #ffe27a; text-shadow: 0 2px 0 var(--ink); }
-.viet-info { margin: 0; font-size: 14px; font-weight: 700; color: #ffe27a; }
-.viet-locked { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
-.viet-count { margin: 0; font-family: var(--font-display); font-size: 20px; color: #fff; }
-#viet-actions { justify-self: center; }
-:root.h380 .vn-name { display: none; }
-:root.h380 .viet-sub, :root.h380 .viet-info { font-size: 12px; }
-:root.h320 .viet-reward .mini-kicker { display: none; }
-
-/* výzva Vietnam přes celou obrazovku */
-#viet.screen.dim { padding: 0; }
+#viet.screen.dim { padding: 0; background: #12080a; }
 #viet.screen.dim > .dialog.viet-dlg {
+  position: relative;
   margin: 0;
   width: 100%;
   min-height: 100%;
-  border-radius: 0;
-  border: 0;
-  box-shadow: none;
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
-  align-content: stretch;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(6px, calc(var(--vh, 1vh) * 2.4), 14px);
   padding: max(10px, var(--safe-t)) max(18px, var(--safe-r)) max(10px, var(--safe-b)) max(18px, var(--safe-l));
+  overflow: hidden;
+  isolation: isolate;
+  justify-items: stretch;
+  text-align: left;
+  background:
+    radial-gradient(ellipse 60% 80% at 100% 40%, rgba(255, 205, 0, 0.16), transparent 65%),
+    radial-gradient(ellipse 80% 70% at 0% 100%, rgba(0, 0, 0, 0.45), transparent 70%),
+    linear-gradient(155deg, #c8231b 0%, #8e130f 45%, #3b0a0c 100%);
 }
-#viet .viet-body { align-items: stretch; }
-#viet .viet-map { align-content: center; }
-#viet .vn { padding: clamp(6px, calc(var(--vh, 1vh) * 3), 18px) 4px; align-content: center; }
-#viet .vn .sn-pic { width: clamp(28px, calc(var(--vh, 1vh) * 14), 64px); height: clamp(28px, calc(var(--vh, 1vh) * 14), 64px); }
-#viet .viet-reward { align-content: center; }
-#viet .viet-pic { width: clamp(70px, calc(var(--vh, 1vh) * 30), 150px); height: clamp(90px, calc(var(--vh, 1vh) * 38), 190px); }
+/* velká hvězda z vlajky na pozadí */
+.viet-dlg::before {
+  content: "★";
+  position: absolute;
+  z-index: -1;
+  right: -4vw;
+  top: 50%;
+  transform: translateY(-50%) rotate(-8deg);
+  font-size: calc(var(--vh, 1vh) * 120);
+  line-height: 1;
+  color: rgba(255, 205, 0, 0.07);
+  pointer-events: none;
+}
+.viet-head { display: flex; align-items: center; gap: 12px; }
+.viet-head .screen-title { display: flex; align-items: center; gap: 10px; font-size: clamp(24px, calc(var(--vh, 1vh) * 7.5), 40px); }
+.vn-flag { display: inline-grid; place-items: center; width: 1.25em; height: 0.85em; border-radius: 4px; background: #da251d; color: #ffcd00; font-size: 0.8em; box-shadow: 0 3px 0 var(--ink), inset 0 0 0 2px rgba(0, 0, 0, 0.2); text-shadow: none; }
+.viet-tag { padding: 4px 12px; border-radius: 999px; background: rgba(0, 0, 0, 0.35); border: 2px solid rgba(255, 205, 0, 0.55); color: #ffe27a; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.viet-head .btn-mini { margin-left: auto; }
+.viet-main { display: grid; grid-template-columns: minmax(0, 1fr) clamp(140px, 22vw, 230px); gap: clamp(10px, 2vw, 22px); min-height: 0; }
+.viet-left { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: clamp(6px, calc(var(--vh, 1vh) * 2), 12px); min-width: 0; }
+/* cesta pěti zápasů se spojnicí */
+.viet-map { position: relative; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(6px, 1.2vw, 14px); align-items: center; }
+.viet-map::before { content: ""; position: absolute; left: 6%; right: 6%; top: 50%; height: 6px; transform: translateY(-50%); border-radius: 3px; background: repeating-linear-gradient(90deg, rgba(255, 205, 0, 0.55) 0 14px, transparent 14px 24px); z-index: 0; }
+.vn { position: relative; z-index: 1; display: grid; justify-items: center; align-content: center; gap: 3px; padding: clamp(6px, calc(var(--vh, 1vh) * 2.6), 16px) 4px; border-radius: 18px; border: 3px solid var(--ink); background: linear-gradient(180deg, #2b3550, #1a2136); box-shadow: 0 5px 0 var(--ink); min-height: 0; }
+.vn.done { background: linear-gradient(180deg, #2e7a5a, #1b4636); }
+.vn.cur { background: linear-gradient(180deg, #ffd84a, #e0a512); color: var(--ink); transform: translateY(-4px) scale(1.04); box-shadow: 0 8px 0 var(--ink), 0 0 26px rgba(255, 205, 0, 0.55); }
+.vn.locked { filter: saturate(0.4) brightness(0.62); }
+.vn .sn-num { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: #ffe27a; font-family: var(--font-display); font-size: 15px; border: 2px solid #ffe27a; }
+.vn .sn-pics { display: flex; justify-content: center; }
+.vn .sn-pic { width: clamp(26px, calc(var(--vh, 1vh) * 12), 58px); height: clamp(26px, calc(var(--vh, 1vh) * 12), 58px); display: block; }
+.vn .sn-pic + .sn-pic { margin-left: -10px; }
+.vn-name { font-family: var(--font-display); font-size: clamp(12px, calc(var(--vh, 1vh) * 3.8), 18px); line-height: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.vn-meta { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.8; white-space: nowrap; }
+.vn .sn-check { bottom: auto; top: 6px; right: 6px; }
+.vn .sn-badge { top: -10px; right: -6px; font-size: 20px; }
+.viet-next { display: grid; gap: 2px; padding: clamp(6px, calc(var(--vh, 1vh) * 2), 12px) 14px; border-radius: 16px; background: rgba(0, 0, 0, 0.32); border-left: 5px solid #ffcd00; min-width: 0; }
+.viet-next .mini-kicker { color: #ffe27a; }
+.viet-next-t { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(18px, calc(var(--vh, 1vh) * 5.6), 28px); line-height: 1.05; color: #fff; text-shadow: 0 2px 0 var(--ink); }
+.viet-info { margin: 0; font-size: clamp(12px, calc(var(--vh, 1vh) * 3.5), 15px); font-weight: 600; color: #f3e6d0; line-height: 1.3; }
+/* odměna */
+.viet-reward { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; justify-items: center; align-items: center; gap: 2px; padding: 18px 10px 10px; border-radius: 22px; border: 3px solid #ffcd00; background: radial-gradient(ellipse at 50% 40%, rgba(255, 205, 0, 0.3), transparent 65%), linear-gradient(180deg, #2a1012, #160709); box-shadow: 0 6px 0 var(--ink), 0 0 30px rgba(255, 205, 0, 0.25); min-height: 0; }
+.vr-ribbon { position: absolute; top: -13px; padding: 3px 14px; border-radius: 999px; background: #ffcd00; color: var(--ink); font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; border: 2px solid var(--ink); }
+.viet-pic { width: 100%; height: 100%; max-height: clamp(90px, calc(var(--vh, 1vh) * 44), 230px); min-height: 0; display: block; }
+.viet-rw { margin: 0; font-family: var(--font-display); font-size: clamp(22px, calc(var(--vh, 1vh) * 7), 34px); line-height: 1; color: #ffe27a; text-shadow: 0 3px 0 var(--ink); }
+.vr-sub { margin: 0; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #f3e6d0; opacity: 0.85; text-align: center; }
+/* spodní lišta */
+.viet-foot { display: flex; justify-content: center; }
+.viet-locked, .viet-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.viet-count { margin: 0; padding: 6px 16px; border-radius: 999px; background: rgba(0, 0, 0, 0.4); font-family: var(--font-display); font-size: clamp(15px, calc(var(--vh, 1vh) * 4.6), 22px); color: #fff; }
+.viet-foot .btn-play { font-size: clamp(18px, calc(var(--vh, 1vh) * 5.4), 26px); padding: 6px 22px 4px; }
+.viet-foot .btn-game { font-size: clamp(15px, calc(var(--vh, 1vh) * 4.4), 20px); padding: 6px 16px; }
+:root.h380 .vn-meta { display: none; }
+:root.h380 .viet-tag { font-size: 11px; padding: 3px 9px; }
+:root.h320 .viet-info { display: none; }
+:root.w700 .viet-tag { display: none; }
+.viet-pic { width: clamp(90px, calc(var(--vh, 1vh) * 40), 220px); height: clamp(110px, calc(var(--vh, 1vh) * 50), 280px); max-height: none; }
+:root.h380 .viet-pic { height: calc(var(--vh, 1vh) * 44); width: calc(var(--vh, 1vh) * 36); }
+:root.h380 .viet-pic { height: calc(var(--vh, 1vh) * 36); width: calc(var(--vh, 1vh) * 30); }
+:root.h380 .vr-sub { display: none; }
+:root.h380 .viet-reward { padding-top: 14px; }

@@ -3473,8 +3473,11 @@ const UI = {
       }
       const nm = document.createElement('span');
       nm.className = 'vn-name';
-      nm.textContent = lv.title;
-      li.append(num, pics, nm);
+      nm.textContent = lv.short;
+      const meta = document.createElement('span');
+      meta.className = 'vn-meta';
+      meta.textContent = `${{ easy: 'Lehký', medium: 'Střední', hard: 'Těžký' }[lv.level]}${lv.arena ? ' · ' + ARENAS[lv.arena].icon : ''}`;
+      li.append(num, pics, nm, meta);
       if (i < done) {
         const ck = document.createElement('span');
         ck.className = 'sn-check';
@@ -3490,9 +3493,12 @@ const UI = {
       map.appendChild(li);
     });
     const got = Unlocks.has('trana');
-    $('viet-rw').textContent = got ? 'TRÁŇA · odemčeno ✓' : 'TRÁŇA';
-    const lv = VIET[next];
-    $('viet-info').textContent = done >= VIET.length ? 'Vietnam je poražený! Finále jde hrát znovu.' : `Další: ${next + 1}. ${lv.title} – ${lv.text}`;
+    $('viet-rw').textContent = 'TRÁŇA';
+    $('viet-rw-sub').textContent = got ? 'odemčeno ✓' : 'za vítězství ve finále';
+    const lv = VIET[next], D = DUO_TEAMS[lv.duo];
+    $('viet-next-k').textContent = done >= VIET.length ? 'Vietnam poražen ✓ · finále znovu' : `Další zápas · ${next + 1}/${VIET.length}`;
+    $('viet-next-t').textContent = lv.title;
+    $('viet-info').textContent = `${lv.text}  Soupeř: ${D.name}.`;
     $('viet-locked').hidden = open;
     $('viet-actions').hidden = !open;
     this.show('viet');

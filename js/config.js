@@ -101,7 +101,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.45';
+const GAME_VERSION = '1.46';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -363,11 +363,11 @@ const VIET_OPEN = Date.UTC(2026, 10, 27, 11, 0);
 const VIET_CODE = 'ae48e170';
 const vietOpen = () => Date.now() >= VIET_OPEN || Unlocks.has('viet');
 const VIET = [
-  { duo: 6, level: 'easy', boost: 1, title: 'Přátelák v Hanoji', text: 'První zápas proti vietnamské reprezentaci. Rozehrajte se!' },
-  { duo: 7, level: 'medium', boost: 1, arena: 'wind', title: 'Monzun', text: 'Fouká monzun – hlídejte šipku větru.' },
-  { duo: 8, level: 'medium', boost: 1.1, arena: 'beach', title: 'Pláž v Nha Trangu', text: 'Písek zpomaluje nohy i míč.' },
-  { duo: 9, level: 'hard', boost: 1.05, title: 'Semifinále v Ho Či Minově Městě', text: 'Teď už jde do tuhého.' },
-  { duo: 10, level: 'hard', boost: 1.15, title: 'Finále proti kapitánům', text: 'Porazte kapitány a odemkne se Tráňa!', reward: 'trana' },
+  { duo: 6, level: 'easy', boost: 1, short: 'Hanoj', title: 'Přátelák v Hanoji', text: 'První zápas proti vietnamské reprezentaci. Rozehrajte se!' },
+  { duo: 7, level: 'medium', boost: 1, arena: 'wind', short: 'Monzun', title: 'Monzun', text: 'Fouká monzun – hlídejte šipku větru.' },
+  { duo: 8, level: 'medium', boost: 1.1, arena: 'beach', short: 'Nha Trang', title: 'Pláž v Nha Trangu', text: 'Písek zpomaluje nohy i míč.' },
+  { duo: 9, level: 'hard', boost: 1.05, short: 'Semifinále', title: 'Semifinále v Ho Či Minově Městě', text: 'Teď už jde do tuhého.' },
+  { duo: 10, level: 'hard', boost: 1.15, short: 'Finále', title: 'Finále proti kapitánům', text: 'Porazte kapitány a odemkne se Tráňa!', reward: 'trana' },
 ];
 const VIET_KEY = 'hlavouni.vietnam';
 const Viet = {
