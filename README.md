@@ -158,7 +158,16 @@ Superstřela vystřelí míč skoro dvakrát rychleji s ohnivou stopou v barvě 
 
 ### Poháry a ligy
 
-Za každý zápas dostane hráč na svém zařízení poháry: za výhru +8 (proti lehkému počítači méně, proti těžkému víc, online +10), navíc za větší rozdíl skóre a za vlastní góly. Za prohru se 3 poháry ztratí. Podle pohárů postupuje ligami Nováček → Bronz → Stříbro → Zlato → Diamant → Mistr → Legenda. Liga a poháry jsou vidět vpravo nahoře v menu. Po klepnutí se ukáže profil se statistikami (zápasy, výhry, góly, superstřely, odstřelení, nejdelší série výher). Po zápase se ukáže hráč zápasu a kolik pohárů přibylo. Postup se ukládá v prohlížeči daného zařízení.
+Za každý zápas dostane hráč na svém zařízení poháry podle obtížnosti počítače (online proti kamarádovi zvlášť). Bonus za rozdíl skóre (od 2 gólů) i bonus za vlastní góly je omezený podle obtížnosti; při prohře jeden vlastní gól ubere ztrátu o 1:
+
+| Obtížnost | Výhra | Bonus za rozdíl / vlastní góly (max) | Prohra | Vyhraný turnaj |
+| --- | --- | --- | --- | --- |
+| Lehký | +3 | +1 / +1 | −4 | +5 |
+| Střední | +8 | +2 / +2 | −3 | +15 |
+| Těžký | +14 | +4 / +4 | −1 | +30 |
+| Online proti kamarádovi | +10 | +3 / +3 | −3 | +20 |
+
+Výhra na lehkou tak dá 3–5 pohárů, na těžkou 14–22; prohra s lehkým počítačem stojí nejvíc. Podle pohárů postupuje ligami Nováček → Bronz → Stříbro → Zlato → Diamant → Mistr → Legenda. Liga a poháry jsou vidět vpravo nahoře v menu. Po klepnutí se ukáže profil se statistikami (zápasy, výhry, góly, superstřely, odstřelení, nejdelší série výher). Po zápase se ukáže hráč zápasu a kolik pohárů přibylo. Postup se ukládá v prohlížeči daného zařízení.
 
 ### Celá obrazovka
 
@@ -229,6 +238,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.41 – vyvážené poháry podle obtížnosti (lehký dává málo, těžký hodně)
 - 1.40 – oprava: Majda se po Gumových rukou už neotočí zády k bráně
 - 1.39 – Majda má schopnost Gumové ruce (přitáhne míč, ukradne trojku i tryskáč)
 - 1.38 – Durcado má schopnost Byznysman (oblek a soukromý tryskáč, který shodí míč před bránu soupeře)

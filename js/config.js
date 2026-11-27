@@ -95,7 +95,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.40';
+const GAME_VERSION = '1.41';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -335,6 +335,15 @@ const SPONSORS = [
   { t: 'HOT PEPPERS', bg: '#1b0f0c', fg: '#ff5a2a', icon: 'chili' },
   { t: 'RADEGAST', bg: '#14532d', fg: '#ffffff', icon: 'star' },
 ];
+
+// Poháry za zápas podle obtížnosti: výhra, max. bonus (za rozdíl skóre i za vlastní góly),
+// prohra a bonus za vyhraný turnaj. Lehký počítač dává málo a za prohru s ním se hodně ztrácí.
+const TROPHY_RULES = {
+  easy: { name: 'lehký', win: 3, bonus: 1, lose: 4, cup: 5 },
+  medium: { name: 'střední', win: 8, bonus: 2, lose: 3, cup: 15 },
+  hard: { name: 'těžký', win: 14, bonus: 4, lose: 1, cup: 30 },
+  online: { name: 'online', win: 10, bonus: 3, lose: 3, cup: 20 },
+};
 
 // Poháry a ligy (postup se ukládá v zařízení).
 const RANKS = [

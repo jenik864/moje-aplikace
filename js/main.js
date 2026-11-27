@@ -1802,28 +1802,31 @@ const Game = {
     const win = m.winner() === me.team;
     const prof = Profile.get();
     const before = prof.trophies;
-    const mult = this.mode === 'local' ? { easy: 0.5, medium: 1, hard: 1.5 }[setup.level] || 1 : 1.25;
+    // poháry podle obtížnosti (online proti kamarádovi zvlášť)
+    const vsHuman = setup.players.some((sp) => sp.team !== me.team && sp.ctrl !== 'cpu');
+    const key = vsHuman ? 'online' : TROPHY_RULES[setup.level] ? setup.level : 'medium';
+    const R = TROPHY_RULES[key];
     const parts = [];
     let delta;
     if (win) {
-      const base = Math.round(8 * mult);
-      const big = Math.max(0, Math.min(3, Math.abs(m.score[0] - m.score[1]) - 1));
-      const goals = Math.min(3, st.goals);
-      delta = base + big + goals;
-      parts.push(`výhra +${base}`);
+      const big = Math.max(0, Math.min(R.bonus, Math.abs(m.score[0] - m.score[1]) - 1));
+      const goals = Math.min(R.bonus, st.goals);
+      delta = R.win + big + goals;
+      parts.push(`výhra (${R.name}) +${R.win}`);
       if (big > 0) parts.push(`rozdíl +${big}`);
       if (goals > 0) parts.push(`tvoje góly +${goals}`);
     } else {
-      const lose = this.mode === 'local' && setup.level === 'easy' ? 1 : 3;
-      const goals = Math.min(2, st.goals);
-      delta = -Math.min(before, Math.max(0, lose - goals));
-      parts.push(goals ? `prohra −${lose}, tvoje góly +${goals}` : `prohra −${lose}`);
+      const goals = Math.min(1, st.goals, R.lose);
+      delta = -Math.min(before, R.lose - goals);
+      parts.push(`prohra (${R.name}) −${R.lose}` + (goals ? `, tvůj gól +${goals}` : ''));
     }
-    // vítězství v turnaji
+    // vítězství v turnaji (podle obtížnosti turnaje)
     this.cupRecord();
     if (this.cup && setup.cup && this.cup.stage === 'done' && this.cup.won) {
-      delta += 15;
-      parts.push('turnaj +15');
+      const cb = (TROPHY_RULES[this.cup.level] || TROPHY_RULES.medium).cup;
+      const bonus = vsHuman ? Math.max(cb, TROPHY_RULES.online.cup) : cb;
+      delta += bonus;
+      parts.push(`turnaj +${bonus}`);
       prof.cups++;
     }
     prof.trophies = Math.max(0, before + delta);
@@ -2959,7 +2962,7 @@ const UI = {
     let sub;
     if (cup.stage === 'done') {
       const wi = cupWinner(cup, 'f');
-      sub = champ ? 'Pohár je tvůj! +15 pohárů navíc.' : `Turnaj vyhráli ${wi >= 0 ? cupTeam(cup, wi).name : '?'}.`;
+      sub = champ ? `Pohár je tvůj! +${(TROPHY_RULES[cup.level] || TROPHY_RULES.medium).cup} pohárů navíc.` : `Turnaj vyhráli ${wi >= 0 ? cupTeam(cup, wi).name : '?'}.`;
     } else {
       const [a, b] = cupPair(cup, cup.stage);
       sub = `${cup.stage === 'f' ? 'Finále' : 'Semifinále'}: ${cupTeam(cup, a).name} – ${cupTeam(cup, b).name}`;
