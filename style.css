@@ -2059,3 +2059,49 @@ body.game-blocked .screen, body.game-blocked #hud, body.game-blocked #touch, bod
   .gp-media img { max-height: calc(var(--vh, 1vh) * 64); object-fit: contain; }
   .gn-preview img, .gn-preview .gp-text { max-height: calc(var(--vh, 1vh) * 38); object-fit: contain; aspect-ratio: auto; min-height: 90px; }
 }
+
+/* úvodní obrazovka: přehlednější rozvržení */
+#home .sponsor-mini, #home .home-help { display: none; }
+.home-buttons { width: min(520px, 100%); }
+.home-feat { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.feat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: clamp(6px, calc(var(--vh, 1vh) * 1.8), 10px) 12px;
+  border-radius: 16px;
+  border: 3px solid var(--ink);
+  box-shadow: 0 4px 0 var(--ink);
+  color: #fff;
+  text-align: left;
+}
+.feat:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--ink); }
+.feat-hp { background: linear-gradient(135deg, #3a0818, #0c0408 70%); border-color: #000; box-shadow: 0 4px 0 #000, inset 0 0 0 1px rgba(232, 195, 122, 0.55), 0 0 18px rgba(255, 47, 110, 0.3); }
+.feat-gram { background: linear-gradient(135deg, #ff9a3c, #ff2f6e 55%, #8a3cff); }
+.feat-ico { font-size: clamp(20px, calc(var(--vh, 1vh) * 6), 28px); line-height: 1; flex: none; }
+.feat-txt { min-width: 0; }
+.feat-txt b { display: block; font-family: var(--font-display); font-weight: 400; font-size: clamp(16px, calc(var(--vh, 1vh) * 4.8), 22px); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feat-txt small { display: block; margin-top: 3px; font: 800 11px/1 var(--font-ui); letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.9; white-space: nowrap; }
+.feat-hp b { color: #ffe6ef; font-style: italic; text-shadow: 0 0 8px #ff2f6e; }
+.feat-hp small { color: #f3d38a; }
+.feat-gram b { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25); }
+.home-links { display: flex; flex-wrap: wrap; gap: 6px; }
+.home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(8, 13, 26, 0.6);
+  color: #cdd7e6;
+  font: 800 13px/1.2 var(--font-ui);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.home-link svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.feat { gap: 7px; padding-left: 9px; padding-right: 8px; }
+.feat-ico { font-size: clamp(18px, calc(var(--vh, 1vh) * 5), 24px); }
+.feat-txt b { font-size: clamp(14px, calc(var(--vh, 1vh) * 4.2), 20px); text-overflow: clip; }
+.feat-txt small { font-size: 10px; letter-spacing: 0.06em; }

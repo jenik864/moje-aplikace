@@ -183,7 +183,7 @@ Na tanečním parketu jde zdarma *Tančit*; dalším klepnutím se mění pohyb 
 
 Klub je vyvedený jako prémiový strip club: černá lesklá mramorová podlaha s odlesky neonů, stěna z prošívané kůže se zlatou lištou a LED páskem, rampa se světly, nápis *Hot Peppers · Gentlemen's Club* v neonové kurzívě, bar z černého mramoru se zlatými lamelami a podsvícenými policemi, kožené boxy u stolků, tmavé skleněné dlaždice na parketu, pódia s LED okrajem a zrcadlem, ve VIP černý koberec se zlatým vzorem, zlaté panely a křišťálový lustr. Výběr postavy, obchody a tlačítka jsou černozlaté.
 
-**Jízda do klubu** – po *Vstoupit* se objevíš v autě v nočním městě (pohled shora) a jedeš do Hot Peppers podle navigace: nahoře šipka a „Za 650 m doleva“, vzdálenost do cíle, vpravo minimapa s trasou, dole rychloměr. Řídí se joystickem (auto zatáčí ke směru joysticku a přidává plyn; na počítači šipky). Ve městě jezdí auta (srážky zpomalí), svítí lampy, neony na střechách a reflektory klubu. Na parkovišti před Hot Peppers zaparkuješ a jde se dovnitř. *Přeskočit jízdu* tě pustí rovnou do klubu.
+**Jízda do klubu** – po *Vstoupit* se objevíš v autě v nočním městě a jedeš do Hot Peppers podle navigace. Kamera je za autem (3D perspektiva): domy jako kvádry s rozsvícenými okny, neony na střechách, lampy, silnice s čarami, auta s koncovými světly, noční obloha a mlha v dálce; na silnici svítí modrá trasa. Nahoře šipka a „Za 650 m doleva“ s vzdáleností do cíle, vpravo minimapa, vpravo dole rychloměr. Ovládání: joystick nahoru = plyn, dolů = brzda/couvání, do stran = zatáčení (na počítači šipky). Ve městě jezdí auta (srážky zpomalí), klub září obřím neonem a reflektory do nebe, cíl ukazuje růžový sloup světla. Na parkovišti před Hot Peppers zaparkuješ a jde se dovnitř. *Přeskočit jízdu* tě pustí rovnou do klubu.
 
 **Garáž** (🚗 tlačítko ve výběru postavy): Rezavý hatchback (zdarma), Tuned kombi (150 🏆), Černé SUV (300), Sportovní kupé (600), Zlaté superauto (1200) a Bílá limuzína (2000). Liší se rychlostí, zrychlením, zatáčením a vzhledem; koupená auta se ukládají a synchronizují s účtem.
 
@@ -358,6 +358,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.71 – jízda do klubu s kamerou za autem (3D město), přehlednější úvodní obrazovka (karty Hot Peppers a FIFAgram, menší odkazy)
 - 1.70 – FIFAgram: profily hráčů, fotky z klubu a textové příspěvky, lajky a komentáře od ostatních
 - 1.69 – jízda autem po nočním městě do Hot Peppers s navigací a provozem, garáž se 6 auty za poháry; kód na +500 pohárů
 - 1.68 – prémiový vzhled klubu Hot Peppers (mramor, kůže, zlato, neon, lustr, černozlaté menu); Příběh začíná úvodní obrazovkou s kartami kampaní

@@ -34,6 +34,7 @@ const Drive = {
     this.onArrive = onArrive;
     this.p = { x: DRV.START.x + 40, y: DRV.START.y + 36, ang: 0, v: 0, steer: 0 };
     this.cam = { x: this.p.x, y: this.p.y };
+    this.camAng = 0;
     this.t = 0;
     this.shake = 0;
     this.arrived = false;
@@ -71,7 +72,7 @@ const Drive = {
           for (let k = 0; k < n; k++) {
             b.houses.push({
               x0: x0 + 14 + k * w + 4, y0: y0 + 14, x1: x0 + 14 + (k + 1) * w - 4, y1: y1 - 14,
-              hue: Math.floor(r() * 360), l: 12 + r() * 10, ac: Math.floor(r() * 4),
+              hue: Math.floor(r() * 360), l: 12 + r() * 10, ac: Math.floor(r() * 4), h: 90 + r() * 210, win: Math.floor(r() * 1000),
               sign: r() < 0.35 ? DRV_SIGNS[Math.floor(r() * DRV_SIGNS.length)] : '', signHue: Math.floor(r() * 360),
             });
           }
@@ -233,18 +234,16 @@ const Drive = {
     this.t += dt;
     this.shake = Math.max(0, this.shake - dt * 3);
     const p = this.p, car = this.car;
-    let { mx, my } = inp;
+    const { mx, my } = inp;
     const mag = Math.min(1, Math.hypot(mx, my));
     let throttle = 0;
-    if (mag > 0.15 && !this.arrived) {
-      // auto zatáčí ke směru joysticku a přidává plyn
-      const want = Math.atan2(my, mx);
-      let diff = want - p.ang;
-      while (diff > Math.PI) diff -= Math.PI * 2;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-      const grip = clamp(Math.abs(p.v) / 140, 0.25, 1);
-      p.ang += clamp(diff, -car.turn * grip * dt, car.turn * grip * dt);
-      throttle = Math.abs(diff) > 2.3 ? -0.6 : mag * (1 - Math.min(0.6, Math.abs(diff) / 3));
+    if (!this.arrived) {
+      // pohled za autem: joystick nahoru = plyn, dolů = brzda/couvání, do stran = zatáčení
+      const steer = Math.abs(mx) > 0.12 ? clamp(mx, -1, 1) : 0;
+      throttle = my < -0.15 ? Math.min(1, -my * 1.2) : my > 0.15 ? -Math.min(1, my * 1.2) : 0;
+      const grip = clamp(Math.abs(p.v) / 160, 0.2, 1) * (p.v < 0 ? -1 : 1);
+      p.ang += steer * car.turn * grip * dt;
+      p.steer = approach(p.steer || 0, steer, dt * 6);
     }
     const drag = throttle === 0 ? 1.6 : 0.45;
     p.v += (throttle * car.acc - p.v * drag) * dt;
@@ -278,14 +277,17 @@ const Drive = {
       }
     }
     // stopy smyku při ostrém zatáčení
-    if (Math.abs(p.v) > car.max * 0.6 && mag > 0.15) {
+    if (Math.abs(p.v) > car.max * 0.6 && Math.abs(mx) > 0.5) {
       this.trail.push({ x: p.x - Math.cos(p.ang) * car.len * 0.4, y: p.y - Math.sin(p.ang) * car.len * 0.4, t: this.t });
       if (this.trail.length > 120) this.trail.shift();
     }
-    // kamera s předstihem ve směru jízdy
-    const lead = 0.35;
-    this.cam.x = lerp(this.cam.x, p.x + Math.cos(p.ang) * p.v * lead, Math.min(1, dt * 4));
-    this.cam.y = lerp(this.cam.y, p.y + Math.sin(p.ang) * p.v * lead, Math.min(1, dt * 4));
+    // kamera za autem: natáčí se se zpožděním
+    let da = p.ang - (this.camAng === undefined ? p.ang : this.camAng);
+    while (da > Math.PI) da -= Math.PI * 2;
+    while (da < -Math.PI) da += Math.PI * 2;
+    this.camAng = (this.camAng === undefined ? p.ang : this.camAng) + da * Math.min(1, dt * 5);
+    this.cam.x = p.x;
+    this.cam.y = p.y;
     this.routeT -= dt;
     if (this.routeT <= 0) {
       this.routeT = 0.4;
@@ -348,256 +350,376 @@ const Drive = {
 
   /* ---------- kreslení ---------- */
 
-  draw(ctx, w, h, dpr, now) {
-    const sc = h / DRV.VIEW_H, vw = w / sc, vh = DRV.VIEW_H;
-    const cx = clamp(this.cam.x, vw / 2, DRV.W - vw / 2), cy = clamp(this.cam.y, vh / 2, DRV.H - vh / 2);
-    const sh = this.shake * 8;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#0b0c10';
-    ctx.fillRect(0, 0, w, h);
-    ctx.setTransform(sc, 0, 0, sc, w / 2 - (cx + rand(-sh, sh)) * sc, h / 2 - (cy + rand(-sh, sh)) * sc);
-    const V = { x0: cx - vw / 2 - 60, x1: cx + vw / 2 + 60, y0: cy - vh / 2 - 60, y1: cy + vh / 2 + 60 };
-    this.drawRoads(ctx, V);
-    for (const b of this.blocks) if (b.x1 > V.x0 && b.x0 < V.x1 && b.y1 > V.y0 && b.y0 < V.y1) this.drawBlock(ctx, b, now);
-    // stopy smyku
-    ctx.fillStyle = 'rgba(0,0,0,.35)';
-    for (const s of this.trail) if (this.t - s.t < 4) {
-      circle(ctx, s.x, s.y, 4);
-      ctx.fill();
+  /* ---------- kreslení: kamera za autem (3D perspektiva) ---------- */
+
+  // Bod světa (x, y, výška z) -> souřadnice kamery.
+  camPt(x, y, z) {
+    const C = this._C, dx = x - C.x, dy = y - C.y;
+    const f = dx * C.c + dy * C.s, r = -dx * C.s + dy * C.c, u = z - C.z;
+    return { r, zc: f * C.cp - u * C.sp, yc: f * C.sp + u * C.cp };
+  },
+  toScreen(q) {
+    const C = this._C;
+    return { x: C.w / 2 + (q.r * C.f) / q.zc, y: C.hy0 - (q.yc * C.f) / q.zc };
+  },
+  // Mlha: barva [r,g,b] -> směs s nocí podle vzdálenosti.
+  fog(c, zc, a = 1) {
+    const k = clamp((zc - 300) / 1900, 0, 0.88), F = [14, 10, 26];
+    return `rgba(${Math.round(c[0] + (F[0] - c[0]) * k)},${Math.round(c[1] + (F[1] - c[1]) * k)},${Math.round(c[2] + (F[2] - c[2]) * k)},${a})`;
+  },
+  // Mnohoúhelník ve 3D s ořezem před kamerou.
+  poly(ctx, pts, col, a) {
+    const NEAR = 6, cs = pts.map((p) => this.camPt(p[0], p[1], p[2]));
+    const out = [];
+    for (let i = 0; i < cs.length; i++) {
+      const A = cs[i], B = cs[(i + 1) % cs.length];
+      const ain = A.zc >= NEAR, bin = B.zc >= NEAR;
+      if (ain) out.push(A);
+      if (ain !== bin) {
+        const t = (NEAR - A.zc) / (B.zc - A.zc);
+        out.push({ r: A.r + (B.r - A.r) * t, yc: A.yc + (B.yc - A.yc) * t, zc: NEAR });
+      }
     }
-    this.drawRoute(ctx, now);
-    for (const q of this.parked) if (q.x > V.x0 && q.x < V.x1 && q.y > V.y0 && q.y < V.y1) this.drawCar(ctx, q.x, q.y, q.ang, { color: q.c, dark: shade(q.c, -0.4), len: 44, wid: 23 }, false, false);
-    for (const c of this.traffic) {
-      const q = this.trafficPos(c);
-      if (q.x > V.x0 && q.x < V.x1 && q.y > V.y0 && q.y < V.y1) this.drawCar(ctx, q.x, q.y, q.ang, { color: c.c, dark: shade(c.c, -0.4), len: c.len, wid: c.wid }, true, false);
+    if (out.length < 3) return false;
+    let zsum = 0;
+    ctx.beginPath();
+    out.forEach((q, i) => {
+      const sp = this.toScreen(q);
+      zsum += q.zc;
+      if (i) ctx.lineTo(sp.x, sp.y);
+      else ctx.moveTo(sp.x, sp.y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = typeof col === 'string' ? col : this.fog(col, zsum / out.length, a === undefined ? 1 : a);
+    ctx.fill();
+    return true;
+  },
+  // Kvádr natočený o úhel (auta) nebo osově zarovnaný (domy).
+  box(ctx, cx, cy, ang, L, W, z0, z1, side, top, opt = {}) {
+    const c = Math.cos(ang), s = Math.sin(ang), hl = L / 2, hw = W / 2;
+    const P = [[hl, -hw], [hl, hw], [-hl, hw], [-hl, -hw]].map(([a, b]) => [cx + a * c - b * s, cy + a * s + b * c]);
+    const C = this._C;
+    const faces = [];
+    for (let i = 0; i < 4; i++) {
+      const A = P[i], B = P[(i + 1) % 4];
+      const mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2;
+      const nx = (A[0] + B[0]) / 2 - cx, ny = (A[1] + B[1]) / 2 - cy;
+      if (nx * (C.x - mx) + ny * (C.y - my) <= 0) continue; // odvrácená stěna
+      const lit = 0.75 + 0.25 * Math.abs(nx * 0.7 + ny * 0.3) / (Math.hypot(nx, ny) || 1);
+      faces.push({ i, A, B, d: Math.hypot(mx - C.x, my - C.y), lit });
     }
-    const p = this.p;
-    this.drawCar(ctx, p.x, p.y, p.ang, this.car, true, true);
-    this.drawLamps(ctx, V, now);
-    // cíl
-    const pulse = 1 + Math.sin(now * 0.006) * 0.15;
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    const g = ctx.createRadialGradient(DRV.DEST.x, DRV.DEST.y, 5, DRV.DEST.x, DRV.DEST.y, 90 * pulse);
-    g.addColorStop(0, 'rgba(255,60,120,.6)');
-    g.addColorStop(1, 'rgba(255,60,120,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(DRV.DEST.x - 100, DRV.DEST.y - 100, 200, 200);
-    ctx.restore();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    // noční viněta
-    const vg = ctx.createRadialGradient(w / 2, h / 2, h * 0.25, w / 2, h / 2, h * 0.9);
-    vg.addColorStop(0, 'rgba(0,0,10,0)');
-    vg.addColorStop(1, 'rgba(0,0,10,.6)');
-    ctx.fillStyle = vg;
-    ctx.fillRect(0, 0, w, h);
-    this.drawHud(ctx, w, h, dpr, now);
+    faces.sort((a, b) => b.d - a.d);
+    for (const F of faces) {
+      const col = [side[0] * F.lit, side[1] * F.lit, side[2] * F.lit];
+      this.poly(ctx, [[F.A[0], F.A[1], z0], [F.B[0], F.B[1], z0], [F.B[0], F.B[1], z1], [F.A[0], F.A[1], z1]], col);
+      if (opt.windows) this.windows(ctx, F.A, F.B, z0, z1, opt.windows, F.i);
+      if (opt.rear && F.i === 2) this.tailLights(ctx, F.A, F.B, z0, z1, opt.rear);
+    }
+    if (top && C.z > z1 - 1) this.poly(ctx, P.map(([x, y]) => [x, y, z1]), top);
+    return P;
+  },
+  // Rozsvícená okna: vodorovné pásy po patrech.
+  windows(ctx, A, B, z0, z1, seed, face) {
+    const floors = Math.floor((z1 - z0) / 34);
+    const len = Math.hypot(B[0] - A[0], B[1] - A[1]), n = Math.max(1, Math.floor(len / 46));
+    for (let f = 0; f < floors; f++) {
+      const za = z0 + 12 + f * 34, zb = za + 16;
+      for (let k = 0; k < n; k++) {
+        const on = ((seed * 31 + f * 17 + k * 7 + face * 13) % 10) < 4;
+        if (!on) continue;
+        const t0 = (k + 0.2) / n, t1 = (k + 0.8) / n;
+        const x0 = A[0] + (B[0] - A[0]) * t0, y0 = A[1] + (B[1] - A[1]) * t0, x1 = A[0] + (B[0] - A[0]) * t1, y1 = A[1] + (B[1] - A[1]) * t1;
+        const warm = (seed + k + f) % 3 ? [255, 214, 150] : [150, 210, 255];
+        this.poly(ctx, [[x0, y0, za], [x1, y1, za], [x1, y1, zb], [x0, y0, zb]], warm, 0.85);
+      }
+    }
+  },
+  tailLights(ctx, A, B, z0, z1, col) {
+    const zl = z0 + (z1 - z0) * 0.45, zh = z0 + (z1 - z0) * 0.8;
+    for (const [t0, t1] of [[0.06, 0.26], [0.74, 0.94]]) {
+      const x0 = A[0] + (B[0] - A[0]) * t0, y0 = A[1] + (B[1] - A[1]) * t0, x1 = A[0] + (B[0] - A[0]) * t1, y1 = A[1] + (B[1] - A[1]) * t1;
+      this.poly(ctx, [[x0, y0, zl], [x1, y1, zl], [x1, y1, zh], [x0, y0, zh]], col);
+    }
+  },
+  // Auto ve 3D: podvozek, kabina, světla.
+  car3d(ctx, x, y, ang, c, me) {
+    const rgb = hexRgb(c.color).split(',').map(Number), dk = hexRgb(c.dark || shade(c.color, -0.4)).split(',').map(Number);
+    this.box(ctx, x, y, ang, c.len, c.wid, 3, 15, rgb, rgb.map((v) => v * 1.1), { rear: 'rgba(255,40,60,1)' });
+    const cl = c.id === 'limo' ? c.len * 0.62 : c.len * 0.48;
+    this.box(ctx, x - Math.cos(ang) * c.len * 0.05, y - Math.sin(ang) * c.len * 0.05, ang, cl, c.wid * 0.84, 15, 27, [20, 28, 44], dk);
+    if (c.spoiler) this.box(ctx, x - Math.cos(ang) * c.len * 0.46, y - Math.sin(ang) * c.len * 0.46, ang, 5, c.wid, 18, 22, [12, 12, 16], [12, 12, 16]);
+    // světla: záře vzadu a před autem
+    const C = this._C;
+    for (const [d, col, rad] of [[-c.len / 2, '255,40,60', 22], [c.len / 2 + 30, '255,240,200', me ? 70 : 50]]) {
+      const q = this.camPt(x + Math.cos(ang) * d, y + Math.sin(ang) * d, 10);
+      if (q.zc < 10) continue;
+      const sp = this.toScreen(q), r = (rad * C.f) / q.zc;
+      const g = ctx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, r);
+      g.addColorStop(0, `rgba(${col},.55)`);
+      g.addColorStop(1, `rgba(${col},0)`);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = g;
+      ctx.fillRect(sp.x - r, sp.y - r, r * 2, r * 2);
+      ctx.restore();
+    }
+  },
+  // Billboard (lampy, neony): bod ve světě -> 2D kresba v měřítku vzdálenosti.
+  bb(x, y, z) {
+    const q = this.camPt(x, y, z);
+    if (q.zc < 12) return null;
+    const sp = this.toScreen(q);
+    return { x: sp.x, y: sp.y, k: this._C.f / q.zc, zc: q.zc };
   },
 
-  drawRoads(ctx, V) {
-    const R = DRV.ROAD, h = R / 2;
-    ctx.fillStyle = '#17181e';
-    for (const x of DRV.XS) ctx.fillRect(x - h, V.y0, R, V.y1 - V.y0);
-    for (const y of DRV.YS) ctx.fillRect(V.x0, y - h, V.x1 - V.x0, R);
-    // středové čáry a okraje
-    ctx.strokeStyle = 'rgba(255,255,255,.55)';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([30, 26]);
-    for (const x of DRV.XS) line(ctx, x, V.y0, x, V.y1);
-    for (const y of DRV.YS) line(ctx, V.x0, y, V.x1, y);
-    ctx.setLineDash([]);
-    ctx.strokeStyle = 'rgba(255,200,80,.35)';
-    ctx.lineWidth = 2;
+  draw(ctx, w, h, dpr, now) {
+    const p = this.p, ca = this.camAng, BACK = 150, CZ = 64, pitch = 0.16;
+    const sh = this.shake * 6;
+    this._C = {
+      x: p.x - Math.cos(ca) * BACK + rand(-sh, sh), y: p.y - Math.sin(ca) * BACK + rand(-sh, sh), z: CZ,
+      c: Math.cos(ca), s: Math.sin(ca), cp: Math.cos(pitch), sp: Math.sin(pitch), w, f: h * 0.95, hy0: h * 0.6,
+    };
+    const C = this._C, horizon = C.hy0 - C.f * Math.tan(pitch);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    // obloha s rozzářeným městem u obzoru a hvězdami
+    const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+    sky.addColorStop(0, '#04030a');
+    sky.addColorStop(0.7, '#160c2a');
+    sky.addColorStop(1, '#3a1a40');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, horizon + 1);
+    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    for (let i = 0; i < 40; i++) {
+      const sx = ((i * 977 + Math.floor(ca * 400)) % w + w) % w, sy = (i * 53) % Math.max(1, horizon * 0.8);
+      ctx.fillRect(sx, sy, 1.5 * dpr, 1.5 * dpr);
+    }
+    ctx.fillStyle = '#100c18';
+    ctx.fillRect(0, horizon, w, h - horizon);
+    // silnice a chodníky (zem)
+    const R = DRV.ROAD / 2, RANGE = 2300;
+    for (const x of DRV.XS) this.poly(ctx, [[x - R, 0, 0], [x + R, 0, 0], [x + R, DRV.H, 0], [x - R, DRV.H, 0]], [30, 31, 38]);
+    for (const y of DRV.YS) this.poly(ctx, [[0, y - R, 0], [DRV.W, y - R, 0], [DRV.W, y + R, 0], [0, y + R, 0]], [30, 31, 38]);
+    // čáry na silnici v okolí kamery
+    const near = (a, b) => Math.abs(a - b) < RANGE;
     for (const x of DRV.XS) {
-      line(ctx, x - h + 6, V.y0, x - h + 6, V.y1);
-      line(ctx, x + h - 6, V.y0, x + h - 6, V.y1);
+      if (!near(x, C.x)) continue;
+      for (let y = Math.max(0, Math.floor((C.y - RANGE) / 60) * 60); y < Math.min(DRV.H, C.y + RANGE); y += 60) {
+        if (DRV.YS.some((yy) => Math.abs(yy - y) < R + 10)) continue;
+        this.poly(ctx, [[x - 2, y, 0.5], [x + 2, y, 0.5], [x + 2, y + 32, 0.5], [x - 2, y + 32, 0.5]], [230, 230, 230]);
+      }
     }
     for (const y of DRV.YS) {
-      line(ctx, V.x0, y - h + 6, V.x1, y - h + 6);
-      line(ctx, V.x0, y + h - 6, V.x1, y + h - 6);
+      if (!near(y, C.y)) continue;
+      for (let x = Math.max(0, Math.floor((C.x - RANGE) / 60) * 60); x < Math.min(DRV.W, C.x + RANGE); x += 60) {
+        if (DRV.XS.some((xx) => Math.abs(xx - x) < R + 10)) continue;
+        this.poly(ctx, [[x, y - 2, 0.5], [x + 32, y - 2, 0.5], [x + 32, y + 2, 0.5], [x, y + 2, 0.5]], [230, 230, 230]);
+      }
     }
-    // křižovatky: asfalt přes čáry a přechody
+    // navigace: svítící čára trasy na silnici
+    if (this.path) {
+      for (let i = 1; i < this.path.length; i++) {
+        const A = this.path[i - 1], B = this.path[i], L = Math.hypot(B.x - A.x, B.y - A.y);
+        if (L < 1) continue;
+        const nx = -(B.y - A.y) / L * 9, ny = (B.x - A.x) / L * 9;
+        this.poly(ctx, [[A.x + nx, A.y + ny, 1], [B.x + nx, B.y + ny, 1], [B.x - nx, B.y - ny, 1], [A.x - nx, A.y - ny, 1]], 'rgba(90,210,255,.42)');
+      }
+    }
+    // objekty seřazené od nejvzdálenějších
+    const items = [];
+    const fwd = (x, y) => (x - C.x) * C.c + (y - C.y) * C.s;
+    for (const b of this.blocks) {
+      const bx = (b.x0 + b.x1) / 2, by = (b.y0 + b.y1) / 2;
+      if (fwd(bx, by) < -500 || Math.hypot(bx - C.x, by - C.y) > RANGE + 400) continue;
+      if (b.kind === 'park') {
+        items.push({ d: Math.hypot(bx - C.x, by - C.y) + 400, f: () => {
+          this.poly(ctx, [[b.x0 + 14, b.y0 + 14, 0.3], [b.x1 - 14, b.y0 + 14, 0.3], [b.x1 - 14, b.y1 - 14, 0.3], [b.x0 + 14, b.y1 - 14, 0.3]], [22, 52, 34]);
+        } });
+        for (const t of b.trees) items.push({ d: Math.hypot(t.x - C.x, t.y - C.y), f: () => this.tree(ctx, t) });
+      } else if (b.kind === 'hp') {
+        items.push({ d: Math.hypot(bx - C.x, by - C.y), f: () => this.hp3d(ctx, b, now) });
+      } else {
+        for (const hs of b.houses) {
+          const hx = (hs.x0 + hs.x1) / 2, hy = (hs.y0 + hs.y1) / 2;
+          items.push({ d: Math.hypot(hx - C.x, hy - C.y), f: () => this.house3d(ctx, hs, now) });
+        }
+      }
+    }
+    for (const q of this.parked) if (Math.hypot(q.x - C.x, q.y - C.y) < 1400 && fwd(q.x, q.y) > -60) items.push({ d: Math.hypot(q.x - C.x, q.y - C.y), f: () => this.car3d(ctx, q.x, q.y, q.ang, { color: q.c, len: 44, wid: 23 }, false) });
+    for (const c of this.traffic) {
+      const q = this.trafficPos(c);
+      if (Math.hypot(q.x - C.x, q.y - C.y) < 1800 && fwd(q.x, q.y) > -60) items.push({ d: Math.hypot(q.x - C.x, q.y - C.y), f: () => this.car3d(ctx, q.x, q.y, q.ang, { color: c.c, len: c.len, wid: c.wid }, false) });
+    }
     for (const x of DRV.XS) for (const y of DRV.YS) {
-      if (x < V.x0 - R || x > V.x1 + R || y < V.y0 - R || y > V.y1 + R) continue;
-      ctx.fillStyle = '#17181e';
-      ctx.fillRect(x - h, y - h, R, R);
-      ctx.fillStyle = 'rgba(255,255,255,.5)';
-      for (let k = -h + 12; k < h - 12; k += 18) {
-        ctx.fillRect(x + k, y - h - 18, 9, 16);
-        ctx.fillRect(x + k, y + h + 2, 9, 16);
-        ctx.fillRect(x - h - 18, y + k, 16, 9);
-        ctx.fillRect(x + h + 2, y + k, 16, 9);
+      if (Math.hypot(x - C.x, y - C.y) > 1600) continue;
+      for (const [sx, sy] of [[-1, -1], [1, 1]]) {
+        const lx = x + sx * (R + 12), ly = y + sy * (R + 12);
+        if (fwd(lx, ly) > 10) items.push({ d: Math.hypot(lx - C.x, ly - C.y), f: () => this.lamp(ctx, lx, ly) });
+      }
+    }
+    items.push({ d: Math.hypot(p.x - C.x, p.y - C.y), f: () => this.car3d(ctx, p.x, p.y, p.ang, this.car, true) });
+    items.sort((a, b) => b.d - a.d);
+    for (const it of items) it.f();
+    // cíl: zářící sloup světla nad parkovištěm
+    const dst = this.bb(DRV.DEST.x, DRV.DEST.y, 0);
+    if (dst) {
+      const top = this.bb(DRV.DEST.x, DRV.DEST.y, 260);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createLinearGradient(0, dst.y, 0, top ? top.y : dst.y - 200);
+      g.addColorStop(0, 'rgba(255,60,130,.55)');
+      g.addColorStop(1, 'rgba(255,60,130,0)');
+      ctx.fillStyle = g;
+      const bw = 22 * dst.k;
+      ctx.fillRect(dst.x - bw, top ? top.y : dst.y - 200, bw * 2, dst.y - (top ? top.y : dst.y - 200));
+      ctx.restore();
+    }
+    // viněta a HUD
+    const vg = ctx.createRadialGradient(w / 2, h * 0.6, h * 0.3, w / 2, h * 0.6, h);
+    vg.addColorStop(0, 'rgba(0,0,10,0)');
+    vg.addColorStop(1, 'rgba(0,0,10,.55)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, w, h);
+    if (Math.abs(p.v) > this.car.max * 0.75) {
+      // rychlostní čáry po stranách
+      ctx.strokeStyle = 'rgba(255,255,255,.12)';
+      ctx.lineWidth = 2 * dpr;
+      for (let i = 0; i < 10; i++) {
+        const yy = h * 0.35 + ((i * 97 + now * 0.9) % (h * 0.6));
+        line(ctx, 0, yy, w * 0.12, yy + 20 * dpr);
+        line(ctx, w, yy, w * 0.88, yy + 20 * dpr);
+      }
+    }
+    this.drawHud(ctx, w, h, dpr, now);
+    if (this.t < 4) {
+      ctx.globalAlpha = Math.min(1, (4 - this.t) * 1.5);
+      ctx.font = `${14 * dpr}px ${FONT_D}`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Joystick nahoru = plyn · dolů = brzda · do stran = zatáčení', w / 2, h * 0.3);
+      ctx.globalAlpha = 1;
+    }
+  },
+
+  house3d(ctx, hs, now) {
+    const col = this.hsl(hs.hue, 14, hs.l + 6);
+    const cx = (hs.x0 + hs.x1) / 2, cy = (hs.y0 + hs.y1) / 2;
+    this.box(ctx, cx, cy, 0, hs.x1 - hs.x0, hs.y1 - hs.y0, 0, hs.h, col, col.map((v) => v * 0.8), { windows: hs.win });
+    if (hs.sign) {
+      const b = this.bb(cx, cy, hs.h + 18);
+      if (b && b.zc < 2000) {
+        const fs = 34 * b.k;
+        if (fs > 4) {
+          ctx.save();
+          ctx.globalAlpha = clamp(1 - (b.zc - 1400) / 600, 0, 1);
+          ctx.font = `${fs}px ${FONT_D}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.lineJoin = 'round';
+          ctx.strokeStyle = `hsla(${hs.signHue},100%,60%,.4)`;
+          ctx.lineWidth = fs * 0.35;
+          ctx.strokeText(hs.sign, b.x, b.y);
+          ctx.fillStyle = `hsl(${hs.signHue},100%,78%)`;
+          ctx.fillText(hs.sign, b.x, b.y);
+          ctx.restore();
+        }
       }
     }
   },
 
-  drawBlock(ctx, b, now) {
-    // chodník
-    ctx.fillStyle = '#2c2d36';
-    ctx.fillRect(b.x0, b.y0, b.x1 - b.x0, b.y1 - b.y0);
-    ctx.strokeStyle = 'rgba(255,255,255,.08)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(b.x0 + 1, b.y0 + 1, b.x1 - b.x0 - 2, b.y1 - b.y0 - 2);
-    if (b.kind === 'park') {
-      ctx.fillStyle = '#10241a';
-      ctx.fillRect(b.x0 + 14, b.y0 + 14, b.x1 - b.x0 - 28, b.y1 - b.y0 - 28);
-      ctx.strokeStyle = 'rgba(200,180,140,.25)';
-      ctx.lineWidth = 8;
-      line(ctx, b.x0 + 14, (b.y0 + b.y1) / 2, b.x1 - 14, (b.y0 + b.y1) / 2);
-      for (const t of b.trees) {
-        ctx.fillStyle = 'rgba(0,0,0,.4)';
-        circle(ctx, t.x + 6, t.y + 8, t.s);
-        ctx.fill();
-        ctx.fillStyle = '#1d4a2a';
-        circle(ctx, t.x, t.y, t.s);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(120,200,120,.18)';
-        circle(ctx, t.x - t.s * 0.3, t.y - t.s * 0.3, t.s * 0.5);
-        ctx.fill();
+  hp3d(ctx, b, now) {
+    const t = now / 1000, ly = b.lotY, cx = (b.x0 + b.x1) / 2, cy = (b.y0 + 14 + ly) / 2;
+    // parkoviště a koberec
+    this.poly(ctx, [[b.x0 + 14, ly, 0.4], [b.x1 - 14, ly, 0.4], [b.x1 - 14, b.y1, 0.4], [b.x0 + 14, b.y1, 0.4]], [40, 40, 50]);
+    this.poly(ctx, [[cx - 26, ly - 2, 0.6], [cx + 26, ly - 2, 0.6], [cx + 26, ly + 60, 0.6], [cx - 26, ly + 60, 0.6]], [160, 18, 48]);
+    // budova klubu: tmavá, zlatý pás, růžový LED pruh nahoře
+    const W = b.x1 - b.x0 - 28, H = ly - b.y0 - 14, Hh = 150;
+    this.box(ctx, cx, cy, 0, W, H, 0, Hh, [34, 16, 30], [26, 12, 22]);
+    this.box(ctx, cx, cy, 0, W + 4, H + 4, Hh - 14, Hh - 4, [255, 60, 130], [255, 60, 130]);
+    this.box(ctx, cx, cy, 0, W + 2, H + 2, 40, 46, [212, 165, 60], [212, 165, 60]);
+    // obří neon
+    const s = this.bb(cx, ly + 4, Hh + 40);
+    if (s) {
+      const fs = 70 * s.k;
+      ctx.save();
+      ctx.font = `italic ${fs}px ${FONT_D}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round';
+      for (const [lw, a] of [[0.5, 0.15], [0.25, 0.35], [0.1, 0.7]]) {
+        ctx.strokeStyle = `rgba(255,50,110,${a + Math.sin(t * 3) * 0.05})`;
+        ctx.lineWidth = fs * lw;
+        ctx.strokeText('Hot Peppers', s.x, s.y);
       }
-      return;
+      ctx.fillStyle = '#ffe6ef';
+      ctx.fillText('Hot Peppers', s.x, s.y);
+      ctx.font = `${fs * 0.3}px ${FONT_D}`;
+      ctx.fillStyle = '#f3d38a';
+      ctx.fillText("GENTLEMEN'S CLUB", s.x, s.y + fs * 0.62);
+      ctx.restore();
     }
-    if (b.kind === 'hp') {
-      this.drawHotPeppers(ctx, b, now);
-      return;
-    }
-    for (const hs of b.houses) {
-      // střecha domu se stínem a detaily
-      ctx.fillStyle = 'rgba(0,0,0,.5)';
-      ctx.fillRect(hs.x0 + 10, hs.y0 + 12, hs.x1 - hs.x0, hs.y1 - hs.y0);
-      ctx.fillStyle = `hsl(${hs.hue},14%,${hs.l}%)`;
-      ctx.fillRect(hs.x0, hs.y0, hs.x1 - hs.x0, hs.y1 - hs.y0);
-      ctx.strokeStyle = `hsl(${hs.hue},14%,${hs.l + 10}%)`;
-      ctx.lineWidth = 6;
-      ctx.strokeRect(hs.x0 + 3, hs.y0 + 3, hs.x1 - hs.x0 - 6, hs.y1 - hs.y0 - 6);
-      ctx.fillStyle = `hsl(${hs.hue},10%,${hs.l + 6}%)`;
-      for (let k = 0; k < hs.ac; k++) {
-        const ax = hs.x0 + 30 + k * 60, ay = hs.y0 + 30 + (k % 2) * 50;
-        if (ax + 40 > hs.x1) break;
-        ctx.fillRect(ax, ay, 36, 26);
-        ctx.strokeStyle = 'rgba(0,0,0,.4)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(ax, ay, 36, 26);
-      }
-      if (hs.sign) {
-        const sx = (hs.x0 + hs.x1) / 2, sy = hs.y1 - 30;
-        ctx.save();
-        ctx.font = `30px ${FONT_D}`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const flick = Math.sin(now * 0.004 + hs.hue) > -0.95 ? 1 : 0.3;
-        ctx.globalAlpha = flick;
-        ctx.strokeStyle = `hsla(${hs.signHue},100%,60%,.35)`;
-        ctx.lineWidth = 12;
-        ctx.strokeText(hs.sign, sx, sy);
-        ctx.fillStyle = `hsl(${hs.signHue},100%,75%)`;
-        ctx.fillText(hs.sign, sx, sy);
-        ctx.restore();
-      }
-    }
-  },
-
-  drawHotPeppers(ctx, b, now) {
-    const t = now / 1000, ly = b.lotY;
-    // budova klubu
-    ctx.fillStyle = 'rgba(0,0,0,.5)';
-    ctx.fillRect(b.x0 + 24, b.y0 + 26, b.x1 - b.x0 - 28, ly - b.y0 - 28);
-    ctx.fillStyle = '#1a0a14';
-    ctx.fillRect(b.x0 + 14, b.y0 + 14, b.x1 - b.x0 - 28, ly - b.y0 - 28);
-    ctx.strokeStyle = '#d4a53c';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(b.x0 + 20, b.y0 + 20, b.x1 - b.x0 - 40, ly - b.y0 - 40);
-    const cx = (b.x0 + b.x1) / 2, cy = (b.y0 + ly) / 2;
-    // reflektory ze střechy
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
+    // reflektory do nebe
     for (let i = 0; i < 2; i++) {
-      const a = t * 0.8 + i * Math.PI, ex = cx + Math.cos(a) * 900, ey = cy + Math.sin(a) * 900;
-      const g = ctx.createLinearGradient(cx, cy, ex, ey);
-      g.addColorStop(0, 'rgba(255,120,200,.25)');
-      g.addColorStop(1, 'rgba(255,120,200,0)');
+      const a = t * 0.7 + i * 2.2, base = this.bb(cx + (i ? 120 : -120), cy, Hh);
+      if (!base) continue;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.translate(base.x, base.y);
+      ctx.rotate(Math.sin(a) * 0.5);
+      const L = 900 * base.k + 200;
+      const g = ctx.createLinearGradient(0, 0, 0, -L);
+      g.addColorStop(0, 'rgba(255,140,210,.35)');
+      g.addColorStop(1, 'rgba(255,140,210,0)');
       ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(ex + Math.sin(a) * 120, ey - Math.cos(a) * 120);
-      ctx.lineTo(ex - Math.sin(a) * 120, ey + Math.cos(a) * 120);
+      ctx.moveTo(-6, 0);
+      ctx.lineTo(6, 0);
+      ctx.lineTo(L * 0.12, -L);
+      ctx.lineTo(-L * 0.12, -L);
       ctx.closePath();
       ctx.fill();
+      ctx.restore();
     }
-    ctx.restore();
-    // obří neon na střeše
-    ctx.save();
-    ctx.font = `italic 64px ${FONT_D}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round';
-    for (const [lw, a] of [[30, 0.12], [16, 0.3], [8, 0.6]]) {
-      ctx.strokeStyle = `rgba(255,50,110,${a})`;
-      ctx.lineWidth = lw;
-      ctx.strokeText('Hot Peppers', cx, cy - 20);
-    }
-    ctx.fillStyle = '#ffe6ef';
-    ctx.fillText('Hot Peppers', cx, cy - 20);
-    ctx.font = `22px ${FONT_D}`;
-    ctx.fillStyle = '#f3d38a';
-    ctx.fillText("GENTLEMEN'S CLUB", cx, cy + 34);
-    ctx.restore();
-    // parkoviště s čarami a červený koberec ke vchodu
-    ctx.fillStyle = '#1e1f27';
-    ctx.fillRect(b.x0 + 14, ly, b.x1 - b.x0 - 28, b.y1 - ly);
-    ctx.strokeStyle = 'rgba(255,255,255,.45)';
-    ctx.lineWidth = 3;
-    for (let x = b.x0 + 40; x < b.x1 - 30; x += 58) if (Math.abs(x - cx) > 70) line(ctx, x, ly + 6, x, ly + 70);
-    ctx.fillStyle = '#9e1230';
-    ctx.fillRect(cx - 26, ly - 30, 52, 40);
-    ctx.fillStyle = '#d4a53c';
-    ctx.fillRect(cx - 30, ly - 34, 60, 5);
-    ctx.font = `18px ${FONT_D}`;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,215,140,.9)';
-    ctx.fillText('VJEZD', cx, b.y1 - 8);
   },
 
-  // Pouliční lampy na rozích křižovatek (teplé světlo).
-  drawLamps(ctx, V, now) {
-    const h = DRV.ROAD / 2 + 14;
+  tree(ctx, t) {
+    const b = this.bb(t.x, t.y, 0), top = this.bb(t.x, t.y, 70);
+    if (!b || !top) return;
+    ctx.strokeStyle = this.fog([70, 50, 30], b.zc);
+    ctx.lineWidth = Math.max(1, 6 * b.k);
+    line(ctx, b.x, b.y, top.x, top.y + 20 * top.k);
+    ctx.fillStyle = this.fog([30, 80, 46], b.zc);
+    circle(ctx, top.x, top.y, Math.max(2, t.s * 0.9 * top.k));
+    ctx.fill();
+  },
+
+  lamp(ctx, x, y) {
+    const b = this.bb(x, y, 0), top = this.bb(x, y, 80);
+    if (!b || !top) return;
+    ctx.strokeStyle = this.fog([90, 90, 100], b.zc);
+    ctx.lineWidth = Math.max(1, 3 * b.k);
+    line(ctx, b.x, b.y, top.x, top.y);
+    const r = 70 * top.k;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    for (const x of DRV.XS) for (const y of DRV.YS) {
-      if (x < V.x0 - 200 || x > V.x1 + 200 || y < V.y0 - 200 || y > V.y1 + 200) continue;
-      for (const [sx, sy] of [[-1, -1], [1, 1]]) {
-        const lx = x + sx * h, ly = y + sy * h;
-        const g = ctx.createRadialGradient(lx, ly, 4, lx, ly, 150);
-        g.addColorStop(0, 'rgba(255,200,120,.28)');
-        g.addColorStop(1, 'rgba(255,200,120,0)');
-        ctx.fillStyle = g;
-        ctx.fillRect(lx - 150, ly - 150, 300, 300);
-        ctx.fillStyle = 'rgba(255,230,180,.9)';
-        circle(ctx, lx, ly, 5);
-        ctx.fill();
-      }
-    }
+    const g = ctx.createRadialGradient(top.x, top.y, 0, top.x, top.y, r);
+    g.addColorStop(0, `rgba(255,210,140,${clamp(1 - b.zc / 1800, 0.1, 0.7)})`);
+    g.addColorStop(1, 'rgba(255,210,140,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(top.x - r, top.y - r, r * 2, r * 2);
+    const lg = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, r * 1.6);
+    lg.addColorStop(0, 'rgba(255,200,120,.18)');
+    lg.addColorStop(1, 'rgba(255,200,120,0)');
+    ctx.fillStyle = lg;
+    ctx.fillRect(b.x - r * 1.6, b.y - r * 0.6, r * 3.2, r * 1.2);
     ctx.restore();
   },
 
-  drawRoute(ctx, now) {
-    const P = this.path;
-    if (!P || P.length < 2) return;
-    ctx.save();
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(P[0].x, P[0].y);
-    for (let i = 1; i < P.length; i++) ctx.lineTo(P[i].x, P[i].y);
-    ctx.strokeStyle = 'rgba(80,200,255,.18)';
-    ctx.lineWidth = 34;
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(120,220,255,.75)';
-    ctx.lineWidth = 8;
-    ctx.setLineDash([24, 18]);
-    ctx.lineDashOffset = -now * 0.12;
-    ctx.stroke();
-    ctx.restore();
+  hsl(h, s, l) {
+    s /= 100;
+    l /= 100;
+    const k = (n) => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
   },
 
   // Auto shora: karoserie, okna, střecha, světla.
@@ -703,14 +825,14 @@ const Drive = {
     ctx.fillText(`🌶️ Hot Peppers · ${m(nav.total)}`, px + 62 * k, py + 46 * k);
     // rychloměr
     const kmh = Math.round(Math.abs(this.p.v) * 0.2);
-    ctx.textAlign = 'center';
+    ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
-    ctx.font = `${34 * k}px ${FONT_D}`;
+    ctx.font = `${40 * k}px ${FONT_D}`;
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(String(kmh), w / 2, h - 26 * k);
+    ctx.fillText(String(kmh), w - 22 * k, h - 30 * k);
     ctx.font = `${12 * k}px ${FONT_D}`;
     ctx.fillStyle = 'rgba(255,255,255,.7)';
-    ctx.fillText(`km/h · ${this.car.name}`, w / 2, h - 10 * k);
+    ctx.fillText(`km/h · ${this.car.name}`, w - 22 * k, h - 14 * k);
     // minimapa
     const mw = 150 * k, mh = mw * (DRV.H / DRV.W), mx0 = w - mw - 12 * k, my0 = 64 * k, s = mw / DRV.W;
     ctx.fillStyle = 'rgba(10,12,20,.8)';
