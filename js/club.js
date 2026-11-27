@@ -50,6 +50,9 @@ const CLUB_SHOP = {
     items: [
       { id: 'pepr', icon: '❄️', name: 'Pepřák', price: 15, trip: 'pepr', t: 20, desc: 'Bílej prášek z dílny podniku (jen ve hře). 20 s jedeš jak raketa, pak dojezd.' },
       { id: 'smajl', icon: '💊', name: 'Smajlík', price: 10, trip: 'smajl', t: 25, desc: 'Barevná pilulka (jen ve hře). 25 s miluješ celej klub, pak únava.' },
+      { id: 'houba', icon: '🍄', name: 'Kouzelná houbička', price: 12, trip: 'houba', t: 25, desc: 'Celej klub se vlní a přelévá v barvách (jen ve hře). Pak máš 15 s ovládání naruby.' },
+      { id: 'zelenac', icon: '🌿', name: 'Zelenáč', price: 8, trip: 'zelenac', t: 30, desc: 'Všechno se zpomalí, zezelená a kouří se z tebe (jen ve hře). Pak se ti klíží oči.' },
+      { id: 'turbo', icon: '⚡', name: 'Turbo', price: 12, trip: 'turbo', t: 15, desc: 'Letíš jak blesk a táhneš za sebou duchy (jen ve hře). Pak se klepeš a jsi pomalej.' },
     ],
   },
   lounge: {
@@ -211,6 +214,9 @@ const Club = {
     click('club-contacts-close', () => { this.el('club-contacts').hidden = true; });
     click('club-photo-close', () => { this.el('club-photo').hidden = true; });
     click('club-photo-share', () => this.sharePhoto());
+    click('club-cam', () => {
+      if (this.phase === 'in' && !this.overlayOpen()) this.takePhoto();
+    });
     for (const b of this.el('club-pads').querySelectorAll('button[data-lane]')) {
       b.addEventListener('pointerdown', (e) => {
         e.preventDefault();
@@ -489,6 +495,8 @@ const Club = {
   /* ---------- herní smyčka ---------- */
 
   frame(dt, now) {
+    const tr = this.trip;
+    if (tr && tr.kind === 'zelenac' && tr.t < tr.high) dt *= 0.55; // všechno se zpomalí
     this.t += dt;
     this.pump();
     if (this.phase === 'select') this.drawGrid(now / 1000);
@@ -552,6 +560,7 @@ const Club = {
     }
     if (me && this.phase === 'in' && !this.kick) {
       let { mx, my } = this.overlayOpen() || me.stunT > 0 ? { mx: 0, my: 0 } : this.input();
+      if (this.trip && this.trip.kind === 'houba' && this.trip.t >= this.trip.high) mx = -mx; // ovládání naruby
       // opilý: joystick ujíždí a hráč se motá
       const pr = this.promile || 0;
       if (pr > 0.9 && (mx || my)) {
@@ -1323,10 +1332,11 @@ const Club = {
       setTimeout(() => this.kickOut('Zkolaboval jsi na záchodě. Ochranka tě vynesla ven.'), 1800);
       return;
     }
-    this.trip = { kind: it.trip, t: 0, high: it.t, down: 15 };
-    me.line = it.trip === 'pepr' ? 'JEDEEEM!' : 'Miluju vás všechny!';
+    this.trip = { kind: it.trip, t: 0, high: it.t, down: 15, trail: [] };
+    const say = { pepr: ['JEDEEEM!', '❄️ Jedeš jak raketa!'], smajl: ['Miluju vás všechny!', '💊 Celej klub je najednou krásnej'], houba: ['Ty stěny dejchaj…', '🍄 Všechno se vlní'], zelenac: ['Ty jo… pohoda…', '🌿 Čas se zpomalil'], turbo: ['TURBOOO!', '⚡ Jsi rychlejší než světlo'] }[it.trip];
+    me.line = say[0];
     me.lineT = 2;
-    UI.toast(it.trip === 'pepr' ? '❄️ Jedeš jak raketa!' : '💊 Celej klub je najednou krásnej');
+    UI.toast(say[1]);
     // ochranka hlídá záchody
     if (Math.random() < 0.25) {
       setTimeout(() => {
@@ -1347,6 +1357,12 @@ const Club = {
     if (high) {
       this.dance = true;
       if (tr.kind === 'pepr' && Math.random() < dt * 30) this.parts.push({ k: 'spark', x: me.x + rand(-20, 20), y: me.y - rand(10, 80), vx: rand(-40, 40), vy: rand(-40, 10), t: 0, life: 0.6, col: `hsl(${Math.floor(rand(0, 360))},100%,70%)` });
+      if (tr.kind === 'zelenac' && Math.random() < dt * 5) this.parts.push({ k: 'smoke', x: me.x + me.dir * 14, y: me.y - 70, vx: rand(-12, 12), vy: -rand(20, 40), t: 0, life: 2.2, s: rand(8, 14) });
+      if (tr.kind === 'turbo') {
+        tr.trail.unshift({ x: me.x, y: me.y, dir: me.dir });
+        if (tr.trail.length > 18) tr.trail.pop();
+      }
+      if (tr.kind === 'houba' && Math.random() < dt * 4) this.parts.push({ k: 'spark', x: me.x + rand(-300, 300), y: me.y - rand(0, 250), vx: rand(-30, 30), vy: rand(-30, 30), t: 0, life: 1.6, col: `hsl(${Math.floor(rand(0, 360))},100%,70%)` });
       if (tr.kind === 'smajl' && Math.random() < dt * 6) {
         const n = this.npcs[Math.floor(Math.random() * this.npcs.length)];
         this.heart(n);
@@ -1357,7 +1373,7 @@ const Club = {
     } else if (!tr.downSaid) {
       tr.downSaid = true;
       this.dance = false;
-      me.line = tr.kind === 'pepr' ? 'Proč je mi tak blbě…' : 'Jsem úplně hotovej…';
+      me.line = { pepr: 'Proč je mi tak blbě…', smajl: 'Jsem úplně hotovej…', houba: 'Kde je vlevo?!', zelenac: 'Mám hlad… a spát…', turbo: 'Klepu se jak ratlík…' }[tr.kind];
       me.lineT = 2.4;
     }
   },
@@ -1365,8 +1381,8 @@ const Club = {
   tripSpeed() {
     const tr = this.trip;
     if (!tr) return 1;
-    if (tr.t < tr.high) return tr.kind === 'pepr' ? 1.8 : 1.1;
-    return 0.6;
+    if (tr.t < tr.high) return { pepr: 1.8, smajl: 1.1, houba: 1, zelenac: 0.7, turbo: 2.4 }[tr.kind] || 1;
+    return tr.kind === 'zelenac' ? 0.5 : 0.6;
   },
 
   // Show na stage: DJ ohlásí tanečnici, reflektory na pódium, kluci se seběhnou a fandí.
@@ -1708,82 +1724,148 @@ const Club = {
 
   /* ---------- fotokoutek ---------- */
 
+  // Fotka jako z opravdového foťáku: skutečná scéna z klubu kolem tebe, blesk,
+  // rozmazané pozadí, zrno, viněta, lehce nakřivo a datum v rohu.
   takePhoto() {
     const me = this.me;
     if (!me) return;
-    const s = this.state();
-    const W2 = 1200, H2 = 800, cv = document.createElement('canvas');
-    cv.width = W2;
-    cv.height = H2;
-    const c = cv.getContext('2d');
-    const g = c.createLinearGradient(0, 0, W2, H2);
-    g.addColorStop(0, '#2a0a2e');
-    g.addColorStop(0.5, '#5a0f3a');
-    g.addColorStop(1, '#140c24');
-    c.fillStyle = g;
-    c.fillRect(0, 0, W2, H2);
-    for (let i = 0; i < 46; i++) {
-      c.fillStyle = `hsla(${Math.floor(rand(0, 360))},100%,65%,${rand(0.12, 0.4)})`;
-      circle(c, rand(0, W2), rand(0, H2 * 0.72), rand(6, 30));
-      c.fill();
-    }
-    c.fillStyle = 'rgba(0,0,0,.35)';
-    c.fillRect(0, H2 * 0.8, W2, H2 * 0.2);
-    this.neonText(c, 'HOT PEPPERS', W2 / 2, 96, 86, '#ff3d5a', 0.6);
-    const partner = this.follower || this.npcs.find((n) => n.lady && s.nums[n.look.id] && !n.staff) || this.npcs.find((n) => n.lady && !n.staff);
-    const draw = (e, x, dir) => {
-      const p = e.pl, k = 2.2;
-      c.save();
-      c.translate(x, H2 * 0.86);
-      c.fillStyle = 'rgba(0,0,0,.4)';
-      oval(c, 0, 0, 92, 20);
-      c.fill();
-      c.scale(k, k);
-      const od = p.dir, om = p.mood, ox = p.x, oy = p.y;
-      p.x = 0;
-      p.y = -(p.R + p.F);
-      p.dir = dir;
-      p.mood = 1;
-      p.gear = e.gear || null;
-      Renderer.drawPlayer(c, p, { x: dir * 300, y: p.y - 20 }, [e.kit, e.kit], performance.now());
-      p.dir = od;
-      p.mood = om;
-      p.x = ox;
-      p.y = oy;
-      c.restore();
-    };
-    draw(me, partner ? W2 * 0.4 : W2 / 2, 1);
-    if (partner) {
-      draw(partner, W2 * 0.6, -1);
-      for (let i = 0; i < 7; i++) {
-        c.save();
-        c.translate(W2 / 2 + rand(-60, 60), rand(250, 420));
-        c.scale(2.4, 2.4);
-        c.fillStyle = '#ff4d8a';
-        c.beginPath();
-        c.moveTo(0, 5);
-        c.bezierCurveTo(-9, -2, -5, -10, 0, -5);
-        c.bezierCurveTo(5, -10, 9, -2, 0, 5);
-        c.fill();
-        c.restore();
+    const s = this.state(), now = performance.now();
+    let partner = this.follower;
+    if (!partner) {
+      let bd = 260;
+      for (const n of this.npcs) {
+        if (!n.lady || n.staff) continue;
+        const d = Math.hypot(n.x - me.x, n.y - me.y);
+        if (d < bd) {
+          bd = d;
+          partner = n;
+        }
       }
     }
-    c.lineWidth = 14;
-    c.strokeStyle = '#ff3d5a';
-    rrect(c, 14, 14, W2 - 28, H2 - 28, 30);
-    c.stroke();
-    c.lineWidth = 4;
-    c.strokeStyle = '#ffd0d8';
-    c.stroke();
-    c.font = `34px ${FONT_D}`;
-    c.textAlign = 'center';
-    c.textBaseline = 'middle';
-    c.fillStyle = '#ffffff';
-    c.fillText(`${charById(me.id).name}${partner ? ' & ' + partner.look.name : ''} · ${new Date().toLocaleDateString('cs-CZ')}`, W2 / 2, H2 - 52);
-    this.photoCanvas = cv;
-    const url = cv.toDataURL('image/png');
+    // na fotce stojíte těsně u sebe a díváte se na sebe
+    const saved = [];
+    const keep = (e) => saved.push([e, e.x, e.y, e.dir, e.lift, e.pl.mood, e.bob]);
+    keep(me);
+    if (partner) {
+      keep(partner);
+      if (!partner.podium) {
+        partner.x = me.x + 50;
+        partner.y = me.y + 4;
+      }
+      partner.dir = partner.x >= me.x ? -1 : 1;
+      me.dir = -partner.dir;
+      partner.bob = 0;
+    }
+    me.bob = 0;
+    const W2 = 1200, H2 = 900;
+    const mk = (w, h) => {
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      return c;
+    };
+    const A = mk(W2, H2), a = A.getContext('2d');
+    a.fillStyle = '#07040d';
+    a.fillRect(0, 0, W2, H2);
+    const fx = partner ? (me.x + partner.x) / 2 : me.x;
+    const fy = (partner ? Math.min(me.y, partner.y) : me.y) - 62;
+    const viewH = 230 + rand(-15, 25), sc = H2 / viewH;
+    a.translate(W2 / 2, H2 / 2);
+    a.rotate(rand(-0.045, 0.045)); // z ruky, lehce nakřivo
+    a.scale(sc, sc);
+    a.translate(-fx - rand(-12, 12), -fy - rand(-6, 6));
+    // přirozené výrazy: úsměv / smích
+    me.pl.mood = Math.random() < 0.5 ? 1 : 0;
+    if (partner) partner.pl.mood = Math.random() < 0.7 ? 1 : 0;
+    this.drawWorld(a, now, true);
+    for (const [e, x, y, d, l, m, bb] of saved) {
+      e.x = x;
+      e.y = y;
+      e.dir = d;
+      e.lift = l;
+      e.pl.mood = m;
+      e.bob = bb;
+    }
+    // --- zpracování jako fotka ---
+    const P = mk(W2, H2), p = P.getContext('2d');
+    // rozmazané pozadí (hloubka ostrosti)
+    const sm = mk(W2 / 10, H2 / 10);
+    sm.getContext('2d').drawImage(A, 0, 0, W2 / 10, H2 / 10);
+    p.imageSmoothingEnabled = true;
+    p.imageSmoothingQuality = 'high';
+    p.drawImage(sm, 0, 0, W2, H2);
+    // ostrý střed s lidmi
+    const C = mk(W2, H2), c = C.getContext('2d');
+    c.drawImage(A, 0, 0);
+    c.globalCompositeOperation = 'destination-in';
+    const m = c.createRadialGradient(W2 / 2, H2 * 0.55, H2 * 0.3, W2 / 2, H2 * 0.55, H2 * 0.72);
+    m.addColorStop(0, 'rgba(0,0,0,1)');
+    m.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = m;
+    c.fillRect(0, 0, W2, H2);
+    p.drawImage(C, 0, 0);
+    // blesk: popředí přesvícené, okolí zapadne do tmy
+    p.globalCompositeOperation = 'soft-light';
+    let g = p.createRadialGradient(W2 / 2, H2 * 0.5, 10, W2 / 2, H2 * 0.5, H2 * 0.62);
+    g.addColorStop(0, 'rgba(255,255,255,.75)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    p.fillStyle = g;
+    p.fillRect(0, 0, W2, H2);
+    p.globalCompositeOperation = 'screen';
+    g = p.createRadialGradient(W2 / 2, H2 * 0.48, 10, W2 / 2, H2 * 0.48, H2 * 0.5);
+    g.addColorStop(0, 'rgba(255,245,235,.22)');
+    g.addColorStop(1, 'rgba(255,245,235,0)');
+    p.fillStyle = g;
+    p.fillRect(0, 0, W2, H2);
+    p.globalCompositeOperation = 'multiply';
+    g = p.createRadialGradient(W2 / 2, H2 * 0.5, H2 * 0.35, W2 / 2, H2 * 0.5, H2 * 0.95);
+    g.addColorStop(0, 'rgb(255,255,255)');
+    g.addColorStop(1, 'rgb(40,28,50)');
+    p.fillStyle = g;
+    p.fillRect(0, 0, W2, H2);
+    // teplý nádech levného foťáku
+    p.globalCompositeOperation = 'soft-light';
+    p.fillStyle = 'rgba(255,170,100,.22)';
+    p.fillRect(0, 0, W2, H2);
+    // chromatická vada na krajích
+    p.globalCompositeOperation = 'screen';
+    p.globalAlpha = 0.06;
+    p.drawImage(A, 4, 0);
+    p.drawImage(A, -4, 1);
+    p.globalAlpha = 1;
+    // zrno
+    if (!this._grain) {
+      const n = mk(256, 256), nc = n.getContext('2d'), id = nc.createImageData(256, 256);
+      for (let i = 0; i < id.data.length; i += 4) {
+        const v = 128 + (Math.random() - 0.5) * 255;
+        id.data[i] = id.data[i + 1] = id.data[i + 2] = v;
+        id.data[i + 3] = 255;
+      }
+      nc.putImageData(id, 0, 0);
+      this._grain = n;
+    }
+    p.globalCompositeOperation = 'overlay';
+    p.globalAlpha = 0.16;
+    p.fillStyle = p.createPattern(this._grain, 'repeat');
+    p.fillRect(0, 0, W2, H2);
+    p.globalAlpha = 1;
+    p.globalCompositeOperation = 'source-over';
+    // datum jako na digitálu
+    const d = new Date(), z = (v) => String(v).padStart(2, '0');
+    const stamp = `'${z(d.getFullYear() % 100)} ${z(d.getMonth() + 1)} ${z(d.getDate())}  ${z(d.getHours())}:${z(d.getMinutes())}`;
+    p.font = 'bold 38px "Courier New", Courier, monospace';
+    p.textAlign = 'right';
+    p.textBaseline = 'bottom';
+    p.shadowColor = 'rgba(255,120,20,.9)';
+    p.shadowBlur = 10;
+    p.fillStyle = '#ffa53a';
+    p.fillText(stamp, W2 - 34, H2 - 26);
+    p.shadowBlur = 0;
+    this.photoCanvas = P;
+    const url = P.toDataURL('image/jpeg', 0.9);
     this.el('club-photo-img').src = url;
     this.el('club-photo-save').href = url;
+    this.el('club-photo-save').setAttribute('download', 'hot-peppers.jpg');
     this.el('club-photo').hidden = false;
     this.whiteT = 1;
     this.stick.id = null;
@@ -1799,8 +1881,8 @@ const Club = {
 
   async sharePhoto() {
     try {
-      const blob = await new Promise((res) => this.photoCanvas.toBlob(res, 'image/png'));
-      const file = new File([blob], 'hot-peppers.png', { type: 'image/png' });
+      const blob = await new Promise((res) => this.photoCanvas.toBlob(res, 'image/jpeg', 0.9));
+      const file = new File([blob], 'hot-peppers.jpg', { type: 'image/jpeg' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: 'Hot Peppers' });
       else this.el('club-photo-save').click();
     } catch (e) { /* zrušeno */ }
@@ -1835,11 +1917,21 @@ const Club = {
     const pr = this.phase === 'in' ? this.promile || 0 : 0;
     const sway = pr > 0.4 ? Math.sin(this.t * 0.8) * 0.018 * Math.min(3, pr) : 0;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.translate(w / 2, h / 2);
+    const tr1 = this.phase === 'in' ? this.trip : null;
+    const shake = tr1 && tr1.kind === 'turbo' && tr1.t >= tr1.high ? 3 * dpr : 0;
+    ctx.translate(w / 2 + rand(-shake, shake), h / 2 + rand(-shake, shake));
     ctx.rotate(sway);
     ctx.scale(sc, sc);
     ctx.translate(-cx, -cy);
     this.view = { x0: cx - vw / 2, x1: cx + vw / 2, y0: cy - CLUB_VIEW_H / 2, y1: cy + CLUB_VIEW_H / 2 };
+    this.drawWorld(ctx, now, false);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.drawPost(ctx, w, h, dpr, pr, now);
+  },
+
+  // Celý klub ve světových souřadnicích (i pro fotku – ta je bez bublin a značek).
+  drawWorld(ctx, now, photo) {
+    this._photo = photo;
     this.drawRoom(ctx, now);
     // věci a lidi seřazené podle hloubky
     const list = [];
@@ -1852,10 +1944,31 @@ const Club = {
     if (this.me && this.phase === 'in') list.push({ y: this.me.y, f: () => this.drawChar(ctx, this.me, now) });
     for (const q of this.parts) if (q.k === 'cup' && q.vy === 0) list.push({ y: q.y, f: () => this.drawPart(ctx, q) });
     list.sort((a, b) => a.y - b.y);
+    const tr0 = this.trip;
+    if (tr0 && tr0.kind === 'turbo' && tr0.t < tr0.high && this.me && !photo) {
+      const me = this.me, ox = me.x, oy = me.y, od = me.dir;
+      this._ghost = true;
+      for (let i = tr0.trail.length - 1; i >= 2; i -= 3) {
+        const g = tr0.trail[i];
+        ctx.save();
+        ctx.globalAlpha = 0.35 * (1 - i / tr0.trail.length);
+        me.x = g.x;
+        me.y = g.y;
+        me.dir = g.dir;
+        this.drawChar(ctx, me, now);
+        ctx.restore();
+      }
+      me.x = ox;
+      me.y = oy;
+      me.dir = od;
+      this._ghost = false;
+    }
     for (const d of list) d.f();
     for (const q of this.parts) if (!(q.k === 'cup' && q.vy === 0)) this.drawPart(ctx, q);
     this.drawLights(ctx, now);
     this.drawDisco(ctx, now);
+    this._photo = false;
+    if (photo) return;
     // bubliny obsluhy
     const me0 = this.me;
     if (me0 && this.phase === 'in' && me0.lineT > 0 && !this.separe) drawSpeech(ctx, me0.line, me0.x, me0.y - (me0.pl.R + me0.pl.F) * CLUB_K - 40, '#ffc93c', 15, 0);
@@ -1864,7 +1977,10 @@ const Club = {
       const text = n.talk && n.say ? n.say : n.lineT > 0 ? n.line : '';
       if (text) drawSpeech(ctx, text, n.x, n.y - n.lift - (n.pl.R + n.pl.F) * CLUB_K - 34, n.lady ? '#ff4d9a' : '#ff3d5a', 15, 0);
     }
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+  },
+
+  // Efekty přes celou obrazovku (opilost, drogy, souboj, HUD).
+  drawPost(ctx, w, h, dpr, pr, now) {
     if (pr > 1) {
       // dvojité vidění
       ctx.save();
@@ -1880,7 +1996,41 @@ const Club = {
     if (tr) {
       const high = tr.t < tr.high;
       ctx.save();
-      if (high && tr.kind === 'pepr') {
+      if (tr.kind === 'houba' && (high || tr.t < tr.high + tr.down)) {
+        // vlnění: obraz rozřezaný na pruhy posunuté do vlny
+        const amp = (high ? 22 : 7) * dpr;
+        if (!this._tmp) this._tmp = document.createElement('canvas');
+        const tmp = this._tmp;
+        if (tmp.width !== w || tmp.height !== h) {
+          tmp.width = w;
+          tmp.height = h;
+        }
+        tmp.getContext('2d').drawImage(this.cv, 0, 0);
+        const band = Math.max(4, Math.round(6 * dpr));
+        for (let y = 0; y < h; y += band) ctx.drawImage(tmp, 0, y, w, band, Math.sin(y * 0.012 / dpr + this.t * 3) * amp, y, w, band);
+        if (high) {
+          ctx.globalCompositeOperation = 'hue';
+          ctx.fillStyle = `hsla(${(this.t * 60) % 360},100%,50%,.4)`;
+          ctx.fillRect(0, 0, w, h);
+        }
+      } else if (high && tr.kind === 'zelenac') {
+        ctx.fillStyle = 'rgba(80,200,90,.22)';
+        ctx.fillRect(0, 0, w, h);
+        const g = ctx.createRadialGradient(w / 2, h / 2, h * 0.2, w / 2, h / 2, h * 0.8);
+        g.addColorStop(0, 'rgba(200,255,200,0)');
+        g.addColorStop(1, 'rgba(200,255,200,.35)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+      } else if (high && tr.kind === 'turbo') {
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.strokeStyle = 'rgba(120,200,255,.25)';
+        ctx.lineWidth = 3 * dpr;
+        for (let i = 0; i < 14; i++) {
+          const y = ((i * 97 + this.t * 900) % h);
+          line(ctx, 0, y, w * 0.25, y);
+          line(ctx, w * 0.75, h - y, w, h - y);
+        }
+      } else if (high && tr.kind === 'pepr') {
         ctx.globalCompositeOperation = 'hue';
         ctx.fillStyle = `hsla(${(this.t * 160) % 360},100%,50%,.55)`;
         ctx.fillRect(0, 0, w, h);
@@ -1895,6 +2045,13 @@ const Club = {
         ctx.globalCompositeOperation = 'source-over';
         ctx.fillStyle = 'rgba(0,0,20,.25)';
         ctx.fillRect(0, 0, w, h);
+        if (tr.kind === 'zelenac') {
+          // klíží se oči
+          const lid = Math.max(0, Math.sin(this.t * 1.3)) ** 3 * h * 0.5;
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, w, lid);
+          ctx.fillRect(0, h - lid, w, lid);
+        }
       }
       ctx.restore();
     }
@@ -1948,7 +2105,8 @@ const Club = {
         ctx.font = `${16 * dpr}px ${FONT_D}`;
         ctx.textBaseline = 'top';
         ctx.fillStyle = high ? '#ff7ad9' : '#9fb0c7';
-        ctx.fillText(high ? `${tr.kind === 'pepr' ? '❄️ Jedeš' : '💊 Láska'} · ${left} s` : `😵 Dojezd · ${left} s`, w / 2, (pr > 0.05 ? 36 : 14) * dpr);
+        const lab = { pepr: '❄️ Jedeš', smajl: '💊 Láska', houba: '🍄 Vlnění', zelenac: '🌿 Pohoda', turbo: '⚡ Turbo' }[tr.kind];
+        ctx.fillText(high ? `${lab} · ${left} s` : `😵 Dojezd${tr.kind === 'houba' ? ' – ovládání naruby' : ''} · ${left} s`, w / 2, (pr > 0.05 ? 36 : 14) * dpr);
       }
       if (pr > 0.05) {
         ctx.font = `${16 * dpr}px ${FONT_D}`;
@@ -2547,7 +2705,7 @@ const Club = {
       ctx.fillStyle = g;
       ctx.fillRect(e.x - 80, e.y - 120, 160, 160);
     }
-    if (e.me) {
+    if (e.me && !this._photo && !this._ghost) {
       // kroužek pod mým hráčem
       ctx.strokeStyle = 'rgba(255,201,60,.85)';
       ctx.lineWidth = 3;
@@ -2599,7 +2757,7 @@ const Club = {
         ctx.fill();
       }
     }
-    if (e.me && this.phase === 'in') {
+    if (e.me && this.phase === 'in' && !this._photo && !this._ghost) {
       ctx.font = `14px ${FONT_D}`;
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffc93c';
@@ -2621,6 +2779,10 @@ const Club = {
       circle(ctx, q.x, q.y, s);
       ctx.fill();
       ctx.restore();
+    } else if (q.k === 'smoke') {
+      ctx.fillStyle = `rgba(190,230,190,${0.35 * a})`;
+      circle(ctx, q.x, q.y, q.s * (1 + q.t));
+      ctx.fill();
     } else if (q.k === 'spark') {
       ctx.fillStyle = q.col;
       ctx.globalAlpha = a;

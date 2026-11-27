@@ -173,7 +173,7 @@ Na tanečním parketu jde zdarma *Tančit*; dalším klepnutím se mění pohyb 
 
 **Kontakty** – tlačítko 📱 vpravo nahoře ukazuje, od kolika holek máš číslo (0/8). Číslo dá holka za výhru v souboji nebo když s ní (po *Zatančit spolu*) aspoň 10 s tančíš. Za všech 8 čísel je zdarma *Koruna krále klubu*.
 
-**Fotokoutek** – budka *FOTO* vpravo dole: vyfotí tvou postavu s holkou, se kterou tančíš (nebo s tou, od které máš číslo), v rámečku Hot Peppers s datem. Fotka jde *Uložit* nebo *Poslat* (sdílení v telefonu).
+**Fotka** – tlačítko 📸 vlevo nahoře (nebo budka *FOTO* vpravo dole) vyfotí skutečnou scénu z klubu kolem tebe jako z opravdového foťáku: ty s holkou, se kterou tančíš (nebo s tou nejbližší), lidi a světla kolem, blesk, rozmazané pozadí, zrno, viněta, lehce nakřivo a oranžové datum v rohu jako na digitálu. Každá fotka je jiná. Jde *Uložit* nebo *Poslat* (sdílení v telefonu).
 
 **Strip club**
 - *Opilost*: každé pití přidá promile (ukazuje se nahoře). Od ~0,5 ‰ se obraz houpe, od 1 ‰ vidíš dvojitě, joystick ujíždí, postava se motá a škytá. Promile pomalu klesají.
@@ -182,7 +182,7 @@ Na tanečním parketu jde zdarma *Tančit*; dalším klepnutím se mění pohyb 
 - *Tanečnice u tyče*: na pódiích jsou chromové tyče, holky v třpytivém topu a kraťáskách se kolem nich točí a vyšvihují. *Hodit 5 🏆* – poháry letí na pódium a tanečnice se rozjede.
 - *Show*: zhruba každou minutu DJ ohlásí tanečnici („SHOW · LOLA“), na pódium svítí reflektory a kluci se seběhnou fandit.
 - *Soukromý tanec* v separé ve VIP: s holkou, která jde s tebou (*Zatančit spolu*) – 25 🏆, zdarma s tou, co ti dala číslo. Zatáhne se závěs a je vidět jen její stín.
-- *Dealer* u záchodů (WC vedle východu) prodává vymyšlené drogy, které jsou jen ve hře: *Pepřák* (15 🏆, 20 s jízda – duhové barvy, rychlost, tanec samo, pak 15 s šedý dojezd a zpomalení) a *Smajlík* (10 🏆, 25 s růžová láska a srdíčka všude, pak únava). Ochranka tě u dealera může načapat (vyhazov) a dvě dávky naráz = kolaps a vyhazov.
+- *Dealer* u záchodů (WC vedle východu) prodává vymyšlené drogy, které jsou jen ve hře: *Pepřák* (15 🏆, 20 s jízda – duhové barvy, rychlost, tanec samo, pak 15 s šedý dojezd a zpomalení) *Smajlík* (10 🏆, 25 s růžová láska a srdíčka všude, pak únava), *Kouzelná houbička* (12 🏆, 25 s se celý obraz vlní a přelévá v barvách, pak 15 s ovládání naruby), *Zelenáč* (8 🏆, 30 s zpomalený čas, zelený opar a kouř, pak se klíží oči) a *Turbo* (12 🏆, 15 s rychlost ×2,4 s duchy za postavou, pak třes a zpomalení). Ochranka tě u dealera může načapat (vyhazov) a dvě dávky naráz = kolaps a vyhazov.
 - Nahota ani sex se ve hře neukazují.
 
 Klub má disco kouli nad parketem s odlesky po podlaze, dým, reflektory a při hitu lasery z DJ pultu. Hudbu klub skládá sám ve Web Audio (u vchodu je slyšet jen přes zeď). Koupené věci a VIP se ukládají v prohlížeči (`hlavouni.klub`) a synchronizují s účtem.
@@ -340,6 +340,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.63 – tři další vymyšlené drogy (houbička, Zelenáč, Turbo) s vlastními efekty; fotka z klubu jako opravdový snímek z foťáku (tlačítko 📸 kdekoli)
 - 1.62 – klub je strip club: show na stage, soukromý tanec v separé, dealer s vymyšlenými drogami (jízda a dojezd); pryč krknutí a drsné hlášky
 - 1.61 – klub v hovado režimu: chlast a promile, blití a vyhazov ochrankou, strkání, krkání, tanečnice u tyče s házením pohárů, separé, drsnější hlášky
 - 1.60 – klub: taneční souboj (rytmická minihra, výhra = poháry a číslo), kontakty 0/8 s korunou, fotokoutek, styly hudby u DJe, taneční pohyby, disco koule, lasery a dým
