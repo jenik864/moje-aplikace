@@ -341,6 +341,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.66 – mozaika u tanečnic je větší a kreslí se úplně navrch (přes hlavu i ruce), takže je vždycky vidět
 - 1.65 – za každý hod 5 pohárů tanečnice na chvilku flashne (záblesk a mozaika)
 - 1.64 – soukromá show ve VIP (vlastní pódium, vějíře, reflektor), finále show s odhozeným topem a mozaikou
 - 1.63 – tři další vymyšlené drogy (houbička, Zelenáč, Turbo) s vlastními efekty; fotka z klubu jako opravdový snímek z foťáku (tlačítko 📸 kdekoli)

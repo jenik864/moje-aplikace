@@ -2015,6 +2015,7 @@ const Renderer = {
     else if (this._beach) this.drawShades(ctx, p, true);
     if (p.gear) this.drawGear(ctx, p, R, now);
     this.drawArm(ctx, 10 * ch, R + 1, aFront, T, L, false);
+    if (this._dress && L.topless) this.drawCensor(ctx, R, L);
     this._drip = false;
     this._beach = false;
     this._hoop = false;
@@ -3194,6 +3195,21 @@ const Renderer = {
     line(ctx, -12, R - 1, 11, R - 1);
   },
 
+  // Cenzura mozaikou přes poprsí – kreslí se úplně navrch (přes hlavu i ruce), ať je vždycky vidět.
+  drawCensor(ctx, R, L) {
+    const cols = [shade(L.skin, 0.22), shade(L.skin, -0.34), '#e79a9a', shade(L.skin, -0.12), shade(L.skin, 0.08), '#c97a72', shade(L.skin, -0.45)];
+    const sz = 6.5, nx = 5, ny = 3, x0 = -1, y0 = R - 5;
+    for (let i = 0; i < nx; i++) {
+      for (let j = 0; j < ny; j++) {
+        ctx.fillStyle = cols[(i * 3 + j * 5 + i * j) % cols.length];
+        ctx.fillRect(x0 + i * sz, y0 + j * sz, sz, sz);
+      }
+    }
+    ctx.strokeStyle = 'rgba(0,0,0,.6)';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(x0, y0, sz * nx, sz * ny);
+  },
+
   // Upnuté minišaty (holky v klubu Hot Peppers): odhalená ramena, výstřih, výrazná postava.
   drawDress(ctx, R, L) {
     const D = L.dress;
@@ -3246,18 +3262,7 @@ const Renderer = {
         ctx.beginPath();
         ctx.ellipse(15, R + 2, 8.5, 7.5, 0, -Math.PI * 0.6, Math.PI * 0.6);
         ctx.stroke();
-        const cols = [shade(L.skin, -0.1), shade(L.skin, -0.28), shade(L.skin, 0.18), shade(L.skin, -0.2), shade(L.skin, 0.06)];
-        const sz = 6, x0 = 2, y0 = R - 4;
-        for (let i = 0; i < 4; i++) {
-          for (let j = 0; j < 2; j++) {
-            ctx.fillStyle = cols[(i * 2 + j * 3) % cols.length];
-            ctx.fillRect(x0 + i * sz, y0 + j * sz, sz, sz);
-          }
-        }
-        ctx.strokeStyle = 'rgba(0,0,0,.35)';
-        ctx.lineWidth = 0.8;
-        ctx.strokeRect(x0, y0, sz * 4, sz * 2);
-        return;
+        return; // mozaiku kreslí drawCensor až přes hlavu a ruce
       }
       ctx.fillStyle = D.color;
       rrect(ctx, -15, R - 4, 28, 8, 4);
