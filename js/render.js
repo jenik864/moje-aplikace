@@ -3237,6 +3237,28 @@ const Renderer = {
       ctx.strokeStyle = OUTLINE;
       ctx.lineWidth = 2;
       ctx.stroke();
+      if (L.topless) {
+        // top odhozený: poprsí zakryté mozaikou (stejně jako u Suli)
+        ctx.fillStyle = L.skin;
+        oval(ctx, 15, R + 2, 8.5, 7.5);
+        ctx.fill();
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.ellipse(15, R + 2, 8.5, 7.5, 0, -Math.PI * 0.6, Math.PI * 0.6);
+        ctx.stroke();
+        const cols = [shade(L.skin, -0.1), shade(L.skin, -0.28), shade(L.skin, 0.18), shade(L.skin, -0.2), shade(L.skin, 0.06)];
+        const sz = 6, x0 = 2, y0 = R - 4;
+        for (let i = 0; i < 4; i++) {
+          for (let j = 0; j < 2; j++) {
+            ctx.fillStyle = cols[(i * 2 + j * 3) % cols.length];
+            ctx.fillRect(x0 + i * sz, y0 + j * sz, sz, sz);
+          }
+        }
+        ctx.strokeStyle = 'rgba(0,0,0,.35)';
+        ctx.lineWidth = 0.8;
+        ctx.strokeRect(x0, y0, sz * 4, sz * 2);
+        return;
+      }
       ctx.fillStyle = D.color;
       rrect(ctx, -15, R - 4, 28, 8, 4);
       ctx.fill();
