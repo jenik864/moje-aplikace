@@ -74,7 +74,7 @@ Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče,
 
 ## Příběh
 
-Tlačítko *Příběh* v hlavním menu – je odemčený pro všechny (dřív byl zamčený kódem). Nahoře jsou záložky kampaní: **Páv & Suli** (původní příběh, popsaný níž), **Vietnam** (výzva Vietnam, viz níž – tlačítko v hlavním menu zmizelo, je teď tady), **Točná** (18 úrovní) a **Petr Kuba** (7 úrovní). Každá kampaň má vlastní postup; naposledy otevřená kampaň se pamatuje. Tlačítkem *Mám kód* v okně Úkoly jde zadat **hlavní kód**, který odemkne úplně všechno (všechny úrovně Příběhu splněné, Moncler-Jenda, Kiki v bikinách, Michael Bémič, Tlustej páv & Suli, Milan); v kódu se nekontrolují velká/malá písmena, mezery ani háčky. Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
+Tlačítko *Příběh* v hlavním menu – je odemčený pro všechny (dřív byl zamčený kódem). Otevře úvodní obrazovku kampaní: čtyři velké karty **Páv & Suli** (původní příběh, popsaný níž), **Výzva Vietnam** (viz níž), **Točná** (18 úrovní) a **Petr Kuba** (7 úrovní). Na každé kartě jsou postavy kampaně, postup (např. 6 / 10 s ukazatelem), další úroveň, odměny (✓ u získaných) a štítek *Nová / Pokračovat / Dokončeno / Zamčeno*. Klepnutím na kartu se otevře mapa úrovní té kampaně, šipka zpět vede na kampaně. Každá kampaň má vlastní postup; naposledy otevřená kampaň se pamatuje. Tlačítkem *Mám kód* v okně Úkoly jde zadat **hlavní kód**, který odemkne úplně všechno (všechny úrovně Příběhu splněné, Moncler-Jenda, Kiki v bikinách, Michael Bémič, Tlustej páv & Suli, Milan); v kódu se nekontrolují velká/malá písmena, mezery ani háčky. Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
 
 10 úrovní, každá je jeden zápas proti počítači – některé 1 v 1, některé 2 v 2 (spoluhráče máš z tvé dvojice, hraje za něj počítač). Vybereš si svého hráče a postupně odemykáš další úrovně (splněné jde hrát znovu, zamčené si můžeš prohlédnout). Každá úroveň má úkol, bez jeho splnění se nepostoupí; úkol je vidět i během zápasu pod tabulí:
 
@@ -172,6 +172,8 @@ Ze hry jsou v klubu jen klučičí postavy (barman, DJ, ochranka, tanečníci a 
 Na tanečním parketu jde zdarma *Tančit*; dalším klepnutím se mění pohyb (Pohupování, Robot, Točení, Skoky).
 
 **Fotka** – tlačítko 📸 vlevo nahoře (nebo budka *FOTO* vlevo dole) vyfotí skutečnou scénu z klubu kolem tebe jako z opravdového foťáku: ty s holkou, se kterou tančíš (nebo s tou nejbližší), lidi a světla kolem, blesk, rozmazané pozadí, zrno, viněta, lehce nakřivo a oranžové datum v rohu jako na digitálu. Každá fotka je jiná. Jde *Uložit* nebo *Poslat* (sdílení v telefonu).
+
+Klub je vyvedený jako prémiový strip club: černá lesklá mramorová podlaha s odlesky neonů, stěna z prošívané kůže se zlatou lištou a LED páskem, rampa se světly, nápis *Hot Peppers · Gentlemen's Club* v neonové kurzívě, bar z černého mramoru se zlatými lamelami a podsvícenými policemi, kožené boxy u stolků, tmavé skleněné dlaždice na parketu, pódia s LED okrajem a zrcadlem, ve VIP černý koberec se zlatým vzorem, zlaté panely a křišťálový lustr. Výběr postavy, obchody a tlačítka jsou černozlaté.
 
 **VIP (prémium)** – VIP je větší (sahá až dolů k fotokoutku) a má:
 - *Vířivku* se dvěma exkluzivními VIP holkami v plavkách (Diamond a Rubi – nejsou nikde jinde). Tlačítkem *Vířivka* do ní vlezeš, ve vodě je vidět jen to nad hladinou, bublinky, pára, srdíčka a holky kecají („Voda je teplá“, „VIP život“). *Vylézt* tě vrátí ven.
@@ -344,6 +346,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.68 – prémiový vzhled klubu Hot Peppers (mramor, kůže, zlato, neon, lustr, černozlaté menu); Příběh začíná úvodní obrazovkou s kartami kampaní
 - 1.67 – pryč taneční souboj a čísla od holek; VIP prémium: větší VIP, vířivka s VIP holkami, šampus s prskavkami, VIP ohňostroj, zlatý VIP odznak
 - 1.66 – mozaika u tanečnic je větší a kreslí se úplně navrch (přes hlavu i ruce), takže je vždycky vidět
 - 1.65 – za každý hod 5 pohárů tanečnice na chvilku flashne (záblesk a mozaika)

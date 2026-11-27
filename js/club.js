@@ -2019,6 +2019,7 @@ const Club = {
     for (const q of this.parts) if (!(q.k === 'cup' && q.vy === 0)) this.drawPart(ctx, q);
     this.drawLights(ctx, now);
     this.drawDisco(ctx, now);
+    this.drawChandelier(ctx, now);
     this._photo = false;
     if (photo) return;
     // bubliny obsluhy
@@ -2279,6 +2280,45 @@ const Club = {
     ctx.restore();
   },
 
+  // Křišťálový lustr nad VIP a teplé světlo kolem.
+  drawChandelier(ctx, now) {
+    const x = 1300, y = 228, t = now / 1000;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(x, y + 120, 20, x, y + 120, 260);
+    g.addColorStop(0, 'rgba(255,210,130,.16)');
+    g.addColorStop(1, 'rgba(255,210,130,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - 260, y - 140, 520, 520);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(212,165,60,.8)';
+    ctx.lineWidth = 2;
+    line(ctx, x, y - 90, x, y - 26);
+    ctx.fillStyle = '#d4a53c';
+    oval(ctx, x, y - 20, 34, 8);
+    ctx.fill();
+    for (let i = 0; i < 9; i++) {
+      const dx = (i - 4) * 8, len = 22 + (4 - Math.abs(i - 4)) * 6;
+      ctx.strokeStyle = 'rgba(230,240,255,.65)';
+      ctx.lineWidth = 1.2;
+      line(ctx, x + dx, y - 18, x + dx, y - 18 + len);
+      const tw = 0.5 + Math.sin(t * 5 + i * 1.7) * 0.5;
+      ctx.fillStyle = `rgba(255,255,255,${0.55 + tw * 0.45})`;
+      ctx.beginPath();
+      ctx.moveTo(x + dx, y - 18 + len - 4);
+      ctx.lineTo(x + dx + 3, y - 18 + len + 2);
+      ctx.lineTo(x + dx, y - 18 + len + 8);
+      ctx.lineTo(x + dx - 3, y - 18 + len + 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+    for (let i = 0; i < 5; i++) {
+      ctx.fillStyle = 'rgba(255,230,170,.95)';
+      circle(ctx, x - 28 + i * 14, y - 24, 2.6);
+      ctx.fill();
+    }
+  },
+
   // Disco koule nad parketem (odlesky na podlaze kreslí drawRoom).
   drawDisco(ctx, now) {
     const x = 750, y = 262, r = 24, rot = now * 0.0012;
@@ -2321,34 +2361,90 @@ const Club = {
 
   drawRoom(ctx, now) {
     const beat = this.pulse, party = this.fx.hit > 0, vip = this.state().vip;
-    // podlaha
+    // podlaha: černý lesklý mramor s žilkami a odlesky neonů
     const fg = ctx.createLinearGradient(0, CLUB_WALL, 0, CLUB_H);
-    fg.addColorStop(0, '#1d1030');
-    fg.addColorStop(1, '#0f0818');
+    fg.addColorStop(0, '#140a16');
+    fg.addColorStop(0.5, '#0c060f');
+    fg.addColorStop(1, '#070409');
     ctx.fillStyle = fg;
     ctx.fillRect(0, CLUB_WALL, CLUB_W, CLUB_H - CLUB_WALL);
-    ctx.strokeStyle = 'rgba(255,255,255,.035)';
-    ctx.lineWidth = 2;
-    for (let x = 0; x <= CLUB_W; x += 75) line(ctx, x, CLUB_WALL, x, CLUB_FLOOR_B);
-    for (let y = CLUB_WALL; y <= CLUB_FLOOR_B; y += 50) line(ctx, 0, y, CLUB_W, y);
-    // VIP koberec
-    ctx.fillStyle = vip ? '#3a0f1c' : '#2a0c16';
+    if (!this._veins) {
+      const r = mulberry32(77);
+      this._veins = [];
+      for (let i = 0; i < 26; i++) {
+        const x = r() * CLUB_W, y = CLUB_WALL + r() * (CLUB_FLOOR_B - CLUB_WALL);
+        this._veins.push([x, y, x + (r() - 0.5) * 260, y + (r() - 0.5) * 120, x + (r() - 0.5) * 420, y + (r() - 0.5) * 60]);
+      }
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.045)';
+    ctx.lineWidth = 1.5;
+    for (const v of this._veins) {
+      ctx.beginPath();
+      ctx.moveTo(v[0], v[1]);
+      ctx.quadraticCurveTo(v[2], v[3], v[4], v[5]);
+      ctx.stroke();
+    }
+    // odlesky (svislé pruhy pod neony a světly)
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const refl = (x, w, col, a) => {
+      const g = ctx.createLinearGradient(0, CLUB_WALL, 0, CLUB_WALL + 300);
+      g.addColorStop(0, `rgba(${col},${a})`);
+      g.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(x - w / 2, CLUB_WALL, w, 300);
+    };
+    refl(488, 260, '255,60,110', 0.16 + beat * 0.08);
+    refl(750, 340, '80,200,255', 0.1 + beat * 0.06);
+    refl(250, 380, '255,170,90', 0.1);
+    refl(1290, 300, '255,200,80', 0.12);
+    ctx.restore();
+    // VIP: černý koberec se zlatým vzorem
+    ctx.fillStyle = vip ? '#160a0c' : '#120809';
     ctx.fillRect(1116, CLUB_WALL, 354, 612);
-    ctx.strokeStyle = 'rgba(255,201,60,.35)';
+    ctx.fillStyle = 'rgba(212,165,60,.16)';
+    for (let y = CLUB_WALL + 20; y < CLUB_WALL + 600; y += 36) {
+      for (let x = 1134 + ((y / 36) % 2) * 18; x < 1460; x += 36) {
+        ctx.beginPath();
+        ctx.moveTo(x, y - 7);
+        ctx.lineTo(x + 6, y);
+        ctx.lineTo(x, y + 7);
+        ctx.lineTo(x - 6, y);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+    ctx.strokeStyle = 'rgba(212,165,60,.7)';
     ctx.lineWidth = 3;
     ctx.strokeRect(1128, CLUB_WALL + 10, 330, 590);
+    ctx.strokeStyle = 'rgba(212,165,60,.3)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(1136, CLUB_WALL + 18, 314, 574);
     this.drawTub(ctx, now);
-    // taneční parket: LED dlaždice do rytmu
+    // taneční parket: tmavé skleněné dlaždice s jemným podsvícením
     const D = CLUB_DANCE, cols = 8, rows = 6, tw = (D.x1 - D.x0) / cols, th = (D.y1 - D.y0) / rows;
-    ctx.fillStyle = '#0a0612';
-    ctx.fillRect(D.x0 - 8, D.y0 - 8, D.x1 - D.x0 + 16, D.y1 - D.y0 + 16);
+    ctx.fillStyle = '#050307';
+    rrect(ctx, D.x0 - 10, D.y0 - 10, D.x1 - D.x0 + 20, D.y1 - D.y0 + 20, 14);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(212,165,60,.55)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
     for (let i = 0; i < cols; i++) {
       for (let j = 0; j < rows; j++) {
-        const hue = (i * 37 + j * 53 + this.beatN * (party ? 90 : 45)) % 360;
-        const lit = ((i + j + this.beatN) % 3 === 0 ? 0.55 : 0.18) + beat * 0.35;
-        ctx.fillStyle = `hsla(${hue},95%,${party ? 58 : 50}%,${Math.min(1, lit)})`;
-        rrect(ctx, D.x0 + i * tw + 3, D.y0 + j * th + 3, tw - 6, th - 6, 6);
+        const hue = (i * 23 + j * 31 + this.beatN * (party ? 70 : 25)) % 360;
+        const on = (i + j + this.beatN) % 4 === 0;
+        const x = D.x0 + i * tw + 3, y = D.y0 + j * th + 3;
+        const g = ctx.createLinearGradient(x, y, x, y + th);
+        g.addColorStop(0, `hsla(${hue},80%,${on ? 45 : 22}%,${on ? 0.7 + beat * 0.3 : 0.35})`);
+        g.addColorStop(1, `hsla(${hue},80%,10%,.4)`);
+        ctx.fillStyle = g;
+        rrect(ctx, x, y, tw - 6, th - 6, 5);
         ctx.fill();
+        ctx.strokeStyle = `hsla(${hue},100%,70%,${on ? 0.55 : 0.12})`;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,.05)';
+        ctx.fillRect(x + 4, y + 3, tw - 14, 3);
       }
     }
     // louže od blití
@@ -2381,49 +2477,111 @@ const Club = {
       ctx.fill();
     }
     ctx.restore();
-    // zadní stěna
-    const wg = ctx.createLinearGradient(0, 0, 0, CLUB_WALL);
-    wg.addColorStop(0, '#120a1d');
-    wg.addColorStop(1, '#22123a');
-    ctx.fillStyle = wg;
+    // zadní stěna: prošívaná kůže, zlaté lišty, LED pásek
+    ctx.fillStyle = '#1a0a14';
     ctx.fillRect(0, 0, CLUB_W, CLUB_WALL);
-    ctx.fillStyle = 'rgba(0,0,0,.35)';
-    ctx.fillRect(0, CLUB_WALL - 10, CLUB_W, 10);
-    // police s lahvemi nad barem
-    for (const sy of [62, 112]) {
-      ctx.fillStyle = '#3b2a1c';
-      ctx.fillRect(60, sy, 380, 6);
+    ctx.strokeStyle = 'rgba(0,0,0,.45)';
+    ctx.lineWidth = 1.5;
+    for (let x = -CLUB_WALL; x < CLUB_W; x += 26) {
+      line(ctx, x, 0, x + CLUB_WALL, CLUB_WALL);
+      line(ctx, x + CLUB_WALL, 0, x, CLUB_WALL);
+    }
+    ctx.fillStyle = 'rgba(255,255,255,.07)';
+    for (let x = 13; x < CLUB_W; x += 26) for (let y = 13; y < CLUB_WALL - 14; y += 26) {
+      circle(ctx, x, y, 1.6);
+      ctx.fill();
+    }
+    const wsh = ctx.createLinearGradient(0, 0, 0, CLUB_WALL);
+    wsh.addColorStop(0, 'rgba(0,0,0,.55)');
+    wsh.addColorStop(0.5, 'rgba(0,0,0,0)');
+    wsh.addColorStop(1, 'rgba(0,0,0,.35)');
+    ctx.fillStyle = wsh;
+    ctx.fillRect(0, 0, CLUB_W, CLUB_WALL);
+    // rampa se světly nahoře
+    ctx.fillStyle = '#0b0b10';
+    ctx.fillRect(0, 0, CLUB_W, 12);
+    for (let x = 60; x < CLUB_W; x += 120) {
+      ctx.fillStyle = '#22232c';
+      rrect(ctx, x - 10, 6, 20, 16, 4);
+      ctx.fill();
+      ctx.fillStyle = `hsla(${(x + this.beatN * 40) % 360},100%,70%,${0.6 + beat * 0.4})`;
+      circle(ctx, x, 20, 4);
+      ctx.fill();
+    }
+    // zlatá lišta a LED pásek u podlahy
+    ctx.fillStyle = '#b8862b';
+    ctx.fillRect(0, CLUB_WALL - 16, CLUB_W, 3);
+    const ledHue = (this.t * 30) % 360;
+    ctx.fillStyle = `hsla(${ledHue},100%,62%,.9)`;
+    ctx.fillRect(0, CLUB_WALL - 10, CLUB_W, 3);
+    const lg = ctx.createLinearGradient(0, CLUB_WALL - 10, 0, CLUB_WALL + 40);
+    lg.addColorStop(0, `hsla(${ledHue},100%,60%,.28)`);
+    lg.addColorStop(1, `hsla(${ledHue},100%,60%,0)`);
+    ctx.fillStyle = lg;
+    ctx.fillRect(0, CLUB_WALL - 10, CLUB_W, 50);
+    // podsvícené police s lahvemi nad barem
+    const sg = ctx.createRadialGradient(250, 80, 20, 250, 80, 230);
+    sg.addColorStop(0, 'rgba(255,170,90,.35)');
+    sg.addColorStop(1, 'rgba(255,170,90,0)');
+    ctx.fillStyle = '#120a08';
+    rrect(ctx, 50, 22, 400, 108, 8);
+    ctx.fill();
+    ctx.fillStyle = sg;
+    ctx.fillRect(50, 22, 400, 108);
+    ctx.strokeStyle = '#b8862b';
+    ctx.lineWidth = 2;
+    rrect(ctx, 50, 22, 400, 108, 8);
+    ctx.stroke();
+    for (const sy of [70, 120]) {
+      ctx.fillStyle = 'rgba(255,220,170,.6)';
+      ctx.fillRect(60, sy, 380, 3);
       for (let i = 0; i < 13; i++) {
-        const bx = 74 + i * 28, hue = (i * 67) % 360;
-        ctx.fillStyle = `hsla(${hue},70%,55%,.85)`;
+        const bx = 72 + i * 28, hue = [30, 45, 120, 200, 0, 280][i % 6];
+        ctx.fillStyle = `hsla(${hue},60%,${40 + (i % 3) * 8}%,.9)`;
         rrect(ctx, bx, sy - 30, 14, 30, 4);
         ctx.fill();
         ctx.fillRect(bx + 4, sy - 40, 6, 12);
-        ctx.fillStyle = 'rgba(255,255,255,.35)';
-        ctx.fillRect(bx + 3, sy - 26, 2.5, 18);
+        ctx.fillStyle = 'rgba(255,255,255,.4)';
+        ctx.fillRect(bx + 3, sy - 26, 2, 18);
       }
     }
     // LED stěna za DJem s ekvalizérem
-    ctx.fillStyle = '#05030a';
-    rrect(ctx, 580, 14, 340, 118, 10);
+    ctx.fillStyle = '#030205';
+    rrect(ctx, 580, 18, 340, 114, 10);
     ctx.fill();
+    ctx.strokeStyle = '#b8862b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
     for (let i = 0; i < 20; i++) {
       const hgt = 14 + Math.abs(Math.sin(i * 1.7 + this.beatPos * 3.1)) * 70 * (0.5 + beat * 0.6);
-      ctx.fillStyle = `hsl(${(i * 14 + this.beatN * 30) % 360},95%,60%)`;
-      ctx.fillRect(594 + i * 16.4, 124 - hgt, 11, hgt);
+      for (let y = 124; y > 124 - hgt; y -= 6) {
+        ctx.fillStyle = `hsla(${(i * 9 + 300 + (124 - y) * 1.2) % 360},95%,60%,.9)`;
+        ctx.fillRect(594 + i * 16.4, y - 4, 11, 4);
+      }
     }
     // neon HOT PEPPERS (bliká do rytmu)
     this.drawSign(ctx, 750, 0, beat, now);
-    // VIP stěna se zlatými panely
+    // VIP stěna: zlaté panely s nástěnnými světly
     for (let i = 0; i < 5; i++) {
-      ctx.fillStyle = i % 2 ? '#2a1a08' : '#3a2408';
+      const g = ctx.createLinearGradient(1130 + i * 66, 20, 1190 + i * 66, 140);
+      g.addColorStop(0, '#3a2a10');
+      g.addColorStop(0.5, '#6a4c18');
+      g.addColorStop(1, '#2a1c08');
+      ctx.fillStyle = g;
       ctx.fillRect(1130 + i * 66, 20, 60, 120);
-      ctx.strokeStyle = 'rgba(255,201,60,.5)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,215,120,.6)';
+      ctx.lineWidth = 1.5;
       ctx.strokeRect(1136 + i * 66, 28, 48, 104);
     }
-    this.neonText(ctx, 'VIP', 1290, 84, 44, '#ffc93c', beat);
-    this.neonText(ctx, 'BAR', 250, 26, 26, '#4fe0ff', beat);
+    for (const x of [1130, 1460]) {
+      const g = ctx.createRadialGradient(x, 50, 2, x, 50, 60);
+      g.addColorStop(0, 'rgba(255,220,150,.7)');
+      g.addColorStop(1, 'rgba(255,220,150,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(x - 60, -10, 120, 120);
+    }
+    this.neonText(ctx, 'VIP', 1295, 82, 46, '#ffc93c', beat);
+    this.neonText(ctx, 'BAR', 250, 14, 20, '#ffb46a', beat);
     // spodní stěna s východem
     ctx.fillStyle = '#0a0612';
     ctx.fillRect(0, CLUB_FLOOR_B, CLUB_W, CLUB_H - CLUB_FLOOR_B);
@@ -2457,27 +2615,46 @@ const Club = {
   },
 
   drawSign(ctx, x, y, beat, now) {
-    const flick = Math.sin(now * 0.031) > 0.97 ? 0.4 : 1;
-    // nápis vlevo od DJe, paprička vpravo
+    const flick = Math.sin(now * 0.031) > 0.97 ? 0.45 : 1;
     ctx.save();
     ctx.globalAlpha = flick;
-    this.neonText(ctx, 'HOT', 488, 52, 40, '#ff3d5a', beat);
-    this.neonText(ctx, 'PEPPERS', 488, 100, 30, '#ff3d5a', beat);
-    // paprička
+    // nápis kurzívou mezi barem a DJem
+    ctx.font = `italic 44px ${FONT_D}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    for (const [w, a] of [[22, 0.12 + beat * 0.08], [12, 0.28], [6, 0.6]]) {
+      ctx.strokeStyle = `rgba(255,50,110,${a})`;
+      ctx.lineWidth = w;
+      ctx.strokeText('Hot', 515, 50);
+      ctx.strokeText('Peppers', 515, 96);
+    }
+    ctx.fillStyle = '#ffe6ef';
+    ctx.fillText('Hot', 515, 50);
+    ctx.fillText('Peppers', 515, 96);
+    ctx.font = `13px ${FONT_D}`;
+    ctx.fillStyle = 'rgba(255,215,140,.9)';
+    ctx.fillText('GENTLEMEN\'S CLUB · 18+', 515, 130);
+    // paprička neonem
     ctx.translate(1010, 72);
     ctx.rotate(0.35);
-    ctx.strokeStyle = hexA('#ff3d5a', 0.3 + beat * 0.2);
-    ctx.lineWidth = 16;
     ctx.lineCap = 'round';
+    for (const [w, a] of [[22, 0.15], [12, 0.35]]) {
+      ctx.strokeStyle = `rgba(255,50,90,${a + beat * 0.1})`;
+      ctx.lineWidth = w;
+      ctx.beginPath();
+      ctx.moveTo(-26, -6);
+      ctx.quadraticCurveTo(0, 30, 32, 26);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = '#ff7a8e';
+    ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.moveTo(-26, -6);
     ctx.quadraticCurveTo(0, 30, 32, 26);
     ctx.stroke();
-    ctx.strokeStyle = '#ff5a6e';
-    ctx.lineWidth = 9;
-    ctx.stroke();
-    ctx.strokeStyle = '#3dff7a';
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#7dff9a';
+    ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(-26, -6);
     ctx.quadraticCurveTo(-34, -16, -26, -24);
@@ -2498,21 +2675,45 @@ const Club = {
       }
     };
     if (q.kind === 'bar') {
-      box(q.x0, q.y0, q.x1, q.y1, 40, '#5a3a22', '#2a1a10', '#ffc93c');
-      ctx.fillStyle = hexA('#4fe0ff', 0.5 + this.pulse * 0.4);
-      ctx.fillRect(q.x0, q.y1 - 8, q.x1 - q.x0, 4);
-      // židličky
+      // černý mramor, zlatá hrana, zlaté lamely a podsvícení
+      box(q.x0, q.y0, q.x1, q.y1, 40, '#15121a', '#0c0a10', '#d4a53c');
+      ctx.fillStyle = 'rgba(255,255,255,.08)';
+      ctx.fillRect(q.x0 + 10, q.y0 - 36, q.x1 - q.x0 - 20, 3);
+      ctx.fillStyle = 'rgba(212,165,60,.5)';
+      for (let x = q.x0 + 12; x < q.x1; x += 18) ctx.fillRect(x, q.y1 - 34, 2, 26);
+      const ug = ctx.createLinearGradient(0, q.y1 - 8, 0, q.y1 + 22);
+      ug.addColorStop(0, `rgba(255,120,170,${0.55 + this.pulse * 0.3})`);
+      ug.addColorStop(1, 'rgba(255,120,170,0)');
+      ctx.fillStyle = ug;
+      ctx.fillRect(q.x0, q.y1 - 8, q.x1 - q.x0, 30);
+      // chromové židličky s koženým sedákem
       for (let x = q.x0 + 40; x < q.x1; x += 75) {
-        ctx.fillStyle = '#111';
+        ctx.fillStyle = '#9aa0ae';
         ctx.fillRect(x - 2, q.y1 + 4, 4, 22);
-        ctx.fillStyle = '#c0283d';
+        oval(ctx, x, q.y1 + 26, 9, 3);
+        ctx.fill();
+        ctx.fillStyle = '#6a0f1f';
         oval(ctx, x, q.y1 + 4, 15, 6);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.18)';
+        oval(ctx, x - 4, q.y1 + 2, 6, 2);
         ctx.fill();
       }
     } else if (q.kind === 'dj') {
-      box(q.x0, q.y0, q.x1, q.y1, 52, '#202634', '#111521', null);
-      ctx.fillStyle = `hsl(${(this.beatN * 40) % 360},95%,60%)`;
-      ctx.fillRect(q.x0 + 10, q.y1 - 30, q.x1 - q.x0 - 20, 6);
+      box(q.x0, q.y0, q.x1, q.y1, 52, '#121018', '#07060a', '#d4a53c');
+      const lg = ctx.createLinearGradient(q.x0, 0, q.x1, 0);
+      lg.addColorStop(0, `hsla(${(this.beatN * 40) % 360},95%,60%,.2)`);
+      lg.addColorStop(0.5, `hsla(${(this.beatN * 40 + 60) % 360},95%,62%,.95)`);
+      lg.addColorStop(1, `hsla(${(this.beatN * 40 + 120) % 360},95%,60%,.2)`);
+      ctx.fillStyle = lg;
+      ctx.fillRect(q.x0 + 10, q.y1 - 30, q.x1 - q.x0 - 20, 5);
+      ctx.save();
+      ctx.font = `italic 18px ${FONT_D}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(255,215,140,.85)';
+      ctx.fillText('HP', (q.x0 + q.x1) / 2, q.y1 - 14);
+      ctx.restore();
       for (const dx of [40, 180]) {
         ctx.fillStyle = '#0b0d14';
         circle(ctx, q.x0 + dx, q.y0 - 34, 22);
@@ -2524,24 +2725,27 @@ const Club = {
         line(ctx, q.x0 + dx, q.y0 - 34, q.x0 + dx + Math.cos(now * 0.01 + dx) * 18, q.y0 - 34 + Math.sin(now * 0.01 + dx) * 18);
       }
     } else if (q.kind === 'speaker') {
-      box(q.x0, q.y0, q.x1, q.y1, 120, '#1a1d26', '#10121a', null);
+      box(q.x0, q.y0, q.x1, q.y1, 120, '#101014', '#08080b', '#d4a53c');
       const k = 1 + this.pulse * 0.12;
       for (const [dy, r] of [[-86, 16], [-38, 22]]) {
-        ctx.fillStyle = '#05060a';
+        ctx.fillStyle = '#020203';
         circle(ctx, (q.x0 + q.x1) / 2, q.y1 + dy, r * k);
         ctx.fill();
-        ctx.strokeStyle = '#3a4152';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#9aa0ae';
+        ctx.lineWidth = 2.5;
         ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,.12)';
+        circle(ctx, (q.x0 + q.x1) / 2 - r * 0.3, q.y1 + dy - r * 0.3, r * 0.25);
+        ctx.fill();
       }
     } else if (q.kind === 'wardrobe') {
       // věšák s oblečením vzadu, šatnářka a pult vepředu
       const rx0 = q.x0 + 10, rx1 = q.x1 - 10, ry = q.y0 - 70;
-      ctx.fillStyle = '#8a93a8';
-      ctx.fillRect(rx0, ry, rx1 - rx0, 5);
-      ctx.fillRect(rx0, ry, 5, 74);
-      ctx.fillRect(rx1 - 5, ry, 5, 74);
-      const cols = ['#ff7ad9', '#4fe0ff', '#ffc93c', '#f7f8fa', '#7a5cff', '#22c47a', '#ff5a3d'];
+      ctx.fillStyle = '#d4a53c';
+      ctx.fillRect(rx0, ry, rx1 - rx0, 4);
+      ctx.fillRect(rx0, ry, 4, 74);
+      ctx.fillRect(rx1 - 4, ry, 4, 74);
+      const cols = ['#111015', '#5a0c1e', '#e8d3a8', '#1d1730', '#8a1430', '#0e0d12', '#c9a03a'];
       for (let i = 0; i < 9; i++) {
         const x = rx0 + 16 + i * ((rx1 - rx0 - 32) / 8);
         ctx.fillStyle = cols[i % cols.length];
@@ -2555,7 +2759,7 @@ const Club = {
       }
       this.neonText(ctx, 'ŠATNA', (q.x0 + q.x1) / 2, ry - 26, 24, '#ff7ad9', this.pulse);
       for (const n of this.npcs) if (n.staff === 'wardrobe') this.drawChar(ctx, n, now);
-      box(q.x0, q.y1 - 40, q.x1, q.y1, 40, '#4a3a5e', '#251c33', '#ff7ad9');
+      box(q.x0, q.y1 - 40, q.x1, q.y1, 40, '#15121a', '#0c0a10', '#d4a53c');
     } else if (q.kind === 'booth') {
       // fotokoutek: budka se závěsem a bleskem
       box(q.x0, q.y0, q.x1, q.y1, 120, '#2b1a3a', '#1a0f26', '#ff4d9a');
@@ -2621,16 +2825,34 @@ const Club = {
     ctx.fillStyle = 'rgba(0,0,0,.4)';
     oval(ctx, q.x, q.y + 6, r + 6, 16);
     ctx.fill();
-    ctx.fillStyle = '#1c1228';
+    // černý lesklý válec se zlatou obručí a LED okrajem, nahoře zrcadlo
+    const bg = ctx.createLinearGradient(q.x - r, 0, q.x + r, 0);
+    bg.addColorStop(0, '#08060c');
+    bg.addColorStop(0.45, '#2a2532');
+    bg.addColorStop(1, '#08060c');
+    ctx.fillStyle = bg;
     ctx.fillRect(q.x - r, q.y - h, r * 2, h);
     oval(ctx, q.x, q.y, r, 15);
     ctx.fill();
-    const hue = (this.beatN * 50 + q.x) % 360;
-    ctx.strokeStyle = `hsla(${hue},100%,62%,${0.6 + this.pulse * 0.4})`;
+    ctx.strokeStyle = '#d4a53c';
+    ctx.lineWidth = 2;
+    oval(ctx, q.x, q.y - 6, r, 15);
+    ctx.stroke();
+    const hue = q.vip ? 45 : (this.beatN * 50 + q.x) % 360;
+    const glow = ctx.createRadialGradient(q.x, q.y - h, r * 0.6, q.x, q.y - h, r * 1.6);
+    glow.addColorStop(0, `hsla(${hue},100%,60%,${0.25 + this.pulse * 0.2})`);
+    glow.addColorStop(1, `hsla(${hue},100%,60%,0)`);
+    ctx.fillStyle = glow;
+    ctx.fillRect(q.x - r * 1.7, q.y - h - r, r * 3.4, r * 2);
+    ctx.strokeStyle = `hsla(${hue},100%,65%,${0.7 + this.pulse * 0.3})`;
     ctx.lineWidth = 3;
     oval(ctx, q.x, q.y - h, r, 15);
     ctx.stroke();
-    ctx.fillStyle = '#2a1c3c';
+    const mg = ctx.createLinearGradient(q.x - r, q.y - h - 13, q.x + r, q.y - h + 13);
+    mg.addColorStop(0, '#2a2a36');
+    mg.addColorStop(0.5, '#6a6a80');
+    mg.addColorStop(1, '#1a1a24');
+    ctx.fillStyle = mg;
     oval(ctx, q.x, q.y - h, r - 2, 13);
     ctx.fill();
     ctx.strokeStyle = `hsla(${hue},100%,62%,.5)`;
@@ -2673,6 +2895,23 @@ const Club = {
   },
 
   _drawTable(ctx, t, now) {
+    if (!t.vip) {
+      // půlkruhový kožený box za stolkem
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#3a0812';
+      ctx.lineWidth = 22;
+      ctx.beginPath();
+      ctx.ellipse(t.x, t.y - 30, 56, 26, 0, Math.PI * 1.05, Math.PI * 1.95);
+      ctx.stroke();
+      ctx.strokeStyle = '#6a1424';
+      ctx.lineWidth = 14;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.12)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(t.x, t.y - 34, 56, 26, 0, Math.PI * 1.15, Math.PI * 1.85);
+      ctx.stroke();
+    }
     ctx.fillStyle = 'rgba(0,0,0,.35)';
     oval(ctx, t.x, t.y + 4, 30, 11);
     ctx.fill();

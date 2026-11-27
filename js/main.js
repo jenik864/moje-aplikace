@@ -452,7 +452,8 @@ const Game = {
 
   /* ---------------- příběh ---------------- */
 
-  openStory() {
+  // hub = úvodní obrazovka s kampaněmi (z menu); jinak rovnou mapa kampaně (po zápase)
+  openStory(hub) {
     if (Online.active) Online.leave();
     this.storySync();
     this.cup = null;
@@ -468,7 +469,8 @@ const Game = {
     Sound.quiet = true;
     Sound.crowdLevel(0.02);
     if (!this.match || this.match.setup.demo !== true) this.newDemo();
-    UI.showStory();
+    if (hub) UI.showHub();
+    else UI.showStory();
   },
 
   // Kód: příběh, nebo hlavní kód, který odemkne úplně všechno. Vrací 'story', 'all' nebo ''.
@@ -2765,7 +2767,22 @@ const UI = {
     });
     click('btn-story', () => {
       this.goFullscreen();
-      Game.openStory();
+      Game.openStory(true);
+    });
+    click('btn-hub-back', () => Game.toHome());
+    $('hub-cards').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-camp]');
+      if (!b) return;
+      Sound.init();
+      Sound.click();
+      const id = b.dataset.camp;
+      if (id === 'viet') {
+        this.showViet();
+        return;
+      }
+      Story.use(id);
+      this.storySel = -1;
+      this.showStory();
     });
     click('btn-unlock-back', () => this.show('home'));
     click('btn-code', () => this.showUnlock(true));
@@ -2806,7 +2823,7 @@ const UI = {
       }
     });
     $('unlock-code').addEventListener('input', () => { $('unlock-err').hidden = true; });
-    click('btn-story-back', () => Game.toHome());
+    click('btn-story-back', () => this.showHub());
     click('btn-sc-prev', () => this.storyCycle(-1));
     click('btn-sc-next', () => this.storyCycle(1));
     click('btn-gold', () => {
@@ -2822,7 +2839,7 @@ const UI = {
       if (this.storySel >= 0) Game.playStory(this.storySel);
     });
     click('btn-viet-close', () => {
-      if (Game.screen === 'story') this.showStory(true);
+      if (Game.screen === 'story') this.showHub();
       else this.show('home');
     });
     document.querySelectorAll('#camp-tabs button').forEach((b) => b.addEventListener('click', () => {
@@ -3468,6 +3485,45 @@ const UI = {
     this.showStory(true);
   },
 
+  // Úvodní obrazovka Příběhu: velké karty kampaní s postavami, postupem a odměnami.
+  showHub() {
+    const $ = (id) => document.getElementById(id);
+    $('story').classList.add('hub');
+    this.show('story');
+    const kitOf = (id) => {
+      const d = duoOf(id);
+      return d >= 0 ? DUO_TEAMS[d] : charById(id).kit || SIDE_COLORS[0];
+    };
+    const names = { trana: 'Tráňa', moncler: 'Moncler-Jenda', truegold: 'True Gold Kiki', pav: 'Tlustej páv & Suli', berry: 'Bémič Š. & Berry', nikol: 'Nikol & Luďan', kuba: 'Petr Kuba', kubams: 'Petr Kuba MS' };
+    const rewardsOf = (levels) => {
+      const out = [];
+      for (const lv of levels) {
+        for (const k of [lv.reward, lv.bonus && lv.bonus.reward]) {
+          if (!k) continue;
+          out.push(`${Unlocks.has(k) ? '✓ ' : ''}${names[k] || (STORY_REWARDS[k] && STORY_REWARDS[k].name) || k}`);
+        }
+      }
+      return out;
+    };
+    const cards = [
+      { id: 'pav', name: 'Páv & Suli', sub: 'Původní příběh · 1 v 1 i 2 v 2', chars: ['pav', 'sully'], c: ['#0d9488', '#062b2f'], done: Story.doneOf('pav'), total: CAMPAIGNS.pav.levels.length, levels: CAMPAIGNS.pav.levels },
+      { id: 'viet', name: 'Výzva Vietnam', sub: 'Jen 2 v 2 s parťákem online', chars: ['trana', 'v_minh'], c: ['#c81e2a', '#3a0608'], done: Viet.done(), total: VIET.length, levels: VIET, locked: !vietOpen() },
+      { id: 'tocna', name: 'Točná', sub: '18 zápasů na vesnici', chars: ['nikol', 'ludan'], c: ['#ea580c', '#3a1004'], done: Story.doneOf('tocna'), total: CAMPAIGNS.tocna.levels.length, levels: CAMPAIGNS.tocna.levels },
+      { id: 'kuba', name: 'Petr Kuba', sub: 'Rozhodčí odkládají píšťalky', chars: ['kuba', 'milan'], c: ['#4b4b57', '#0b0b10'], done: Story.doneOf('kuba'), total: CAMPAIGNS.kuba.levels.length, levels: CAMPAIGNS.kuba.levels },
+    ];
+    const box = $('hub-cards');
+    box.innerHTML = cards.map((k) => {
+      const pct = Math.round((k.done / k.total) * 100);
+      const badge = k.locked ? '<span class="hub-badge locked">🔒 Zamčeno</span>' : k.done >= k.total ? '<span class="hub-badge done">Dokončeno ✓</span>' : k.done > 0 ? '<span class="hub-badge go">Pokračovat</span>' : '<span class="hub-badge new">Nová</span>';
+      const next = k.done < k.total ? `Další: ${k.levels[k.done].title || k.levels[k.done].short || ''}` : 'Všechno splněno';
+      const rw = rewardsOf(k.levels);
+      return `<button type="button" class="hub-card" data-camp="${k.id}" style="--c1:${k.c[0]};--c2:${k.c[1]}">${badge}<div class="hub-art"><canvas data-ch="${k.chars[0]}" data-f="1"></canvas><canvas data-ch="${k.chars[1]}" data-f="-1"></canvas></div><div class="hub-info"><b class="hub-name">${k.name}</b><span class="hub-sub">${k.sub}</span><span class="hub-next">${next}</span><span class="hub-bar"><i style="width:${pct}%"></i></span><span class="hub-prog">${k.done} / ${k.total}</span><span class="hub-rewards">🎁 ${rw.join(' · ')}</span></div></button>`;
+    }).join('');
+    requestAnimationFrame(() => {
+      for (const cv of box.querySelectorAll('canvas')) Renderer.portrait(cv, cv.dataset.ch, kitOf(cv.dataset.ch), Number(cv.dataset.f), undefined, { happy: true });
+    });
+  },
+
   // Mapa příběhu: 10 úrovní, výběr hráče, skin a odměny.
   showStory(keepSel) {
     const $ = (id) => document.getElementById(id);
@@ -3475,8 +3531,9 @@ const UI = {
     const d = duoOf(me), T = d >= 0 ? DUO_TEAMS[d] : look.kit || SIDE_COLORS[0];
     const skinId = ownedSkinFor(me);
     const skin = mySkinFor(me);
+    $('story').classList.remove('hub');
     $('story-prog').textContent = `${st.done} / ${STORY.length}`;
-    $('story-title').textContent = 'Příběh';
+    $('story-title').textContent = (CAMPAIGNS[Story.campaign] || CAMPAIGNS.pav).name;
     document.querySelectorAll('#camp-tabs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.camp === Story.campaign)));
     $('story-map').style.setProperty('--cols', STORY.length > 10 ? 9 : 5);
     $('story-map').classList.toggle('many', STORY.length > 10);
