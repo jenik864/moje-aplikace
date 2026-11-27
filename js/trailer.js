@@ -546,7 +546,7 @@ const Trailer = {
       }
       this.text(ctx, String(i + 1), x - 48, y - 46, 28, { alpha: trClamp(k) });
       if (boss) this.text(ctx, 'BOSS', x, y + 52, 22, { ui: true, color: '#ffd0d0', alpha: trClamp(k) });
-      if (STORY[i].reward) this.text(ctx, '🎁', x + 56, y - 66, 30, { ui: true, alpha: trClamp(k) });
+      if (STORY[i].reward || STORY[i].bonus) this.text(ctx, '🎁', x + 56, y - 66, 30, { ui: true, alpha: trClamp(k) });
     });
   },
 

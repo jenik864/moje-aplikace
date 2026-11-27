@@ -450,7 +450,7 @@ const Game = {
     const norm = String(code || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').toUpperCase();
     const h = codeHash(norm);
     if (h === MASTER_CODE) {
-      for (const k of ['story', 'moncler', 'on.moncler', 'pav', 'milan', 'bikini', 'michael']) Unlocks.set(k);
+      for (const k of ['story', 'moncler', 'on.moncler', 'pav', 'milan', 'bikini', 'michael', 'truegold']) Unlocks.set(k);
       const st = Story.get();
       st.done = STORY.length;
       Story.save(st);
@@ -475,7 +475,23 @@ const Game = {
   // Zapnout/vypnout skin (platí pro svou postavu, i online).
   toggleSkin(id) {
     if (!skinOwned(id)) return;
-    Unlocks.set('on.' + id, !Unlocks.has('on.' + id));
+    const on = !Unlocks.has('on.' + id);
+    // u jedné postavy může být zapnutý jen jeden skin
+    if (on) for (const o of ownedSkinsFor(SKINS[id].char)) Unlocks.set('on.' + o, false);
+    Unlocks.set('on.' + id, on);
+    this.skinChanged();
+  },
+
+  // Přepnout skin postavy dokola: žádný → první → druhý → … → žádný.
+  cycleSkin(charId) {
+    const owned = ownedSkinsFor(charId);
+    if (!owned.length) return;
+    const next = owned[owned.indexOf(mySkinFor(charId)) + 1] || '';
+    for (const o of owned) Unlocks.set('on.' + o, o === next);
+    this.skinChanged();
+  },
+
+  skinChanged() {
     Sound.click();
     if (this.mode === 'guest') Online.publish({ skins: mySkins() });
     if (this.screen === 'lobby') {
@@ -554,7 +570,22 @@ const Game = {
         rewards.push(rw);
       }
     }
-    this.storyRes = { id: s.id, idx, win, won, rewards };
+    // bonusová odměna (např. bez obdrženého gólu)
+    let bonusMissed = false;
+    if (win && lv.bonus && !Unlocks.has(lv.bonus.reward)) {
+      if (storyGoalMet(lv.bonus.goal, m.score[t], m.score[1 - t], won)) {
+        const rb = lv.bonus.reward;
+        Unlocks.set(rb);
+        if (SKINS[rb]) {
+          for (const o of ownedSkinsFor(SKINS[rb].char)) Unlocks.set('on.' + o, false);
+          Unlocks.set('on.' + rb);
+        }
+        rewards.push(rb);
+      } else {
+        bonusMissed = true;
+      }
+    }
+    this.storyRes = { id: s.id, idx, win, won, rewards, bonusMissed };
     return this.storyRes;
   },
 
@@ -2697,11 +2728,13 @@ const UI = {
     click('btn-sc-prev', () => this.storyCycle(-1));
     click('btn-sc-next', () => this.storyCycle(1));
     click('btn-gold', () => {
-      const id = ownedSkinFor(Game.storyChar());
-      if (id) Game.toggleSkin(id);
+      Game.cycleSkin(Game.storyChar());
       this.showStory(true);
     });
-    click('btn-story-reward', () => this.showReward(STORY[this.storySel] && STORY[this.storySel].reward));
+    click('btn-story-reward', () => {
+      const lv = STORY[this.storySel];
+      if (lv) this.showReward(lv.reward || (lv.bonus && lv.bonus.reward));
+    });
     click('btn-reward-close', () => this.show('story'));
     click('btn-story-play', () => {
       if (this.storySel >= 0) Game.playStory(this.storySel);
@@ -3220,8 +3253,11 @@ const UI = {
         this.el.resSub.textContent = `Odměna: ${txt}!`;
         setTimeout(() => {
           Sound.fanfare();
-          this.toast(sr.rewards.includes('pav') ? 'Odemčena dvojice Tlustej páv & Suli!' : 'Odměna: skin MONCLER-JENDA! Zapneš ho, když hraješ za Jendu.');
+          this.toast(sr.rewards.includes('pav') ? 'Odemčena dvojice Tlustej páv & Suli!' : `Odměna: ${txt}! Skin máš hned na sobě.`);
         }, 700);
+      } else if (sr.bonusMissed) {
+        const lb = STORY[sr.idx].bonus;
+        this.el.resSub.textContent = `Postup ✓ · bonus ${STORY_REWARDS[lb.reward].name} jen když: ${storyGoalText(lb.goal).toLowerCase()}`;
       }
     }
     this.show('result');
@@ -3259,7 +3295,7 @@ const UI = {
     const st = Story.get(), me = Game.storyChar(), look = charById(me);
     const d = duoOf(me), T = d >= 0 ? DUO_TEAMS[d] : look.kit || SIDE_COLORS[0];
     const skinId = ownedSkinFor(me);
-    const skin = skinId && skinOn(skinId) ? skinId : '';
+    const skin = mySkinFor(me);
     $('story-prog').textContent = `${st.done} / ${STORY.length}`;
     $('story-title').textContent = st.done >= STORY.length ? 'Příběh dokončen' : 'Příběh';
     $('story-name').textContent = look.name;
@@ -3270,7 +3306,7 @@ const UI = {
     const gb = $('btn-gold');
     gb.hidden = !skinId;
     gb.setAttribute('aria-pressed', String(!!skin));
-    if (skinId) $('gold-label').textContent = SKINS[skinId].name + (skin ? ' ✓' : '');
+    if (skinId) $('gold-label').textContent = skin ? `${SKINS[skin].name} ✓` : ownedSkinsFor(me).length > 1 ? 'Skin: žádný' : SKINS[skinId].name;
     const cur = Math.min(st.done, STORY.length - 1);
     if (!keepSel || this.storySel < 0) this.storySel = cur;
     const map = $('story-map');
@@ -3302,7 +3338,7 @@ const UI = {
       nm.className = 'sn-name';
       nm.textContent = i === STORY.length - 1 ? 'BOSS' : two ? '2 v 2' : oname;
       b.append(num, pics, nm);
-      if (lv.reward) {
+      if (lv.reward || lv.bonus) {
         const bd = document.createElement('span');
         bd.className = 'sn-badge';
         bd.textContent = '🎁';
@@ -3339,8 +3375,10 @@ const UI = {
     $('si-text').textContent = lv.text;
     $('si-goal').textContent = `🎯 ${storyGoalText(lv.goal)}`;
     const rb = $('btn-story-reward');
-    rb.hidden = !lv.reward;
-    if (lv.reward) rb.textContent = `🎁 ${STORY_REWARDS[lv.reward].name}`;
+    const rwKey = lv.reward || (lv.bonus && lv.bonus.reward);
+    rb.hidden = !rwKey;
+    if (rwKey) rb.textContent = `${lv.bonus ? '⭐ Bonus:' : '🎁'} ${STORY_REWARDS[rwKey].name}`;
+    if (lv.bonus) $('si-goal').textContent += ` · ⭐ bonus: ${storyGoalText(lv.bonus.goal).toLowerCase()}`;
     const play = $('btn-story-play');
     play.disabled = locked;
     play.textContent = locked ? 'Zamčeno' : this.storySel < st.done ? 'Znovu' : 'Hrát';
@@ -3411,16 +3449,17 @@ const UI = {
     const rw = STORY_REWARDS[key];
     if (!rw) return;
     const $ = (id) => document.getElementById(id);
-    const i = STORY.findIndex((l) => l.reward === key), lv = STORY[i];
+    const i = STORY.findIndex((l) => l.reward === key || (l.bonus && l.bonus.reward === key)), lv = STORY[i];
+    const isBonus = lv.reward !== key;
     const got = Unlocks.has(key);
     $('rw-title').textContent = rw.name;
-    $('rw-kicker').textContent = got ? 'Odměna · získáno ✓' : `Odměna za úroveň ${i + 1}`;
+    $('rw-kicker').textContent = got ? 'Odměna · získáno ✓' : `${isBonus ? 'Bonus' : 'Odměna'} za úroveň ${i + 1}`;
     $('rw-text').textContent = rw.text;
-    $('rw-how').textContent = got ? (key === 'moncler' ? 'Zapneš ho tlačítkem Moncler-Jenda u Jendy.' : 'Najdeš je ve výběru hráčů.') : `Úkol: ${storyGoalText(lv.goal)}`;
+    $('rw-how').textContent = got ? (rw.kind === 'skin' ? `Zapneš ho tlačítkem skinu u postavy ${charById(SKINS[key].char).name}.` : 'Najdeš je ve výběru hráčů.') : `Úkol: ${storyGoalText(isBonus ? lv.bonus.goal : lv.goal)}`;
     const box = $('rw-pics');
     box.textContent = '';
-    const list = rw.kind === 'skin' ? [[SKINS.moncler.char, 'moncler']] : DUO_TEAMS.find((t) => t.locked === key).chars.map((c) => [c, '']);
-    const T = rw.kind === 'skin' ? MONCLER_KIT : DUO_TEAMS.find((t) => t.locked === key);
+    const list = rw.kind === 'skin' ? [[SKINS[key].char, key]] : DUO_TEAMS.find((t) => t.locked === key).chars.map((c) => [c, '']);
+    const T = rw.kind === 'skin' ? SKINS[key].kit || DUO_TEAMS[Math.max(0, duoOf(SKINS[key].char))] : DUO_TEAMS.find((t) => t.locked === key);
     const cvs = list.map(() => {
       const cv = document.createElement('canvas');
       cv.className = 'rw-pic';

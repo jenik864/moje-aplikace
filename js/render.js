@@ -2910,6 +2910,61 @@ const Renderer = {
     ctx.restore();
   },
 
+  // Zlatá korunka (True Gold Kiki) a zlaté odlesky.
+  drawCrown(ctx, R, now) {
+    ctx.save();
+    ctx.translate(2, -R + 4);
+    ctx.rotate(-0.12);
+    ctx.beginPath();
+    ctx.moveTo(-20, 0);
+    ctx.lineTo(-22, -20);
+    ctx.lineTo(-11, -9);
+    ctx.lineTo(0, -26);
+    ctx.lineTo(11, -9);
+    ctx.lineTo(22, -20);
+    ctx.lineTo(20, 0);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(0, -26, 0, 0);
+    g.addColorStop(0, '#fff6c2');
+    g.addColorStop(0.5, '#ffd23f');
+    g.addColorStop(1, '#b8860b');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = '#5a3d00';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    ctx.fillStyle = '#b8860b';
+    ctx.fillRect(-20, -5, 40, 5);
+    for (const [jx, col] of [[-11, '#e8445a'], [0, '#3fa2ff'], [11, '#e8445a']]) {
+      ctx.fillStyle = col;
+      circle(ctx, jx, -3, 2.4);
+      ctx.fill();
+    }
+    for (const [px, py] of [[-22, -20], [0, -26], [22, -20]]) {
+      ctx.fillStyle = '#ffffff';
+      circle(ctx, px, py, 2.2);
+      ctx.fill();
+    }
+    ctx.restore();
+    // třpyt
+    const tw = (Math.sin(now * 0.006) + 1) / 2;
+    ctx.fillStyle = `rgba(255,255,255,${0.35 + tw * 0.6})`;
+    for (const [sx, sy, sz] of [[-18, -10, 3.5], [22, 14, 2.6]]) {
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - sz * 2);
+      ctx.lineTo(sx + sz * 0.5, sy - sz * 0.5);
+      ctx.lineTo(sx + sz * 2, sy);
+      ctx.lineTo(sx + sz * 0.5, sy + sz * 0.5);
+      ctx.lineTo(sx, sy + sz * 2);
+      ctx.lineTo(sx - sz * 0.5, sy + sz * 0.5);
+      ctx.lineTo(sx - sz * 2, sy);
+      ctx.lineTo(sx - sz * 0.5, sy - sz * 0.5);
+      ctx.closePath();
+      ctx.fill();
+    }
+  },
+
   // Mobil v ruce (selfie), na začátku s bleskem.
   drawPhone(ctx, x, y, t) {
     ctx.save();
@@ -3094,6 +3149,7 @@ const Renderer = {
 
     this.drawFace(ctx, p, ball);
     this.drawHair(ctx, p, T, 'top', now);
+    if (L.crown) this.drawCrown(ctx, R, now);
   },
 
   // Vlasy mají tři vrstvy: 'back' (za tělem), 'cap' (na hlavě), 'top' (přes obrys a čelo).

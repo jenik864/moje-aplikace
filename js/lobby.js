@@ -430,13 +430,14 @@ const LobbyUI = {
         const meCtrl = ctx.mode === 'local' ? 'p1' : ctx.me;
         const skinId = s.ctrl === meCtrl ? ownedSkinFor(c.id) : '';
         if (skinId) {
-          const on = skinOn(skinId);
-          const sk = this.el2('button', 'skin-chip' + (on ? ' on' : ''), SKINS[skinId].short + (on ? ' ✓' : ''));
+          const cur = mySkinFor(c.id);
+          const label = cur ? `${SKINS[cur].short} ✓` : ownedSkinsFor(c.id).length > 1 ? 'Skin' : SKINS[skinId].short;
+          const sk = this.el2('button', 'skin-chip' + (cur ? ' on' : ''), label);
           sk.type = 'button';
           sk.addEventListener('click', (e) => {
             e.stopPropagation();
             Sound.init();
-            Game.toggleSkin(skinId);
+            Game.cycleSkin(c.id);
           });
           card.appendChild(sk);
         }
@@ -449,7 +450,7 @@ const LobbyUI = {
           card.appendChild(arrows);
         }
         row.appendChild(card);
-        const skin = skinId && skinOn(skinId) ? skinId : '';
+        const skin = skinId ? mySkinFor(c.id) : '';
         const key2 = `${i}:${s.char}:${s.ctrl}:${skin}`;
         const prev = (this.portraits || []).find((o) => o.key === key2);
         portraits.push({ cv, char: s.char, T, facing: team === 0 ? 1 : -1, mine, skin, key: key2, since: prev ? prev.since : performance.now() / 1000 });

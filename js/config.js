@@ -95,7 +95,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.41';
+const GAME_VERSION = '1.42';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -190,18 +190,22 @@ const charAvailable = (c) => !c.locked || Unlocks.has(c.locked);
 // Postava se ukáže ve výběru (boss jen když už je odemčený).
 const charListed = (c) => !c.hidden || charAvailable(c);
 const MONCLER_KIT = { name: 'MONCLER-JENDA', short: 'Moncler-Jenda', color: '#f7f8fa', dark: '#cfd5de', light: '#1c2230', num: '#1c2230' };
+// TRUE GOLD KIKI: celá ze zlata (bonus za 4. úroveň Příběhu bez obdrženého gólu)
+const TRUEGOLD_KIT = { name: 'TRUE GOLD', short: 'True Gold', color: '#ffcf3a', dark: '#b8860b', light: '#fff3b0', num: '#5a3d00' };
 // Skiny postav: každý patří jedné postavě, zapíná se u ní (v lobby, v Příběhu nebo v Úkolech).
 const SKINS = {
   moncler: { char: 'jenda', name: 'Moncler-Jenda', short: 'Moncler', kit: MONCLER_KIT },
   bikini: { char: 'kiki', name: 'Kiki v bikinách', short: 'Bikiny' },
+  truegold: { char: 'kiki', name: 'True Gold Kiki', short: 'Gold', kit: TRUEGOLD_KIT, look: { skin: '#f2c14e', hairColor: '#ffd84a', hairDark: '#a87412', hairLight: '#fff6c2', brow: '#a87412', eyes: '#7a4a08', accent: '#fff6c2', crown: true } },
   // červený basketbalový dres bez rukávů s číslem 23 (bez loga klubu)
   michael: { char: 'bemic', name: 'Michael Bémič', short: 'Michael', kit: { name: 'MICHAEL', short: 'Michael', color: '#ce1141', dark: '#8f0a2c', light: '#111111', num: '#ffffff' }, look: { num: 23, skin: '#7a4b30', hair: 'bald', brow: '#1d130c', eyes: '#2f1d12', hairColor: '#2a1a10', hairDark: '#120a05', hairLight: '#5a3a24' } },
 };
 const skinOwned = (id) => !!SKINS[id] && Unlocks.has(id);
 const skinOn = (id) => skinOwned(id) && Unlocks.has('on.' + id);
 // skin, který mám vlastněný pro postavu (a jestli je zapnutý)
-const ownedSkinFor = (charId) => Object.keys(SKINS).find((id) => SKINS[id].char === charId && skinOwned(id)) || '';
-const mySkinFor = (charId) => { const id = ownedSkinFor(charId); return id && skinOn(id) ? id : ''; };
+const ownedSkinsFor = (charId) => Object.keys(SKINS).filter((id) => SKINS[id].char === charId && skinOwned(id));
+const ownedSkinFor = (charId) => ownedSkinsFor(charId)[0] || '';
+const mySkinFor = (charId) => ownedSkinsFor(charId).find((id) => skinOn(id)) || '';
 function mySkins() {
   const o = {};
   for (const id of Object.keys(SKINS)) if (skinOn(id)) o[SKINS[id].char] = id;
@@ -282,7 +286,7 @@ const STORY = [
   { format: '1v1', opp: 'toma', level: 'easy', boost: 1, goal: {}, title: 'Sídlištní plácek', text: 'Tóma tě vyzve na první zápas. Ukaž, co v tobě je!' },
   { format: '1v1', opp: 'peli', level: 'easy', boost: 1.05, goal: { by: 2 }, arena: 'beach', title: 'Plážový turnaj', text: 'Peli je rychlík, ale v písku se běhá pomalu. Musí to být jasná výhra.' },
   { format: '2v2', duo: 2, level: 'medium', boost: 1, goal: {}, title: 'Odveta na sídlišti', text: 'Tóma a Peli si přivedli posilu. Hraje se 2 na 2, spoluhráče máš z tvé dvojice.' },
-  { format: '1v1', opp: 'kiki', level: 'medium', boost: 1.05, goal: { clean: true }, title: 'Okresní přebor', text: 'Kiki nikdy neprohrává. Porazíš ji, ani když nedostaneš gól?' },
+  { format: '1v1', opp: 'kiki', level: 'medium', boost: 1.05, goal: {}, bonus: { goal: { clean: true }, reward: 'truegold' }, title: 'Okresní přebor', text: 'Kiki nikdy neprohrává. Na postup ji stačí porazit – a když nedostaneš gól, získáš TRUE GOLD KIKI!' },
   { format: '2v2', duo: 3, level: 'medium', boost: 1.1, goal: { by: 3 }, arena: 'snow', title: 'Zimní stadion', text: 'Bémič a Kiki. Pozor na Skipera a zmrzlou bránu!', reward: 'moncler' },
   { format: '1v1', opp: 'durcado', level: 'hard', boost: 1, goal: { goals: 3 }, arena: 'wind', title: 'Derby ve vichřici', text: 'Durcado hraje hlavou a fouká vítr. Musíš mu dát aspoň 3 góly.' },
   { format: '2v2', duo: 1, level: 'hard', boost: 1.05, goal: { by: 2 }, title: 'Jižní supi', text: 'Marsal a Durcado. Trojky z dálky a hlavičky – vydržíš to?' },
@@ -293,6 +297,7 @@ const STORY = [
 // Odměny příběhu (náhled po klepnutí).
 const STORY_REWARDS = {
   moncler: { kind: 'skin', name: 'MONCLER-JENDA', text: 'Luxusní skin pro Jendu: bílá péřová bunda, černé brýle, zlatý řetěz a bílé tenisky. Zapneš ho, když hraješ za Jendu.' },
+  truegold: { kind: 'skin', name: 'TRUE GOLD KIKI', text: 'Kiki celá ze zlata se zlatou korunkou. Bonus za 4. úroveň Příběhu – vyhraj a nedostaň žádný gól.' },
   pav: { kind: 'duo', name: 'TLUSTEJ PÁV & SULI', text: 'Nová dvojice hráčů. Páv umí OBŘÍ PÁV (zvětší se a kdo do něj narazí, je omráčený), Suli FLASH (vyhrne triko a soupeři na 3 s ztuhnou). Do té doby mají ve výběru zámeček.' },
 };
 const plural = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
