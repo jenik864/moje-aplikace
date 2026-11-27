@@ -280,6 +280,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.55 – blokace znovu pro všechny: nový tajný kód a odemknutí platí jen v daném zařízení (nepřenáší se přes účet)
 - 1.54 – Příběh má kampaně (záložky Páv & Suli, Vietnam, Točná); nová kampaň Točná s 18 úrovněmi, nové dvojice Bémič Š. & Berry (králík) za 10. úroveň a Nikol & Luďan za 17. úroveň
 - 1.53 – trojité rychlé klepnutí na hlavu rozhodčího na obrazovce STOP otevře pole pro tajný kód; se správným kódem jde na tom zařízení hrát dál. Pod blokací hra neběží (šetří baterii)
 - 1.52 – hra pozastavená: po otevření výzva „Není normální trávit volný čas hraním FIFA67“ s odkazem na Úřad práce (vypíná se v js/config.js: GAME_BLOCKED)

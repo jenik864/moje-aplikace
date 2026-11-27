@@ -3376,7 +3376,7 @@ const UI = {
 
   // Hra zablokovaná: přes celou obrazovku výzva od rozhodčího, hrát nejde.
   showBlocked() {
-    if (Unlocks.has('pass')) return; // tohle zařízení zná tajný kód
+    try { if (localStorage.getItem(BLOCK_PASS_KEY) === BLOCK_CODE) return; } catch (e) { /* bez úložiště blokace platí */ } // tohle zařízení zná tajný kód
     const el = document.getElementById('blocked');
     // trojité rychlé klepnutí na hlavu rozhodčího: pole pro tajný kód
     const pic = document.getElementById('blk-pic'), form = document.getElementById('blk-form'), input = document.getElementById('blk-code');
@@ -3396,7 +3396,7 @@ const UI = {
       e.preventDefault();
       const norm = String(input.value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').toUpperCase();
       if (codeHash(norm) === BLOCK_CODE) {
-        Unlocks.set('pass');
+        try { localStorage.setItem(BLOCK_PASS_KEY, BLOCK_CODE); } catch (e) { /* nevadí */ }
         input.blur();
         el.hidden = true;
         document.body.classList.remove('game-blocked');

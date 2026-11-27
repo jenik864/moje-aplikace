@@ -104,11 +104,12 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.54';
+const GAME_VERSION = '1.55';
 // Hra je zablokovaná: po otevření se ukáže jen výzva, ať si hráč najde práci.
 // Kdo třikrát rychle klepne na hlavu rozhodčího a zadá tajný kód, hraje dál (na tom zařízení).
 const GAME_BLOCKED = true;
-const BLOCK_CODE = 'ec03253f';
+const BLOCK_CODE = '6db84fed';
+const BLOCK_PASS_KEY = 'hlavouni.pust2'; // odemknutí blokace platí jen v tomhle zařízení (nesynchronizuje se s účtem)
 const JOB_URL = 'https://www.uradprace.cz/';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
