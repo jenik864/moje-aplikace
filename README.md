@@ -149,7 +149,7 @@ Soupeři jsou pevní – když hraješ za stejnou postavu nebo dvojici jako soup
 
 ## Klub Hot Peppers
 
-Tlačítko *🌶️ Hot Peppers 18+* dole v hlavním menu otevře noční klub pro dospělé – při prvním vstupu se potvrzuje věk 18+. Nejdřív si vybereš, za koho jdeš – do klubu chodí jen kluci. Zamčené postavy mají zámeček. Pak *Vstoupit* a v klubu chodíš joystickem (kdekoli na levé části obrazovky; na počítači šipky nebo WASD) – pohled shora jako v Brawl Stars. U obsluhy se objeví velké tlačítko vpravo dole (na počítači E, mezerník nebo Enter).
+Tlačítko *🌶️ Hot Peppers 18+* dole v hlavním menu otevře strip club pro dospělé – při prvním vstupu se potvrzuje věk 18+. Nejdřív si vybereš, za koho jdeš – do klubu chodí jen kluci. Zamčené postavy mají zámeček. Pak *Vstoupit* a v klubu chodíš joystickem (kdekoli na levé části obrazovky; na počítači šipky nebo WASD) – pohled shora jako v Brawl Stars. U obsluhy se objeví velké tlačítko vpravo dole (na počítači E, mezerník nebo Enter).
 
 V klubu se **utrácí poháry** (ubydou z profilu, takže klesne i liga a místo v žebříčku):
 
@@ -175,14 +175,15 @@ Na tanečním parketu jde zdarma *Tančit*; dalším klepnutím se mění pohyb 
 
 **Fotokoutek** – budka *FOTO* vpravo dole: vyfotí tvou postavu s holkou, se kterou tančíš (nebo s tou, od které máš číslo), v rámečku Hot Peppers s datem. Fotka jde *Uložit* nebo *Poslat* (sdílení v telefonu).
 
-**Hovado režim**
-- *Opilost*: každé pití přidá promile (ukazuje se nahoře). Od ~0,5 ‰ se obraz houpe, od 1 ‰ vidíš dvojitě, joystick ujíždí, postava se motá a škytá a holky ti říkají „Smrdíš chlastem!“. Promile pomalu klesají.
-- Od 2,5 ‰ se **pozvracíš** (zelená louže zůstane na podlaze, všichni „FUUUJ!“) a ochranka si pro tebe dojde a **vyhodí tě** – zákaz vstupu 20 s.
-- *Strčit*: u kluka jde do něj strčit – zapotácí se, nadává a někdy ti ránu vrátí. Po druhé strkanici ochranka varuje, po třetí letíš ven.
-- *Krknout* (zelené tlačítko, na počítači B): holky „Fuj, ty jsi prase!“, kluci „Legenda!“.
+**Strip club**
+- *Opilost*: každé pití přidá promile (ukazuje se nahoře). Od ~0,5 ‰ se obraz houpe, od 1 ‰ vidíš dvojitě, joystick ujíždí, postava se motá a škytá. Promile pomalu klesají.
+- Od 2,5 ‰ se **pozvracíš** (zelená louže zůstane na podlaze) a ochranka si pro tebe dojde a **vyhodí tě** – zákaz vstupu 20 s.
+- *Strčit*: do kluka jde strčit – zapotácí se a někdy ránu vrátí. Po druhé strkanici ochranka varuje, po třetí letíš ven.
 - *Tanečnice u tyče*: na pódiích jsou chromové tyče, holky v třpytivém topu a kraťáskách se kolem nich točí a vyšvihují. *Hodit 5 🏆* – poháry letí na pódium a tanečnice se rozjede.
-- *Separé* ve VIP (červený závěs): jen s holkou, která ti dala číslo a jde s tebou. Zatáhne se závěs – co se stane v separé, zůstane v separé.
-- Sprostší hlášky kluků i holek. Nic explicitního se neukazuje.
+- *Show*: zhruba každou minutu DJ ohlásí tanečnici („SHOW · LOLA“), na pódium svítí reflektory a kluci se seběhnou fandit.
+- *Soukromý tanec* v separé ve VIP: s holkou, která jde s tebou (*Zatančit spolu*) – 25 🏆, zdarma s tou, co ti dala číslo. Zatáhne se závěs a je vidět jen její stín.
+- *Dealer* u záchodů (WC vedle východu) prodává vymyšlené drogy, které jsou jen ve hře: *Pepřák* (15 🏆, 20 s jízda – duhové barvy, rychlost, tanec samo, pak 15 s šedý dojezd a zpomalení) a *Smajlík* (10 🏆, 25 s růžová láska a srdíčka všude, pak únava). Ochranka tě u dealera může načapat (vyhazov) a dvě dávky naráz = kolaps a vyhazov.
+- Nahota ani sex se ve hře neukazují.
 
 Klub má disco kouli nad parketem s odlesky po podlaze, dým, reflektory a při hitu lasery z DJ pultu. Hudbu klub skládá sám ve Web Audio (u vchodu je slyšet jen přes zeď). Koupené věci a VIP se ukládají v prohlížeči (`hlavouni.klub`) a synchronizují s účtem.
 
@@ -339,6 +340,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.62 – klub je strip club: show na stage, soukromý tanec v separé, dealer s vymyšlenými drogami (jízda a dojezd); pryč krknutí a drsné hlášky
 - 1.61 – klub v hovado režimu: chlast a promile, blití a vyhazov ochrankou, strkání, krkání, tanečnice u tyče s házením pohárů, separé, drsnější hlášky
 - 1.60 – klub: taneční souboj (rytmická minihra, výhra = poháry a číslo), kontakty 0/8 s korunou, fotokoutek, styly hudby u DJe, taneční pohyby, disco koule, lasery a dým
 - 1.59 – klub Hot Peppers je 18+: potvrzení věku, NPC ze hry jen kluci, 8 nových holek (šaty, podpatky, pódia), flirt a společný tanec
