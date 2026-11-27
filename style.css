@@ -1443,3 +1443,39 @@ body.trailer-mode #rotate, body.trailer-mode #toast, body.trailer-mode #btn-skip
 .arena-btn.beach { background: linear-gradient(180deg, #ffe7a8, #e8b85a); color: #0b1220; border-color: #fff3c4; }
 .arena-btn.moon { background: linear-gradient(180deg, #4a5068, #1c2033); color: #e8ecff; border-color: #9aa3c7; }
 .arena-btn.wind { background: linear-gradient(180deg, #8fa3bf, #4d5d78); color: #ffffff; border-color: #cfe3ff; }
+
+/* výzva Vietnam */
+.viet-chip { border-color: rgba(255, 216, 74, 0.7); background: linear-gradient(180deg, rgba(218, 37, 29, 0.85), rgba(155, 20, 16, 0.85)); color: #ffe27a; }
+.chip-lock { margin-left: 2px; }
+.dialog.viet-dlg {
+  width: min(760px, 100%);
+  gap: 8px;
+  padding: clamp(10px, calc(var(--vh, 1vh) * 3), 18px) 16px;
+  border-radius: 24px;
+  border: 3px solid var(--ink);
+  background: radial-gradient(ellipse at 85% 20%, rgba(255, 216, 74, 0.22), transparent 55%), linear-gradient(160deg, #6e1210, #1a1420 70%);
+  box-shadow: 0 6px 0 var(--ink);
+  justify-items: stretch;
+  text-align: left;
+}
+.viet-sub { margin: 0; font-size: 14px; font-weight: 600; color: #f3e6d0; }
+.viet-sub b { color: #ffe27a; }
+.viet-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.viet-map { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.vn { position: relative; display: grid; justify-items: center; gap: 2px; padding: 6px 4px 5px; border-radius: 14px; border: 3px solid var(--ink); background: linear-gradient(180deg, #34425f, #222c44); box-shadow: 0 4px 0 var(--ink); }
+.vn.done { background: linear-gradient(180deg, #2e6b52, #1d3f34); }
+.vn.cur { background: linear-gradient(180deg, #b3261e, #6e1210); animation: sn-glow 1.4s ease-in-out infinite; }
+.vn.locked { filter: grayscale(0.6) brightness(0.7); }
+.vn .sn-pic { width: clamp(24px, calc(var(--vh, 1vh) * 9), 40px); height: clamp(24px, calc(var(--vh, 1vh) * 9), 40px); }
+.vn .sn-pic + .sn-pic { margin-left: -8px; }
+.vn-name { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; text-align: center; line-height: 1.1; color: #f3e6d0; }
+.viet-reward { display: grid; justify-items: center; gap: 2px; padding: 4px 10px; border-radius: 16px; background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(255, 216, 74, 0.5); }
+.viet-pic { width: clamp(60px, calc(var(--vh, 1vh) * 22), 100px); height: clamp(76px, calc(var(--vh, 1vh) * 28), 128px); display: block; }
+.viet-rw { margin: 0; font-family: var(--font-display); font-size: 20px; color: #ffe27a; text-shadow: 0 2px 0 var(--ink); }
+.viet-info { margin: 0; font-size: 14px; font-weight: 700; color: #ffe27a; }
+.viet-locked { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.viet-count { margin: 0; font-family: var(--font-display); font-size: 20px; color: #fff; }
+#viet-actions { justify-self: center; }
+:root.h380 .vn-name { display: none; }
+:root.h380 .viet-sub, :root.h380 .viet-info { font-size: 12px; }
+:root.h320 .viet-reward .mini-kicker { display: none; }

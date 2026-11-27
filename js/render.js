@@ -3573,6 +3573,34 @@ const Renderer = {
         break;
       }
 
+      case 'bangs': {
+        // husté rovné vlasy s rovně střiženou ofinou přes čelo
+        shape(() => {
+          ctx.beginPath();
+          ctx.moveTo(-34, 16);
+          ctx.arc(0, -1, R + 3.5, Math.PI * 0.86, Math.PI * 1.86);
+          ctx.quadraticCurveTo(44, -22, 40, -13);
+          const pts = [[34, -15], [29, -12], [23, -15.5], [17, -12.5], [11, -15.5], [5, -13], [-1, -16], [-6, -14]];
+          for (const [px, py] of pts) ctx.lineTo(px, py);
+          ctx.quadraticCurveTo(-13, -10, -15, -2);
+          ctx.quadraticCurveTo(-19, 8, -22, 12);
+          ctx.quadraticCurveTo(-28, 16, -34, 16);
+          ctx.closePath();
+        });
+        // pramínky v ofině
+        ctx.strokeStyle = dark;
+        ctx.lineWidth = 1.5;
+        for (const [x0, x1] of [[30, 31], [20, 22], [10, 12], [1, 3]]) {
+          ctx.beginPath();
+          ctx.moveTo(x0 - 6, -34);
+          ctx.quadraticCurveTo(x0, -24, x1, -16);
+          ctx.stroke();
+        }
+        strand(-6, -40, 16, -44, 36, -28, light, 2.4);
+        strand(-24, -28, -28, -12, -26, 6, light, 1.6);
+        break;
+      }
+
       case 'side': {
         // pěšinka vlevo, ofina sčesaná dopředu přes čelo
         shape(() => {

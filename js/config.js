@@ -90,12 +90,18 @@ const DUO_TEAMS = [
   { name: 'ŠIMŠA & JENDA', short: 'Šimša a Jenda', girls: false, color: '#8b5cf6', dark: '#5527c4', light: '#d6c6ff', chars: ['simsa', 'jenda'] },
   // odemkne se v příběhu (úroveň 10)
   { name: 'TLUSTEJ PÁV & SULI', short: 'Páv a Suli', girls: false, color: '#0e8a8f', dark: '#075457', light: '#8ef0e6', chars: ['pav', 'sully'], locked: 'pav' },
+  // vietnamská reprezentace (jen ve výzvě Vietnam)
+  { name: 'MINH & TUẤN', short: 'Minh a Tuấn', girls: false, color: '#da251d', dark: '#9b1410', light: '#ffd84a', chars: ['v_minh', 'v_tuan'], locked: 'never', viet: true },
+  { name: 'LONG & HUY', short: 'Long a Huy', girls: false, color: '#da251d', dark: '#9b1410', light: '#ffd84a', chars: ['v_long', 'v_huy'], locked: 'never', viet: true },
+  { name: 'PHONG & NAM', short: 'Phong a Nam', girls: false, color: '#da251d', dark: '#9b1410', light: '#ffd84a', chars: ['v_phong', 'v_nam'], locked: 'never', viet: true },
+  { name: 'KHOA & BẢO', short: 'Khoa a Bảo', girls: false, color: '#da251d', dark: '#9b1410', light: '#ffd84a', chars: ['v_khoa', 'v_bao'], locked: 'never', viet: true },
+  { name: 'DUY & HIẾU', short: 'Duy a Hiếu', girls: false, color: '#da251d', dark: '#9b1410', light: '#ffd84a', chars: ['v_duy', 'v_hieu'], locked: 'never', viet: true },
 ];
 // Dvojice je k dispozici (zamčená až po odemčení v příběhu).
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.43';
+const GAME_VERSION = '1.44';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -116,6 +122,19 @@ const ROSTER = [
   // odemkne se v příběhu (úroveň 10)
   { id: 'pav', name: 'Tlustej páv', short: 'Páv', num: 99, skin: '#efc3a0', hair: 'side', hairColor: '#b8975c', hairDark: '#6f5428', hairLight: '#e6cd96', eyes: '#4a3424', brow: '#8a6a3a', chub: 1.75, beard: true, lid: 0.1, locked: 'pav' },
   { id: 'sully', name: 'Suli', girl: true, num: 17, skin: '#f3cfb4', hair: 'longhair', fringe: 'curtain', wavy: true, hairColor: '#f3dc96', hairDark: '#b08f45', hairLight: '#fffae0', eyes: '#3d6f8f', brow: '#b3924f', accent: '#7ee8d8', curvy: true, flashPose: true, locked: 'pav' },
+  // odemkne se za 5. zápas výzvy Vietnam
+  { id: 'trana', name: 'Tráňa', num: 88, skin: '#e8bf93', hair: 'bangs', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.34, browW: 3.6, browFlat: true, mouth: 'smirk', locked: 'trana', kit: { color: '#e6e8ec', dark: '#b9bec8', light: '#1c2230', num: '#1c2230' } },
+  // vietnamská reprezentace (soupeři ve výzvě Vietnam, nedají se vybrat)
+  { id: 'v_minh', name: 'Minh', num: 7, skin: '#e9c196', hair: 'bangs', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.32, browW: 3.6, browFlat: true, hidden: true, locked: 'never', viet: true },
+  { id: 'v_tuan', name: 'Tuấn', num: 9, skin: '#e2b68a', hair: 'side', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.34, browW: 3.6, browFlat: true, mouth: 'smirk', hidden: true, locked: 'never', viet: true },
+  { id: 'v_long', name: 'Long', num: 10, skin: '#dcae82', hair: 'bangs', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.3, browW: 3.6, browFlat: true, hidden: true, locked: 'never', viet: true },
+  { id: 'v_huy', name: 'Huy', num: 11, skin: '#eec79f', hair: 'buzz', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.36, browW: 3.6, browFlat: true, mouth: 'flat', hidden: true, locked: 'never', viet: true },
+  { id: 'v_phong', name: 'Phong', num: 4, skin: '#d9a87c', hair: 'fade', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.32, browW: 3.6, browFlat: true, hidden: true, locked: 'never', viet: true },
+  { id: 'v_nam', name: 'Nam', num: 5, skin: '#e9c196', hair: 'bangs', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.34, browW: 3.6, browFlat: true, mouth: 'smirk', hidden: true, locked: 'never', viet: true },
+  { id: 'v_khoa', name: 'Khoa', num: 8, skin: '#e2b68a', hair: 'side', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.36, browW: 3.6, browFlat: true, mouth: 'flat', hidden: true, locked: 'never', viet: true },
+  { id: 'v_bao', name: 'Bảo', num: 19, skin: '#dcae82', hair: 'bangs', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.3, browW: 3.6, browFlat: true, hidden: true, locked: 'never', viet: true },
+  { id: 'v_duy', name: 'Duy', num: 16, skin: '#eec79f', hair: 'bangs', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.34, browW: 3.6, browFlat: true, mouth: 'smirk', hidden: true, locked: 'never', viet: true },
+  { id: 'v_hieu', name: 'Hiếu', num: 23, skin: '#d9a87c', hair: 'fade', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.36, browW: 3.6, browFlat: true, mouth: 'flat', hidden: true, locked: 'never', viet: true },
   // boss příběhu, jako hráč se odemkne úkolem (15 odehraných zápasů)
   { id: 'milan', name: 'Milan', num: 90, skin: '#f1c2a0', hair: 'receding', hairColor: '#c9a66a', hairDark: '#8a6a34', hairLight: '#ecd39c', eyes: '#86a0b4', brow: '#a8895a', lid: 0.24, browW: 3.4, mouth: 'flat', stubble: true, locked: 'milan', kit: { color: '#25282f', dark: '#121419', light: '#ffd23f' } },
 ];
@@ -158,6 +177,7 @@ const DUO_SHOUTS = [
   ['JONY, KIKI TĚ CHCE', 'SKIPER'],
   ['MÁ VO2max 67'],
   ['TLUSTEJ PÁV', 'SULI SULI'],
+  ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'],
 ];
 
 // Odemčené věci na tomto zařízení (příběh, odměny).
@@ -334,6 +354,40 @@ const Story = {
   },
   save(o) {
     try { localStorage.setItem(STORY_KEY, JSON.stringify(o)); } catch (e) { /* nevadí */ }
+  },
+};
+
+// Výzva Vietnam: 5 zápasů 2 v 2 proti vietnamské reprezentaci, jen s parťákem (člověk) online.
+// Pro všechny se otevře 27. 11. 2026 ve 12:00 (Praha); dřív jen tajným kódem.
+const VIET_OPEN = Date.UTC(2026, 10, 27, 11, 0);
+const VIET_CODE = 'ae48e170';
+const vietOpen = () => Date.now() >= VIET_OPEN || Unlocks.has('viet');
+const VIET = [
+  { duo: 6, level: 'easy', boost: 1, title: 'Přátelák v Hanoji', text: 'První zápas proti vietnamské reprezentaci. Rozehrajte se!' },
+  { duo: 7, level: 'medium', boost: 1, arena: 'wind', title: 'Monzun', text: 'Fouká monzun – hlídejte šipku větru.' },
+  { duo: 8, level: 'medium', boost: 1.1, arena: 'beach', title: 'Pláž v Nha Trangu', text: 'Písek zpomaluje nohy i míč.' },
+  { duo: 9, level: 'hard', boost: 1.05, title: 'Semifinále v Ho Či Minově Městě', text: 'Teď už jde do tuhého.' },
+  { duo: 10, level: 'hard', boost: 1.15, title: 'Finále proti kapitánům', text: 'Porazte kapitány a odemkne se Tráňa!', reward: 'trana' },
+];
+const VIET_KEY = 'hlavouni.vietnam';
+const Viet = {
+  done() {
+    try { return Math.max(0, Math.min(VIET.length, Math.floor(Number(localStorage.getItem(VIET_KEY)) || 0))); } catch (e) { return 0; }
+  },
+  // další zápas (po dohrání všech se hraje finále znovu)
+  next() {
+    return Math.min(this.done(), VIET.length - 1);
+  },
+  // po zápase: postup a odměna (vrací true, když se právě odemkl Tráňa)
+  record(win, level) {
+    if (!win) return false;
+    try { localStorage.setItem(VIET_KEY, String(Math.max(this.done(), level))); } catch (e) { /* nevadí */ }
+    const rw = VIET[level - 1] && VIET[level - 1].reward;
+    if (rw && !Unlocks.has(rw)) {
+      Unlocks.set(rw);
+      return true;
+    }
+    return false;
   },
 };
 

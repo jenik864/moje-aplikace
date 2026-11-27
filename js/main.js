@@ -193,7 +193,7 @@ const Game = {
     this.toLobby();
   },
 
-  async hostCreate(name) {
+  async hostCreate(name, mode) {
     UI.onlineStatus('Zakládám hru…');
     try {
       await Online.create(name);
@@ -203,6 +203,7 @@ const Game = {
     }
     this.mode = 'host';
     this.lobby = newLobby(this.prefs, 'host');
+    if (mode === 'viet') applyViet(this.lobby);
     this.publishLobby();
     this.toLobby();
   },
@@ -287,6 +288,12 @@ const Game = {
       return;
     }
     const l = this.lobby;
+    // Vietnam: formát, obtížnost, aréna a soupeř jsou dané zápasem
+    if (l.mode === 'viet') {
+      if (a.type === 'setting') return;
+      if (a.type === 'duo' && a.side === 1) return;
+      if (a.type === 'slot' && l.slots[a.slot] && l.slots[a.slot].team === 1) return;
+    }
     if (a.type === 'setting') {
       if (a.key === 'format') {
         if (l.format === a.value) return;
@@ -326,7 +333,7 @@ const Game = {
     const l = this.lobby;
     Online.publish({
       phase: 'lobby',
-      lobby: { mode: l.mode, format: l.format, minutes: l.minutes, level: l.level, arena: validArena(l.arena), duos: l.duos.slice(), slots: l.slots.map((s) => ({ team: s.team, char: s.char, ctrl: s.ctrl })), members: Online.members() },
+      lobby: { mode: l.mode, viet: l.viet || 0, format: l.format, minutes: l.minutes, level: l.level, arena: validArena(l.arena), duos: l.duos.slice(), slots: l.slots.map((s) => ({ team: s.team, char: s.char, ctrl: s.ctrl })), members: Online.members() },
       setup: null,
       g: null,
     });
@@ -412,6 +419,25 @@ const Game = {
       this.playCupMatch();
       return;
     }
+    // výzva Vietnam: jen hostitel online a dva lidé v týmu
+    if (this.lobby && this.lobby.mode === 'viet') {
+      if (this.mode !== 'host') return;
+      applyViet(this.lobby);
+      if (!vietReady(this.lobby)) {
+        UI.toast('Ve Vietnamu hrajete dva lidi v jednom týmu – pozvi parťáka a ať si klepne na volné místo vedle tebe.');
+        this.publishLobby();
+        this.renderLobby();
+        return;
+      }
+      const i = this.lobby.viet, lv = VIET[i];
+      const setup = this.buildSetup(this.lobby);
+      setup.viet = i + 1;
+      setup.boost = lv.boost;
+      setup.label = `VIETNAM · ZÁPAS ${i + 1}/${VIET.length}`;
+      this.cup = null;
+      this.beginMatch(setup);
+      return;
+    }
     if (this.screen === 'lobby' && lobbyLocked(this.lobby)) {
       UI.toast('Zamčená postava – odemkneš ji v Příběhu');
       return;
@@ -449,8 +475,12 @@ const Game = {
   tryUnlock(code) {
     const norm = String(code || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').toUpperCase();
     const h = codeHash(norm);
+    if (h === VIET_CODE) {
+      Unlocks.set('viet');
+      return 'viet';
+    }
     if (h === MASTER_CODE) {
-      for (const k of ['story', 'moncler', 'on.moncler', 'pav', 'milan', 'bikini', 'michael', 'truegold']) Unlocks.set(k);
+      for (const k of ['story', 'moncler', 'on.moncler', 'pav', 'milan', 'bikini', 'michael', 'truegold', 'viet', 'trana']) Unlocks.set(k);
       const st = Story.get();
       st.done = STORY.length;
       Story.save(st);
@@ -729,7 +759,7 @@ const Game = {
 
   netSetup() {
     const s = this.setup;
-    return { id: s.id, rev: s.rev, format: s.format, minutes: s.minutes, arena: s.arena, teams: s.teams, players: s.players, cup: s.cup ? 1 : 0, stage: s.stage || '', label: s.label || '' };
+    return { id: s.id, rev: s.rev, format: s.format, minutes: s.minutes, arena: s.arena, teams: s.teams, players: s.players, cup: s.cup ? 1 : 0, stage: s.stage || '', label: s.label || '', viet: s.viet || 0 };
   },
 
   pause() {
@@ -758,6 +788,7 @@ const Game = {
       return;
     }
     this.cup = null;
+    if (this.mode === 'host' && this.lobby && this.lobby.mode === 'viet') applyViet(this.lobby);
     if (this.mode === 'host') this.publishLobby();
     this.toLobby();
   },
@@ -1870,8 +1901,9 @@ const Game = {
     prof.bestStreak = Math.max(prof.bestStreak, prof.streak);
     Profile.save(prof);
     const tasks = Tasks.record(me.look.id, st.goals);
+    const vietReward = setup.viet ? Viet.record(win, setup.viet) : false;
     Board.afterMatch(me.look.id);
-    this.lastReward = { delta, before, after: prof.trophies, win, parts, streak: prof.streak, tasks };
+    this.lastReward = { delta, before, after: prof.trophies, win, parts, streak: prof.streak, tasks, vietReward };
     return this.lastReward;
   },
 
@@ -2606,7 +2638,8 @@ function sanitizeLobby(l) {
   if (!l || typeof l !== 'object' || !Array.isArray(l.slots)) return null;
   const format = l.format === '1v1' ? '1v1' : '2v2';
   return {
-    mode: l.mode === 'cup' ? 'cup' : 'match',
+    mode: l.mode === 'cup' ? 'cup' : l.mode === 'viet' ? 'viet' : 'match',
+    viet: Math.max(0, Math.min(VIET.length - 1, Math.floor(Number(l.viet) || 0))),
     format,
     minutes: [1, 2, 3].includes(l.minutes) ? l.minutes : 2,
     level: AI_LEVELS[l.level] ? l.level : 'medium',
@@ -2653,6 +2686,7 @@ function sanitizeSetup(s) {
     stage: ['SEMIFINÁLE', 'FINÁLE'].includes(s.stage) ? s.stage : '',
     label: typeof s.label === 'string' ? s.label.slice(0, 40) : '',
     goal: typeof s.goal === 'string' ? s.goal.slice(0, 40) : '',
+    viet: Math.max(0, Math.min(VIET.length, Math.floor(Number(s.viet) || 0))),
   };
 }
 
@@ -2671,7 +2705,7 @@ const UI = {
       resMain: $('btn-res-main'), resSecond: $('btn-res-second'), resThird: $('btn-res-third'), resWait: $('res-wait'),
       pauseSecond: $('btn-restart'), pauseThird: $('btn-quit'),
       profile: $('profile'), chip: $('profile-chip'), cup: $('cup'), half: $('half'),
-      story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'), board: $('board'), player: $('player'),
+      story: $('story'), unlock: $('unlock'), reward: $('reward'), tasks: $('tasks'), board: $('board'), player: $('player'), viet: $('viet'),
     };
     const click = (id, fn) => $(id).addEventListener('click', () => {
       Sound.init();
@@ -2707,7 +2741,10 @@ const UI = {
         input.blur();
         this.updateLocks();
         Sound.fanfare();
-        if (got === 'all') {
+        if (got === 'viet') {
+          this.toast('Výzva Vietnam odemčena!');
+          this.showViet();
+        } else if (got === 'all') {
           this.toast('Odemčeno úplně všechno! Příběh, skiny, Páv & Suli i Milan.');
           this.show('home');
         } else {
@@ -2739,7 +2776,16 @@ const UI = {
     click('btn-story-play', () => {
       if (this.storySel >= 0) Game.playStory(this.storySel);
     });
-    click('btn-swap', () => this.setSwap(!Touch.swap));
+    click('btn-viet', () => this.showViet());
+    click('btn-viet-close', () => this.show('home'));
+    click('btn-viet-code', () => this.showUnlock(true));
+    click('btn-viet-join', () => Game.toOnline());
+    click('btn-viet-host', () => {
+      this.goFullscreen();
+      Game.toOnline();
+      const nick = cleanName(store.get(STORE_NAME, '')) || 'Hráč';
+      Game.hostCreate(nick, 'viet');
+    });
     click('profile-chip', () => this.openProfile());
     click('btn-profile-close', () => this.show('home'));
     click('btn-swap2', () => this.setSwap(!Touch.swap));
@@ -3171,13 +3217,13 @@ const UI = {
   },
 
   show(name) {
-    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks', 'board', 'player']) {
+    for (const key of ['home', 'online', 'lobby', 'pause', 'result', 'profile', 'cup', 'half', 'story', 'unlock', 'reward', 'tasks', 'board', 'player', 'viet']) {
       this.el[key].hidden = name !== key && !(name === 'profile' && key === 'home') && !(name === 'reward' && key === 'story');
     }
     this.el.chip.hidden = name !== 'home';
     document.getElementById('app').classList.toggle('on-home', name === 'home');
     // u velkých tabulek schovat ikony v rohu, ať nic nepřekrývají
-    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock', 'reward', 'tasks', 'board', 'player'].includes(name));
+    document.getElementById('app').classList.toggle('modal', ['result', 'profile', 'cup', 'half', 'unlock', 'reward', 'tasks', 'board', 'player', 'viet'].includes(name));
     if (name === 'home') this.updateLocks();
     this.measureHud();
     this.el.pauseBtn.hidden = !(Game.screen === 'match' && Game.mode !== 'guest' && (Game.inMatch() || Game.state === 'paused'));
@@ -3239,6 +3285,22 @@ const UI = {
       this.el.resMain.textContent = 'Pokračovat';
       this.el.resSecond.textContent = guest ? 'Odejít ze hry' : 'Ukončit turnaj';
     }
+    if (setup.viet) {
+      const L = setup.viet, mySp = setup.players.find((sp) => sp.ctrl === Game.myCtrl());
+      const myWon = !!mySp && m.winner() === mySp.team;
+      this.el.resKicker.textContent = `Vietnam · zápas ${L}/${VIET.length}`;
+      this.el.resTitle.textContent = myWon ? (L >= VIET.length ? 'Vietnam poražen!' : `Zápas ${L}/${VIET.length} vyhrán!`) : 'Prohra – zkuste to znovu';
+      this.el.resTitle.style.color = myWon ? '#ffc93c' : T.light;
+      if (Game.mode === 'host') this.el.resMain.textContent = myWon && L < VIET.length ? 'Další zápas' : 'Znovu';
+      const rw = Game.award();
+      if (rw && rw.vietReward) {
+        this.el.resSub.textContent = 'Odměna: nový hráč TRÁŇA!';
+        setTimeout(() => {
+          Sound.fanfare();
+          this.toast('Odemčen nový hráč: TRÁŇA!');
+        }, 700);
+      }
+    }
     const sr = Game.story && setup.story ? Game.storyRecord() : null;
     if (sr) {
       const last = sr.idx + 1 >= STORY.length;
@@ -3264,10 +3326,12 @@ const UI = {
     this.renderRewards();
   },
 
-  // Zámek u tlačítka Příběh.
+  // Zámky na tlačítkách v menu.
   updateLocks() {
     const l = document.getElementById('story-lock');
     if (l) l.hidden = true; // Příběh je odemčený pro všechny
+    const v = document.getElementById('viet-lock');
+    if (v) v.hidden = vietOpen();
   },
 
   showUnlock(any) {
@@ -3383,6 +3447,74 @@ const UI = {
     play.disabled = locked;
     play.textContent = locked ? 'Zamčeno' : this.storySel < st.done ? 'Znovu' : 'Hrát';
     if (Game.screen === 'story') this.show('story');
+  },
+
+  // Výzva Vietnam: mapa 5 zápasů, odměna Tráňa, zámek do 12:00.
+  showViet() {
+    const $ = (id) => document.getElementById(id);
+    const done = Viet.done(), open = vietOpen(), next = Viet.next();
+    const map = $('viet-map');
+    map.textContent = '';
+    const draws = [];
+    VIET.forEach((lv, i) => {
+      const li = document.createElement('li');
+      li.className = 'vn' + (i < done ? ' done' : i === next ? ' cur' : ' locked');
+      const num = document.createElement('span');
+      num.className = 'sn-num';
+      num.textContent = i + 1;
+      const pics = document.createElement('span');
+      pics.className = 'sn-pics';
+      const D = DUO_TEAMS[lv.duo];
+      for (const ch of D.chars) {
+        const cv = document.createElement('canvas');
+        cv.className = 'sn-pic';
+        pics.appendChild(cv);
+        draws.push(() => Renderer.portrait(cv, ch, D, -1, undefined, { head: true }));
+      }
+      const nm = document.createElement('span');
+      nm.className = 'vn-name';
+      nm.textContent = lv.title;
+      li.append(num, pics, nm);
+      if (i < done) {
+        const ck = document.createElement('span');
+        ck.className = 'sn-check';
+        ck.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+        li.appendChild(ck);
+      }
+      if (lv.reward) {
+        const bd = document.createElement('span');
+        bd.className = 'sn-badge';
+        bd.textContent = '🎁';
+        li.appendChild(bd);
+      }
+      map.appendChild(li);
+    });
+    const got = Unlocks.has('trana');
+    $('viet-rw').textContent = got ? 'TRÁŇA · odemčeno ✓' : 'TRÁŇA';
+    const lv = VIET[next];
+    $('viet-info').textContent = done >= VIET.length ? 'Vietnam je poražený! Finále jde hrát znovu.' : `Další: ${next + 1}. ${lv.title} – ${lv.text}`;
+    $('viet-locked').hidden = open;
+    $('viet-actions').hidden = !open;
+    this.show('viet');
+    if (!open) {
+      const tick = () => {
+        if ($('viet').hidden) return;
+        const ms = VIET_OPEN - Date.now();
+        if (ms <= 0) {
+          this.updateLocks();
+          this.showViet();
+          return;
+        }
+        const h = Math.floor(ms / 3600000), mn = Math.floor((ms % 3600000) / 60000), sc = Math.floor((ms % 60000) / 1000);
+        $('viet-count').textContent = `🔒 Otevře se dnes ve 12:00 – za ${h ? h + ' h ' : ''}${mn} min ${sc} s`;
+        setTimeout(tick, 1000);
+      };
+      tick();
+    }
+    requestAnimationFrame(() => {
+      draws.forEach((f) => f());
+      Renderer.portrait($('viet-pic'), 'trana', charById('trana').kit, 1, undefined, { happy: true });
+    });
   },
 
   // Úkoly: postup, odměna a zapnutí skinu.

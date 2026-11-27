@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.43">
+<link rel="stylesheet" href="style.css?v=1.44">
 </head>
 <body>
 <!-- HRA:START -->
@@ -77,9 +77,9 @@
           </button>
         </div>
         <div class="home-extra">
-          <button id="btn-swap" class="btn-chip small" type="button" aria-pressed="false">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>
-            <span id="swap-label">Joystick vlevo</span>
+          <button id="btn-viet" class="btn-chip small viet-chip" type="button">
+            <span>🇻🇳 Vietnam</span>
+            <span id="viet-lock" class="chip-lock" hidden>🔒</span>
           </button>
           <button id="btn-board" class="btn-chip small" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V11h4v9M10 20V5h4v15M16 20v-6h4v6"/></svg>
@@ -371,6 +371,36 @@
     </div>
   </section>
 
+  <!-- výzva Vietnam -->
+  <section id="viet" class="screen dim" aria-labelledby="viet-title" hidden>
+    <div class="dialog viet-dlg">
+      <header class="tasks-head">
+        <h2 id="viet-title" class="screen-title">🇻🇳 Výzva: Vietnam</h2>
+        <button id="btn-viet-close" class="btn-mini" type="button" aria-label="Zavřít">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <p class="viet-sub">5 zápasů 2 v 2 proti vietnamské reprezentaci. Hraje se <b>jen s parťákem online</b> – s počítačem v týmu to nejde.</p>
+      <div class="viet-body">
+        <ol id="viet-map" class="viet-map" aria-label="Zápasy"></ol>
+        <div class="viet-reward">
+          <canvas id="viet-pic" class="viet-pic" aria-hidden="true"></canvas>
+          <p class="mini-kicker">Odměna za 5. zápas</p>
+          <p id="viet-rw" class="viet-rw">TRÁŇA</p>
+        </div>
+      </div>
+      <p id="viet-info" class="viet-info"></p>
+      <div id="viet-locked" class="viet-locked" hidden>
+        <p id="viet-count" class="viet-count"></p>
+        <button id="btn-viet-code" class="btn-game" type="button">Mám kód</button>
+      </div>
+      <div id="viet-actions" class="dialog-buttons row">
+        <button id="btn-viet-join" class="btn-game blue" type="button">Připojit se ke hře</button>
+        <button id="btn-viet-host" class="btn-play" type="button">Založit hru s parťákem</button>
+      </div>
+    </div>
+  </section>
+
   <!-- úkoly -->
   <section id="tasks" class="screen dim" aria-labelledby="tasks-title" hidden>
     <div class="dialog tasks-dlg">
@@ -436,17 +466,17 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.43"></script>
-<script src="js/audio.js?v=1.43"></script>
-<script src="js/input.js?v=1.43"></script>
-<script src="js/ai.js?v=1.43"></script>
-<script src="js/physics.js?v=1.43"></script>
-<script src="js/render.js?v=1.43"></script>
-<script src="js/penalty.js?v=1.43"></script>
-<script src="js/net.js?v=1.43"></script>
-<script src="js/lobby.js?v=1.43"></script>
-<script src="js/board.js?v=1.43"></script>
-<script src="js/trailer.js?v=1.43"></script>
-<script src="js/main.js?v=1.43"></script>
+<script src="js/config.js?v=1.44"></script>
+<script src="js/audio.js?v=1.44"></script>
+<script src="js/input.js?v=1.44"></script>
+<script src="js/ai.js?v=1.44"></script>
+<script src="js/physics.js?v=1.44"></script>
+<script src="js/render.js?v=1.44"></script>
+<script src="js/penalty.js?v=1.44"></script>
+<script src="js/net.js?v=1.44"></script>
+<script src="js/lobby.js?v=1.44"></script>
+<script src="js/board.js?v=1.44"></script>
+<script src="js/trailer.js?v=1.44"></script>
+<script src="js/main.js?v=1.44"></script>
 </body>
 </html>

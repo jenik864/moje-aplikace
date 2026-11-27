@@ -69,7 +69,7 @@ function cycleDuo(lobby, side, d) {
   let i = lobby.duos[side];
   do {
     i = (i + d + DUO_TEAMS.length) % DUO_TEAMS.length;
-  } while (i === lobby.duos[1 - side]);
+  } while (i === lobby.duos[1 - side] || DUO_TEAMS[i].viet);
   lobby.duos[side] = i;
   if (lobby.format === '2v2') {
     const fresh = duoSlots(lobby.duos);
@@ -108,15 +108,41 @@ function cycleChar(id, d, playable) {
 
 // Zamčené postavy v lobby (hrát se nedá, dokud je neodemkneš v příběhu).
 function lobbyLocked(lobby) {
-  return lobby.slots.some((s) => !charAvailable(charById(s.char)));
+  return lobby.slots.some((s) => { const c = charById(s.char); return !charAvailable(c) && !c.viet; });
 }
+
+// Výzva Vietnam: soupeř podle postupu hostitele, tým 0 musí tvořit dva lidé.
+function applyViet(lobby) {
+  const i = Viet.next(), lv = VIET[i];
+  lobby.mode = 'viet';
+  lobby.viet = i;
+  lobby.level = lv.level;
+  lobby.arena = lv.arena || 'stadium';
+  if (lobby.format !== '2v2') {
+    lobby.slots = makeSlots('2v2', lobby, lobby.duos);
+    lobby.format = '2v2';
+  }
+  if (DUO_TEAMS[lobby.duos[0]].viet) lobby.duos[0] = 4;
+  lobby.duos[1] = lv.duo;
+  const fresh = duoSlots(lobby.duos);
+  lobby.slots.forEach((s, k) => {
+    if (s.team === 1) {
+      s.char = fresh[k].char;
+      s.ctrl = 'cpu';
+    } else {
+      s.char = fresh[k].char;
+    }
+  });
+  return lobby;
+}
+const vietReady = (lobby) => lobby.slots.filter((s) => s.team === 0).every((s) => s.ctrl !== 'cpu');
 
 // Hostitel zpracuje přání kamaráda (vybrat místo nebo postavu).
 function applyWant(lobby, uid, want) {
   if (!want || typeof want !== 'object') return false;
   let changed = false;
   if (want.slot === -1) changed = releaseCtrl(lobby, uid);
-  else if (Number.isInteger(want.slot)) changed = claimSlot(lobby, uid, want.slot) || changed;
+  else if (Number.isInteger(want.slot) && !(lobby.mode === 'viet' && lobby.slots[want.slot] && lobby.slots[want.slot].team === 1)) changed = claimSlot(lobby, uid, want.slot) || changed;
   if (lobby.format === '1v1' && typeof want.char === 'string' && ROSTER.some((c) => c.id === want.char)) {
     const mine = lobby.slots.find((s) => s.ctrl === uid);
     if (mine && mine.char !== want.char) {
@@ -322,15 +348,18 @@ const LobbyUI = {
         b.disabled = !ctx.canEdit;
       });
     });
-    el.levelRow.hidden = !lobby.slots.some((s) => s.ctrl === 'cpu');
+    const viet = lobby.mode === 'viet';
+    el.levelRow.hidden = viet || !lobby.slots.some((s) => s.ctrl === 'cpu');
+    // ve Vietnamu je formát, obtížnost i aréna daná zápasem
+    if (viet) document.querySelectorAll('#lobby .seg[data-key="format"] button').forEach((b) => { b.disabled = true; });
     const ar = ARENAS[validArena(lobby.arena)];
     const ab = document.getElementById('btn-arena');
     if (ab) {
       ab.textContent = `${ar.icon} ${ar.name}`;
       for (const k of ARENA_ORDER) ab.classList.toggle(k, validArena(lobby.arena) === k);
-      ab.disabled = !ctx.canEdit;
+      ab.disabled = !ctx.canEdit || viet;
     }
-    el.modeRow.hidden = ctx.mode === 'guest';
+    el.modeRow.hidden = ctx.mode === 'guest' || viet;
     const cup = lobby.mode === 'cup';
 
     // hlavička
@@ -339,8 +368,8 @@ const LobbyUI = {
       el.title.textContent = cup ? 'Vyber svůj tým' : 'Výběr hráčů';
       el.invite.hidden = true;
     } else {
-      el.kicker.textContent = ctx.mode === 'host' ? 'Online hra · jsi hostitel' : 'Online hra';
-      el.title.textContent = ctx.mode === 'host' ? 'Pozvi kamarády' : 'Čekárna';
+      el.kicker.textContent = viet ? '🇻🇳 Výzva Vietnam · jen s parťákem' : ctx.mode === 'host' ? 'Online hra · jsi hostitel' : 'Online hra';
+      el.title.textContent = viet ? `Vietnam ${(lobby.viet || 0) + 1}/${VIET.length}` : ctx.mode === 'host' ? 'Pozvi kamarády' : 'Čekárna';
       el.invite.hidden = false;
       el.code.textContent = Online.code;
     }
@@ -391,11 +420,12 @@ const LobbyUI = {
       if (two) {
         const head = this.el2('div', 'team-head');
         const tt = this.el2('div', 'team-tt');
-        const duoLocked = !duoAvailable(lobby.duos[team]);
-        tt.appendChild(this.el2('span', 'team-title', (duoLocked ? '🔒 ' : '') + T.name));
-        head.appendChild(this.arrow(-1, { duo: team, d: -1 }, 'Předchozí dvojice', !ctx.canEdit));
+        const duoLocked = !duoAvailable(lobby.duos[team]) && !DUO_TEAMS[lobby.duos[team]].viet;
+        tt.appendChild(this.el2('span', 'team-title', (duoLocked ? '🔒 ' : '') + (DUO_TEAMS[lobby.duos[team]].viet ? '🇻🇳 ' : '') + T.name));
+        const fixed = !ctx.canEdit || (viet && team === 1);
+        head.appendChild(this.arrow(-1, { duo: team, d: -1 }, 'Předchozí dvojice', fixed));
         head.appendChild(tt);
-        head.appendChild(this.arrow(1, { duo: team, d: 1 }, 'Další dvojice', !ctx.canEdit));
+        head.appendChild(this.arrow(1, { duo: team, d: 1 }, 'Další dvojice', fixed));
         col.appendChild(head);
       } else {
         col.classList.add('no-head');
@@ -406,7 +436,7 @@ const LobbyUI = {
         const c = charById(s.char);
         const b = this.badge(s.ctrl, ctx);
         const mine = b.cls === 'b-me' || (ctx.mode === 'local' && s.ctrl !== 'cpu');
-        const locked = !charAvailable(c);
+        const locked = !charAvailable(c) && !c.viet;
         const card = this.el2('div', 'card' + (s.ctrl === 'cpu' ? '' : ' taken') + (mine ? ' mine' : '') + (locked ? ' locked' : ''));
         const main = this.el2('button', 'card-main');
         main.type = 'button';
@@ -422,7 +452,7 @@ const LobbyUI = {
         main.append(cv, plate, this.el2('span', 'card-power', `${pw.icon} ${pw.short}`));
         if (locked) {
           const lk = this.el2('span', 'card-lock');
-          lk.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><b>${c.locked === 'milan' ? 'Úkol: 15 zápasů' : 'Odemkni v Příběhu'}</b>`;
+          lk.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><b>${c.locked === 'milan' ? 'Úkol: 15 zápasů' : c.locked === 'trana' ? 'Výzva Vietnam' : 'Odemkni v Příběhu'}</b>`;
           main.appendChild(lk);
         }
         card.appendChild(main);
@@ -490,14 +520,14 @@ const LobbyUI = {
     if (ctx.mode === 'host') {
       const guests = ctx.members.filter((m) => m.uid !== 'host');
       const ready = guests.filter((m) => m.ready).length;
-      const word = cup ? 'Začít turnaj' : 'Hrát';
-      el.start.textContent = guests.length ? `${word} (${ready}/${guests.length})` : word;
+      const word = cup ? 'Začít turnaj' : viet ? `Hrát ${(lobby.viet || 0) + 1}/${VIET.length}` : 'Hrát';
+      el.start.textContent = viet && !vietReady(lobby) ? 'Čeká se na parťáka' : guests.length ? `${word} (${ready}/${guests.length})` : word;
     } else {
       el.start.textContent = cup ? 'Začít turnaj' : 'Hrát';
     }
     const anyLocked = lobbyLocked(lobby);
     if (anyLocked && ctx.mode !== 'guest') el.hint.textContent = '🔒 Zamčená postava – odemkneš ji v Příběhu nebo v Úkolech. Vyber jinou.';
-    el.start.classList.toggle('locked', anyLocked); // klepnutí ukáže, proč hrát nejde
+    el.start.classList.toggle('locked', anyLocked || (viet && !vietReady(lobby))); // klepnutí ukáže, proč hrát nejde
     el.ready.hidden = ctx.mode !== 'guest';
     if (ctx.mode === 'guest') {
       const myLocked = meSlot && !charAvailable(charById(meSlot.char));

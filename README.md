@@ -106,6 +106,10 @@ Tlačítko *Žebříček* dole v hlavním menu. Nahoře si nastavíš přezdívk
 
 Jak to funguje: hra nemá vlastní server, profily se ukládají jako uložené (retained) zprávy na stejných veřejných MQTT serverech, které se používají pro online hru (téma `fifa67/zebricek/v1/<id hráče>`). Profil se pošle po uložení přezdívky, po každém zápase (nejvýš jednou za 20 s) a při otevření žebříčku. Ve hře je jen přezdívka a herní statistiky, nic dalšího. Omezení: veřejné servery nic neslibují (uložené zprávy můžou po restartu serveru zmizet – po dalším zápase se profil pošle znovu) a nejsou tam účty ani hesla, takže kdo by chtěl podvádět, mohl by si poháry upravit. Přátelé se ukládají jen v tomto zařízení. Profily starší než půl roku se nezobrazují.
 
+## Výzva Vietnam
+
+Tlačítko *🇻🇳 Vietnam* dole v hlavním menu. Pro všechny se otevře 27. 11. 2026 ve 12:00 (do té doby je tam zámek s odpočtem; dřív jde odemknout tajným kódem přes *Mám kód*). 5 zápasů 2 v 2 proti vietnamské reprezentaci (10 hráčů v červených dresech), každý těžší – 2. zápas ve vichřici (monzun), 3. na pláži. Hraje se **jen s parťákem online**: hostitel tlačítkem *Založit hru s parťákem* založí online hru, kamarád se připojí kódem a sedne si na volné místo v jeho týmu. Dokud v týmu nejsou dva lidé, hrát nejde (počítač za parťáka nehraje). Soupeř, formát, obtížnost i aréna jsou dané zápasem. Postup se ukládá oběma hráčům; za 5. zápas se odemkne nový hráč **Tráňa** (č. 88, černé rovné vlasy s ofinou, světle šedý dres).
+
 ## Úkoly a skiny
 
 Tlačítko *Úkoly* dole v hlavním menu. Postup se počítá ze všech zápasů (i online a v Příběhu) a ukládá se v zařízení:
@@ -240,6 +244,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.44 – výzva Vietnam (5 zápasů 2 v 2 jen s parťákem online, od 12:00), nový hráč Tráňa; přepínač joysticku je jen v pauze
 - 1.43 – 4. úroveň Příběhu: postup s nejvýš jedním obdrženým gólem, bez gólu bonus skin True Gold Kiki
 - 1.41 – vyvážené poháry podle obtížnosti (lehký dává málo, těžký hodně)
 - 1.40 – oprava: Majda se po Gumových rukou už neotočí zády k bráně
