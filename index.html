@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.53">
+<link rel="stylesheet" href="style.css?v=1.54">
 </head>
 <body>
 <!-- HRA:START -->
@@ -77,10 +77,6 @@
           </button>
         </div>
         <div class="home-extra">
-          <button id="btn-viet" class="btn-chip small viet-chip" type="button">
-            <span>🇻🇳 Vietnam</span>
-            <span id="viet-lock" class="chip-lock" hidden>🔒</span>
-          </button>
           <button id="btn-board" class="btn-chip small" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V11h4v9M10 20V5h4v15M16 20v-6h4v6"/></svg>
             <span>Žebříček</span>
@@ -299,6 +295,11 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
         </button>
         <h2 id="story-title" class="screen-title">Příběh</h2>
+        <div id="camp-tabs" class="camp-tabs" role="tablist" aria-label="Kampaně">
+          <button type="button" data-camp="pav">Páv &amp; Suli</button>
+          <button type="button" data-camp="viet">🇻🇳 Vietnam</button>
+          <button type="button" data-camp="tocna">Točná</button>
+        </div>
         <span id="story-prog" class="story-prog">0 / 10</span>
       </header>
       <div class="story-body">
@@ -528,18 +529,18 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.53"></script>
-<script src="js/audio.js?v=1.53"></script>
-<script src="js/input.js?v=1.53"></script>
-<script src="js/ai.js?v=1.53"></script>
-<script src="js/physics.js?v=1.53"></script>
-<script src="js/render.js?v=1.53"></script>
-<script src="js/penalty.js?v=1.53"></script>
-<script src="js/net.js?v=1.53"></script>
-<script src="js/lobby.js?v=1.53"></script>
-<script src="js/board.js?v=1.53"></script>
-<script src="js/account.js?v=1.53"></script>
-<script src="js/trailer.js?v=1.53"></script>
-<script src="js/main.js?v=1.53"></script>
+<script src="js/config.js?v=1.54"></script>
+<script src="js/audio.js?v=1.54"></script>
+<script src="js/input.js?v=1.54"></script>
+<script src="js/ai.js?v=1.54"></script>
+<script src="js/physics.js?v=1.54"></script>
+<script src="js/render.js?v=1.54"></script>
+<script src="js/penalty.js?v=1.54"></script>
+<script src="js/net.js?v=1.54"></script>
+<script src="js/lobby.js?v=1.54"></script>
+<script src="js/board.js?v=1.54"></script>
+<script src="js/account.js?v=1.54"></script>
+<script src="js/trailer.js?v=1.54"></script>
+<script src="js/main.js?v=1.54"></script>
 </body>
 </html>

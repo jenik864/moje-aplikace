@@ -3237,6 +3237,31 @@ const Renderer = {
   // Vlasy mají tři vrstvy: 'back' (za tělem), 'cap' (na hlavě), 'top' (přes obrys a čelo).
   drawHair(ctx, p, T, layer, now) {
     const R = p.R / PS, L = p.look;
+    if (L.hair === 'bunny') {
+      // králík: dlouhé uši (jedno trochu sklopené), uvnitř růžové
+      if (layer !== 'top') return;
+      const ear = (bx, ang, len) => {
+        ctx.save();
+        ctx.translate(bx, -R + 6);
+        ctx.rotate(ang);
+        ctx.beginPath();
+        ctx.ellipse(0, -len / 2, 9, len / 2, 0, 0, TAU);
+        ctx.fillStyle = L.skin;
+        ctx.fill();
+        ctx.strokeStyle = OUTLINE;
+        ctx.lineWidth = 2.6;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(0, -len / 2 + 2, 4.5, len / 2 - 7, 0, 0, TAU);
+        ctx.fillStyle = '#f7a8bd';
+        ctx.fill();
+        ctx.restore();
+      };
+      const sway = Math.sin((now || 0) * 0.004) * 0.06;
+      ear(-10, -0.32 + sway, 50);
+      ear(12, 0.5 - sway, 44);
+      return;
+    }
     if (L.hair === 'bald') {
       // holá hlava: jen odlesk
       if (layer === 'cap') {
@@ -3804,6 +3829,7 @@ const Renderer = {
             ctx.closePath();
           });
           strand(-2, -41, 16, -48, 34, -32, light, 2.4);
+          if (!L.noBow) {
           ctx.save();
           ctx.translate(-15, -39);
           ctx.rotate(-0.45);
@@ -3823,6 +3849,7 @@ const Renderer = {
           ctx.fill();
           ctx.stroke();
           ctx.restore();
+          }
         }
         // pramen vlasů před uchem dolů na rameno
         shape(() => {
@@ -4109,12 +4136,51 @@ const Renderer = {
       }
       ctx.restore();
     }
+    // králík: růžový čumáček, vousky a dva zoubky
+    if (L.bunny) {
+      ctx.fillStyle = '#f58aa8';
+      ctx.beginPath();
+      ctx.moveTo(33, 4);
+      ctx.lineTo(40, 4);
+      ctx.lineTo(36.5, 9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(60,40,40,.55)';
+      ctx.lineWidth = 1;
+      for (const [y1, y2] of [[8, 5], [10, 10], [12, 15]]) {
+        line(ctx, 30, y1, 14, y2);
+        line(ctx, 40, y1, 47, y2 - 1);
+      }
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(22.5, 19.5, 3.4, 5);
+      ctx.fillRect(26.2, 19.5, 3.4, 5);
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(22.5, 19.5, 3.4, 5);
+      ctx.strokeRect(26.2, 19.5, 3.4, 5);
+    }
     // lehké vousy (Tlustej páv): po bradě a čelisti, knírek
     if (L.beard) {
       ctx.save();
       circle(ctx, 0, 0, 39);
       ctx.clip();
-      ctx.fillStyle = hexA(L.hairColor, 0.38);
+      const full = L.beard === 'full';
+      if (full) {
+        // plnovous: tváře a čelist od ucha po bradu (pusa zůstane vidět)
+        ctx.fillStyle = L.hairColor;
+        ctx.beginPath();
+        ctx.moveTo(-8, 6);
+        ctx.quadraticCurveTo(0, 11, 14, 10);
+        ctx.lineTo(42, 8);
+        ctx.lineTo(46, 52);
+        ctx.lineTo(-30, 52);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = hexA(L.hairLight, 0.5);
+        const rr = mulberry32(9);
+        for (let i = 0; i < 40; i++) ctx.fillRect(-8 + rr() * 46, 12 + rr() * 24, 1.4, 2.4);
+      }
+      ctx.fillStyle = hexA(L.hairColor, full ? 0.92 : 0.38);
       ctx.beginPath();
       ctx.moveTo(-14, 12);
       ctx.quadraticCurveTo(-6, 30, 14, 33);
@@ -4132,13 +4198,22 @@ const Renderer = {
         if (y < 23 && x > 15 && x < 35) continue; // kolem pusy holo
         ctx.fillRect(x, y, 1.3, 1.3);
       }
-      ctx.strokeStyle = hexA(L.hairDark, 0.7);
-      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = hexA(full ? L.hairColor : L.hairDark, full ? 1 : 0.7);
+      ctx.lineWidth = full ? 4 : 2.2;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(19, 15);
       ctx.quadraticCurveTo(25, 12.5, 32, 14.5);
       ctx.stroke();
+      if (full) {
+        // pusa vykukuje z plnovousu
+        ctx.strokeStyle = '#e29a8a';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(20, 20);
+        ctx.quadraticCurveTo(25.5, 22.5, 31, 19.5);
+        ctx.stroke();
+      }
       ctx.restore();
     }
     // rozhodčí píská

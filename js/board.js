@@ -74,7 +74,7 @@ const Board = {
     const p = Profile.get(), ch = this.favChar();
     return {
       v: 1, id: this.myId(), nick: this.nick(), tro: p.trophies, played: p.played, wins: p.wins, goals: p.goals,
-      cups: p.cups, story: Story.get().done, ch, sk: mySkinFor(ch), ts: Date.now(),
+      cups: p.cups, story: Story.doneOf('pav'), ch, sk: mySkinFor(ch), ts: Date.now(),
     };
   },
 
@@ -141,7 +141,7 @@ const Board = {
     const sk = SKINS[o.sk] && SKINS[o.sk].char === ch ? o.sk : '';
     return {
       v: 1, id: o.id, nick, tro: num(o.tro, 1e6), played: num(o.played, 1e6), wins: num(o.wins, 1e6), goals: num(o.goals, 1e7),
-      cups: num(o.cups, 1e5), story: num(o.story, STORY.length), ch, sk, ts: num(o.ts, 4e12),
+      cups: num(o.cups, 1e5), story: num(o.story, CAMPAIGNS.pav.levels.length), ch, sk, ts: num(o.ts, 4e12),
     };
   },
 
@@ -308,7 +308,7 @@ const Board = {
     $('pl-pos').textContent = pos >= 0 && this.tab === 'all' ? `${pos + 1}. místo v žebříčku` : '';
     const stats = [
       ['Zápasy', p.played], ['Výhry', p.wins], ['Úspěšnost', p.played ? `${Math.round((p.wins / p.played) * 100)} %` : '–'],
-      ['Góly', p.goals], ['Turnaje', p.cups], ['Příběh', `${p.story} / ${STORY.length}`],
+      ['Góly', p.goals], ['Turnaje', p.cups], ['Příběh', `${p.story} / ${CAMPAIGNS.pav.levels.length}`],
     ];
     const grid = $('pl-stats');
     grid.textContent = '';

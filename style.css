@@ -1590,3 +1590,20 @@ body.game-blocked .screen, body.game-blocked #hud, body.game-blocked #touch, bod
 .blk-form { display: flex; gap: 8px; align-items: center; }
 .blk-form.shake { animation: shake 0.4s; }
 .blk-input { width: 190px; font-size: 20px; padding: 6px 10px; }
+
+/* kampaně v Příběhu */
+.camp-tabs { display: flex; gap: 3px; padding: 3px; border-radius: 12px; background: rgba(0, 0, 0, 0.35); border: 2px solid var(--line); }
+.camp-tabs button { padding: 4px 10px; border: 0; border-radius: 9px; background: none; color: var(--chalk); font: 800 13px/1.2 var(--font-ui); letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
+.camp-tabs button[aria-pressed="true"] { background: var(--gold); color: var(--ink); }
+.story-map { grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr)); }
+.story-map.many { gap: 5px; }
+.story-map.many .sn { padding: 3px 1px 2px; border-radius: 11px; }
+.story-map.many .sn-num { font-size: 12px; left: 4px; }
+.story-map.many .sn-name { display: none; }
+.story-map.many .sn-pic { width: clamp(22px, calc(var(--vh, 1vh) * 8), 36px); height: clamp(22px, calc(var(--vh, 1vh) * 8), 36px); }
+.story-map.many .sn.two .sn-pic { width: clamp(18px, calc(var(--vh, 1vh) * 6.5), 30px); height: clamp(18px, calc(var(--vh, 1vh) * 6.5), 30px); }
+.story-map.many .sn.two .sn-pic + .sn-pic { margin-left: -7px; }
+.story-map.many .sn-badge { font-size: 14px; top: -7px; right: -4px; }
+.story-map.many .sn-check { width: 14px; height: 14px; bottom: 2px; right: 2px; }
+:root.h380 .camp-tabs button { padding: 3px 7px; font-size: 11px; }
+:root.w700 .story-head .screen-title { display: none; }

@@ -22,6 +22,8 @@ Ve 2 v 2 se v lobby šipkami vybírají dvě z pěti dvojic:
 | Tóma & Peli (zelení) | Tóma (střapaté hnědé vlasy), Peli (tmavé vlasy s pěšinkou) |
 | Bémič & Kiki (oranžoví) | Bémič (černý buzzcut), Kiki (dlouhé vlnité vlasy, špinavý blond, ofina a čelenka) |
 | Šimša & Jenda (fialoví) | Šimša (krátké tmavé kudrny, vystříhané strany, číslo 87), Jenda (střapaté hnědé vlasy s ofinou) |
+| Bémič Š. & Berry | Bémič Š. (č. 41, tmavé vlasy na stranu), Berry (králík – mazlíček: dlouhé uši, růžový čumáček, vousky, zoubky, č. 1); odemkne 10. úroveň kampaně Točná |
+| Nikol & Luďan | Nikol (č. 22, dlouhé vlnité hnědé vlasy s ofinou na obě strany, úsměv), Luďan (č. 77, holá hlava, plnovous do zrzava, světlé oči); odemkne 17. úroveň kampaně Točná |
 
 Všechny holky mají dlouhé rozpuštěné vlasy až k lopatkám, které vlají při běhu a skoku. Postavy se liší i obličejem: přivřená víčka a vážný pohled, síla obočí a výraz pusy (úsměv, klidný, úšklebek).
 
@@ -71,7 +73,7 @@ Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče,
 
 ## Příběh
 
-Tlačítko *Příběh* v hlavním menu – je odemčený pro všechny (dřív byl zamčený kódem). Tlačítkem *Mám kód* v okně Úkoly jde zadat **hlavní kód**, který odemkne úplně všechno (všechny úrovně Příběhu splněné, Moncler-Jenda, Kiki v bikinách, Michael Bémič, Tlustej páv & Suli, Milan); v kódu se nekontrolují velká/malá písmena, mezery ani háčky. Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
+Tlačítko *Příběh* v hlavním menu – je odemčený pro všechny (dřív byl zamčený kódem). Nahoře jsou záložky kampaní: **Páv & Suli** (původní příběh, popsaný níž), **Vietnam** (výzva Vietnam, viz níž – tlačítko v hlavním menu zmizelo, je teď tady) a **Točná** (18 úrovní). Každá kampaň má vlastní postup; naposledy otevřená kampaň se pamatuje. Tlačítkem *Mám kód* v okně Úkoly jde zadat **hlavní kód**, který odemkne úplně všechno (všechny úrovně Příběhu splněné, Moncler-Jenda, Kiki v bikinách, Michael Bémič, Tlustej páv & Suli, Milan); v kódu se nekontrolují velká/malá písmena, mezery ani háčky. Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
 
 10 úrovní, každá je jeden zápas proti počítači – některé 1 v 1, některé 2 v 2 (spoluhráče máš z tvé dvojice, hraje za něj počítač). Vybereš si svého hráče a postupně odemykáš další úrovně (splněné jde hrát znovu, zamčené si můžeš prohlédnout). Každá úroveň má úkol, bez jeho splnění se nepostoupí; úkol je vidět i během zápasu pod tabulí:
 
@@ -97,7 +99,34 @@ Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhl
 - Postava s víc skiny (Kiki: bikiny a True Gold) je přepíná tlačítkem u postavy dokola: žádný → první → druhý → žádný.
 - **Tlustej páv & Suli**: nová dvojice (Páv č. 99 – špinavý blond, lehké vousy, pořádné bříško; Suli č. 17 – dlouhé blond vlasy, výrazná postava). Ve výběru hráčů jsou vidět od začátku, ale mají zámeček a hrát za ně (ani proti nim) nejde, dokud nesplníš 10. úroveň.
 
-Soupeři jsou pevní – když hraješ za stejnou postavu nebo dvojici jako soupeř, hraje se zrcadlový zápas (třeba Tóma proti Tómovi; soupeřova dvojice má dres v jiné barvě). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, odemčené věci `hlavouni.odemceno`).
+### Kampaň Točná
+
+18 úrovní, pravidla stejná jako v Páv & Suli (úkol musíš splnit, jinak se nepostoupí):
+
+| Úroveň | Název | Zápas | Soupeř | Obtížnost | Úkol | Odměna |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Hřiště u lesa | 1 v 1 | Tóma | lehká | vyhraj | |
+| 2 | Pole za vsí | 1 v 1 | Peli | lehká, +5 % | vyhraj o 2 góly | |
+| 3 | Místní derby | 2 v 2 | Tóma & Peli | lehká, +5 % | vyhraj | |
+| 4 | Zamrzlý rybník | 1 v 1 | Kiki | střední, led | vyhraj | |
+| 5 | Trojky u stodoly | 1 v 1 | Marsal | střední | vyhraj a dej aspoň 2 góly | |
+| 6 | Vítr nad Točnou | 2 v 2 | Bémič & Kiki | střední, +5 %, vichřice | vyhraj | |
+| 7 | Hermelínový zápas | 1 v 1 | Nelcis | střední, +5 % | vyhraj bez inkasovaného gólu | |
+| 8 | Písečná jáma | 1 v 1 | Majda | střední, +10 %, pláž | vyhraj | |
+| 9 | Holky z Točné | 2 v 2 | Nelcis & Majda | střední, +10 % | vyhraj o 2 góly | |
+| 10 | Bémičův dvůr | 1 v 1 | Bémič | těžká | vyhraj o 2 góly | **dvojice Bémič Š. & Berry** |
+| 11 | Noc na Měsíci | 1 v 1 | Durcado | těžká, +5 %, Měsíc | vyhraj | |
+| 12 | Jižní supi na Točné | 2 v 2 | Marsal & Durcado | těžká, +5 % | vyhraj | |
+| 13 | JENDA PRIME | 1 v 1 | Jenda | těžká, +10 % | vyhraj o 2 góly | |
+| 14 | Běh do kopce | 1 v 1 | Šimša | těžká, +10 %, vichřice | vyhraj a dej aspoň 3 góly | |
+| 15 | Šimša a Jenda | 2 v 2 | Šimša & Jenda | těžká, +12 % | vyhraj o 2 góly | |
+| 16 | Rozhodčí na ledě | 1 v 1 | Milan | těžká, +15 %, led | vyhraj o 3 góly | |
+| 17 | Páv a Suli | 2 v 2 | Tlustej páv & Suli | těžká, +15 % | vyhraj o 2 góly | **dvojice Nikol & Luďan** |
+| 18 | BOSS: Velké finále na Točné | 2 v 2 | Nikol & Luďan | těžká, +20 % | vyhraj o 3 góly | |
+
+Nové dvojice jsou ve výběru hráčů vidět od začátku se zámečkem („Odemkni v Příběhu“) a hrát za ně jde po splnění dané úrovně. Zatím mají obyčejnou superstřelu. Hlavní kód odemkne i celou Točnou a obě dvojice.
+
+Soupeři jsou pevní – když hraješ za stejnou postavu nebo dvojici jako soupeř, hraje se zrcadlový zápas (třeba Tóma proti Tómovi; soupeřova dvojice má dres v jiné barvě). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, Točná `hlavouni.tocna`, vybraná kampaň `hlavouni.kampan`, odemčené věci `hlavouni.odemceno`) a s účtem se synchronizuje.
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
 ## Účet s heslem (víc zařízení)
@@ -114,7 +143,7 @@ Jak to funguje: hra nemá vlastní server, profily se ukládají jako uložené 
 
 ## Výzva Vietnam
 
-Tlačítko *🇻🇳 Vietnam* dole v hlavním menu. Pro všechny se otevře 27. 11. 2026 ve 12:00 (do té doby je tam zámek s odpočtem; dřív jde odemknout tajným kódem přes *Mám kód*). 5 zápasů 2 v 2 proti vietnamské reprezentaci (10 hráčů v červených dresech), každý těžší – 2. zápas ve vichřici (monzun), 3. na pláži. Hraje se **jen s parťákem online**: hostitel tlačítkem *Založit hru s parťákem* založí online hru, kamarád se připojí kódem a sedne si na volné místo v jeho týmu. Dokud v týmu nejsou dva lidé, hrát nejde (počítač za parťáka nehraje). Soupeř, formát, obtížnost i aréna jsou dané zápasem. Postup se ukládá oběma hráčům; za 5. zápas se odemkne nový hráč **Tráňa** (č. 88, černé rovné vlasy s ofinou, světle šedý dres).
+Záložka *Vietnam* v okně Příběh. Pro všechny se otevře 27. 11. 2026 ve 12:00 (do té doby je tam zámek s odpočtem; dřív jde odemknout tajným kódem přes *Mám kód*). 5 zápasů 2 v 2 proti vietnamské reprezentaci (10 hráčů v červených dresech), každý těžší – 2. zápas ve vichřici (monzun), 3. na pláži. Hraje se **jen s parťákem online**: hostitel tlačítkem *Založit hru s parťákem* založí online hru, kamarád se připojí kódem a sedne si na volné místo v jeho týmu. Dokud v týmu nejsou dva lidé, hrát nejde (počítač za parťáka nehraje). Soupeř, formát, obtížnost i aréna jsou dané zápasem. Postup se ukládá oběma hráčům; za 5. zápas se odemkne nový hráč **Tráňa** (č. 88, černé rovné vlasy s ofinou, světle šedý dres).
 
 ## Úkoly a skiny
 
@@ -251,6 +280,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.54 – Příběh má kampaně (záložky Páv & Suli, Vietnam, Točná); nová kampaň Točná s 18 úrovněmi, nové dvojice Bémič Š. & Berry (králík) za 10. úroveň a Nikol & Luďan za 17. úroveň
 - 1.53 – trojité rychlé klepnutí na hlavu rozhodčího na obrazovce STOP otevře pole pro tajný kód; se správným kódem jde na tom zařízení hrát dál. Pod blokací hra neběží (šetří baterii)
 - 1.52 – hra pozastavená: po otevření výzva „Není normální trávit volný čas hraním FIFA67“ s odkazem na Úřad práce (vypíná se v js/config.js: GAME_BLOCKED)
 - 1.51 – heslo k účtu musí mít aspoň 8 znaků (kvůli hádání hrubou silou)

@@ -96,12 +96,15 @@ const DUO_TEAMS = [
   { name: 'PHONG & NAM', short: 'Phong a Nam', girls: false, color: '#da251d', dark: '#9b1410', light: '#ffd84a', chars: ['v_phong', 'v_nam'], locked: 'never', viet: true },
   { name: 'KHOA & BẢO', short: 'Khoa a Bảo', girls: false, color: '#da251d', dark: '#9b1410', light: '#ffd84a', chars: ['v_khoa', 'v_bao'], locked: 'never', viet: true },
   { name: 'DUY & HIẾU', short: 'Duy a Hiếu', girls: false, color: '#da251d', dark: '#9b1410', light: '#ffd84a', chars: ['v_duy', 'v_hieu'], locked: 'never', viet: true },
+  // odemknou se v kampani Točná (úroveň 10 a 17)
+  { name: 'BÉMIČ Š. & BERRY', short: 'Bémič Š. a Berry', girls: false, color: '#7a5cff', dark: '#4b33b8', light: '#d8ccff', chars: ['bemics', 'berry'], locked: 'berry' },
+  { name: 'NIKOL & LUĎAN', short: 'Nikol a Luďan', girls: false, color: '#ff6a3d', dark: '#b83c18', light: '#ffd1bf', chars: ['nikol', 'ludan'], locked: 'nikol' },
 ];
 // Dvojice je k dispozici (zamčená až po odemčení v příběhu).
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.53';
+const GAME_VERSION = '1.54';
 // Hra je zablokovaná: po otevření se ukáže jen výzva, ať si hráč najde práci.
 // Kdo třikrát rychle klepne na hlavu rozhodčího a zadá tajný kód, hraje dál (na tom zařízení).
 const GAME_BLOCKED = true;
@@ -129,6 +132,11 @@ const ROSTER = [
   { id: 'sully', name: 'Suli', girl: true, num: 17, skin: '#f3cfb4', hair: 'longhair', fringe: 'curtain', wavy: true, hairColor: '#f3dc96', hairDark: '#b08f45', hairLight: '#fffae0', eyes: '#3d6f8f', brow: '#b3924f', accent: '#7ee8d8', curvy: true, flashPose: true, locked: 'pav' },
   // odemkne se za 5. zápas výzvy Vietnam
   { id: 'trana', name: 'Tráňa', num: 88, skin: '#e8bf93', hair: 'bangs', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.34, browW: 3.6, browFlat: true, mouth: 'smirk', locked: 'trana', kit: { color: '#e6e8ec', dark: '#b9bec8', light: '#1c2230', num: '#1c2230' } },
+  // odemknou se v kampani Točná
+  { id: 'bemics', name: 'Bémič Š.', num: 41, skin: '#efc6a2', hair: 'side', hairColor: '#3b2414', hairDark: '#170c05', hairLight: '#6e4a30', eyes: '#3a5d7a', brow: '#2a1a0e', lid: 0.2, browW: 3.6, mouth: 'smirk', locked: 'berry' },
+  { id: 'berry', name: 'Berry', num: 1, skin: '#f6f2ec', hair: 'bunny', hairColor: '#f6f2ec', hairDark: '#b9b0a4', hairLight: '#ffffff', eyes: '#1a1210', brow: '#f6f2ec', browW: 0.1, lid: 0, bunny: true, locked: 'berry' },
+  { id: 'nikol', name: 'Nikol', girl: true, num: 22, skin: '#f0c8a8', hair: 'longhair', fringe: 'curtain', wavy: true, hairColor: '#7a4e2c', hairDark: '#3f2512', hairLight: '#c8955f', eyes: '#5a6a3e', brow: '#4a2c16', accent: '#ff8fb0', noBow: true, locked: 'nikol' },
+  { id: 'ludan', name: 'Luďan', num: 77, skin: '#f2c3a2', hair: 'bald', hairColor: '#b8582a', hairDark: '#7a3414', hairLight: '#e08a52', eyes: '#7d8a58', brow: '#b8582a', lid: 0.18, browW: 3.4, beard: 'full', locked: 'nikol' },
   // vietnamská reprezentace (soupeři ve výzvě Vietnam, nedají se vybrat)
   { id: 'v_minh', name: 'Minh', num: 7, skin: '#e9c196', hair: 'bangs', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.32, browW: 3.6, browFlat: true, hidden: true, locked: 'never', viet: true },
   { id: 'v_tuan', name: 'Tuấn', num: 9, skin: '#e2b68a', hair: 'side', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.34, browW: 3.6, browFlat: true, mouth: 'smirk', hidden: true, locked: 'never', viet: true },
@@ -183,6 +191,8 @@ const DUO_SHOUTS = [
   ['MÁ VO2max 67'],
   ['TLUSTEJ PÁV', 'SULI SULI'],
   ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'],
+  ['BERRY BERRY', 'TOČNÁ'],
+  ['NIKOL NIKOL', 'LUĎAN LUĎAN'],
 ];
 
 // Odemčené věci na tomto zařízení (příběh, odměny).
@@ -323,6 +333,8 @@ const STORY = [
 const STORY_REWARDS = {
   moncler: { kind: 'skin', name: 'MONCLER-JENDA', text: 'Luxusní skin pro Jendu: bílá péřová bunda, černé brýle, zlatý řetěz a bílé tenisky. Zapneš ho, když hraješ za Jendu.' },
   truegold: { kind: 'skin', name: 'TRUE GOLD KIKI', text: 'Kiki celá ze zlata se zlatou korunkou. Bonus za 4. úroveň Příběhu – vyhraj a nedostaň žádný gól.' },
+  berry: { kind: 'duo', name: 'BÉMIČ Š. & BERRY', text: 'Nová dvojice: Bémič Š. a jeho mazlíček – králík Berry s dlouhýma ušima. Odměna za 10. úroveň kampaně Točná.' },
+  nikol: { kind: 'duo', name: 'NIKOL & LUĎAN', text: 'Nová dvojice: Nikol a Luďan. Odměna za 17. úroveň kampaně Točná.' },
   pav: { kind: 'duo', name: 'TLUSTEJ PÁV & SULI', text: 'Nová dvojice hráčů. Páv umí OBŘÍ PÁV (zvětší se a kdo do něj narazí, je omráčený), Suli FLASH (vyhrne triko a soupeři na 3 s ztuhnou). Do té doby mají ve výběru zámeček.' },
 };
 const plural = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
@@ -346,11 +358,56 @@ function storyGoalMet(g, my, opp, won) {
 function storyOpp(lv) {
   return lv.format === '2v2' ? lv.duo : lv.opp;
 }
-const STORY_KEY = 'hlavouni.pribeh';
+// Kampaně pod tlačítkem Příběh (Vietnam má vlastní obrazovku – hraje se s parťákem online).
+const TOCNA = [
+  { format: '1v1', opp: 'toma', level: 'easy', boost: 1, goal: {}, title: 'Hřiště u lesa', text: 'Vítej na Točné! Tóma tě provede prvním zápasem.' },
+  { format: '1v1', opp: 'peli', level: 'easy', boost: 1.05, goal: { by: 2 }, title: 'Pole za vsí', text: 'Peli je rychlý – vyhraj o 2 góly.' },
+  { format: '2v2', duo: 2, level: 'easy', boost: 1.05, goal: {}, title: 'Místní derby', text: 'Tóma a Peli spolu. Hraje se 2 na 2.' },
+  { format: '1v1', opp: 'kiki', level: 'medium', boost: 1, goal: {}, arena: 'snow', title: 'Zamrzlý rybník', text: 'Kiki na ledu. Pozor, klouže to!' },
+  { format: '1v1', opp: 'marsal', level: 'medium', boost: 1, goal: { goals: 2 }, title: 'Trojky u stodoly', text: 'Marsal střílí trojky. Dej mu aspoň 2 góly.' },
+  { format: '2v2', duo: 3, level: 'medium', boost: 1.05, goal: {}, arena: 'wind', title: 'Vítr nad Točnou', text: 'Bémič a Kiki ve vichřici.' },
+  { format: '1v1', opp: 'nelcis', level: 'medium', boost: 1.05, goal: { clean: true }, title: 'Hermelínový zápas', text: 'Nelcis zablokuje bránu hermelínem. Vyhraj a nedostaň gól.' },
+  { format: '1v1', opp: 'majda', level: 'medium', boost: 1.1, goal: {}, arena: 'beach', title: 'Písečná jáma', text: 'Majda a její gumové ruce. V písku to klouže míč.' },
+  { format: '2v2', duo: 0, level: 'medium', boost: 1.1, goal: { by: 2 }, title: 'Holky z Točné', text: 'Nelcis a Majda – vyhraj o 2 góly.' },
+  { format: '1v1', opp: 'bemic', level: 'hard', boost: 1, goal: { by: 2 }, title: 'Bémičův dvůr', text: 'Porazíš Bémiče o 2 góly a přidá se k tobě Bémič Š. s králíkem Berry!', reward: 'berry' },
+  { format: '1v1', opp: 'durcado', level: 'hard', boost: 1.05, goal: {}, arena: 'moon', title: 'Noc na Měsíci', text: 'Durcado a jeho tryskáč – na Měsíci se skáče do nebe.' },
+  { format: '2v2', duo: 1, level: 'hard', boost: 1.05, goal: {}, title: 'Jižní supi na Točné', text: 'Marsal a Durcado přijeli na návštěvu.' },
+  { format: '1v1', opp: 'jenda', level: 'hard', boost: 1.1, goal: { by: 2 }, title: 'JENDA PRIME', text: 'Jenda v bílém dresu. Vyhraj o 2 góly.' },
+  { format: '1v1', opp: 'simsa', level: 'hard', boost: 1.1, goal: { goals: 3 }, arena: 'wind', title: 'Běh do kopce', text: 'Šimša má VO2max 67 a fouká vítr. Dej mu aspoň 3 góly.' },
+  { format: '2v2', duo: 4, level: 'hard', boost: 1.12, goal: { by: 2 }, title: 'Šimša a Jenda', text: 'Nejrychlejší dvojka okolí. Vyhraj o 2 góly.' },
+  { format: '1v1', opp: 'milan', level: 'hard', boost: 1.15, goal: { by: 3 }, arena: 'snow', title: 'Rozhodčí na ledě', text: 'Milan Voračka a červená karta na ledě. Vyhraj o 3 góly.' },
+  { format: '2v2', duo: 5, level: 'hard', boost: 1.15, goal: { by: 2 }, title: 'Páv a Suli', text: 'Obří páv a flash. Vyhraj o 2 góly a odemkneš Nikol a Luďana!', reward: 'nikol' },
+  { format: '2v2', duo: 12, level: 'hard', boost: 1.2, goal: { by: 3 }, title: 'BOSS: Velké finále na Točné', text: 'Nikol a Luďan hájí Točnou. Poraz je o 3 góly a jsi král Točné!' },
+];
+const CAMPAIGNS = {
+  pav: { name: 'Páv & Suli', short: 'Páv & Suli', key: 'hlavouni.pribeh', levels: STORY.slice() },
+  tocna: { name: 'Točná', short: 'Točná', key: 'hlavouni.tocna', levels: TOCNA },
+};
+const CAMPAIGN_KEY = 'hlavouni.kampan';
 const Story = {
+  campaign: 'pav',
+  key: 'hlavouni.pribeh',
+  // přepnout kampaň: STORY (pole úrovní) se naplní úrovněmi vybrané kampaně
+  use(id) {
+    const C = CAMPAIGNS[id] || CAMPAIGNS.pav;
+    this.campaign = CAMPAIGNS[id] ? id : 'pav';
+    this.key = C.key;
+    STORY.length = 0;
+    STORY.push(...C.levels);
+    try { localStorage.setItem(CAMPAIGN_KEY, this.campaign); } catch (e) { /* nevadí */ }
+  },
+  doneOf(id) {
+    const C = CAMPAIGNS[id];
+    try {
+      const o = JSON.parse(localStorage.getItem(C.key));
+      return Math.max(0, Math.min(C.levels.length, Math.floor(Number(o && o.done) || 0)));
+    } catch (e) {
+      return 0;
+    }
+  },
   get() {
     try {
-      const o = JSON.parse(localStorage.getItem(STORY_KEY));
+      const o = JSON.parse(localStorage.getItem(this.key));
       const done = Math.max(0, Math.min(STORY.length, Math.floor(Number(o && o.done) || 0)));
       return { done, char: (o && typeof o.char === 'string' && o.char) || 'jenda' };
     } catch (e) {
@@ -358,9 +415,12 @@ const Story = {
     }
   },
   save(o) {
-    try { localStorage.setItem(STORY_KEY, JSON.stringify(o)); } catch (e) { /* nevadí */ }
+    try { localStorage.setItem(this.key, JSON.stringify(o)); } catch (e) { /* nevadí */ }
   },
 };
+
+// naposledy vybraná kampaň
+try { Story.use(localStorage.getItem(CAMPAIGN_KEY) || 'pav'); } catch (e) { Story.use('pav'); }
 
 // Výzva Vietnam: 5 zápasů 2 v 2 proti vietnamské reprezentaci, jen s parťákem (člověk) online.
 // Pro všechny se otevře 27. 11. 2026 ve 12:00 (Praha); dřív jen tajným kódem.

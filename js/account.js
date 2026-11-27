@@ -14,7 +14,7 @@ const ACC_KEY = 'hlavouni.ucet';
 const ACC_ITER = 150000;
 const ACC_MIN_PASS = 8; // kratší heslo jde u zašifrované uložené hry uhodnout hrubou silou
 // co se synchronizuje (všechen postup hráče)
-const ACC_SYNC = ['hlavouni.profil', 'hlavouni.odemceno', 'hlavouni.pribeh', 'hlavouni.ukoly', 'hlavouni.vietnam', 'hlavouni.pratele', 'hlavouni.postavy', 'hlavouni.hracId'];
+const ACC_SYNC = ['hlavouni.profil', 'hlavouni.odemceno', 'hlavouni.pribeh', 'hlavouni.tocna', 'hlavouni.kampan', 'hlavouni.ukoly', 'hlavouni.vietnam', 'hlavouni.pratele', 'hlavouni.postavy', 'hlavouni.hracId'];
 
 const b64 = (u8) => {
   let s = '';
@@ -142,7 +142,7 @@ const Account = {
         v = Object.assign({}, b || {});
         for (const f in v) if (f.startsWith('on.')) delete v[f]; // zapnuté skiny podle novějšího
         Object.assign(v, a || {});
-      } else if (k === 'hlavouni.pribeh') {
+      } else if (k === 'hlavouni.pribeh' || k === 'hlavouni.tocna') {
         v = Object.assign({}, b || {}, a || {});
         v.done = Math.max(Number((a || {}).done) || 0, Number((b || {}).done) || 0);
       } else if (k === 'hlavouni.ukoly' || k === 'hlavouni.postavy') {

@@ -481,9 +481,14 @@ const Game = {
     }
     if (h === MASTER_CODE) {
       for (const k of ['story', 'moncler', 'on.moncler', 'pav', 'milan', 'bikini', 'michael', 'truegold', 'viet', 'trana']) Unlocks.set(k);
-      const st = Story.get();
-      st.done = STORY.length;
-      Story.save(st);
+      for (const id of Object.keys(CAMPAIGNS)) {
+        const C = CAMPAIGNS[id];
+        let o = {};
+        try { o = JSON.parse(localStorage.getItem(C.key)) || {}; } catch (e) { /* nevadí */ }
+        o.done = C.levels.length;
+        try { localStorage.setItem(C.key, JSON.stringify(o)); } catch (e) { /* nevadí */ }
+      }
+      for (const k of ['berry', 'nikol']) Unlocks.set(k);
       return 'all';
     }
     if (h !== STORY_CODE) return '';
@@ -2801,8 +2806,22 @@ const UI = {
     click('btn-story-play', () => {
       if (this.storySel >= 0) Game.playStory(this.storySel);
     });
-    click('btn-viet', () => this.showViet());
-    click('btn-viet-close', () => this.show('home'));
+    click('btn-viet-close', () => {
+      if (Game.screen === 'story') this.showStory(true);
+      else this.show('home');
+    });
+    document.querySelectorAll('#camp-tabs button').forEach((b) => b.addEventListener('click', () => {
+      Sound.init();
+      Sound.click();
+      const id = b.dataset.camp;
+      if (id === 'viet') {
+        this.showViet();
+        return;
+      }
+      Story.use(id);
+      this.storySel = -1;
+      this.showStory();
+    }));
     click('btn-viet-code', () => this.showUnlock(true));
     click('btn-viet-join', () => Game.toOnline());
     click('btn-viet-host', () => {
@@ -3442,7 +3461,10 @@ const UI = {
     const skinId = ownedSkinFor(me);
     const skin = mySkinFor(me);
     $('story-prog').textContent = `${st.done} / ${STORY.length}`;
-    $('story-title').textContent = st.done >= STORY.length ? 'Příběh dokončen' : 'Příběh';
+    $('story-title').textContent = 'Příběh';
+    document.querySelectorAll('#camp-tabs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.camp === Story.campaign)));
+    $('story-map').style.setProperty('--cols', STORY.length > 10 ? 9 : 5);
+    $('story-map').classList.toggle('many', STORY.length > 10);
     $('story-name').textContent = look.name;
     const pw = POWERS[powerOf(me)];
     $('story-power').textContent = `${pw.icon} ${pw.name}`;
