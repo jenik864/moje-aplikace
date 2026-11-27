@@ -741,6 +741,10 @@ const Club = {
       return;
     }
     if (this.kick && n === this.kick.b) return;
+    if (n.flashT > 0) {
+      n.flashT -= dt;
+      if (n.flashT <= 0 && !n.hold) n.pl.look.topless = false;
+    }
     if (n.podium) {
       // tanec u tyče: obtáčí se kolem, občas se vyšvihne nahoru
       n.poleT = (n.poleT || rand(0, 6)) + dt * (n.tipT > 0 ? 1.6 : 1);
@@ -1451,6 +1455,7 @@ const Club = {
     }
     if (sh.t > sh.dur) {
       sh.girl.pl.look.topless = false;
+      sh.girl.hold = false;
       for (const n of sh.fans) {
         n.watch = null;
         n.go = { x: n.hx !== undefined ? n.hx : n.sx, y: n.hy !== undefined ? n.hy : n.sy };
@@ -1508,6 +1513,7 @@ const Club = {
   // Tanečnice odhodí top: letí vzduchem, poprsí zakryje mozaika.
   topOff(n) {
     n.pl.look.topless = true;
+    n.hold = true;
     const D = n.pl.look.dress;
     this.parts.push({ k: 'top', x: n.x, y: n.y - n.lift - 50, vx: rand(-90, 90), vy: -rand(260, 340), g: 600, t: 0, life: 2.2, rot: 0, col: D.color, floor: n.hy + rand(10, 30) });
     this.pulse = 1;
@@ -1518,6 +1524,7 @@ const Club = {
     const pv = this.priv, n = pv.n;
     n.fans = false;
     n.pl.look.topless = false;
+    n.hold = false;
     this.style = pv.style0;
     this.priv = null;
     n.line = 'Děkuju, VIP';
@@ -1568,6 +1575,13 @@ const Club = {
     const me = this.me;
     for (let i = 0; i < 14; i++) this.parts.push({ k: 'cup', x: me.x + rand(-10, 10), y: me.y - 70, vx: (n.x - me.x) * rand(0.9, 1.4) + rand(-60, 60), vy: -rand(300, 420), g: 700, t: 0, life: 2.4, rot: rand(-1, 1), floor: n.hy - 30 + rand(-8, 8) });
     n.tipT = 6;
+    // za poháry na chvilku flashne (jako Suli): záblesk a mozaika
+    if (n.pl.look.dress && n.pl.look.dress.style === 'set') {
+      n.flashT = 2.2;
+      n.pl.look.topless = true;
+      this.parts.push({ k: 'flash', x: n.x, y: n.y - n.lift - 50, vx: 0, vy: 0, t: 0, life: 0.5 });
+      this.whiteT = Math.max(this.whiteT || 0, 0.35);
+    }
     n.line = ['Ještě!', 'Jo, to se mi líbí', 'Víc, víc!', 'Ty jsi boss'][Math.floor(Math.random() * 4)];
     n.lineT = 2;
     for (let i = 0; i < 5; i++) this.heart(n);
@@ -2947,6 +2961,14 @@ const Club = {
       const s = q.s * (1 + q.t * 3);
       ctx.fillStyle = `rgba(255,${Math.floor(200 * a)},40,${a * 0.85})`;
       circle(ctx, q.x, q.y, s);
+      ctx.fill();
+      ctx.restore();
+    } else if (q.k === 'flash') {
+      const u = q.t / q.life;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = `rgba(255,255,255,${0.8 * (1 - u)})`;
+      circle(ctx, q.x, q.y, 20 + u * 90);
       ctx.fill();
       ctx.restore();
     } else if (q.k === 'top') {

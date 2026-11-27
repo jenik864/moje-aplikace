@@ -179,7 +179,7 @@ Na tanečním parketu jde zdarma *Tančit*; dalším klepnutím se mění pohyb 
 - *Opilost*: každé pití přidá promile (ukazuje se nahoře). Od ~0,5 ‰ se obraz houpe, od 1 ‰ vidíš dvojitě, joystick ujíždí, postava se motá a škytá. Promile pomalu klesají.
 - Od 2,5 ‰ se **pozvracíš** (zelená louže zůstane na podlaze) a ochranka si pro tebe dojde a **vyhodí tě** – zákaz vstupu 20 s.
 - *Strčit*: do kluka jde strčit – zapotácí se a někdy ránu vrátí. Po druhé strkanici ochranka varuje, po třetí letíš ven.
-- *Tanečnice u tyče*: na pódiích jsou chromové tyče, holky v třpytivém topu a kraťáskách se kolem nich točí a vyšvihují. *Hodit 5 🏆* – poháry letí na pódium a tanečnice se rozjede.
+- *Tanečnice u tyče*: na pódiích jsou chromové tyče, holky v třpytivém topu a kraťáskách se kolem nich točí a vyšvihují. *Hodit 5 🏆* – poháry letí na pódium, tanečnice se rozjede a na 2 s flashne jako Suli (záblesk, poprsí zakryté mozaikou).
 - *Show*: zhruba každou minutu DJ ohlásí tanečnici („SHOW · LOLA“), na pódium svítí reflektory a kluci se seběhnou fandit. Ve finále tanečnice odhodí top – poprsí zakrývá mozaika (stejně jako u Suliiny schopnosti).
 - *Soukromá show* ve VIP (VIP bar, 40 🏆): kamera se přiblíží na VIP pódium s tyčí, zbytek klubu potemní a tanečnice tančí jen pro tebe s péřovými vějíři a třpytkami. Během show jde *Hodit 5 🏆*; ve vyvrcholení odhodí top (cenzura mozaikou). Když hodíš aspoň dvakrát, dá ti číslo.
 - *Soukromý tanec* v separé ve VIP: s holkou, která jde s tebou (*Zatančit spolu*) – 25 🏆, zdarma s tou, co ti dala číslo. Zatáhne se závěs a je vidět jen její stín.
@@ -341,6 +341,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.65 – za každý hod 5 pohárů tanečnice na chvilku flashne (záblesk a mozaika)
 - 1.64 – soukromá show ve VIP (vlastní pódium, vějíře, reflektor), finále show s odhozeným topem a mozaikou
 - 1.63 – tři další vymyšlené drogy (houbička, Zelenáč, Turbo) s vlastními efekty; fotka z klubu jako opravdový snímek z foťáku (tlačítko 📸 kdekoli)
 - 1.62 – klub je strip club: show na stage, soukromý tanec v separé, dealer s vymyšlenými drogami (jízda a dojezd); pryč krknutí a drsné hlášky
