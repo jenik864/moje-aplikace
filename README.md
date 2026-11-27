@@ -244,6 +244,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.45 – okno výzvy Vietnam přes celou obrazovku
 - 1.44 – výzva Vietnam (5 zápasů 2 v 2 jen s parťákem online, od 12:00), nový hráč Tráňa; přepínač joysticku je jen v pauze
 - 1.43 – 4. úroveň Příběhu: postup s nejvýš jedním obdrženým gólem, bez gólu bonus skin True Gold Kiki
 - 1.41 – vyvážené poháry podle obtížnosti (lehký dává málo, těžký hodně)

@@ -1479,3 +1479,23 @@ body.trailer-mode #rotate, body.trailer-mode #toast, body.trailer-mode #btn-skip
 :root.h380 .vn-name { display: none; }
 :root.h380 .viet-sub, :root.h380 .viet-info { font-size: 12px; }
 :root.h320 .viet-reward .mini-kicker { display: none; }
+
+/* výzva Vietnam přes celou obrazovku */
+#viet.screen.dim { padding: 0; }
+#viet.screen.dim > .dialog.viet-dlg {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  align-content: stretch;
+  padding: max(10px, var(--safe-t)) max(18px, var(--safe-r)) max(10px, var(--safe-b)) max(18px, var(--safe-l));
+}
+#viet .viet-body { align-items: stretch; }
+#viet .viet-map { align-content: center; }
+#viet .vn { padding: clamp(6px, calc(var(--vh, 1vh) * 3), 18px) 4px; align-content: center; }
+#viet .vn .sn-pic { width: clamp(28px, calc(var(--vh, 1vh) * 14), 64px); height: clamp(28px, calc(var(--vh, 1vh) * 14), 64px); }
+#viet .viet-reward { align-content: center; }
+#viet .viet-pic { width: clamp(70px, calc(var(--vh, 1vh) * 30), 150px); height: clamp(90px, calc(var(--vh, 1vh) * 38), 190px); }
