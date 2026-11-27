@@ -3953,7 +3953,7 @@ function boot() {
   Updater.init();
   Trailer.init();
   Account.init();
-  if (GAME_BLOCKED && !Trailer.on && !/trailer/.test(location.search)) UI.showBlocked();
+  if (GAME_BLOCKED) UI.showBlocked();
 }
 
 /*

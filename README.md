@@ -299,6 +299,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.57 – blokace znovu pro všechny (nový tajný kód, dřívější odemknutí přestala platit); blokace se už nedá obejít adresou s ?trailer
 - 1.56 – kampaň Petr Kuba (7 úrovní): nový hráč Petr Kuba se schopností Žlutá karta, dvojice Petr Kuba & Milan a skin Petr Kuba MS
 - 1.55 – blokace znovu pro všechny: nový tajný kód a odemknutí platí jen v daném zařízení (nepřenáší se přes účet)
 - 1.54 – Příběh má kampaně (záložky Páv & Suli, Vietnam, Točná); nová kampaň Točná s 18 úrovněmi, nové dvojice Bémič Š. & Berry (králík) za 10. úroveň a Nikol & Luďan za 17. úroveň
