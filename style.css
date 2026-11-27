@@ -1586,3 +1586,7 @@ body.game-blocked .screen, body.game-blocked #hud, body.game-blocked #touch, bod
 .blk-msg b { color: var(--gold); font-weight: 400; }
 .blk-sub { margin: 0; font-size: clamp(13px, calc(var(--vh, 1vh) * 4), 17px); font-weight: 700; color: #d8e1f2; }
 .blk-btn { text-decoration: none; font-size: clamp(20px, calc(var(--vh, 1vh) * 6.4), 30px); padding: 8px 24px 6px; margin-top: 4px; }
+.blk-pic { cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.blk-form { display: flex; gap: 8px; align-items: center; }
+.blk-form.shake { animation: shake 0.4s; }
+.blk-input { width: 190px; font-size: 20px; padding: 6px 10px; }

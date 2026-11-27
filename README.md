@@ -251,6 +251,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.53 – trojité rychlé klepnutí na hlavu rozhodčího na obrazovce STOP otevře pole pro tajný kód; se správným kódem jde na tom zařízení hrát dál. Pod blokací hra neběží (šetří baterii)
 - 1.52 – hra pozastavená: po otevření výzva „Není normální trávit volný čas hraním FIFA67“ s odkazem na Úřad práce (vypíná se v js/config.js: GAME_BLOCKED)
 - 1.51 – heslo k účtu musí mít aspoň 8 znaků (kvůli hádání hrubou silou)
 - 1.50 – plynulá jízda na sushi (Tráňa už nepadá a necuká, surfařský postoj, rozpažené ruce, zrnka rýže)

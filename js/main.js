@@ -3357,14 +3357,49 @@ const UI = {
 
   // Hra zablokovaná: přes celou obrazovku výzva od rozhodčího, hrát nejde.
   showBlocked() {
+    if (Unlocks.has('pass')) return; // tohle zařízení zná tajný kód
     const el = document.getElementById('blocked');
+    // trojité rychlé klepnutí na hlavu rozhodčího: pole pro tajný kód
+    const pic = document.getElementById('blk-pic'), form = document.getElementById('blk-form'), input = document.getElementById('blk-code');
+    let taps = [];
+    pic.addEventListener('pointerdown', () => {
+      const now = performance.now();
+      taps = taps.filter((t) => now - t < 900);
+      taps.push(now);
+      if (taps.length >= 3) {
+        taps = [];
+        form.hidden = false;
+        input.value = '';
+        input.focus();
+      }
+    });
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const norm = String(input.value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').toUpperCase();
+      if (codeHash(norm) === BLOCK_CODE) {
+        Unlocks.set('pass');
+        input.blur();
+        el.hidden = true;
+        document.body.classList.remove('game-blocked');
+        this.blockedAnim = false;
+        Sound.fanfare();
+        this.show('home');
+        this.toast('Vítej zpátky ve FIFA67!');
+      } else {
+        form.classList.remove('shake');
+        void form.offsetWidth;
+        form.classList.add('shake');
+        input.value = '';
+      }
+    });
     document.body.classList.add('game-blocked');
     el.hidden = false;
     document.getElementById('blk-job').href = JOB_URL;
     Touch.show(false);
-    const pic = document.getElementById('blk-pic');
     const t0 = performance.now();
+    this.blockedAnim = true;
     const anim = (now) => {
+      if (!this.blockedAnim) return;
       Renderer.portrait(pic, REFEREE, REF_T, 1, (now - t0) / 1000, {});
       requestAnimationFrame(anim);
     };
@@ -3866,6 +3901,7 @@ function boot() {
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
     last = now;
     if (Trailer.on) Trailer.update(now);
+    if (UI.blockedAnim) return; // hra zablokovaná: zápas pod výzvou neběží (šetří telefon)
     Game.update(dt);
     Renderer.draw(Game);
     if (Trailer.on) Trailer.draw(now);
