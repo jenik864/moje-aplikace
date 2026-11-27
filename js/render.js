@@ -3197,6 +3197,63 @@ const Renderer = {
   // Upnuté minišaty (holky v klubu Hot Peppers): odhalená ramena, výstřih, výrazná postava.
   drawDress(ctx, R, L) {
     const D = L.dress;
+    if (D.style === 'set') {
+      // tanečnice u tyče: třpytivý top a kraťásky, holé bříško
+      ctx.beginPath();
+      ctx.moveTo(-16, R - 8);
+      ctx.lineTo(14, R - 8);
+      ctx.quadraticCurveTo(17, R - 6, 15, R + 2);
+      ctx.lineTo(13, R + 13);
+      ctx.quadraticCurveTo(13, R + 17, 10, R + 17);
+      ctx.lineTo(-12, R + 17);
+      ctx.quadraticCurveTo(-15, R + 17, -15, R + 13);
+      ctx.lineTo(-18, R + 1);
+      ctx.quadraticCurveTo(-19, R - 6, -16, R - 8);
+      ctx.closePath();
+      ctx.fillStyle = L.skin;
+      ctx.fill();
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      ctx.fillStyle = shade(L.skin, -0.35);
+      oval(ctx, 2, R + 8, 0.9, 1.3);
+      ctx.fill();
+      ctx.fillStyle = D.dark;
+      oval(ctx, -16, R + 16, 10, 9);
+      ctx.fill();
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(-16, R + 16, 10, 9, 0, Math.PI * 0.4, Math.PI * 1.6);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-17, R + 11);
+      ctx.lineTo(14, R + 11);
+      ctx.lineTo(13, R + 20);
+      ctx.quadraticCurveTo(-2, R + 23, -18, R + 20);
+      ctx.closePath();
+      ctx.fillStyle = D.color;
+      ctx.fill();
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = D.color;
+      rrect(ctx, -15, R - 4, 28, 8, 4);
+      ctx.fill();
+      ctx.stroke();
+      oval(ctx, 15, R + 2, 8.5, 7.5);
+      ctx.fill();
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(15, R + 2, 8.5, 7.5, 0, -Math.PI * 0.6, Math.PI * 0.6);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.8)';
+      for (const [x, y] of [[-10, -1], [-3, 1], [4, -1], [12, 1], [17, 4], [-9, 14], [0, 16], [8, 14]]) {
+        circle(ctx, x, R + y, 0.9);
+        ctx.fill();
+      }
+      return;
+    }
     // ramena a paže v barvě kůže
     ctx.beginPath();
     ctx.moveTo(-16, R - 8);

@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.60">
+<link rel="stylesheet" href="style.css?v=1.61">
 </head>
 <body>
 <!-- HRA:START -->
@@ -549,6 +549,14 @@
         <div class="club-tro" aria-label="Moje poháry"><span aria-hidden="true">🏆</span><b id="club-tro2">0</b></div>
       </div>
       <button id="club-act" class="club-act" type="button" hidden><span id="club-act-lbl">Bar</span></button>
+      <button id="club-burp" class="club-burp" type="button" aria-label="Krknout">💨<span>Krknout</span></button>
+      <div id="club-out" class="club-shop" hidden>
+        <div class="club-shop-card club-res-card" role="dialog" aria-labelledby="club-out-title">
+          <h3 id="club-out-title" class="lose">VYHOZEN!</h3>
+          <div class="club-res-lines"><p id="club-out-reason"></p><p>Zákaz vstupu 20 sekund. Běž se vyspat, hovado.</p></div>
+          <button id="club-out-ok" class="btn-play club-enter" type="button">No jo, no</button>
+        </div>
+      </div>
       <div id="club-pads" class="club-pads" hidden>
         <button type="button" data-lane="0" aria-label="Doleva" style="--c:#ff4d9a"><svg viewBox="0 0 24 24" aria-hidden="true"><path transform="rotate(180 12 12)" d="M21 12l-8-8v4.5H3v7h10V20z"/></svg></button>
         <button type="button" data-lane="1" aria-label="Dolů" style="--c:#4fe0ff"><svg viewBox="0 0 24 24" aria-hidden="true"><path transform="rotate(90 12 12)" d="M21 12l-8-8v4.5H3v7h10V20z"/></svg></button>
@@ -624,19 +632,19 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.60"></script>
-<script src="js/audio.js?v=1.60"></script>
-<script src="js/input.js?v=1.60"></script>
-<script src="js/ai.js?v=1.60"></script>
-<script src="js/physics.js?v=1.60"></script>
-<script src="js/render.js?v=1.60"></script>
-<script src="js/penalty.js?v=1.60"></script>
-<script src="js/net.js?v=1.60"></script>
-<script src="js/lobby.js?v=1.60"></script>
-<script src="js/board.js?v=1.60"></script>
-<script src="js/account.js?v=1.60"></script>
-<script src="js/trailer.js?v=1.60"></script>
-<script src="js/club.js?v=1.60"></script>
-<script src="js/main.js?v=1.60"></script>
+<script src="js/config.js?v=1.61"></script>
+<script src="js/audio.js?v=1.61"></script>
+<script src="js/input.js?v=1.61"></script>
+<script src="js/ai.js?v=1.61"></script>
+<script src="js/physics.js?v=1.61"></script>
+<script src="js/render.js?v=1.61"></script>
+<script src="js/penalty.js?v=1.61"></script>
+<script src="js/net.js?v=1.61"></script>
+<script src="js/lobby.js?v=1.61"></script>
+<script src="js/board.js?v=1.61"></script>
+<script src="js/account.js?v=1.61"></script>
+<script src="js/trailer.js?v=1.61"></script>
+<script src="js/club.js?v=1.61"></script>
+<script src="js/main.js?v=1.61"></script>
 </body>
 </html>

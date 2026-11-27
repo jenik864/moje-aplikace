@@ -1851,3 +1851,25 @@ body.game-blocked .screen, body.game-blocked #hud, body.game-blocked #touch, bod
 .club-photo-img { width: 100%; max-height: calc(var(--vh, 1vh) * 62); object-fit: contain; border-radius: 14px; display: block; }
 .club-photo-card .btn-chip { text-decoration: none; color: #fff; }
 .club-hud.battling .club-topr { display: none; }
+
+.club-burp {
+  position: absolute;
+  right: calc(max(22px, calc(var(--safe-r) + 10px)) + clamp(92px, calc(var(--vh, 1vh) * 28), 124px) + 10px);
+  bottom: max(22px, calc(var(--safe-b) + 10px));
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: radial-gradient(circle at 35% 30%, #c8ff8a, #6fbf2a 60%, #3a6a10);
+  box-shadow: 0 4px 0 var(--ink);
+  font-size: 22px;
+  line-height: 1;
+  touch-action: none;
+}
+.club-burp span { font-family: var(--font-display); font-size: 11px; color: #fff; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
+.club-burp:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.club-hud.battling .club-burp { display: none; }
+.club-enter:disabled { filter: grayscale(1); opacity: 0.7; }
