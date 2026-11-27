@@ -488,7 +488,7 @@ const Game = {
         o.done = C.levels.length;
         try { localStorage.setItem(C.key, JSON.stringify(o)); } catch (e) { /* nevadí */ }
       }
-      for (const k of ['berry', 'nikol']) Unlocks.set(k);
+      for (const k of ['berry', 'nikol', 'kuba', 'kubams']) Unlocks.set(k);
       return 'all';
     }
     if (h !== STORY_CODE) return '';
@@ -1014,6 +1014,15 @@ const Game = {
           if (live) {
             Effects.pop('FLASH!', p.x, p.y - 130, '#ffffff', 40);
             Sound.whoosh();
+          }
+        } else if (kind === 'yellowcard') {
+          Effects.say(a[0], 'ŽLUTÁ!', '#ffd23f', 2);
+          Effects.rings.push({ x: p.x, y: p.y, t: 0, dur: 0.5, r0: 20, r1: 220, rgb: '255,210,63' });
+          for (const o of m.players) if (o.team !== p.team) Effects.rings.push({ x: o.x, y: o.y, t: 0, dur: 0.4, r0: 8, r1: 70, rgb: '255,210,63' });
+          if (live) {
+            Effects.pop('ŽLUTÁ KARTA!', p.x, p.y - 120, '#ffd23f', 38);
+            Effects.shake(3);
+            Sound.whistle('long');
           }
         } else if (kind === 'redcard') {
           Effects.say(a[0], 'ČERVENÁ!', '#ff2d2d', 2);
@@ -2005,7 +2014,7 @@ const Game = {
     this.rec.push({
       t: this.gameT,
       b: [b.x, b.y, b.rot, b.superT, b.superBy, b.basketT, b.basketSide],
-      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin, p.boostT, p.pengT, p.kneel, p.face, p.plane, p.shootT, p.primeT, p.flashT, p.growK || 1, p.selfieT, p.growT, p.suitT, p.sushiT, p.lift || 0]),
+      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin, p.boostT, p.pengT, p.kneel, p.face, p.plane, p.shootT, p.primeT, p.flashT, p.growK || 1, p.selfieT, p.growT, p.suitT, p.sushiT, p.lift || 0, p.yellowT || 0]),
       bk: [m.blocks[0], m.blocks[1]],
       j: m.jet ? [m.jet.x, m.jet.y, m.jet.dir, m.jet.t, m.jet.by, m.jet.hold ? 1 : 0] : null,
       a: m.arms ? [m.arms.by, m.arms.t, m.arms.bx, m.arms.by0] : null,
@@ -2064,6 +2073,7 @@ const Game = {
       p.suitT = b[19] || 0;
       p.sushiT = b[20] || 0;
       p.lift = b[21] || 0;
+      p.yellowT = b[22] || 0;
       sizeGrow(p, b[16] || 1);
       p.spin = b[7] && a[7] && Math.sign(a[7]) === Math.sign(b[7]) ? lerp(a[7], b[7], k) : b[7] || 0;
       p.mood = 0;
@@ -2261,7 +2271,7 @@ const Game = {
       pn: m.pens ? [m.pens[0], m.pens[1]] : 0,
       sc: [m.score[0], m.score[1]],
       b: [r(b.x), r(b.y), r(b.rot * 100), r(b.superT * 100), b.superBy, r(b.basketT * 100), b.basketSide, b.carryBy >= 0 ? 1 : 0],
-      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100), r(p.primeT * 100), r(p.flashT * 100), r(((p.growK || 1) - 1) * 100), r(p.selfieT * 100), r(p.growT * 100), r(p.suitT * 10), r(p.sushiT * 100), r(p.lift || 0)]).map(trimSnap),
+      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100), r(p.primeT * 100), r(p.flashT * 100), r(((p.growK || 1) - 1) * 100), r(p.selfieT * 100), r(p.growT * 100), r(p.suitT * 10), r(p.sushiT * 100), r(p.lift || 0), r((p.yellowT || 0) * 10)]).map(trimSnap),
       bk: [r(m.blocks[0] * 100), r(m.blocks[1] * 100), m.blockKind[0] === 'ice' ? 1 : 0, m.blockKind[1] === 'ice' ? 1 : 0],
       wd: m.windDir,
       jt: m.jet ? [r(m.jet.x), r(m.jet.y), m.jet.dir, r(m.jet.t * 100), m.jet.by, m.jet.hold ? 1 : 0] : 0,
@@ -2612,6 +2622,7 @@ const Game = {
       p.suitT = (Number(pb[21]) || 0) / 10;
       p.sushiT = (Number(pb[22]) || 0) / 100;
       p.lift = Number(pb[23]) || 0;
+      p.yellowT = (Number(pb[24]) || 0) / 10;
       sizeGrow(p, clamp(1 + (Number(pb[18]) || 0) / 100, 1, GROW_K));
       const sa = Number(pa[9]) || 0, sb = Number(pb[9]) || 0;
       p.spin = sb === 0 || Math.sign(sa) !== Math.sign(sb) ? sb / 100 : lerp(sa, sb, k) / 100;

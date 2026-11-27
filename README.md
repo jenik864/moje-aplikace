@@ -23,6 +23,7 @@ Ve 2 v 2 se v lobby šipkami vybírají dvě z pěti dvojic:
 | Bémič & Kiki (oranžoví) | Bémič (černý buzzcut), Kiki (dlouhé vlnité vlasy, špinavý blond, ofina a čelenka) |
 | Šimša & Jenda (fialoví) | Šimša (krátké tmavé kudrny, vystříhané strany, číslo 87), Jenda (střapaté hnědé vlasy s ofinou) |
 | Bémič Š. & Berry | Bémič Š. (č. 41, tmavé vlasy na stranu), Berry (králík – mazlíček: dlouhé uši, růžový čumáček, vousky, zoubky, č. 1); odemkne 10. úroveň kampaně Točná |
+| Petr Kuba & Milan (černí) | dva rozhodčí: Petr Kuba (č. 45, starší, holohlavý se šedivým věncem, lehce šedivé vousy, vrásky) a Milan; odemkne 5. úroveň kampaně Petr Kuba (Milan pak jde hrát i bez úkolu 15 zápasů) |
 | Nikol & Luďan | Nikol (č. 22, dlouhé vlnité hnědé vlasy s ofinou na obě strany, úsměv), Luďan (č. 77, holá hlava, plnovous do zrzava, světlé oči); odemkne 17. úroveň kampaně Točná |
 
 Všechny holky mají dlouhé rozpuštěné vlasy až k lopatkám, které vlají při běhu a skoku. Postavy se liší i obličejem: přivřená víčka a vážný pohled, síla obočí a výraz pusy (úsměv, klidný, úšklebek).
@@ -73,7 +74,7 @@ Statistiky (o poločase i na konci zápasu u výsledku): góly, držení míče,
 
 ## Příběh
 
-Tlačítko *Příběh* v hlavním menu – je odemčený pro všechny (dřív byl zamčený kódem). Nahoře jsou záložky kampaní: **Páv & Suli** (původní příběh, popsaný níž), **Vietnam** (výzva Vietnam, viz níž – tlačítko v hlavním menu zmizelo, je teď tady) a **Točná** (18 úrovní). Každá kampaň má vlastní postup; naposledy otevřená kampaň se pamatuje. Tlačítkem *Mám kód* v okně Úkoly jde zadat **hlavní kód**, který odemkne úplně všechno (všechny úrovně Příběhu splněné, Moncler-Jenda, Kiki v bikinách, Michael Bémič, Tlustej páv & Suli, Milan); v kódu se nekontrolují velká/malá písmena, mezery ani háčky. Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
+Tlačítko *Příběh* v hlavním menu – je odemčený pro všechny (dřív byl zamčený kódem). Nahoře jsou záložky kampaní: **Páv & Suli** (původní příběh, popsaný níž), **Vietnam** (výzva Vietnam, viz níž – tlačítko v hlavním menu zmizelo, je teď tady), **Točná** (18 úrovní) a **Petr Kuba** (7 úrovní). Každá kampaň má vlastní postup; naposledy otevřená kampaň se pamatuje. Tlačítkem *Mám kód* v okně Úkoly jde zadat **hlavní kód**, který odemkne úplně všechno (všechny úrovně Příběhu splněné, Moncler-Jenda, Kiki v bikinách, Michael Bémič, Tlustej páv & Suli, Milan); v kódu se nekontrolují velká/malá písmena, mezery ani háčky. Kód je jen jednoduchý zámek v prohlížeči – kdo umí číst zdrojový kód, obejde ho.
 
 10 úrovní, každá je jeden zápas proti počítači – některé 1 v 1, některé 2 v 2 (spoluhráče máš z tvé dvojice, hraje za něj počítač). Vybereš si svého hráče a postupně odemykáš další úrovně (splněné jde hrát znovu, zamčené si můžeš prohlédnout). Každá úroveň má úkol, bez jeho splnění se nepostoupí; úkol je vidět i během zápasu pod tabulí:
 
@@ -126,7 +127,24 @@ Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhl
 
 Nové dvojice jsou ve výběru hráčů vidět od začátku se zámečkem („Odemkni v Příběhu“) a hrát za ně jde po splnění dané úrovně. Zatím mají obyčejnou superstřelu. Hlavní kód odemkne i celou Točnou a obě dvojice.
 
-Soupeři jsou pevní – když hraješ za stejnou postavu nebo dvojici jako soupeř, hraje se zrcadlový zápas (třeba Tóma proti Tómovi; soupeřova dvojice má dres v jiné barvě). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, Točná `hlavouni.tocna`, vybraná kampaň `hlavouni.kampan`, odemčené věci `hlavouni.odemceno`) a s účtem se synchronizuje.
+### Kampaň Petr Kuba
+
+7 úrovní:
+
+| Úroveň | Název | Zápas | Soupeř | Obtížnost | Úkol | Odměna |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Píšťalka na krku | 1 v 1 | Peli | lehká | vyhraj | |
+| 2 | Bez faulu | 1 v 1 | Jenda | střední | vyhraj a dej aspoň 2 góly | |
+| 3 | Nastavený čas | 2 v 2 | Šimša & Jenda | střední, +5 %, vichřice | vyhraj o 2 góly | |
+| 4 | Kolega Milan | 1 v 1 | Milan | těžká, +5 %, led | vyhraj | |
+| 5 | Petr Kuba hraje | 1 v 1 | Petr Kuba | těžká, +10 % | vyhraj o 2 góly | **hráč Petr Kuba** + dvojice **Petr Kuba & Milan** |
+| 6 | Videorozhodčí | 2 v 2 | Tlustej páv & Suli | těžká, +12 %, Měsíc | vyhraj a dostaň nejvýš 1 gól | |
+| 7 | BOSS: Dva rozhodčí | 2 v 2 | Petr Kuba & Milan | těžká, +18 % | vyhraj o 3 góly | **skin Petr Kuba MS** |
+
+- **Petr Kuba** má schopnost **Žlutá karta**: soupeři 5 s běhají asi o polovinu pomaleji a skáčou míň (nad hlavou mají žlutou kartu, na konci bliká). JENDA PRIME ji ustojí.
+- **Petr Kuba MS**: rozhodčí z mistrovství světa – svítivě žlutý dres, sluchátko s mikrofonem a zlatý odznak. Zapíná se tlačítkem *MS* u Kuby v lobby.
+
+Soupeři jsou pevní – když hraješ za stejnou postavu nebo dvojici jako soupeř, hraje se zrcadlový zápas (třeba Tóma proti Tómovi; soupeřova dvojice má dres v jiné barvě). Postup se ukládá v prohlížeči (`hlavouni.pribeh`, Točná `hlavouni.tocna`, Petr Kuba `hlavouni.kuba`, vybraná kampaň `hlavouni.kampan`, odemčené věci `hlavouni.odemceno`) a s účtem se synchronizuje.
 - **Online s kamarády**: jeden hráč dá *Založit hru* a dostane čtyřznakový kód. Ostatní dají *Připojit* a kód opíšou. V lobby si každý klepnutím vybere postavu, volná místa hraje počítač. Hostitel spustí zápas, po konci může dát odvetu nebo se vrátit do lobby.
 
 ## Účet s heslem (víc zařízení)
@@ -192,6 +210,7 @@ Nabíjí se časem (asi 15 s) a každým kopem do míče. Každá postava má sv
 | Tlustej páv | **Obří páv**: na 3 s se zvětší a ztloustne (větší i pro míč a soupeře). Kdo do něj narazí, odletí a je omráčený. |
 | Suli | **Flash**: „PŘEDPLAŤ SI MĚ!“, vyhrne triko (místo detailů kreslená cenzura – mozaika), záblesk přes obrazovku a soupeři na 3 s ztuhnou s vyvalenýma očima (JENDA PRIME to ustojí). |
 | Milan (boss Příběhu) | **Červená karta**: písknutí, nápis ČERVENÁ KARTA a všichni soupeři na 2 s ztuhnou (JENDA PRIME a tučňák ji ustojí). |
+| Petr Kuba | **Žlutá karta**: písknutí, nápis ŽLUTÁ KARTA a všichni soupeři na 5 s zpomalí (asi na polovinu) a skáčou míň, nad hlavou mají žlutou kartu (JENDA PRIME ji ustojí). |
 | ostatní | **Superstřela** (viz dál). Vlastní schopnosti přijdou v dalších verzích. |
 
 Počítač superschopnosti používá taky: hermelín a led, když letí míč na jeho bránu, VO2max, když je míč daleko, trojku, když je u míče, JENDA PRIME, když jde o míč.
@@ -280,6 +299,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.56 – kampaň Petr Kuba (7 úrovní): nový hráč Petr Kuba se schopností Žlutá karta, dvojice Petr Kuba & Milan a skin Petr Kuba MS
 - 1.55 – blokace znovu pro všechny: nový tajný kód a odemknutí platí jen v daném zařízení (nepřenáší se přes účet)
 - 1.54 – Příběh má kampaně (záložky Páv & Suli, Vietnam, Točná); nová kampaň Točná s 18 úrovněmi, nové dvojice Bémič Š. & Berry (králík) za 10. úroveň a Nikol & Luďan za 17. úroveň
 - 1.53 – trojité rychlé klepnutí na hlavu rozhodčího na obrazovce STOP otevře pole pro tajný kód; se správným kódem jde na tom zařízení hrát dál. Pod blokací hra neběží (šetří baterii)

@@ -80,6 +80,7 @@ const TOUCH_ICONS = {
   flash: '<svg viewBox="0 0 48 48"><rect x="8" y="14" width="32" height="24" rx="5"/><circle cx="24" cy="26" r="7"/><path d="M15 14l3-5h12l3 5"/><circle cx="34" cy="19.5" r="1.8" class="f"/></svg>',
   grow: '<svg viewBox="0 0 48 48"><circle cx="24" cy="26" r="14"/><path d="M6 6l9 9M42 6l-9 9M6 42l9-9M42 42l-9-9M6 6h7M6 6v7M42 6h-7M42 6v7M6 42h7M6 42v-7M42 42h-7M42 42v-7"/></svg>',
   redcard: '<svg viewBox="0 0 48 48"><rect x="15" y="7" width="20" height="29" rx="3" transform="rotate(12 25 21)" style="fill:#ff2d2d;stroke:#3a0505"/><path d="M13 41c3-2 6-3 10-3"/></svg>',
+  yellowcard: '<svg viewBox="0 0 48 48"><rect x="15" y="7" width="20" height="29" rx="3" transform="rotate(12 25 21)" style="fill:#ffd23f;stroke:#4a3a00"/><path d="M13 41c3-2 6-3 10-3"/></svg>',
   vo2: '<svg viewBox="0 0 48 48"><path d="M6 16h18M3 24h22M7 32h16"/><path d="M30 10c8 2 12 8 12 14s-4 12-12 14" /><path d="M30 18c4 1 6 3 6 6s-2 5-6 6"/></svg>',
   penguin: '<svg viewBox="0 0 48 48"><ellipse cx="24" cy="26" rx="13" ry="17" class="f"/><ellipse cx="26" cy="29" rx="7" ry="11" fill="#fff" stroke="none"/><path d="m33 19 8 3-8 2z" fill="#ffb03a" stroke="none"/><circle cx="29" cy="17" r="2" fill="#fff" stroke="none"/></svg>',
 };

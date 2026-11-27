@@ -114,6 +114,7 @@ class Player {
     this.lift = 0;
     this.growT = 0;   // Obří páv
     this.flashT = 0;  // oslněný bleskem (vyvalené oči)
+    this.yellowT = 0; // žlutá karta: zpomalený a skáče míň
     this.selfieT = 0; // Suli fotí selfie
     if (this.growK && this.growK !== 1) setGrow(this, 1);
     this.y = this.standY;
@@ -381,6 +382,7 @@ class Match {
         if (p.primeT === 0) this.onEvent('unprime', { idx: this.players.indexOf(p) });
       }
       if (p.flashT > 0) p.flashT = Math.max(0, p.flashT - dt);
+      if (p.yellowT > 0) p.yellowT = Math.max(0, p.yellowT - dt);
       if (p.suitT > 0) p.suitT = Math.max(0, p.suitT - dt);
       if (p.sushiT > 0 || p.lift > 0) this.updateSushi(p, dt);
       if (p.selfieT > 0) p.selfieT = Math.max(0, p.selfieT - dt);
@@ -500,7 +502,7 @@ class Match {
       if (!p.onGround) p.spin += p.knockDir * 13 * dt;
     }
     const input = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
-    const boost = (p.boostT > 0 ? BOOST_MUL : 1) * (p.primeT > 0 ? PRIME_SPEED : 1);
+    const boost = (p.boostT > 0 ? BOOST_MUL : 1) * (p.primeT > 0 ? PRIME_SPEED : 1) * (p.yellowT > 0 ? YELLOW_SPEED : 1);
     const max = PHYS.moveSpeed * p.speedMul * boost * this.mods.speed;
     const ice = this.ice && p.onGround;
     // na ledu: bez ovládání hráč dlouho dojíždí, změna směru trvá
@@ -512,7 +514,7 @@ class Match {
     else if (p.onGround) p.vx = approach(p.vx, 0, 1700 * (ice ? ICE.brake : 1) * dt);
 
     if (it.jump && p.onGround) {
-      p.vy = -PHYS.jumpV * (p.primeT > 0 ? PRIME_JUMP : 1) * this.mods.jump;
+      p.vy = -PHYS.jumpV * (p.primeT > 0 ? PRIME_JUMP : 1) * (p.yellowT > 0 ? YELLOW_JUMP : 1) * this.mods.jump;
       p.onGround = false;
       this.onEvent('jump', { human: p.isHuman });
     }
@@ -670,6 +672,12 @@ class Match {
         o.kickT = -1;
         o.superKick = false;
         o.vx *= 0.2;
+      }
+    } else if (p.power === 'yellowcard') {
+      // Žlutá karta: soupeři na 5 s zpomalí a skáčou míň (JENDA PRIME ji ustojí)
+      for (const o of this.players) {
+        if (o.team === p.team || o.primeT > 0) continue;
+        o.yellowT = YELLOW_TIME;
       }
     } else if (p.power === 'redcard') {
       // Červená karta: soupeři na chvíli ztuhnou (JENDA PRIME ji ustojí)

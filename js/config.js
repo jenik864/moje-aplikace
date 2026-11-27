@@ -99,12 +99,14 @@ const DUO_TEAMS = [
   // odemknou se v kampani Točná (úroveň 10 a 17)
   { name: 'BÉMIČ Š. & BERRY', short: 'Bémič Š. a Berry', girls: false, color: '#7a5cff', dark: '#4b33b8', light: '#d8ccff', chars: ['bemics', 'berry'], locked: 'berry' },
   { name: 'NIKOL & LUĎAN', short: 'Nikol a Luďan', girls: false, color: '#ff6a3d', dark: '#b83c18', light: '#ffd1bf', chars: ['nikol', 'ludan'], locked: 'nikol' },
+  // dva rozhodčí (odemkne 5. úroveň kampaně Petr Kuba)
+  { name: 'PETR KUBA & MILAN', short: 'Petr Kuba a Milan', girls: false, color: '#25282f', dark: '#121419', light: '#ffd23f', chars: ['kuba', 'milan'], locked: 'kuba' },
 ];
 // Dvojice je k dispozici (zamčená až po odemčení v příběhu).
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.55';
+const GAME_VERSION = '1.56';
 // Hra je zablokovaná: po otevření se ukáže jen výzva, ať si hráč najde práci.
 // Kdo třikrát rychle klepne na hlavu rozhodčího a zadá tajný kód, hraje dál (na tom zařízení).
 const GAME_BLOCKED = true;
@@ -150,14 +152,16 @@ const ROSTER = [
   { id: 'v_duy', name: 'Duy', num: 16, skin: '#eec79f', hair: 'bangs', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.34, browW: 3.6, browFlat: true, mouth: 'smirk', hidden: true, locked: 'never', viet: true },
   { id: 'v_hieu', name: 'Hiếu', num: 23, skin: '#d9a87c', hair: 'fade', hairColor: '#141110', hairDark: '#040303', hairLight: '#3a322c', eyes: '#24160c', brow: '#120e0c', lid: 0.36, browW: 3.6, browFlat: true, mouth: 'flat', hidden: true, locked: 'never', viet: true },
   // boss příběhu, jako hráč se odemkne úkolem (15 odehraných zápasů)
-  { id: 'milan', name: 'Milan', num: 90, skin: '#f1c2a0', hair: 'receding', hairColor: '#c9a66a', hairDark: '#8a6a34', hairLight: '#ecd39c', eyes: '#86a0b4', brow: '#a8895a', lid: 0.24, browW: 3.4, mouth: 'flat', stubble: true, locked: 'milan', kit: { color: '#25282f', dark: '#121419', light: '#ffd23f' } },
+  { id: 'milan', name: 'Milan', num: 90, skin: '#f1c2a0', hair: 'receding', hairColor: '#c9a66a', hairDark: '#8a6a34', hairLight: '#ecd39c', eyes: '#86a0b4', brow: '#a8895a', lid: 0.24, browW: 3.4, mouth: 'flat', stubble: true, locked: 'milan', alsoUnlock: 'kuba', kit: { color: '#25282f', dark: '#121419', light: '#ffd23f' } },
+  // rozhodčí Petr Kuba: starší, holohlavý se šedivým věncem a lehce šedivými vousy (5. úroveň kampaně Petr Kuba)
+  { id: 'kuba', name: 'Petr Kuba', num: 45, skin: '#efbf9c', hair: 'bald', rim: true, old: true, beard: 'light', hairColor: '#b4b2ad', hairDark: '#7d7b76', hairLight: '#dcdad5', eyes: '#6d8296', brow: '#8e8b85', lid: 0.3, browW: 3.8, mouth: 'flat', locked: 'kuba', kit: { color: '#25282f', dark: '#121419', light: '#ffd23f' } },
 ];
 
 // Superschopnost postavy (zatím superstřela v barvě postavy; schopnosti doladíme).
 // Oslovení (5. pád) do pokřiků fanoušků a předzápasové hlášky postav.
 const VOCATIVE = {
   nelcis: 'Nelcis', majda: 'Majdo', marsal: 'Marsale', durcado: 'Durcado', toma: 'Tómo',
-  peli: 'Peli', bemic: 'Bémiči', kiki: 'Kiki', simsa: 'Šimšo', jenda: 'Jendo', milan: 'Milane', pav: 'Páve', sully: 'Suli',
+  peli: 'Peli', bemic: 'Bémiči', kiki: 'Kiki', simsa: 'Šimšo', jenda: 'Jendo', milan: 'Milane', kuba: 'Petře', pav: 'Páve', sully: 'Suli',
 };
 const QUIPS = {
   nelcis: ['Tohle vyhrajeme levou zadní!', 'Připravte se prohrát!'],
@@ -171,6 +175,7 @@ const QUIPS = {
   simsa: ['Šimša jde na věc!', 'Tenhle zápas je můj!'],
   jenda: ['Jenda dává góly!', 'Dneska vás rozstřílíme!'],
   milan: ['Tohle odpískám po svém!', 'Žlutá? Rovnou červená!'],
+  kuba: ['Za tohle je žlutá!', 'Ještě jednou a jdeš ven!'],
   pav: ['Páv je tady, uhněte!', 'Tohle sním i s míčem!'],
   sully: ['Suli to rozhodne!', 'Dneska bez slitování!'],
 };
@@ -194,6 +199,7 @@ const DUO_SHOUTS = [
   ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'], ['VIỆT NAM VÔ ĐỊCH'],
   ['BERRY BERRY', 'TOČNÁ'],
   ['NIKOL NIKOL', 'LUĎAN LUĎAN'],
+  ['PETR KUBA', 'ŽLUTÁ KARTA'],
 ];
 
 // Odemčené věci na tomto zařízení (příběh, odměny).
@@ -222,7 +228,7 @@ const Unlocks = {
   },
 };
 // Postava je k dispozici (zamčené až po odemčení).
-const charAvailable = (c) => !c.locked || Unlocks.has(c.locked);
+const charAvailable = (c) => !c.locked || Unlocks.has(c.locked) || (!!c.alsoUnlock && Unlocks.has(c.alsoUnlock));
 // Postava se ukáže ve výběru (boss jen když už je odemčený).
 const charListed = (c) => !c.hidden || charAvailable(c);
 const MONCLER_KIT = { name: 'MONCLER-JENDA', short: 'Moncler-Jenda', color: '#f7f8fa', dark: '#cfd5de', light: '#1c2230', num: '#1c2230' };
@@ -234,6 +240,8 @@ const SKINS = {
   bikini: { char: 'kiki', name: 'Kiki v bikinách', short: 'Bikiny' },
   truegold: { char: 'kiki', name: 'True Gold Kiki', short: 'Gold', kit: TRUEGOLD_KIT, look: { skin: '#f2c14e', hairColor: '#ffd84a', hairDark: '#a87412', hairLight: '#fff6c2', brow: '#a87412', eyes: '#7a4a08', accent: '#fff6c2', crown: true } },
   // červený basketbalový dres bez rukávů s číslem 23 (bez loga klubu)
+  // Petr Kuba z mistrovství světa: svítivě žlutý dres rozhodčího, sluchátko s mikrofonem a zlatý odznak
+  kubams: { char: 'kuba', name: 'Petr Kuba MS', short: 'MS', kit: { name: 'PETR KUBA MS', short: 'Petr Kuba MS', color: '#d7ff3a', dark: '#8fb312', light: '#ffffff', num: '#1c2230' }, look: { headset: true, badge: true } },
   michael: { char: 'bemic', name: 'Michael Bémič', short: 'Michael', kit: { name: 'MICHAEL', short: 'Michael', color: '#ce1141', dark: '#8f0a2c', light: '#111111', num: '#ffffff' }, look: { num: 23, skin: '#7a4b30', hair: 'bald', brow: '#1d130c', eyes: '#2f1d12', hairColor: '#2a1a10', hairDark: '#120a05', hairLight: '#5a3a24' } },
 };
 const skinOwned = (id) => !!SKINS[id] && Unlocks.has(id);
@@ -336,6 +344,8 @@ const STORY_REWARDS = {
   truegold: { kind: 'skin', name: 'TRUE GOLD KIKI', text: 'Kiki celá ze zlata se zlatou korunkou. Bonus za 4. úroveň Příběhu – vyhraj a nedostaň žádný gól.' },
   berry: { kind: 'duo', name: 'BÉMIČ Š. & BERRY', text: 'Nová dvojice: Bémič Š. a jeho mazlíček – králík Berry s dlouhýma ušima. Odměna za 10. úroveň kampaně Točná.' },
   nikol: { kind: 'duo', name: 'NIKOL & LUĎAN', text: 'Nová dvojice: Nikol a Luďan. Odměna za 17. úroveň kampaně Točná.' },
+  kuba: { kind: 'duo', name: 'PETR KUBA', text: 'Nový hráč Petr Kuba – rozhodčí se schopností ŽLUTÁ KARTA (soupeři na 5 s zpomalí a skáčou míň). S ním se odemkne dvojice Petr Kuba & Milan.' },
+  kubams: { kind: 'skin', name: 'PETR KUBA MS', text: 'Skin pro Petra Kubu: rozhodčí z mistrovství světa – svítivě žlutý dres, sluchátko s mikrofonem a zlatý odznak.' },
   pav: { kind: 'duo', name: 'TLUSTEJ PÁV & SULI', text: 'Nová dvojice hráčů. Páv umí OBŘÍ PÁV (zvětší se a kdo do něj narazí, je omráčený), Suli FLASH (vyhrne triko a soupeři na 3 s ztuhnou). Do té doby mají ve výběru zámeček.' },
 };
 const plural = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
@@ -380,9 +390,20 @@ const TOCNA = [
   { format: '2v2', duo: 5, level: 'hard', boost: 1.15, goal: { by: 2 }, title: 'Páv a Suli', text: 'Obří páv a flash. Vyhraj o 2 góly a odemkneš Nikol a Luďana!', reward: 'nikol' },
   { format: '2v2', duo: 12, level: 'hard', boost: 1.2, goal: { by: 3 }, title: 'BOSS: Velké finále na Točné', text: 'Nikol a Luďan hájí Točnou. Poraz je o 3 góly a jsi král Točné!' },
 ];
+// Kampaň Petr Kuba: 7 zápasů, na 5. se odemkne Petr Kuba (a dvojice s Milanem), na 7. jeho skin
+const KUBA = [
+  { format: '1v1', opp: 'peli', level: 'easy', boost: 1, goal: {}, title: 'Píšťalka na krku', text: 'Petr Kuba píská tvůj první zápas. Hraj čistě a vyhraj.' },
+  { format: '1v1', opp: 'jenda', level: 'medium', boost: 1, goal: { goals: 2 }, title: 'Bez faulu', text: 'Jenda jde do všeho naplno. Dej mu aspoň 2 góly.' },
+  { format: '2v2', duo: 4, level: 'medium', boost: 1.05, goal: { by: 2 }, arena: 'wind', title: 'Nastavený čas', text: 'Šimša a Jenda ve větru. Vyhraj o 2 góly, než Kuba odpíská konec.' },
+  { format: '1v1', opp: 'milan', level: 'hard', boost: 1.05, goal: {}, arena: 'snow', title: 'Kolega Milan', text: 'Milan Voračka a červená karta na ledě. Kuba se dívá z lajny.' },
+  { format: '1v1', opp: 'kuba', level: 'hard', boost: 1.1, goal: { by: 2 }, title: 'Petr Kuba hraje', text: 'Petr Kuba odložil píšťalku a vytáhl žlutou kartu. Poraz ho o 2 góly a hraje za tebe!', reward: 'kuba' },
+  { format: '2v2', duo: 5, level: 'hard', boost: 1.12, goal: { maxConceded: 1 }, arena: 'moon', title: 'Videorozhodčí', text: 'Páv a Suli na Měsíci. Vyhraj a dostaň nejvýš 1 gól.' },
+  { format: '2v2', duo: 13, level: 'hard', boost: 1.18, goal: { by: 3 }, title: 'BOSS: Dva rozhodčí', text: 'Petr Kuba a Milan spolu – žlutá i červená karta. Vyhraj o 3 góly a Kuba je tvůj ve skinu z mistrovství světa!', reward: 'kubams' },
+];
 const CAMPAIGNS = {
   pav: { name: 'Páv & Suli', short: 'Páv & Suli', key: 'hlavouni.pribeh', levels: STORY.slice() },
   tocna: { name: 'Točná', short: 'Točná', key: 'hlavouni.tocna', levels: TOCNA },
+  kuba: { name: 'Petr Kuba', short: 'Petr Kuba', key: 'hlavouni.kuba', levels: KUBA },
 };
 const CAMPAIGN_KEY = 'hlavouni.kampan';
 const Story = {
@@ -502,7 +523,7 @@ function seedOf(str) {
 
 const SUPER_COLORS = {
   nelcis: '#ff5fb0', majda: '#e86bff', marsal: '#3fa2ff', durcado: '#4fe0c0', toma: '#5fe36b',
-  peli: '#b07bff', bemic: '#ff7a1f', kiki: '#53d2ff', simsa: '#c6ff3d', jenda: '#ff4d4d', milan: '#ff2d2d', pav: '#14b8a6', sully: '#7ee8d8', trana: '#ff8a5b',
+  peli: '#b07bff', bemic: '#ff7a1f', kiki: '#53d2ff', simsa: '#c6ff3d', jenda: '#ff4d4d', milan: '#ff2d2d', kuba: '#ffd23f', pav: '#14b8a6', sully: '#7ee8d8', trana: '#ff8a5b',
 };
 const superColor = (id) => SUPER_COLORS[id] || '#ffc93c';
 
@@ -522,10 +543,11 @@ const POWERS = {
   grow: { name: 'Obří páv', short: 'Obr', icon: '🦚', desc: 'Na 3 s se zvětší a ztloustne, kdo do něj narazí, je omráčený' },
   flash: { name: 'Flash', short: 'Flash', icon: '😳', desc: 'Vyhrne triko a soupeři na 3 s ztuhnou s vyvalenýma očima' },
   redcard: { name: 'Červená karta', short: 'Karta', icon: '🟥', desc: 'Soupeři na 2 s ztuhnou' },
+  yellowcard: { name: 'Žlutá karta', short: 'Žlutá', icon: '🟨', desc: 'Soupeři na 5 s zpomalí a skáčou míň' },
   basket: { name: 'Trojka', short: 'Trojka', icon: '🏀', desc: 'U míče: míč se změní v basketbalový a letí obloukem do brány soupeře' },
   penguin: { name: 'Skiper', short: 'Skiper', icon: '🐧', desc: 'Promění se v tučňáka, brána zamrzne na 3 s' },
 };
-const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime', milan: 'redcard', pav: 'grow', sully: 'flash', durcado: 'jet', majda: 'arms', trana: 'sushi' };
+const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime', milan: 'redcard', kuba: 'yellowcard', pav: 'grow', sully: 'flash', durcado: 'jet', majda: 'arms', trana: 'sushi' };
 const SUSHI_TIME = 2.6;  // jak dlouho Tráňa jede na sushi (s)
 const SUSHI_SPEED = 640; // rychlost jízdy
 const SUSHI_H = 44;      // výška sushi pod nohama
@@ -541,6 +563,9 @@ const GROW_K = 1.35;   // o kolik se zvětší
 const GROW_STUN = 1.6; // omráčení po nárazu
 const FLASH_TIME = 3;  // Selfie flash: soupeři ztuhnou
 const REDCARD_TIME = 2;
+const YELLOW_TIME = 5;    // Žlutá karta: jak dlouho jsou soupeři zpomalení
+const YELLOW_SPEED = 0.55; // rychlost běhu se žlutou
+const YELLOW_JUMP = 0.7;   // výskok se žlutou
 // JENDA PRIME: na 5 s hráč Realu Madrid
 const PRIME_TIME = 5;
 const PRIME_SPEED = 1.5; // rychlost běhu

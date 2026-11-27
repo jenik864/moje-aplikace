@@ -1106,6 +1106,7 @@ const Renderer = {
       else if (this.arena === 'wind') this.drawWind(ctx, now, m.windDir || 1);
       Effects.drawTalks(ctx, m.players);
       for (const p of m.players) if (p.stunT > 0 && p.onGround && !(p.flashT > 0)) this.drawDizzy(ctx, p, now);
+      for (const p of m.players) if (p.yellowT > 0) this.drawYellow(ctx, p, now);
       if (g.screen === 'match' && g.state === 'intro') this.drawIntroTalk(ctx, g, now);
       Effects.drawPops(ctx);
       if (g.state !== 'menu' && cam.bars < 0.3) {
@@ -2626,6 +2627,21 @@ const Renderer = {
       ctx.arc(2, R - 1, 7, 0.15 * Math.PI, 0.85 * Math.PI);
       ctx.stroke();
     }
+    // zlatý odznak rozhodčího na hrudi (skin Petr Kuba MS)
+    if (L.badge && !this._suit && !(p.primeT > 0)) {
+      ctx.fillStyle = '#ffcf3a';
+      ctx.strokeStyle = '#8a6200';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(8, R + 1);
+      ctx.lineTo(14, R + 1);
+      ctx.lineTo(14, R + 6);
+      ctx.lineTo(11, R + 9);
+      ctx.lineTo(8, R + 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
     // číslo (ne při vyhrnutém triku a v obleku)
     if ((p.selfieT > 0 && L.flashPose) || this._suit) return;
     ctx.font = `800 13px ${FONT_U}`;
@@ -3232,6 +3248,34 @@ const Renderer = {
     this.drawFace(ctx, p, ball);
     this.drawHair(ctx, p, T, 'top', now);
     if (L.crown) this.drawCrown(ctx, R, now);
+    if (L.headset) this.drawHeadset(ctx, R);
+  },
+
+  // Sluchátko rozhodčího s mikrofonem u pusy.
+  drawHeadset(ctx, R) {
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1c2230';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(-4, 4, R - 3, 1.18 * Math.PI, 1.62 * Math.PI);
+    ctx.stroke();
+    ctx.fillStyle = '#1c2230';
+    rrect(ctx, -22, 2, 11, 16, 4);
+    ctx.fill();
+    ctx.fillStyle = '#d7ff3a';
+    circle(ctx, -16.5, 10, 2.2);
+    ctx.fill();
+    ctx.strokeStyle = '#2b3242';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-12, 15);
+    ctx.quadraticCurveTo(2, 28, 16, 22);
+    ctx.stroke();
+    ctx.fillStyle = '#2b3242';
+    circle(ctx, 17, 21.5, 3);
+    ctx.fill();
+    ctx.restore();
   },
 
   // Vlasy mají tři vrstvy: 'back' (za tělem), 'cap' (na hlavě), 'top' (přes obrys a čelo).
@@ -3263,7 +3307,26 @@ const Renderer = {
       return;
     }
     if (L.hair === 'bald') {
-      // holá hlava: jen odlesk
+      // holá hlava: jen odlesk (starší pán má kolem dokola krátký šedivý věnec)
+      if (layer === 'cap' && L.rim) {
+        ctx.save();
+        circle(ctx, 0, 0, R - 1);
+        ctx.clip();
+        ctx.strokeStyle = L.hairColor;
+        ctx.lineWidth = 15;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(2, 2, R - 2, 0.6 * Math.PI, 1.16 * Math.PI);
+        ctx.stroke();
+        ctx.strokeStyle = hexA(L.hairDark, 0.6);
+        ctx.lineWidth = 1.2;
+        const rr = mulberry32(31);
+        for (let i = 0; i < 26; i++) {
+          const a = (0.62 + rr() * 0.52) * Math.PI, d = R - 8 + rr() * 9;
+          line(ctx, 2 + Math.cos(a) * d, 2 + Math.sin(a) * d, 2 + Math.cos(a) * (d + 3), 2 + Math.sin(a) * (d + 3));
+        }
+        ctx.restore();
+      }
       if (layer === 'cap') {
         ctx.fillStyle = 'rgba(255,255,255,.22)';
         oval(ctx, 4, -24, 13, 6, -0.25);
@@ -3994,6 +4057,31 @@ const Renderer = {
     ctx.stroke();
   },
 
+  // Žlutá karta nad hlavou zpomaleného hráče (na konci bliká).
+  drawYellow(ctx, p, now) {
+    if (p.yellowT < 1 && Math.floor(now / 110) % 2) return;
+    const a = Math.min(1, p.yellowT * 3, (YELLOW_TIME - p.yellowT) * 6 + 0.2);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.translate(p.x - p.dir * (p.R + 14), p.y - p.R * 0.75 + Math.sin(now * 0.005) * 3);
+    ctx.rotate(0.18 + Math.sin(now * 0.003) * 0.06);
+    ctx.fillStyle = '#ffd23f';
+    ctx.strokeStyle = '#4a3a00';
+    ctx.lineWidth = 2.2;
+    rrect(ctx, -9, -13, 18, 26, 3);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    rrect(ctx, -6, -10, 5, 18, 2);
+    ctx.fill();
+    ctx.restore();
+    // pomalé kapky potu
+    const t = (now * 0.0012 + p.x * 0.01) % 1;
+    ctx.fillStyle = `rgba(150,205,255,${0.8 * (1 - t)})`;
+    circle(ctx, p.x - p.dir * 26, p.y - p.R * 0.4 + t * 18, 2.6);
+    ctx.fill();
+  },
+
   // Hvězdičky kolem hlavy omámeného hráče.
   drawDizzy(ctx, p, now) {
     const cx = p.x, cy = p.y - p.R - 6;
@@ -4135,6 +4223,23 @@ const Renderer = {
         ctx.fillRect(18 + Math.cos(a) * 21 * d, 22 + Math.sin(a) * 12 * d, 0.8, 0.8);
       }
       ctx.restore();
+    }
+    // starší pán: vrásky na čele a u očí
+    if (L.old) {
+      ctx.strokeStyle = 'rgba(120,70,45,.38)';
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = 'round';
+      for (const [y, w] of [[-27, 11], [-22.5, 13]]) {
+        ctx.beginPath();
+        ctx.moveTo(18 - w, y + 1);
+        ctx.quadraticCurveTo(18, y - 1.5, 18 + w, y + 1);
+        ctx.stroke();
+      }
+      for (const dy of [-2, 1.5, 5]) line(ctx, 36, -2 + dy * 0.4, 40, -3 + dy);
+      ctx.beginPath();
+      ctx.moveTo(14, 7);
+      ctx.quadraticCurveTo(12, 14, 15, 19);
+      ctx.stroke();
     }
     // králík: růžový čumáček, vousky a dva zoubky
     if (L.bunny) {
