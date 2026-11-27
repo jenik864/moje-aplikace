@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.51">
+<link rel="stylesheet" href="style.css?v=1.52">
 </head>
 <body>
 <!-- HRA:START -->
@@ -501,6 +501,20 @@
     </div>
   </section>
 
+  <!-- hra zablokovaná: najdi si práci -->
+  <section id="blocked" class="blocked" aria-labelledby="blk-title" hidden>
+    <div class="blk-card">
+      <canvas id="blk-pic" class="blk-pic" aria-hidden="true"></canvas>
+      <div class="blk-text">
+        <p class="blk-kicker">Hvizd rozhodčího</p>
+        <h2 id="blk-title" class="blk-title">STOP!</h2>
+        <p class="blk-msg">Není normální trávit volný čas hraním <b>FIFA67</b>.</p>
+        <p class="blk-sub">Hra je pozastavená. Najdi si radši práci.</p>
+        <a id="blk-job" class="btn-play blk-btn" href="https://www.uradprace.cz/" target="_blank" rel="noopener">Úřad práce →</a>
+      </div>
+    </div>
+  </section>
+
   <p id="version" class="version" aria-hidden="true"></p>
   <div id="toast" class="toast" role="status" hidden></div>
   <div id="rotate" class="rotate-screen" hidden>
@@ -510,18 +524,18 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.51"></script>
-<script src="js/audio.js?v=1.51"></script>
-<script src="js/input.js?v=1.51"></script>
-<script src="js/ai.js?v=1.51"></script>
-<script src="js/physics.js?v=1.51"></script>
-<script src="js/render.js?v=1.51"></script>
-<script src="js/penalty.js?v=1.51"></script>
-<script src="js/net.js?v=1.51"></script>
-<script src="js/lobby.js?v=1.51"></script>
-<script src="js/board.js?v=1.51"></script>
-<script src="js/account.js?v=1.51"></script>
-<script src="js/trailer.js?v=1.51"></script>
-<script src="js/main.js?v=1.51"></script>
+<script src="js/config.js?v=1.52"></script>
+<script src="js/audio.js?v=1.52"></script>
+<script src="js/input.js?v=1.52"></script>
+<script src="js/ai.js?v=1.52"></script>
+<script src="js/physics.js?v=1.52"></script>
+<script src="js/render.js?v=1.52"></script>
+<script src="js/penalty.js?v=1.52"></script>
+<script src="js/net.js?v=1.52"></script>
+<script src="js/lobby.js?v=1.52"></script>
+<script src="js/board.js?v=1.52"></script>
+<script src="js/account.js?v=1.52"></script>
+<script src="js/trailer.js?v=1.52"></script>
+<script src="js/main.js?v=1.52"></script>
 </body>
 </html>

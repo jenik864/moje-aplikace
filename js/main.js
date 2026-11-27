@@ -3355,6 +3355,23 @@ const UI = {
     this.renderRewards();
   },
 
+  // Hra zablokovaná: přes celou obrazovku výzva od rozhodčího, hrát nejde.
+  showBlocked() {
+    const el = document.getElementById('blocked');
+    document.body.classList.add('game-blocked');
+    el.hidden = false;
+    document.getElementById('blk-job').href = JOB_URL;
+    Touch.show(false);
+    const pic = document.getElementById('blk-pic');
+    const t0 = performance.now();
+    const anim = (now) => {
+      Renderer.portrait(pic, REFEREE, REF_T, 1, (now - t0) / 1000, {});
+      requestAnimationFrame(anim);
+    };
+    requestAnimationFrame(anim);
+    Sound.init();
+  },
+
   // Zámky na tlačítkách v menu.
   updateLocks() {
     const l = document.getElementById('story-lock');
@@ -3867,6 +3884,7 @@ function boot() {
   Updater.init();
   Trailer.init();
   Account.init();
+  if (GAME_BLOCKED && !Trailer.on && !/trailer/.test(location.search)) UI.showBlocked();
 }
 
 /*
