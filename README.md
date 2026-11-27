@@ -80,7 +80,7 @@ Tlačítko *Příběh* v hlavním menu – je odemčený pro všechny (dřív by
 | 1 | 1 v 1 | Tóma | lehká | vyhraj | |
 | 2 | 1 v 1 | Peli | lehká, +5 % rychlost | vyhraj o 2 góly | |
 | 3 | 2 v 2 | Tóma & Peli | střední | vyhraj | |
-| 4 | 1 v 1 | Kiki | střední, +5 % | vyhraj (bonus: nedostaň gól) | ⭐ bonus **True Gold Kiki** |
+| 4 | 1 v 1 | Kiki | střední, +5 % | vyhraj a dostaň nejvýš 1 gól (bonus: nedostaň žádný) | ⭐ bonus **True Gold Kiki** |
 | 5 | 2 v 2 | Bémič & Kiki | střední, +10 % | vyhraj o 3 góly | **skin Moncler-Jenda** |
 | 6 | 1 v 1 | Durcado | těžká | vyhraj a dej aspoň 3 góly | |
 | 7 | 2 v 2 | Marsal & Durcado | těžká, +5 % | vyhraj o 2 góly | |
@@ -93,7 +93,7 @@ Některé úrovně se hrají ve speciální aréně: 2 na pláži, 5 na ledu, 6 
 Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhled, co za ni dostaneš.
 
 - **Moncler-Jenda**: skin jen pro Jendu – bílá péřová bunda s prošíváním, černé brýle, zlatý řetěz, diamant v uchu, černé tepláky a bílé tenisky (bez loga značky). Zapíná se tlačítkem *Moncler* u Jendy v lobby nebo v Příběhu a platí i online.
-- **True Gold Kiki**: bonus za 4. úroveň – na postup stačí vyhrát, ale když navíc nedostaneš žádný gól, získáš skin Kiki celé ze zlata (zlatá kůže, vlasy i dres) se zlatou korunkou s drahokamy a třpytem. Když bonus nevyjde, výsledek napíše, co je potřeba, a úroveň jde hrát znovu.
+- **True Gold Kiki**: bonus za 4. úroveň – na postup musíš vyhrát a dostat nejvýš jeden gól, a když nedostaneš žádný, získáš skin Kiki celé ze zlata (zlatá kůže, vlasy i dres) se zlatou korunkou s drahokamy a třpytem. Když bonus nevyjde, výsledek napíše, co je potřeba, a úroveň jde hrát znovu.
 - Postava s víc skiny (Kiki: bikiny a True Gold) je přepíná tlačítkem u postavy dokola: žádný → první → druhý → žádný.
 - **Tlustej páv & Suli**: nová dvojice (Páv č. 99 – špinavý blond, lehké vousy, pořádné bříško; Suli č. 17 – dlouhé blond vlasy, výrazná postava). Ve výběru hráčů jsou vidět od začátku, ale mají zámeček a hrát za ně (ani proti nim) nejde, dokud nesplníš 10. úroveň.
 
@@ -240,7 +240,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
-- 1.42 – 4. úroveň Příběhu: postup i s obdrženým gólem, bez gólu bonus skin True Gold Kiki
+- 1.43 – 4. úroveň Příběhu: postup s nejvýš jedním obdrženým gólem, bez gólu bonus skin True Gold Kiki
 - 1.41 – vyvážené poháry podle obtížnosti (lehký dává málo, těžký hodně)
 - 1.40 – oprava: Majda se po Gumových rukou už neotočí zády k bráně
 - 1.39 – Majda má schopnost Gumové ruce (přitáhne míč, ukradne trojku i tryskáč)

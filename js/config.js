@@ -95,7 +95,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.42';
+const GAME_VERSION = '1.43';
 
 // Veřejná adresa hry (GitHub Pages) – online tam funguje bez účtu na claude.ai.
 const PUBLIC_URL = 'https://jenik864.github.io/moje-aplikace/';
@@ -286,7 +286,7 @@ const STORY = [
   { format: '1v1', opp: 'toma', level: 'easy', boost: 1, goal: {}, title: 'Sídlištní plácek', text: 'Tóma tě vyzve na první zápas. Ukaž, co v tobě je!' },
   { format: '1v1', opp: 'peli', level: 'easy', boost: 1.05, goal: { by: 2 }, arena: 'beach', title: 'Plážový turnaj', text: 'Peli je rychlík, ale v písku se běhá pomalu. Musí to být jasná výhra.' },
   { format: '2v2', duo: 2, level: 'medium', boost: 1, goal: {}, title: 'Odveta na sídlišti', text: 'Tóma a Peli si přivedli posilu. Hraje se 2 na 2, spoluhráče máš z tvé dvojice.' },
-  { format: '1v1', opp: 'kiki', level: 'medium', boost: 1.05, goal: {}, bonus: { goal: { clean: true }, reward: 'truegold' }, title: 'Okresní přebor', text: 'Kiki nikdy neprohrává. Na postup ji stačí porazit – a když nedostaneš gól, získáš TRUE GOLD KIKI!' },
+  { format: '1v1', opp: 'kiki', level: 'medium', boost: 1.05, goal: { maxConceded: 1 }, bonus: { goal: { clean: true }, reward: 'truegold' }, title: 'Okresní přebor', text: 'Kiki nikdy neprohrává. Na postup ji porazíš a dostaneš nejvýš jeden gól – a když nedostaneš žádný, získáš TRUE GOLD KIKI!' },
   { format: '2v2', duo: 3, level: 'medium', boost: 1.1, goal: { by: 3 }, arena: 'snow', title: 'Zimní stadion', text: 'Bémič a Kiki. Pozor na Skipera a zmrzlou bránu!', reward: 'moncler' },
   { format: '1v1', opp: 'durcado', level: 'hard', boost: 1, goal: { goals: 3 }, arena: 'wind', title: 'Derby ve vichřici', text: 'Durcado hraje hlavou a fouká vítr. Musíš mu dát aspoň 3 góly.' },
   { format: '2v2', duo: 1, level: 'hard', boost: 1.05, goal: { by: 2 }, title: 'Jižní supi', text: 'Marsal a Durcado. Trojky z dálky a hlavičky – vydržíš to?' },
@@ -304,6 +304,7 @@ const plural = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : 
 function storyGoalText(g) {
   if (g.by) return `Vyhraj o ${g.by} ${plural(g.by, 'gól', 'góly', 'gólů')}`;
   if (g.clean) return 'Vyhraj a nedostaň gól';
+  if (g.maxConceded !== undefined) return `Vyhraj a dostaň nejvýš ${g.maxConceded} ${plural(g.maxConceded, 'gól', 'góly', 'gólů')}`;
   if (g.goals) return `Vyhraj a dej aspoň ${g.goals} ${plural(g.goals, 'gól', 'góly', 'gólů')}`;
   return 'Vyhraj zápas';
 }
@@ -312,6 +313,7 @@ function storyGoalMet(g, my, opp, won) {
   if (!won) return false;
   if (g.by && my - opp < g.by) return false;
   if (g.clean && opp > 0) return false;
+  if (g.maxConceded !== undefined && opp > g.maxConceded) return false;
   if (g.goals && my < g.goals) return false;
   return true;
 }
