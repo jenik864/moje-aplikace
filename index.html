@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Paytone+One&display=swap">
-<link rel="stylesheet" href="style.css?v=1.68">
+<link rel="stylesheet" href="style.css?v=1.69">
 </head>
 <body>
 <!-- HRA:START -->
@@ -537,8 +537,19 @@
       </header>
       <div id="club-grid" class="club-grid" role="group" aria-label="Za koho jdeš do klubu"></div>
       <div class="club-foot">
-        <p class="club-hint">U baru, DJe, ve VIP a v šatně se platí poháry.</p>
+        <button id="club-garage-btn" class="btn-chip small club-garage-btn" type="button">🚗 Garáž</button>
         <button id="club-enter" class="btn-play club-enter" type="button">Vstoupit</button>
+      </div>
+    </div>
+    <div id="club-garage" class="club-shop" hidden>
+      <div class="club-shop-card" role="dialog" aria-labelledby="club-garage-title">
+        <header class="club-shop-head">
+          <h3 id="club-garage-title">Garáž</h3>
+          <button id="club-garage-close" class="btn-mini" type="button" aria-label="Zavřít">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </header>
+        <div id="club-garage-items" class="club-items"></div>
       </div>
     </div>
     <div id="club-age" class="club-age" hidden>
@@ -557,6 +568,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
       <button id="club-cam" class="btn-mini club-cam" type="button" aria-label="Vyfotit">📸</button>
+      <button id="club-skip" class="btn-chip small club-skip" type="button" hidden>Přeskočit jízdu ⏭</button>
       <div class="club-topr">
         <div class="club-tro" aria-label="Moje poháry"><span aria-hidden="true">🏆</span><b id="club-tro2">0</b></div>
       </div>
@@ -618,19 +630,20 @@
   <noscript><p class="noscript">Hra potřebuje zapnutý JavaScript.</p></noscript>
 </div>
 <!-- HRA:END -->
-<script src="js/config.js?v=1.68"></script>
-<script src="js/audio.js?v=1.68"></script>
-<script src="js/input.js?v=1.68"></script>
-<script src="js/ai.js?v=1.68"></script>
-<script src="js/physics.js?v=1.68"></script>
-<script src="js/render.js?v=1.68"></script>
-<script src="js/penalty.js?v=1.68"></script>
-<script src="js/net.js?v=1.68"></script>
-<script src="js/lobby.js?v=1.68"></script>
-<script src="js/board.js?v=1.68"></script>
-<script src="js/account.js?v=1.68"></script>
-<script src="js/trailer.js?v=1.68"></script>
-<script src="js/club.js?v=1.68"></script>
-<script src="js/main.js?v=1.68"></script>
+<script src="js/config.js?v=1.69"></script>
+<script src="js/audio.js?v=1.69"></script>
+<script src="js/input.js?v=1.69"></script>
+<script src="js/ai.js?v=1.69"></script>
+<script src="js/physics.js?v=1.69"></script>
+<script src="js/render.js?v=1.69"></script>
+<script src="js/penalty.js?v=1.69"></script>
+<script src="js/net.js?v=1.69"></script>
+<script src="js/lobby.js?v=1.69"></script>
+<script src="js/board.js?v=1.69"></script>
+<script src="js/account.js?v=1.69"></script>
+<script src="js/trailer.js?v=1.69"></script>
+<script src="js/drive.js?v=1.69"></script>
+<script src="js/club.js?v=1.69"></script>
+<script src="js/main.js?v=1.69"></script>
 </body>
 </html>

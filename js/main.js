@@ -493,6 +493,16 @@ const Game = {
       for (const k of ['berry', 'nikol', 'kuba', 'kubams']) Unlocks.set(k);
       return 'all';
     }
+    if (h === CUPS_CODE) {
+      // +500 pohárů, kód jde použít kolikrát chceš
+      const prof = Profile.get();
+      prof.trophies += 500;
+      Profile.save(prof);
+      UI.renderProfile();
+      if (Board.nick()) Board.publish();
+      if (Account.logged) setTimeout(() => Account.sync(), 800);
+      return 'cups';
+    }
     if (h !== STORY_CODE) return '';
     Unlocks.set('story');
     return 'story';
@@ -2806,6 +2816,9 @@ const UI = {
         if (got === 'viet') {
           this.toast('Výzva Vietnam odemčena!');
           this.showViet();
+        } else if (got === 'cups') {
+          this.toast('+500 pohárů! 🏆');
+          this.show('home');
         } else if (got === 'all') {
           this.toast('Odemčeno úplně všechno! Příběh, skiny, Páv & Suli i Milan.');
           this.show('home');

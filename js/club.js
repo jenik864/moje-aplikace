@@ -163,11 +163,11 @@ const Club = {
         return {
           char: o.char || 'jenda', vip: !!o.vip, own: o.own || {}, wear: o.wear || {}, adult: !!o.adult,
           style: CLUB_STYLES[o.style] ? o.style : 'house',
-          ban: Math.max(0, Number(o.ban) || 0),
+          ban: Math.max(0, Number(o.ban) || 0), cars: Object.assign({ hatch: true }, o.cars || {}), car: o.car && CARS.some((c) => c.id === o.car) ? o.car : 'hatch',
         };
       }
     } catch (e) { /* nic */ }
-    return { char: 'jenda', vip: false, own: {}, wear: {}, adult: false, style: 'house', ban: 0 };
+    return { char: 'jenda', vip: false, own: {}, wear: {}, adult: false, style: 'house', ban: 0, cars: { hatch: true }, car: 'hatch' };
   },
   save(s) {
     try { localStorage.setItem(CLUB_KEY, JSON.stringify(s)); } catch (e) { /* nevadí */ }
@@ -213,6 +213,15 @@ const Club = {
     });
     click('club-age-no', () => this.close());
     click('club-out-ok', () => this.finishKick());
+    click('club-skip', () => {
+      if (this.phase === 'drive') this.enterClub();
+    });
+    click('club-garage-btn', () => this.openGarage());
+    click('club-garage-close', () => { this.el('club-garage').hidden = true; });
+    this.el('club-garage-items').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-car]');
+      if (b) this.buyCar(b.dataset.car);
+    });
     click('club-photo-close', () => { this.el('club-photo').hidden = true; });
     click('club-photo-share', () => this.sharePhoto());
     click('club-cam', () => {
@@ -237,7 +246,7 @@ const Club = {
     // joystick: kdekoli na levé části obrazovky
     const cv = this.cv;
     cv.addEventListener('pointerdown', (e) => {
-      if (this.phase !== 'in' || this.overlayOpen()) return;
+      if ((this.phase !== 'in' && this.phase !== 'drive') || this.overlayOpen()) return;
       const r = cv.getBoundingClientRect();
       if (e.clientX - r.left > r.width * 0.62) return;
       e.preventDefault();
@@ -259,11 +268,11 @@ const Club = {
       if (k === 'escape') {
         if (!this.el('club-photo').hidden) this.el('club-photo').hidden = true;
         else if (this.shopOpen) this.closeShop();
-        else if (this.phase === 'in') this.leave();
+        else if (this.phase === 'in' || this.phase === 'drive') this.leave();
         else this.close();
         return;
       }
-      if (this.phase !== 'in' || this.overlayOpen()) return;
+      if ((this.phase !== 'in' && this.phase !== 'drive') || this.overlayOpen()) return;
       if (k === 'e' || k === ' ' || k === 'enter') {
         e.preventDefault();
         this.act();
@@ -298,6 +307,7 @@ const Club = {
   },
 
   close() {
+    Drive.stop();
     this.on = false;
     Sound.quiet = this.quiet0 !== undefined ? this.quiet0 : true;
     this.stopMusic();
@@ -308,11 +318,29 @@ const Club = {
     UI.renderProfile();
   },
 
+  // Vstoupit: nejdřív jízda autem po městě do Hot Peppers (jde přeskočit).
   enter() {
     const s = this.state();
     s.char = this.pick;
     this.save(s);
+    this.phase = 'drive';
+    this.el('club-select').hidden = true;
+    this.el('club-garage').hidden = true;
+    this.el('club-hud').hidden = false;
+    this.el('club-act').hidden = true;
+    this.el('club-cam').hidden = true;
+    this.el('club-skip').hidden = false;
+    this._zoneKey = 'drive';
+    this.startMusic(true);
+    Drive.start(s.car, () => this.enterClub());
+  },
+
+  enterClub() {
+    Drive.stop();
     this.phase = 'in';
+    this._zoneKey = '';
+    this.el('club-skip').hidden = true;
+    this.el('club-cam').hidden = false;
     this.el('club-select').hidden = true;
     this.el('club-hud').hidden = false;
     this.build(this.pick);
@@ -324,6 +352,9 @@ const Club = {
   },
 
   leave() {
+    Drive.stop();
+    this.el('club-skip').hidden = true;
+    this.el('club-cam').hidden = false;
     this.el('club-photo').hidden = true;
     this.closeShop();
     this.phase = 'select';
@@ -333,6 +364,53 @@ const Club = {
     this.build('');
     this.renderGrid();
     this.startMusic(true);
+  },
+
+  /* ---------- garáž ---------- */
+
+  openGarage() {
+    this.renderGarage();
+    this.el('club-garage').hidden = false;
+  },
+
+  renderGarage() {
+    const s = this.state(), have = Profile.get().trophies;
+    const stars = (v, lo, hi) => '★'.repeat(1 + Math.round(((v - lo) / (hi - lo)) * 4)).padEnd(5, '☆');
+    this.el('club-garage-items').innerHTML = CARS.map((c) => {
+      const own = !!s.cars[c.id], cur = s.car === c.id;
+      const btn = cur ? '<span class="club-owned">Jezdíš ✓</span>' : own ? `<button type="button" class="club-buy on" data-car="${c.id}">Vybrat</button>` : `<button type="button" class="club-buy" data-car="${c.id}" ${have < c.price ? 'data-poor="1"' : ''}><span aria-hidden="true">🏆</span> ${c.price}</button>`;
+      return `<div class="club-item club-car${cur ? ' running' : ''}"><canvas data-car="${c.id}" aria-hidden="true"></canvas><div class="club-it"><b>${c.name}</b><span>${c.desc}</span><span class="club-stars">Rychlost ${stars(c.max, 520, 960)} · Zrychlení ${stars(c.acc, 380, 780)}</span></div>${btn}</div>`;
+    }).join('');
+    for (const cv of this.el('club-garage-items').querySelectorAll('canvas')) {
+      const c = carById(cv.dataset.car), dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = 120 * dpr;
+      cv.height = 56 * dpr;
+      const x = cv.getContext('2d'), k = c.len > 70 ? 0.95 : 1.4;
+      x.setTransform(dpr * k, 0, 0, dpr * k, 60 * dpr, 28 * dpr);
+      Drive.drawCar(x, 0, 0, 0, c, false, true);
+    }
+    this.el('club-garage-btn').textContent = `🚗 ${carById(s.car).name}`;
+  },
+
+  buyCar(id) {
+    const s = this.state(), c = carById(id);
+    if (!s.cars[id]) {
+      const prof = Profile.get();
+      if (prof.trophies < c.price) {
+        UI.toast(`${c.name} stojí ${c.price} pohárů. Máš ${prof.trophies}.`);
+        return;
+      }
+      prof.trophies -= c.price;
+      Profile.save(prof);
+      s.cars[id] = true;
+      Sound.fanfare();
+      UI.toast(`🚗 ${c.name} je tvoje!`);
+      this.renderTro();
+      this.syncOut();
+    } else Sound.click();
+    s.car = id;
+    this.save(s);
+    this.renderGarage();
   },
 
   /* ---------- výběr postavy ---------- */
@@ -359,6 +437,7 @@ const Club = {
       b.setAttribute('aria-label', c.name + (lock ? ' (zamčeno)' : ''));
     }
     this.el('club-enter').textContent = `Vstoupit · ${charById(this.pick).name}`;
+    this.el('club-garage-btn').textContent = `🚗 ${carById(this.state().car).name}`;
     this._banShown = -1;
     this.drawGrid(0);
   },
@@ -486,6 +565,18 @@ const Club = {
     if (tr && tr.kind === 'zelenac' && tr.t < tr.high) dt *= 0.55; // všechno se zpomalí
     this.t += dt;
     this.pump();
+    if (this.phase === 'drive') {
+      Drive.update(dt, this.overlayOpen() ? { mx: 0, my: 0 } : this.input());
+      const cv = this.cv, ctx = this.ctx, dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = Math.round((cv.clientWidth || 800) * dpr), h = Math.round((cv.clientHeight || 400) * dpr);
+      if (cv.width !== w || cv.height !== h) {
+        cv.width = w;
+        cv.height = h;
+      }
+      Drive.draw(ctx, w, h, dpr, now);
+      this.drawStick(ctx, dpr);
+      return;
+    }
     if (this.phase === 'select') this.drawGrid(now / 1000);
     this.update(dt);
     this.draw(now);

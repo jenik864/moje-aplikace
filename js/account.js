@@ -154,6 +154,7 @@ const Account = {
         v = Object.assign({}, B, A);
         v.own = Object.assign({}, B.own || {}, A.own || {});
         v.vip = !!(A.vip || B.vip);
+        v.cars = Object.assign({}, B.cars || {}, A.cars || {});
         v.nums = Object.assign({}, B.nums || {}, A.nums || {});
         v.wins = Math.max(Number(A.wins) || 0, Number(B.wins) || 0);
         v.adult = !!(A.adult || B.adult);

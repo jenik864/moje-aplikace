@@ -1964,3 +1964,9 @@ body.game-blocked .screen, body.game-blocked #hud, body.game-blocked #touch, bod
 .hub-badge.go { background: #fff; color: var(--ink); }
 .hub-badge.new { background: #3dff7a; color: var(--ink); }
 .hub-badge.locked { background: rgba(0, 0, 0, 0.6); color: #fff; border-color: rgba(255, 255, 255, 0.4); }
+
+.club-garage-btn { border-color: rgba(232, 195, 122, 0.7); color: #f3d38a; background: rgba(10, 6, 8, 0.8); white-space: nowrap; }
+.club-skip { position: absolute; left: calc(max(12px, var(--safe-l)) + 54px); top: max(14px, calc(var(--safe-t) + 4px)); border-color: rgba(232, 195, 122, 0.7); color: #f3d38a; background: rgba(10, 6, 8, 0.85); }
+.club-car canvas { width: 120px; height: 56px; }
+.club-stars { color: #e8c37a !important; font-size: 12px !important; letter-spacing: 0.02em; }
+#club-garage { z-index: 4; }

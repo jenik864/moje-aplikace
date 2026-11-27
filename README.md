@@ -175,6 +175,10 @@ Na tanečním parketu jde zdarma *Tančit*; dalším klepnutím se mění pohyb 
 
 Klub je vyvedený jako prémiový strip club: černá lesklá mramorová podlaha s odlesky neonů, stěna z prošívané kůže se zlatou lištou a LED páskem, rampa se světly, nápis *Hot Peppers · Gentlemen's Club* v neonové kurzívě, bar z černého mramoru se zlatými lamelami a podsvícenými policemi, kožené boxy u stolků, tmavé skleněné dlaždice na parketu, pódia s LED okrajem a zrcadlem, ve VIP černý koberec se zlatým vzorem, zlaté panely a křišťálový lustr. Výběr postavy, obchody a tlačítka jsou černozlaté.
 
+**Jízda do klubu** – po *Vstoupit* se objevíš v autě v nočním městě (pohled shora) a jedeš do Hot Peppers podle navigace: nahoře šipka a „Za 650 m doleva“, vzdálenost do cíle, vpravo minimapa s trasou, dole rychloměr. Řídí se joystickem (auto zatáčí ke směru joysticku a přidává plyn; na počítači šipky). Ve městě jezdí auta (srážky zpomalí), svítí lampy, neony na střechách a reflektory klubu. Na parkovišti před Hot Peppers zaparkuješ a jde se dovnitř. *Přeskočit jízdu* tě pustí rovnou do klubu.
+
+**Garáž** (🚗 tlačítko ve výběru postavy): Rezavý hatchback (zdarma), Tuned kombi (150 🏆), Černé SUV (300), Sportovní kupé (600), Zlaté superauto (1200) a Bílá limuzína (2000). Liší se rychlostí, zrychlením, zatáčením a vzhledem; koupená auta se ukládají a synchronizují s účtem.
+
 **VIP (prémium)** – VIP je větší (sahá až dolů k fotokoutku) a má:
 - *Vířivku* se dvěma exkluzivními VIP holkami v plavkách (Diamond a Rubi – nejsou nikde jinde). Tlačítkem *Vířivka* do ní vlezeš, ve vodě je vidět jen to nad hladinou, bublinky, pára, srdíčka a holky kecají („Voda je teplá“, „VIP život“). *Vylézt* tě vrátí ven.
 - *Šampus s prskavkami* a *VIP ohňostroj* ve VIP baru (viz tabulka), *soukromou show* a *separé*.
@@ -346,6 +350,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.69 – jízda autem po nočním městě do Hot Peppers s navigací a provozem, garáž se 6 auty za poháry; kód na +500 pohárů
 - 1.68 – prémiový vzhled klubu Hot Peppers (mramor, kůže, zlato, neon, lustr, černozlaté menu); Příběh začíná úvodní obrazovkou s kartami kampaní
 - 1.67 – pryč taneční souboj a čísla od holek; VIP prémium: větší VIP, vířivka s VIP holkami, šampus s prskavkami, VIP ohňostroj, zlatý VIP odznak
 - 1.66 – mozaika u tanečnic je větší a kreslí se úplně navrch (přes hlavu i ruce), takže je vždycky vidět
