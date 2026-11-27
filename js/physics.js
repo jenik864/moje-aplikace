@@ -561,7 +561,7 @@ class Match {
     const wasAir = !p.onGround;
     p.onGround = false;
     this.playerWorld(p);
-    if (p.onGround) p.runPhase += p.vx * p.dir * dt * 0.05;
+    if (p.onGround && !(p.lift > 1)) p.runPhase += p.vx * p.dir * dt * 0.05;
     if (stunned && wasAir && p.onGround && p.spin !== 0) {
       p.spin = 0;
       this.onEvent('thud', { x: p.x, y: GROUND_Y, idx: this.players.indexOf(p) });
@@ -753,7 +753,7 @@ class Match {
   }
 
   clampPlayer(p) {
-    const stand = GROUND_Y - p.F - p.R;
+    const stand = p.standY; // na sushi stojí výš (p.lift)
     if (p.y >= stand) {
       p.y = stand;
       if (p.vy > 0) p.vy = 0;
@@ -776,6 +776,7 @@ class Match {
       for (let i = 0; i < ps.length; i++) {
         for (let j = i + 1; j < ps.length; j++) {
           const a = ps[i], c = ps[j];
+          if (a.sushiT > 0 || c.sushiT > 0) continue; // jezdec na sushi: srážky řeší sushi samo
           let dx = c.x - a.x, dy = c.y - a.y;
           let d = Math.hypot(dx, dy);
           const min = a.R + c.R - 6 * PS;
@@ -1060,7 +1061,7 @@ class Match {
     if (p.sushiT > 0) {
       p.sushiT = Math.max(0, p.sushiT - dt);
       // u brankové čáry soupeře sushi zastaví
-      const line = p.dir > 0 ? W - GOAL_W - 70 : GOAL_W + 70;
+      const line = p.dir > 0 ? W - GOAL_W - 150 : GOAL_W + 150;
       if ((p.x - line) * p.dir > 0) p.sushiT = Math.min(p.sushiT, 0.05);
     }
     const target = p.sushiT > 0 ? SUSHI_H : 0;
@@ -1090,12 +1091,14 @@ class Match {
     const b = this.ball;
     if (!b.held && b.carryBy < 0 && b.jetBy < 0 && b.armBy < 0) {
       const dx = (b.x - p.x) * p.dir;
-      if (dx > 0 && dx < 70 + b.r + 6 && b.y + b.r > top) {
-        b.x = p.x + p.dir * (70 + b.r + 6);
-        if (b.vx * p.dir < SUSHI_SPEED + 80) b.vx = p.dir * (SUSHI_SPEED + 80);
-        if (b.vy > -120) b.vy = -160;
+      if (dx > -10 && dx < 70 + b.r + 6 && b.y + b.r > top) {
+        // míč odskočí před sushi o kus rychleji než sushi (žádné přilepení a cukání)
+        if (b.vx * p.dir < SUSHI_SPEED + 160) b.vx = p.dir * (SUSHI_SPEED + 160);
+        if (b.vy > -60) b.vy = -220;
         b.lastTouch = p;
         b.lastHow = 'kick';
+        b.ghostBy = this.players.indexOf(p);
+        b.ghostT = 0.25;
       }
     }
     void front;

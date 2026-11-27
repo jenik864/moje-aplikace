@@ -1894,7 +1894,12 @@ const Renderer = {
     const ph = p.runPhase;
     const footY = R + F - 7;
     let bx, by, fx, fy;
-    if (air) {
+    const surf = (p.lift || 0) > 1 && !air;
+    if (surf) {
+      // surfařský postoj na sushi: nohy rozkročené, lehce pokrčené
+      const k = Math.sin(now * 0.006) * 1.5;
+      bx = -15; by = footY - 1 + k; fx = 15; fy = footY - 1 - k;
+    } else if (air) {
       bx = -10; by = footY - 12; fx = 12; fy = footY - 16;
     } else {
       bx = -6 + Math.sin(ph) * 10 * run;
@@ -1949,6 +1954,12 @@ const Renderer = {
       aFront = 0.12 + Math.sin(ph) * 0.8 * run;
     }
 
+    // na sushi: ruce rozpažené, vyvažují náklon
+    if (surf && !kicking) {
+      const w = Math.sin(now * 0.005) * 0.35;
+      aBack = -1.65 + w;
+      aFront = 1.65 + w;
+    }
     // Suli vyhrnuje triko: obě ruce nahoru ke krku
     if (p.selfieT > 0) {
       aBack = -2.3;
@@ -1969,7 +1980,8 @@ const Renderer = {
     }
     if (kn > 0) ctx.translate(0, F * 0.36 * kn * PS);
     // balancování na sushi (kymácí se kolem chodidel)
-    const lean = (p.lean || 0) + (p.sushiT > 0 ? Math.sin(now * 0.014) * 0.16 + Math.sin(now * 0.031) * 0.06 : 0);
+    // jedno plynulé houpání (pomalé, ať to necuká) + mírný náklon dopředu do jízdy
+    const lean = (p.lean || 0) + ((p.lift || 0) > 1 ? (Math.sin(now * 0.005) * 0.1 + 0.08) * Math.min(1, p.lift / SUSHI_H) : 0);
     if (lean) {
       // protahování: náklon kolem chodidel
       const c = p.R + p.F;
@@ -2776,6 +2788,11 @@ const Renderer = {
     ctx.fillStyle = 'rgba(0,0,0,.22)';
     oval(ctx, x, GROUND_Y + 2, w * 0.55, 7);
     ctx.fill();
+    // sushi se při jízdě lehce houpe spolu s Tráňou
+    const tilt = Math.sin(now * 0.005) * 0.03 * Math.min(1, h / SUSHI_H);
+    ctx.translate(x, GROUND_Y);
+    ctx.rotate(tilt);
+    ctx.translate(-x, -GROUND_Y);
     if (p.sushiT > 0) {
       ctx.strokeStyle = 'rgba(255,255,255,.55)';
       ctx.lineWidth = 3;

@@ -251,6 +251,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 
 Aktuální verze je vidět dole v rohu hlavního menu.
 
+- 1.50 – plynulá jízda na sushi (Tráňa už nepadá a necuká, surfařský postoj, rozpažené ruce, zrnka rýže)
 - 1.49 – Tráňa má schopnost Obří sushi
 - 1.48 – online: menší snímky hry pro kamaráda (méně dat, plynulejší hlavně ve 2 v 2 a ve výzvě Vietnam)
 - 1.47 – účet s heslem a synchronizace postupu mezi zařízeními

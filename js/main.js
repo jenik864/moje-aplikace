@@ -1554,6 +1554,10 @@ const Game = {
     if (this.match && this.screen === 'match') {
       for (const p of this.match.players) {
         if (p.kneel > 0.5 && Math.abs(p.vx) > 110 && Math.random() < dt * 40) Effects.grass(p.x, 1);
+        // jízda na sushi: za sushi odlétají zrnka rýže
+        if (p.sushiT > 0 && p.lift > 20 && Math.random() < dt * 35) {
+          Effects.add({ x: p.x - p.dir * 70, y: GROUND_Y - rand(6, 30), vx: -p.dir * rand(60, 200), vy: rand(-220, -60), g: 900, life: rand(0.3, 0.55), size: rand(2, 3.2), color: '#fbfbf6' });
+        }
       }
     }
     if (this.mode === 'guest' && this.screen === 'match') {
