@@ -366,7 +366,7 @@ Hřiště má virtuální rozměr 1280 × 720. Na displeji jiného poměru stran
 
 ## Trailer
 
-Odkaz https://jenik864.github.io/moje-aplikace/?trailer (když hra není pozastavená obrazovkou STOP) přehraje 28s trailer přímo ve hře (tlačítkem *Pustit trailer*, se zvukem): nová dvojice Tlustej páv & Suli se schopnostmi, skiny Moncler-Jenda / Kiki v bikinách / Michael Bémič, Příběh s 10 zápasy a bossem Milanem, Úkoly a gól ve 2 v 2. Scénář je v `js/trailer.js` (skutečné zápasy ve hře, kamera, titulky a syntetizovaná hudba). Hotové video je v `trailer.mp4`; vyrábí se nahráním `?trailer=rec` snímek po snímku a složením přes ffmpeg.
+Odkaz https://jenik864.github.io/moje-aplikace/?trailer (když hra není pozastavená obrazovkou STOP) přehraje 53s trailer „největšího updatu všech dob“ přímo ve hře (tlačítkem *Pustit trailer*, se zvukem). 1. část je fotbalová: Berry a králičí skoky, rapper Ay$kr, jóga s Nikol, Luďanův míč do hrobu, šest nových skinů a kampaň Točná. Pak škrábnutí desky, glitch a „TEĎ SE TO ZVRTNE 😈“ – 2. část na trapovém beatu: drahá auta ve 3D městě s cenovkami, neon Hot Peppers rozsvěcovaný písmeno po písmenu, klub s lasery, VIP s vířivkou (mozaika), šampusem a ohňostrojem, TEMPO a vymyšlené drogy s psychedelickým vlněním, panák s kámošem, Peppers online, telefon s FIFAgramem a lajky, rychlé střihy a závěrečná karta. Scénář je v `js/trailer.js` (skutečné zápasy, klub a jízda ze hry, nové animace a syntetizovaná hudba). Hotové video je v `trailer.mp4`; vyrábí se nahráním `?trailer=rec` snímek po snímku a složením přes ffmpeg.
 
 ## Verze
 
@@ -375,6 +375,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 Aktuální verze je vidět dole v rohu hlavního menu.
 
 - 1.71 – jízda do klubu s kamerou za autem (3D město), přehlednější úvodní obrazovka (karty Hot Peppers a FIFAgram, menší odkazy)
+- 1.75 – nový trailer „největší update všech dob“ (fotbal → zvrat → auta, Hot Peppers, VIP, drogy, online, FIFAgram)
 - 1.74 – superschopnosti: Berry Králičí skoky (přepínač kdykoli), Bémič Š. rapper Ay$kr (5 s rychlejší, výš, silněji i s parťákem), Nikol Jóga (soupeři 3 s na karimatkách), Luďan Do hrobu (míč se k němu přesune odkudkoli)
 - 1.73 – Točná: Spider Boy (5. úroveň), Bémič Š. & Berry už v 9., bonus True Gold Bémič Š. + Berry (12.), Nikol & Luďan v 16., bonus True Gold Nikol + Luďan (finále); úkol 100 gólů za Šimšu = skin Šimša Bohemka a další úkoly za poháry; Peppers online (vidíš ostatní hráče), vířivka s placeným svlékáním (mozaika), smyslnější soukromá show, panák s klukem, dealer přejmenován na TEMPO, pryč fotokoutek, vidět DJ i celý nápis Hot Peppers; celá hra jen na šířku
 - 1.72 – vymazlená grafika jízdy: kabriolety bez střechy (zezadu je vidět tvoje postava za volantem, dres se jménem a číslem, ruce na volantu), tvarovaná karoserie s lakem, koly a disky, koncová a brzdová světla, SPZ, výfuky, spoiler a podsvícení podvozku; domy s okny po patrech, výlohami, markýzami a neonovými cedulemi, reklamy a antény na střechách, lampy a semafory s odlesky na mokré silnici, obrubníky, krajnice, zebry, šipky navigace, mraky a panorama, kouř z výfuku a smyky, kruhový tachometr a nová minimapa; když hra seká, scéna se sama kreslí v nižším rozlišení

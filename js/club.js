@@ -2637,7 +2637,7 @@ const Club = {
       ctx.fillStyle = `rgba(255,255,255,${this.whiteT * 0.85})`;
       ctx.fillRect(0, 0, w, h);
     }
-    if (this.phase === 'in') {
+    if (this.phase === 'in' && !this.cine) {
       this.drawStick(ctx, dpr);
       // co hraje
       const st = CLUB_STYLES[this.style || 'house'];
@@ -3487,7 +3487,7 @@ const Club = {
       circle(ctx, e.x - ctx.measureText(tag).width / 2 - 9, ty - 5, 3.5);
       ctx.fill();
     }
-    if (e.me && this.phase === 'in' && !this._photo && !this._ghost) {
+    if (e.me && this.phase === 'in' && !this._photo && !this._ghost && !this.cine) {
       ctx.font = `14px ${FONT_D}`;
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffc93c';
