@@ -1040,6 +1040,36 @@ const Game = {
             Effects.shake(5);
             Sound.whistle('long');
           }
+        } else if (kind === 'hopon' || kind === 'hopoff') {
+          const on = kind === 'hopon';
+          Effects.say(a[0], on ? 'HOP HOP!' : 'Uf, normálně', col, 1.4);
+          if (on) Effects.rings.push({ x: p.x, y: p.y + 40, t: 0, dur: 0.4, r0: 10, r1: 90, rgb: '255,154,208' });
+          if (live) {
+            Effects.pop(on ? 'KRÁLIČÍ SKOKY!' : 'SKOKY VYPNUTÉ', p.x, p.y - 120, on ? '#ff9ad0' : '#cfd5de', on ? 34 : 26);
+            Sound.whoosh();
+          }
+        } else if (kind === 'rap') {
+          Effects.say(a[0], 'AY$KR, PUSŤ TO!', col, 2);
+          for (const o of m.players) if (o.team === p.team) Effects.rings.push({ x: o.x, y: o.y, t: 0, dur: 0.45, r0: 16, r1: 110, rgb: '255,207,58' });
+          if (live) {
+            Effects.pop('AY$KR RAPUJE!', p.x, p.y - 130, '#ffcf3a', 38);
+            Effects.shake(4);
+            Sound.prime();
+          }
+        } else if (kind === 'yoga') {
+          Effects.say(a[0], 'NÁDECH… VÝDECH…', col, 2);
+          for (const o of m.players) if (o.team !== p.team) Effects.rings.push({ x: o.x, y: o.y, t: 0, dur: 0.5, r0: 8, r1: 80, rgb: '200,160,255' });
+          if (live) {
+            Effects.pop('JÓGA!', p.x, p.y - 120, '#c084ff', 40);
+            Sound.freeze();
+          }
+        } else if (kind === 'grave') {
+          Effects.say(a[0], 'TEN MÍČ SI VEZMU DO HROBU', col, 2.6);
+          if (live) {
+            Effects.pop('DO HROBU!', p.x, p.y - 150, '#9b5cff', 40);
+            Effects.shake(5);
+            Sound.whoosh();
+          }
         } else if (kind === 'vo2') {
           Effects.say(a[0], 'MÁM VO2max 67', col, 2.6);
           Effects.rings.push({ x: p.x, y: p.y, t: 0, dur: 0.45, r0: 20, r1: 110, rgb: hexRgb(col) });
@@ -1740,12 +1770,13 @@ const Game = {
   // Nabití superstřely na tlačítku a v rohu obrazovky.
   updateSuperUI() {
     const me = this.myPlayer();
-    const c = me ? me.superCharge : 0;
+    const hop = !!me && me.power === 'hop';
+    const c = hop ? 1 : me ? me.superCharge : 0;
     this.myCharge = me ? c : -1;
     this.myColor = me ? superColor(me.look.id) : '#ffc93c';
     Touch.setCharge(c);
     Touch.setColor(this.myColor);
-    Touch.setPower(me ? me.power : 'shot');
+    Touch.setPower(hop ? (me.hop ? 'hopon' : 'hop') : me ? me.power : 'shot');
     // penalty: jen potřebné ovládání, na straně bez brány
     if (this.state === 'shootout' && this.pen && me) {
       const idx = this.match.players.indexOf(me);
@@ -2021,10 +2052,10 @@ const Game = {
     this.rec.push({
       t: this.gameT,
       b: [b.x, b.y, b.rot, b.superT, b.superBy, b.basketT, b.basketSide],
-      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin, p.boostT, p.pengT, p.kneel, p.face, p.plane, p.shootT, p.primeT, p.flashT, p.growK || 1, p.selfieT, p.growT, p.suitT, p.sushiT, p.lift || 0, p.yellowT || 0]),
+      p: m.players.map((p) => [p.x, p.y, p.kickT, p.onGround ? 1 : 0, p.vx, p.vy, p.stunT, p.spin, p.boostT, p.pengT, p.kneel, p.face, p.plane, p.shootT, p.primeT, p.flashT, p.growK || 1, p.selfieT, p.growT, p.suitT, p.sushiT, p.lift || 0, p.yellowT || 0, p.hop ? 1 : 0, p.rapT || 0, p.yogaT || 0]),
       bk: [m.blocks[0], m.blocks[1]],
       j: m.jet ? [m.jet.x, m.jet.y, m.jet.dir, m.jet.t, m.jet.by, m.jet.hold ? 1 : 0] : null,
-      a: m.arms ? [m.arms.by, m.arms.t, m.arms.bx, m.arms.by0] : null,
+      a: m.arms ? [m.arms.by, m.arms.t, m.arms.bx, m.arms.by0, m.arms.grave ? 1 : 0] : null,
     });
     while (this.rec.length && this.rec[0].t < this.gameT - 5) this.rec.shift();
   },
@@ -2054,7 +2085,7 @@ const Game = {
     this.replayIdx = i;
     const A = rec[i], B = rec[i + 1] || A;
     const k = B.t > A.t ? clamp((t - A.t) / (B.t - A.t), 0, 1) : 0;
-    m.arms = A.a && B.a ? { by: A.a[0], t: lerp(A.a[1], B.a[1], k), bx: A.a[2], by0: A.a[3] } : null;
+    m.arms = A.a && B.a ? { by: A.a[0], t: lerp(A.a[1], B.a[1], k), bx: A.a[2], by0: A.a[3], grave: !!A.a[4] } : null;
     const ja = A.j, jb = B.j;
     m.jet = ja && jb ? { x: lerp(ja[0], jb[0], k), y: lerp(ja[1], jb[1], k), dir: ja[2], t: lerp(ja[3], jb[3], k), by: ja[4], hold: !!ja[5] } : null;
     m.players.forEach((p, j) => {
@@ -2081,6 +2112,9 @@ const Game = {
       p.sushiT = b[20] || 0;
       p.lift = b[21] || 0;
       p.yellowT = b[22] || 0;
+      p.hop = !!b[23];
+      p.rapT = b[24] || 0;
+      p.yogaT = b[25] || 0;
       sizeGrow(p, b[16] || 1);
       p.spin = b[7] && a[7] && Math.sign(a[7]) === Math.sign(b[7]) ? lerp(a[7], b[7], k) : b[7] || 0;
       p.mood = 0;
@@ -2278,11 +2312,11 @@ const Game = {
       pn: m.pens ? [m.pens[0], m.pens[1]] : 0,
       sc: [m.score[0], m.score[1]],
       b: [r(b.x), r(b.y), r(b.rot * 100), r(b.superT * 100), b.superBy, r(b.basketT * 100), b.basketSide, b.carryBy >= 0 ? 1 : 0],
-      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100), r(p.primeT * 100), r(p.flashT * 100), r(((p.growK || 1) - 1) * 100), r(p.selfieT * 100), r(p.growT * 100), r(p.suitT * 10), r(p.sushiT * 100), r(p.lift || 0), r((p.yellowT || 0) * 10)]).map(trimSnap),
+      p: m.players.map((p) => [r(p.x), r(p.y), p.kickT < 0 ? -1 : r(p.kickT * 1000), p.mood, p.onGround ? 1 : 0, r(p.vx / 10), r(p.vy / 10), r(p.superCharge * 100), r(p.stunT * 100), r(p.spin * 100), r(p.boostT * 100), r(p.pengT * 100), r(p.kneel * 100), p.face, r(p.plane * 100), r(p.shootT * 100), r(p.primeT * 100), r(p.flashT * 100), r(((p.growK || 1) - 1) * 100), r(p.selfieT * 100), r(p.growT * 100), r(p.suitT * 10), r(p.sushiT * 100), r(p.lift || 0), r((p.yellowT || 0) * 10), p.hop ? 1 : 0, r((p.rapT || 0) * 10), r((p.yogaT || 0) * 100)]).map(trimSnap),
       bk: [r(m.blocks[0] * 100), r(m.blocks[1] * 100), m.blockKind[0] === 'ice' ? 1 : 0, m.blockKind[1] === 'ice' ? 1 : 0],
       wd: m.windDir,
       jt: m.jet ? [r(m.jet.x), r(m.jet.y), m.jet.dir, r(m.jet.t * 100), m.jet.by, m.jet.hold ? 1 : 0] : 0,
-      ar: m.arms ? [m.arms.by, r(m.arms.t * 100), r(m.arms.bx), r(m.arms.by0)] : 0,
+      ar: m.arms ? [m.arms.by, r(m.arms.t * 100), r(m.arms.bx), r(m.arms.by0), m.arms.grave ? 1 : 0] : 0,
       m: msg ? [msg.id, msg.text, msg.sub || '', msg.color, msg.size, Math.round(msg.dur * 10)] : 0,
       e: this.evq,
       rs: this.resultShown ? 1 : 0,
@@ -2313,13 +2347,13 @@ const Game = {
     let q = this.pred;
     if (!q) q = this.pred = { x: ex, y: ey, vx: svx, vy: svy, onGround: !!srv[4] };
     // vlastní pohyb jako ve fyzice hostitele
-    const boost = (me.boostT > 0 ? BOOST_MUL : 1) * (me.primeT > 0 ? PRIME_SPEED : 1);
+    const boost = (me.boostT > 0 ? BOOST_MUL : 1) * (me.primeT > 0 ? PRIME_SPEED : 1) * (me.rapT > 0 ? RAP_SPEED : 1) * (me.yellowT > 0 ? YELLOW_SPEED : 1) * (me.yogaT > 0 ? 0 : 1);
     const move = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
     const onIce = q.onGround && this.match && this.match.ice;
     const rate = onIce ? (move === 0 ? 1700 * ICE.brake : PHYS.accelGround * ICE.accel * boost) : (q.onGround ? PHYS.accelGround : PHYS.accelAir) * boost;
     q.vx = approach(q.vx, move * PHYS.moveSpeed * boost * mods.speed, rate * dt);
     if (it.jump && q.onGround) {
-      q.vy = -PHYS.jumpV * (me.primeT > 0 ? PRIME_JUMP : 1) * mods.jump;
+      q.vy = -PHYS.jumpV * (me.primeT > 0 ? PRIME_JUMP : 1) * (me.hop ? HOP_JUMP : 1) * (me.rapT > 0 ? RAP_JUMP : 1) * (me.yellowT > 0 ? YELLOW_JUMP : 1) * mods.jump;
       q.onGround = false;
     }
     q.vy += PHYS.gravity * mods.grav * dt;
@@ -2630,6 +2664,9 @@ const Game = {
       p.sushiT = (Number(pb[22]) || 0) / 100;
       p.lift = Number(pb[23]) || 0;
       p.yellowT = (Number(pb[24]) || 0) / 10;
+      p.hop = !!pb[25];
+      p.rapT = (Number(pb[26]) || 0) / 10;
+      p.yogaT = (Number(pb[27]) || 0) / 100;
       sizeGrow(p, clamp(1 + (Number(pb[18]) || 0) / 100, 1, GROW_K));
       const sa = Number(pa[9]) || 0, sb = Number(pb[9]) || 0;
       p.spin = sb === 0 || Math.sign(sa) !== Math.sign(sb) ? sb / 100 : lerp(sa, sb, k) / 100;
@@ -2646,7 +2683,7 @@ const Game = {
     // zablokované brány (hermelín, led)
     if (B.g.wd === 1 || B.g.wd === -1) m.windDir = B.g.wd;
     const ar = B.g.ar;
-    m.arms = Array.isArray(ar) ? { by: Number(ar[0]) || 0, t: (Number(ar[1]) || 0) / 100, bx: Number(ar[2]) || 0, by0: Number(ar[3]) || 0 } : null;
+    m.arms = Array.isArray(ar) ? { by: Number(ar[0]) || 0, t: (Number(ar[1]) || 0) / 100, bx: Number(ar[2]) || 0, by0: Number(ar[3]) || 0, grave: !!ar[4] } : null;
     const jt = B.g.jt;
     m.jet = Array.isArray(jt) ? { x: Number(jt[0]) || 0, y: Number(jt[1]) || 0, dir: jt[2] === -1 ? -1 : 1, t: (Number(jt[3]) || 0) / 100, by: Number(jt[4]) || 0, hold: !!jt[5] } : null;
     const bk = B.g.bk;

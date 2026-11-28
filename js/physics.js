@@ -81,6 +81,7 @@ class Player {
     this.boostT = 0;      // VO2max: zrychlení
     this.pengT = 0;       // proměna v tučňáka
     this.primeT = 0;      // JENDA PRIME
+    this.hop = false;     // Berry: králičí skoky zapnuté (přepínač, zůstává i po gólu)
     this.baseF = this.F;
     this.place(o.x);
   }
@@ -115,6 +116,8 @@ class Player {
     this.growT = 0;   // Obří páv
     this.flashT = 0;  // oslněný bleskem (vyvalené oči)
     this.yellowT = 0; // žlutá karta: zpomalený a skáče míň
+    this.rapT = 0;    // rapper Ay$kr: rychlejší, výš, silněji
+    this.yogaT = 0;   // jóga s Nikol: sedí na karimatce a nehýbe se
     this.selfieT = 0; // Suli fotí selfie
     if (this.growK && this.growK !== 1) setGrow(this, 1);
     this.y = this.standY;
@@ -383,6 +386,8 @@ class Match {
       }
       if (p.flashT > 0) p.flashT = Math.max(0, p.flashT - dt);
       if (p.yellowT > 0) p.yellowT = Math.max(0, p.yellowT - dt);
+      if (p.rapT > 0) p.rapT = Math.max(0, p.rapT - dt);
+      if (p.yogaT > 0) p.yogaT = Math.max(0, p.yogaT - dt);
       if (p.suitT > 0) p.suitT = Math.max(0, p.suitT - dt);
       if (p.sushiT > 0 || p.lift > 0) this.updateSushi(p, dt);
       if (p.selfieT > 0) p.selfieT = Math.max(0, p.selfieT - dt);
@@ -501,8 +506,14 @@ class Match {
       it = IDLE;
       if (!p.onGround) p.spin += p.knockDir * 13 * dt;
     }
+    if (p.yogaT > 0 && !stunned) {
+      // jóga: sedí na karimatce, nehýbe se
+      it = IDLE;
+      p.kickT = -1;
+      if (p.onGround) p.vx = approach(p.vx, 0, 3000 * dt);
+    }
     const input = typeof it.move === 'number' ? clamp(it.move, -1, 1) : (it.right ? 1 : 0) - (it.left ? 1 : 0);
-    const boost = (p.boostT > 0 ? BOOST_MUL : 1) * (p.primeT > 0 ? PRIME_SPEED : 1) * (p.yellowT > 0 ? YELLOW_SPEED : 1);
+    const boost = (p.boostT > 0 ? BOOST_MUL : 1) * (p.primeT > 0 ? PRIME_SPEED : 1) * (p.yellowT > 0 ? YELLOW_SPEED : 1) * (p.rapT > 0 ? RAP_SPEED : 1);
     const max = PHYS.moveSpeed * p.speedMul * boost * this.mods.speed;
     const ice = this.ice && p.onGround;
     // na ledu: bez ovládání hráč dlouho dojíždí, změna směru trvá
@@ -514,11 +525,17 @@ class Match {
     else if (p.onGround) p.vx = approach(p.vx, 0, 1700 * (ice ? ICE.brake : 1) * dt);
 
     if (it.jump && p.onGround) {
-      p.vy = -PHYS.jumpV * (p.primeT > 0 ? PRIME_JUMP : 1) * (p.yellowT > 0 ? YELLOW_JUMP : 1) * this.mods.jump;
+      p.vy = -PHYS.jumpV * (p.primeT > 0 ? PRIME_JUMP : 1) * (p.yellowT > 0 ? YELLOW_JUMP : 1) * (p.hop ? HOP_JUMP : 1) * (p.rapT > 0 ? RAP_JUMP : 1) * this.mods.jump;
       p.onGround = false;
       this.onEvent('jump', { human: p.isHuman });
     }
-    if (it.super && p.superCharge >= 1 && p.power !== 'shot' && !stunned) {
+    if (it.super && p.power === 'hop') {
+      // Berry: přepínač králičích skoků, jde kdykoli (nečeká na nabití)
+      if (!stunned) {
+        p.hop = !p.hop;
+        this.onEvent('power', { idx: this.players.indexOf(p), kind: p.hop ? 'hopon' : 'hopoff', team: p.team });
+      }
+    } else if (it.super && p.superCharge >= 1 && p.power !== 'shot' && !stunned) {
       this.usePower(p);
     } else if (it.super && p.superCharge >= 1 && p.kickT < 0) {
       // superstřela: švih nohou, další zásah míče je superstřela
@@ -625,10 +642,24 @@ class Match {
     } else if (p.power === 'sushi') {
       p.sushiT = SUSHI_TIME;
       p.sushiHit = [];
-    } else if (p.power === 'arms') {
+    } else if (p.power === 'rap') {
+      // rapper Ay$kr: Bémič Š. i parťák jsou 5 s rychlejší, skáčou výš a kopou silněji
+      for (const o of this.players) if (o.team === p.team) o.rapT = RAP_TIME;
+    } else if (p.power === 'yoga') {
+      // jóga: Nikol medituje 1 s, soupeři musí s ní a ztuhnou na 3 s (JENDA PRIME ji ustojí)
+      p.yogaT = YOGA_SELF;
+      for (const o of this.players) {
+        if (o.team === p.team || o.primeT > 0) continue;
+        o.yogaT = YOGA_TIME;
+        o.kickT = -1;
+        o.superKick = false;
+        o.vx *= 0.2;
+      }
+    } else if (p.power === 'arms' || p.power === 'grave') {
       // Gumové ruce: dosáhnou na míč skoro kdekoli a přitáhnou ho k nohám
-      const reach = Math.hypot(b.x - p.x, b.y - p.y);
-      if (this.arms || b.held || reach > ARM_REACH) {
+      // Luďan („TEN MÍČ SI VEZMU DO HROBU“): míč se k němu přesune odkudkoli
+      const reach = Math.hypot(b.x - p.x, b.y - p.y), grave = p.power === 'grave';
+      if (this.arms || b.held || (!grave && reach > ARM_REACH)) {
         p.superCharge = 1;
         if (reach > ARM_REACH) this.onEvent('armsfar', { idx });
         return false;
@@ -648,7 +679,7 @@ class Match {
       b.superT = 0;
       b.armBy = idx;
       // Majda se neotáčí (hráči koukají pořád na bránu soupeře), ruce dosáhnou i dozadu
-      this.arms = { by: idx, t: 0, bx: b.x, by0: b.y, from };
+      this.arms = { by: idx, t: 0, bx: b.x, by0: b.y, from, grave };
       if (from) this.onEvent('steal', { x: b.x, y: b.y, from, idx });
     } else if (p.power === 'jet') {
       if (this.jet) {
@@ -1046,7 +1077,7 @@ class Match {
     const close = this.players.some((q) => q.team !== p.team && (q.x - p.x) * p.dir > 0
       && (q.x - p.x) * p.dir < 2 * p.R + 45 * PS && Math.abs(q.y - p.y) < 70 * PS);
     const run = Math.max(0, p.vx * p.dir);
-    const power = (PHYS.kickSpeed * rand(0.94, 1.02) + run * 0.3) * (p.primeT > 0 ? PRIME_KICK : 1);
+    const power = (PHYS.kickSpeed * rand(0.94, 1.02) + run * 0.3) * (p.primeT > 0 ? PRIME_KICK : 1) * (p.rapT > 0 ? RAP_KICK : 1);
     if (close) deg = Math.max(deg, 63);
     else deg = this.aimAssist(p, deg, power);
     const el = (deg * Math.PI) / 180;

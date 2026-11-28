@@ -106,7 +106,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.73';
+const GAME_VERSION = '1.74';
 // Hra je zablokovaná: po otevření se ukáže jen výzva, ať si hráč najde práci.
 // Kdo třikrát rychle klepne na hlavu rozhodčího a zadá tajný kód, hraje dál (na tom zařízení).
 const GAME_BLOCKED = true;
@@ -571,6 +571,7 @@ function seedOf(str) {
 const SUPER_COLORS = {
   nelcis: '#ff5fb0', majda: '#e86bff', marsal: '#3fa2ff', durcado: '#4fe0c0', toma: '#5fe36b',
   peli: '#b07bff', bemic: '#ff7a1f', kiki: '#53d2ff', simsa: '#c6ff3d', jenda: '#ff4d4d', milan: '#ff2d2d', kuba: '#ffd23f', pav: '#14b8a6', sully: '#7ee8d8', trana: '#ff8a5b',
+  berry: '#ff9ad0', bemics: '#ffcf3a', nikol: '#c084ff', ludan: '#9b5cff',
 };
 const superColor = (id) => SUPER_COLORS[id] || '#ffc93c';
 
@@ -593,8 +594,23 @@ const POWERS = {
   yellowcard: { name: 'Žlutá karta', short: 'Žlutá', icon: '🟨', desc: 'Soupeři na 5 s zpomalí a skáčou míň' },
   basket: { name: 'Trojka', short: 'Trojka', icon: '🏀', desc: 'U míče: míč se změní v basketbalový a letí obloukem do brány soupeře' },
   penguin: { name: 'Skiper', short: 'Skiper', icon: '🐧', desc: 'Promění se v tučňáka, brána zamrzne na 3 s' },
+  hop: { name: 'Králičí skoky', short: 'Skoky', icon: '🐰', desc: 'Přepínač, který jde zmáčknout kdykoli: zapnuto = Berry skáče mnohem výš než ostatní, vypnuto = normálně' },
+  hopon: { name: 'Králičí skoky', short: 'Skoky ON', icon: '🐰', desc: 'Zapnuto: Berry skáče mnohem výš' },
+  rap: { name: 'Ay$kr', short: 'Ay$kr', icon: '🎤', desc: 'V pozadí se objeví rapper Ay$kr a 5 s rapuje: Bémič Š. i parťák jsou rychlejší, skáčou výš a kopou silněji' },
+  yoga: { name: 'Jóga', short: 'Jóga', icon: '🧘', desc: 'Nikol si na 1 s sedne na karimatku a medituje – soupeři musí dělat jógu s ní a na 3 s ztuhnou' },
+  grave: { name: 'Do hrobu', short: 'Hrob', icon: '⚰️', desc: '„TEN MÍČ SI VEZMU DO HROBU“ – míč se odkudkoli přesune k Luďanovi' },
 };
-const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime', milan: 'redcard', kuba: 'yellowcard', pav: 'grow', sully: 'flash', durcado: 'jet', majda: 'arms', trana: 'sushi' };
+const CHAR_POWER = { nelcis: 'cheese', simsa: 'vo2', bemic: 'penguin', marsal: 'basket', jenda: 'prime', milan: 'redcard', kuba: 'yellowcard', pav: 'grow', sully: 'flash', durcado: 'jet', majda: 'arms', trana: 'sushi', berry: 'hop', bemics: 'rap', nikol: 'yoga', ludan: 'grave' };
+const HOP_JUMP = 1.4;   // Berry s králičími skoky: výskok
+const RAP_TIME = 5;     // rapper Ay$kr rapuje (s)
+const RAP_SPEED = 1.35; // Bémič Š. a parťák při rapu: rychlost
+const RAP_JUMP = 1.2;   // výskok
+const RAP_KICK = 1.3;   // síla kopu
+const YOGA_SELF = 1;    // Nikol medituje (s)
+const YOGA_TIME = 3;    // soupeři dělají jógu (ztuhnou)
+// rapper v pozadí (není hráč)
+const RAPPER = { id: 'ayskr', name: 'Ay$kr', num: '', skin: '#7a4b30', hair: 'buzz', hairColor: '#120a05', hairDark: '#050302', hairLight: '#3a2a1e', eyes: '#2f1d12', brow: '#120a05', lid: 0.3, browW: 3.6, mouth: 'smirk', stubble: true };
+const RAPPER_KIT = { color: '#141418', dark: '#050507', light: '#ffcf3a', num: '#ffcf3a' };
 const SUSHI_TIME = 2.6;  // jak dlouho Tráňa jede na sushi (s)
 const SUSHI_SPEED = 640; // rychlost jízdy
 const SUSHI_H = 44;      // výška sushi pod nohama

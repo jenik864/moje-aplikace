@@ -127,7 +127,7 @@ Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhl
 
 True Gold skiny jsou celé ze zlata se zlatou korunkou (jako True Gold Kiki) a po získání se rovnou zapnou.
 
-Nové dvojice jsou ve výběru hráčů vidět od začátku se zámečkem („Odemkni v Příběhu“) a hrát za ně jde po splnění dané úrovně. Zatím mají obyčejnou superstřelu. Hlavní kód odemkne i celou Točnou a obě dvojice.
+Nové dvojice jsou ve výběru hráčů vidět od začátku se zámečkem („Odemkni v Příběhu“) a hrát za ně jde po splnění dané úrovně. Berry má Králičí skoky, Bémič Š. rappera Ay$kr, Nikol Jógu a Luďan Do hrobu (viz Superschopnosti). Hlavní kód odemkne i celou Točnou a obě dvojice.
 
 ### Kampaň Petr Kuba
 
@@ -281,6 +281,10 @@ Nabíjí se časem (asi 15 s) a každým kopem do míče. Každá postava má sv
 | Suli | **Flash**: „PŘEDPLAŤ SI MĚ!“, vyhrne triko (místo detailů kreslená cenzura – mozaika), záblesk přes obrazovku a soupeři na 3 s ztuhnou s vyvalenýma očima (JENDA PRIME to ustojí). |
 | Milan (boss Příběhu) | **Červená karta**: písknutí, nápis ČERVENÁ KARTA a všichni soupeři na 2 s ztuhnou (JENDA PRIME a tučňák ji ustojí). |
 | Petr Kuba | **Žlutá karta**: písknutí, nápis ŽLUTÁ KARTA a všichni soupeři na 5 s zpomalí (asi na polovinu) a skáčou míň, nad hlavou mají žlutou kartu (JENDA PRIME ji ustojí). |
+| Berry | **Králičí skoky** (přepínač): tlačítko super je pořád dostupné, nečeká na nabití. Zmáčkneš = skoky zapnuté („KRÁLIČÍ SKOKY!“, pružiny pod nohama a růžová záře) a Berry skáče skoro dvakrát výš než ostatní. Zmáčkneš znovu = skáče normálně. Přepínat jde kdykoli; počítač skoky zapne, když je míč vysoko. |
+| Bémič Š. | **Ay$kr**: na pódiu v tribuně se objeví rapper **Ay$kr** (černé brýle, zlatý řetěz, mikrofon, bedny, reflektor) a 5 s rapuje („Skrrt skrrt!“, „Bémič má flow!“). Bémič Š. i jeho parťák jsou celou dobu rychlejší (×1,35), skáčou výš a kopou silněji; kolem nich jsou zlaté noty. |
+| Nikol | **Jóga**: „NÁDECH… VÝDECH…“ – Nikol si na 1 s sedne na růžovou karimatku a medituje (zkřížené nohy, zavřené oči, „óm“ nad hlavou) a všichni soupeři musí dělat jógu s ní – sedí na karimatkách a 3 s se nehýbou (JENDA PRIME to ustojí). |
+| Luďan | **Do hrobu**: „TEN MÍČ SI VEZMU DO HROBU“ – míč se odkudkoli (i od soupeře, z trojky nebo z tryskáče) přesune po fialové duchovské stopě k Luďanovým nohám, za ním vyroste náhrobek RIP. Jako Majdiny gumové ruce, jen bez omezení dosahu. |
 | ostatní | **Superstřela** (viz dál). Vlastní schopnosti přijdou v dalších verzích. |
 
 Počítač superschopnosti používá taky: hermelín a led, když letí míč na jeho bránu, VO2max, když je míč daleko, trojku, když je u míče, JENDA PRIME, když jde o míč.
@@ -371,6 +375,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 Aktuální verze je vidět dole v rohu hlavního menu.
 
 - 1.71 – jízda do klubu s kamerou za autem (3D město), přehlednější úvodní obrazovka (karty Hot Peppers a FIFAgram, menší odkazy)
+- 1.74 – superschopnosti: Berry Králičí skoky (přepínač kdykoli), Bémič Š. rapper Ay$kr (5 s rychlejší, výš, silněji i s parťákem), Nikol Jóga (soupeři 3 s na karimatkách), Luďan Do hrobu (míč se k němu přesune odkudkoli)
 - 1.73 – Točná: Spider Boy (5. úroveň), Bémič Š. & Berry už v 9., bonus True Gold Bémič Š. + Berry (12.), Nikol & Luďan v 16., bonus True Gold Nikol + Luďan (finále); úkol 100 gólů za Šimšu = skin Šimša Bohemka a další úkoly za poháry; Peppers online (vidíš ostatní hráče), vířivka s placeným svlékáním (mozaika), smyslnější soukromá show, panák s klukem, dealer přejmenován na TEMPO, pryč fotokoutek, vidět DJ i celý nápis Hot Peppers; celá hra jen na šířku
 - 1.72 – vymazlená grafika jízdy: kabriolety bez střechy (zezadu je vidět tvoje postava za volantem, dres se jménem a číslem, ruce na volantu), tvarovaná karoserie s lakem, koly a disky, koncová a brzdová světla, SPZ, výfuky, spoiler a podsvícení podvozku; domy s okny po patrech, výlohami, markýzami a neonovými cedulemi, reklamy a antény na střechách, lampy a semafory s odlesky na mokré silnici, obrubníky, krajnice, zebry, šipky navigace, mraky a panorama, kouř z výfuku a smyky, kruhový tachometr a nová minimapa; když hra seká, scéna se sama kreslí v nižším rozlišení
 - 1.70 – FIFAgram: profily hráčů, fotky z klubu a textové příspěvky, lajky a komentáře od ostatních

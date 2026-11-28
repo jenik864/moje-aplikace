@@ -196,7 +196,11 @@ class AIBrain {
 
     // superschopnost, když je nabitá
     const oppGoal = p.team === 0 ? W - GOAL_W : GOAL_W;
-    if (p.superCharge >= 1) {
+    if (p.power === 'hop') {
+      // Berry: skoky zapne, když je míč vysoko a blízko, jinak vypne
+      const want = b.y < GROUND_Y - 230 && Math.abs(b.x - p.x) < 420;
+      if (want !== !!p.hop && Math.random() < 0.08) this.out.super = true;
+    } else if (p.superCharge >= 1) {
       if (p.power === 'shot') {
         if (kick && Math.abs(oppGoal - p.x) < 760 && Math.random() < L.kick) {
           this.out.super = true;
@@ -213,6 +217,20 @@ class AIBrain {
         // jízda, když je míč nebo soupeř před ním a cesta k bráně je dlouhá
         const ahead = (b.x - p.x) * dir;
         if (ahead > 20 && ahead < 420 && Math.abs(oppGoal - p.x) > 380 && Math.random() < L.kick * 0.6) this.out.super = true;
+      } else if (p.power === 'rap') {
+        // rapper, když jde o míč
+        if (Math.abs(b.x - p.x) < 420 && Math.random() < L.kick * 0.6) this.out.super = true;
+      } else if (p.power === 'yoga') {
+        // jóga, když je soupeř u míče blíž než my
+        const opp = m.players.filter((o) => o.team !== p.team && o.stunT <= 0 && !(o.yogaT > 0));
+        const close = opp.some((o) => Math.abs(o.x - b.x) < 170 && Math.abs(o.x - b.x) < Math.abs(p.x - b.x));
+        if (close && Math.random() < L.kick * 0.5) this.out.super = true;
+      } else if (p.power === 'grave') {
+        // míč do hrobu: ukrást trojku nebo tryskáč, nebo míč u soupeře (odkudkoli)
+        const opp = m.players.filter((o) => o.team !== p.team);
+        const oppCloser = opp.some((o) => Math.abs(o.x - b.x) < Math.abs(p.x - b.x) - 60);
+        const danger = b.jetBy >= 0 || b.carryBy >= 0 || b.basketT > 0;
+        if (!b.held && !m.arms && (danger || (oppCloser && Math.abs(b.x - p.x) > 200)) && Math.random() < L.kick * (danger ? 1 : 0.4)) this.out.super = true;
       } else if (p.power === 'arms') {
         // ruce: ukrást trojku nebo tryskáč, nebo míč, ke kterému je soupeř blíž
         const d = Math.hypot(b.x - p.x, b.y - p.y);

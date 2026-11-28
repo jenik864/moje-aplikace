@@ -1078,7 +1078,13 @@ const Renderer = {
       const hoop = b.basketT > 0 || b.carryBy >= 0;
       if (hoop) this.drawHoop(ctx, b, now, false);
       if (g.screen === 'match' && g.state === 'intro') this.drawReferee(ctx, g, b, now);
+      for (let t = 0; t < 2; t++) {
+        const rp = m.players.filter((p) => p.team === t && p.rapT > 0);
+        if (rp.length) this.drawRapper(ctx, t, Math.max(...rp.map((p) => p.rapT)), b, now);
+      }
       for (const p of m.players) if (p.boostT > 0) this.drawBoost(ctx, p, now);
+      for (const p of m.players) if (p.hop) this.drawHop(ctx, p, now);
+      for (const p of m.players) if (p.rapT > 0) this.drawRapAura(ctx, p, now);
       for (const p of m.players) if ((p.lift || 0) > 1) this.drawSushi(ctx, p, now);
       for (const p of m.players) this.drawPlayer(ctx, p, b, m.teams, now);
       // rozcvička: žonglování s vlastním míčem
@@ -1968,6 +1974,10 @@ const Renderer = {
     }
     if (p.pengT > 0) {
       this.drawPenguin(ctx, p, T, now, R, F);
+      return;
+    }
+    if (p.yogaT > 0) {
+      this.drawYoga(ctx, p, ball, T, now, R, F);
       return;
     }
     ctx.save();
@@ -2933,6 +2943,10 @@ const Renderer = {
   drawArms(ctx, m, now) {
     const A = m.arms, p = m.players[A.by], b = m.ball;
     if (!p) return;
+    if (A.grave) {
+      this.drawGrave(ctx, A, p, b, now);
+      return;
+    }
     const L = p.look, T = m.teams[p.team], dir = p.dir || 1;
     const k = A.t < 0.22 ? A.t / 0.22 : 1;
     const tx = A.t < 0.22 ? A.bx : b.x, ty = A.t < 0.22 ? A.by0 : b.y;
@@ -4401,6 +4415,278 @@ const Renderer = {
     ctx.fillStyle = `rgba(150,205,255,${0.8 * (1 - t)})`;
     circle(ctx, p.x - p.dir * 26, p.y - p.R * 0.4 + t * 18, 2.6);
     ctx.fill();
+  },
+
+  // Luďan: míč se odkudkoli přesune k němu – fialová duchovská stopa, lebka a hrob.
+  drawGrave(ctx, A, p, b, now) {
+    const k = Math.min(1, A.t / 0.6);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 3; i++) {
+      ctx.strokeStyle = `rgba(155,92,255,${0.35 - i * 0.1})`;
+      ctx.lineWidth = 26 - i * 8;
+      ctx.beginPath();
+      ctx.moveTo(A.bx, A.by0);
+      ctx.quadraticCurveTo((A.bx + b.x) / 2, Math.min(A.by0, b.y) - 120, b.x, b.y);
+      ctx.stroke();
+    }
+    const g = ctx.createRadialGradient(b.x, b.y, 2, b.x, b.y, 70);
+    g.addColorStop(0, 'rgba(190,140,255,.7)');
+    g.addColorStop(1, 'rgba(120,60,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(b.x - 70, b.y - 70, 140, 140);
+    ctx.restore();
+    // náhrobek u Luďana
+    const gx = p.x - p.dir * 50, gy = GROUND_Y, up = Math.min(1, A.t * 4) * (1 - Math.max(0, k - 0.85) * 4);
+    if (up > 0) {
+      ctx.save();
+      ctx.translate(gx, gy);
+      ctx.scale(1, up);
+      ctx.fillStyle = '#6b6f7a';
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-22, 0);
+      ctx.lineTo(-22, -40);
+      ctx.arc(0, -40, 22, Math.PI, 0);
+      ctx.lineTo(22, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#2a2d36';
+      ctx.font = `14px ${FONT_D}`;
+      ctx.textAlign = 'center';
+      ctx.fillText('RIP', 0, -32);
+      ctx.fillRect(-2, -24, 4, 16);
+      ctx.fillRect(-7, -19, 14, 4);
+      ctx.restore();
+    }
+    // duchové kolem míče
+    for (let i = 0; i < 3; i++) {
+      const a = now * 0.006 + i * 2.1, gxx = b.x + Math.cos(a) * 34, gyy = b.y + Math.sin(a) * 22 - 10;
+      ctx.fillStyle = 'rgba(235,225,255,.8)';
+      ctx.beginPath();
+      ctx.arc(gxx, gyy, 8, Math.PI, 0);
+      ctx.lineTo(gxx + 8, gyy + 9);
+      ctx.lineTo(gxx + 3, gyy + 6);
+      ctx.lineTo(gxx, gyy + 9);
+      ctx.lineTo(gxx - 3, gyy + 6);
+      ctx.lineTo(gxx - 8, gyy + 9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#2a1a4a';
+      circle(ctx, gxx - 3, gyy - 1, 1.5);
+      circle(ctx, gxx + 3, gyy - 1, 1.5);
+      ctx.fill();
+    }
+  },
+
+  // Berry s králičími skoky: pružiny pod nohama a růžová záře.
+  drawHop(ctx, p, now) {
+    const fy = p.y + p.R + p.F, x = p.x, k = 0.6 + Math.sin(now * 0.012) * 0.2;
+    ctx.save();
+    const g = ctx.createRadialGradient(x, fy, 2, x, fy, 50);
+    g.addColorStop(0, `rgba(255,154,208,${0.45 * k})`);
+    g.addColorStop(1, 'rgba(255,154,208,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - 50, fy - 50, 100, 100);
+    ctx.strokeStyle = '#ff7ac0';
+    ctx.lineWidth = 2.5;
+    for (const s of [-1, 1]) {
+      const sx = x + s * 9 * PS;
+      ctx.beginPath();
+      for (let i = 0; i <= 8; i++) {
+        const yy = fy - 2 - i * (p.onGround ? 1.2 : 2.4), xx = sx + (i % 2 ? 5 : -5);
+        if (i) ctx.lineTo(xx, yy);
+        else ctx.moveTo(xx, yy);
+      }
+      ctx.stroke();
+    }
+    // šipky nahoru
+    ctx.fillStyle = `rgba(255,214,236,${0.7 * k})`;
+    for (const s of [-1, 1]) {
+      const ax = x + s * 30, ay = p.y - 10 - ((now * 0.08) % 30);
+      ctx.beginPath();
+      ctx.moveTo(ax, ay - 8);
+      ctx.lineTo(ax + 6, ay);
+      ctx.lineTo(ax - 6, ay);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  },
+
+  // Hráči pod vlivem rapu: zlatá záře a noty kolem.
+  drawRapAura(ctx, p, now) {
+    const a = Math.min(1, p.rapT * 2);
+    ctx.save();
+    ctx.globalAlpha = a;
+    const g = ctx.createRadialGradient(p.x, p.y + 20, 10, p.x, p.y + 20, 90);
+    g.addColorStop(0, 'rgba(255,207,58,.35)');
+    g.addColorStop(1, 'rgba(255,207,58,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(p.x - 90, p.y - 70, 180, 180);
+    ctx.font = `20px ${FONT_D}`;
+    ctx.textAlign = 'center';
+    for (let i = 0; i < 3; i++) {
+      const t = (now * 0.0012 + i / 3) % 1;
+      ctx.fillStyle = `rgba(255,${200 + i * 20},90,${1 - t})`;
+      ctx.fillText(i % 2 ? '♫' : '♪', p.x + Math.sin(t * 6 + i) * 34, p.y - 40 - t * 60);
+    }
+    ctx.restore();
+  },
+
+  // Rapper Ay$kr v pozadí na straně týmu: bedny, mikrofon, řetěz, rapuje do rytmu.
+  drawRapper(ctx, team, left, ball, now) {
+    if (!this._rapper) {
+      this._rapper = new Player({ team: 0, x: 0, look: RAPPER, role: 'attacker', ctrl: 'cpu' });
+      this._rapper.gear = { shades: true, chain: true };
+    }
+    const rp = this._rapper, a = Math.min(1, left * 3, (RAP_TIME - left) * 4 + 0.1);
+    const x = team === 0 ? W * 0.2 : W * 0.8, dir = team === 0 ? 1 : -1, beat = Math.abs(Math.sin(now * 0.011));
+    const base = 405, sc = 0.85; // pódium v tribuně nad reklamami
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#16121c';
+    ctx.strokeStyle = '#ffcf3a';
+    ctx.lineWidth = 3;
+    rrect(ctx, x - 150, base, 300, 16, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.translate(x, base);
+    ctx.scale(sc, sc);
+    ctx.translate(-x, -GROUND_Y);
+    // reflektor a bedny
+    const g = ctx.createLinearGradient(x, 0, x, GROUND_Y);
+    g.addColorStop(0, 'rgba(255,207,58,0)');
+    g.addColorStop(1, 'rgba(255,207,58,.22)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x - 20, 0);
+    ctx.lineTo(x + 20, 0);
+    ctx.lineTo(x + 120, GROUND_Y);
+    ctx.lineTo(x - 120, GROUND_Y);
+    ctx.closePath();
+    ctx.fill();
+    for (const s of [-1, 1]) {
+      const bx = x + s * 95, k = 1 + beat * 0.06;
+      ctx.fillStyle = '#121216';
+      ctx.strokeStyle = '#ffcf3a';
+      ctx.lineWidth = 3;
+      rrect(ctx, bx - 26, GROUND_Y - 110, 52, 110, 6);
+      ctx.fill();
+      ctx.stroke();
+      for (const [dy, r] of [[-80, 12], [-36, 19]]) {
+        ctx.fillStyle = '#030305';
+        circle(ctx, bx, GROUND_Y + dy, r * k);
+        ctx.fill();
+        ctx.strokeStyle = '#3a3a46';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+    rp.x = x;
+    rp.dir = dir;
+    rp.onGround = true;
+    rp.vx = 0;
+    rp.mood = 1;
+    rp.selfieT = 0.5;
+    rp.y = rp.standY - beat * 8;
+    Renderer.drawPlayer(ctx, rp, { x: x + dir * 300, y: rp.y }, [RAPPER_KIT, RAPPER_KIT], now);
+    // mikrofon u pusy
+    const mx = x + dir * 26 * PS, my = rp.y + 10 * PS;
+    ctx.fillStyle = '#1a1a20';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    rrect(ctx, mx - 4, my - 2, 8, 20, 3);
+    ctx.fill();
+    ctx.fillStyle = '#9aa0ae';
+    circle(ctx, mx, my - 4, 7);
+    ctx.fill();
+    ctx.stroke();
+    // jméno a text
+    ctx.font = `italic 30px ${FONT_D}`;
+    ctx.textAlign = 'center';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = '#000';
+    const ty = GROUND_Y + 44; // jméno na čele pódia
+    ctx.strokeText('AY$KR', x, ty);
+    ctx.fillStyle = '#ffcf3a';
+    ctx.fillText('AY$KR', x, ty);
+    const lines = ['Skrrt skrrt!', 'Ay$kr na mikru!', 'Bémič má flow!', 'Berry skáče, my jedem!', 'Yeah, yeah, Točná!', 'Gól jde z mikrofonu!'];
+    const ln = lines[Math.floor(now / 900) % lines.length];
+    drawSpeech(ctx, ln, x + dir * 150, rp.y - 10, '#ffcf3a', 20, 0);
+    ctx.font = `26px ${FONT_D}`;
+    for (let i = 0; i < 4; i++) {
+      const t = (now * 0.0009 + i / 4) % 1;
+      ctx.fillStyle = `rgba(255,220,120,${1 - t})`;
+      ctx.fillText(i % 2 ? '♫' : '♪', x + (i - 1.5) * 50 + Math.sin(t * 5) * 14, rp.y - 20 - t * 120);
+    }
+    ctx.restore();
+  },
+
+  // Jóga: sedí se zkříženýma nohama na karimatce, ruce na kolenou, zavřené oči, nad hlavou „óm“.
+  drawYoga(ctx, p, ball, T, now, R, F) {
+    const L = p.look;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.scale(p.dir * PS, PS);
+    const gy = R + F;
+    ctx.fillStyle = L.id === 'nikol' ? '#ff8fb0' : '#7ad1c0';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    rrect(ctx, -46, gy - 5, 92, 7, 3);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.fillRect(-42, gy - 4, 84, 2);
+    const g = ctx.createRadialGradient(0, R - 10, 10, 0, R - 10, 90);
+    g.addColorStop(0, `rgba(200,160,255,${0.25 + Math.sin(now * 0.004) * 0.08})`);
+    g.addColorStop(1, 'rgba(200,160,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(-90, R - 100, 180, 180);
+    ctx.translate(0, Math.max(0, F - 22) + Math.sin(now * 0.004) * 1.5);
+    this.drawHair(ctx, p, T, 'back', now);
+    // zkřížené nohy
+    for (const s of [1, -1]) {
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 12;
+      line(ctx, -s * 4, R + 16, s * 22, R + 22);
+      ctx.strokeStyle = s > 0 ? L.skin : shade(L.skin, -0.12);
+      ctx.lineWidth = 8;
+      line(ctx, -s * 4, R + 16, s * 22, R + 22);
+      ctx.fillStyle = '#f4f6fa';
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 1.6;
+      oval(ctx, -s * 9, R + 24, 7, 3.4);
+      ctx.fill();
+      ctx.stroke();
+    }
+    this.drawArm(ctx, -12, R + 1, -0.85, T, L, true);
+    this.drawTorso(ctx, p, T, L);
+    const b0 = p.blink, m0 = p.mood;
+    p.blink = 0.1;
+    p.mood = 1;
+    this.drawHead(ctx, p, ball, T, now);
+    p.blink = b0;
+    p.mood = m0;
+    this.drawArm(ctx, 10, R + 1, 0.85, T, L, false);
+    ctx.restore();
+    // óm nad hlavou
+    const t = (now * 0.0008) % 1;
+    ctx.save();
+    ctx.globalAlpha = 1 - t;
+    ctx.font = `22px ${FONT_D}`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#e8d8ff';
+    ctx.strokeStyle = 'rgba(60,20,100,.6)';
+    ctx.lineWidth = 4;
+    ctx.strokeText('óm', p.x, p.y - p.R - 30 - t * 40);
+    ctx.fillText('óm', p.x, p.y - p.R - 30 - t * 40);
+    ctx.restore();
   },
 
   // Hvězdičky kolem hlavy omámeného hráče.
