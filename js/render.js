@@ -2570,6 +2570,33 @@ const Renderer = {
     g.addColorStop(1, T.color);
     ctx.fillStyle = g;
     ctx.fill();
+    if (T.stripes || L.mask === 'spider') {
+      // svislé pruhy (dres Bohemka) / pavučina a pavouk na hrudi (Spider Boy)
+      ctx.save();
+      ctx.clip();
+      if (T.stripes) {
+        ctx.fillStyle = T.stripes;
+        for (let x = -17; x < 18; x += 9) ctx.fillRect(x, R - 10, 4.5, 28);
+        ctx.fillStyle = 'rgba(0,0,0,.12)';
+        ctx.fillRect(-20, R - 10, 6, 28);
+      } else {
+        ctx.strokeStyle = 'rgba(0,0,0,.55)';
+        ctx.lineWidth = 0.9;
+        for (let a = 0; a < 8; a++) line(ctx, 0, R + 3, Math.cos(a * 0.785) * 30, R + 3 + Math.sin(a * 0.785) * 30);
+        for (const rr of [6, 11, 16, 21]) {
+          ctx.beginPath();
+          ctx.arc(0, R + 3, rr, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#0b0b10';
+        oval(ctx, 2, R + 2, 2.6, 3.6);
+        ctx.fill();
+        ctx.strokeStyle = '#0b0b10';
+        ctx.lineWidth = 1.2;
+        for (const sx of [-1, 1]) for (const k of [-2, 0, 2]) line(ctx, 2, R + 2 + k * 0.8, 2 + sx * 6, R + 2 + k * 2.4 - 2);
+      }
+      ctx.restore();
+    }
     ctx.strokeStyle = OUTLINE;
     ctx.lineWidth = 2.2;
     ctx.stroke();
@@ -3494,11 +3521,55 @@ const Renderer = {
     ctx.strokeStyle = OUTLINE;
     circle(ctx, 0, 0, R);
     ctx.stroke();
+    if (L.mask === 'spider') {
+      this.drawSpiderMask(ctx, R);
+      if (L.crown) this.drawCrown(ctx, R, now);
+      return;
+    }
 
     this.drawFace(ctx, p, ball);
     this.drawHair(ctx, p, T, 'top', now);
     if (L.crown) this.drawCrown(ctx, R, now);
     if (L.headset) this.drawHeadset(ctx, R);
+  },
+
+  // Maska Spider Boye: pavučina přes celou hlavu a velké bílé oči s černým lemem.
+  drawSpiderMask(ctx, R) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(0, 0, R - 1.5, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(0,0,0,.6)';
+    ctx.lineWidth = 1.1;
+    const cx = 16, cy = 4;
+    for (let a = 0; a < 12; a++) line(ctx, cx, cy, cx + Math.cos(a * 0.5236) * 60, cy + Math.sin(a * 0.5236) * 60);
+    for (const rr of [7, 14, 22, 31, 41]) {
+      ctx.beginPath();
+      for (let a = 0; a <= 12; a++) {
+        const x = cx + Math.cos(a * 0.5236) * rr, y = cy + Math.sin(a * 0.5236) * rr;
+        if (a) ctx.quadraticCurveTo(cx + Math.cos((a - 0.5) * 0.5236) * rr * 0.86, cy + Math.sin((a - 0.5) * 0.5236) * rr * 0.86, x, y);
+        else ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+    for (const [ex, ey, rot] of [[7, -7, -0.5], [26, -8, 0.5]]) {
+      ctx.save();
+      ctx.translate(ex, ey);
+      ctx.rotate(rot);
+      ctx.beginPath();
+      ctx.moveTo(-7, 3);
+      ctx.quadraticCurveTo(-6, -8, 0, -9);
+      ctx.quadraticCurveTo(6, -8, 7, 3);
+      ctx.quadraticCurveTo(0, 7, -7, 3);
+      ctx.closePath();
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = '#0b0b10';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+    }
   },
 
   // Sluchátko rozhodčího s mikrofonem u pusy.

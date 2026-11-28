@@ -106,7 +106,7 @@ const DUO_TEAMS = [
 const duoAvailable = (i) => !!DUO_TEAMS[i] && (!DUO_TEAMS[i].locked || Unlocks.has(DUO_TEAMS[i].locked));
 
 // Verze hry (vidět dole v menu, aby šlo poznat, jestli už běží nejnovější).
-const GAME_VERSION = '1.72';
+const GAME_VERSION = '1.73';
 // Hra je zablokovaná: po otevření se ukáže jen výzva, ať si hráč najde práci.
 // Kdo třikrát rychle klepne na hlavu rozhodčího a zadá tajný kód, hraje dál (na tom zařízení).
 const GAME_BLOCKED = true;
@@ -243,6 +243,15 @@ const SKINS = {
   // červený basketbalový dres bez rukávů s číslem 23 (bez loga klubu)
   // Petr Kuba z mistrovství světa: svítivě žlutý dres rozhodčího, sluchátko s mikrofonem a zlatý odznak
   kubams: { char: 'kuba', name: 'Petr Kuba MS', short: 'MS', kit: { name: 'PETR KUBA MS', short: 'Petr Kuba MS', color: '#d7ff3a', dark: '#8fb312', light: '#ffffff', num: '#1c2230' }, look: { headset: true, badge: true } },
+  // Spider Boy: pavoučí oblek s maskou přes celou hlavu (odměna za 5. úroveň Točné)
+  spider: { char: 'bemic', name: 'Spider Boy', short: 'Spider', kit: { name: 'SPIDER BOY', short: 'Spider Boy', color: '#d41e2e', dark: '#1d3fae', light: '#ffffff', num: '#ffffff' }, look: { mask: 'spider', skin: '#d41e2e', hair: 'bald', num: '' } },
+  // True Gold pro Bémiče Š., Berryho, Nikol a Luďana (bonusy v Točné za zápas bez obdrženého gólu)
+  tgbemics: { char: 'bemics', name: 'True Gold Bémič Š.', short: 'Gold', kit: TRUEGOLD_KIT, look: { skin: '#f2c14e', hairColor: '#ffd84a', hairDark: '#a87412', hairLight: '#fff6c2', brow: '#a87412', eyes: '#7a4a08', crown: true } },
+  tgberry: { char: 'berry', name: 'True Gold Berry', short: 'Gold', kit: TRUEGOLD_KIT, look: { skin: '#f6cd55', hairColor: '#f6cd55', hairDark: '#a87412', hairLight: '#fff6c2', brow: '#f6cd55', crown: true } },
+  tgnikol: { char: 'nikol', name: 'True Gold Nikol', short: 'Gold', kit: TRUEGOLD_KIT, look: { skin: '#f2c14e', hairColor: '#ffd84a', hairDark: '#a87412', hairLight: '#fff6c2', brow: '#a87412', eyes: '#7a4a08', accent: '#fff6c2', crown: true } },
+  tgludan: { char: 'ludan', name: 'True Gold Luďan', short: 'Gold', kit: TRUEGOLD_KIT, look: { skin: '#f2c14e', hairColor: '#ffd84a', hairDark: '#a87412', hairLight: '#fff6c2', brow: '#a87412', eyes: '#7a4a08', crown: true } },
+  // Šimša v zeleno-bílém pruhovaném dresu Bohemky s číslem 87 (úkol: 100 gólů za Šimšu)
+  bohemka: { char: 'simsa', name: 'Šimša Bohemka', short: 'Bohemka', kit: { name: 'BOHEMKA', short: 'Bohemka', color: '#1f9a48', dark: '#0f6a2e', light: '#ffffff', num: '#127a34', stripes: '#ffffff' } },
   michael: { char: 'bemic', name: 'Michael Bémič', short: 'Michael', kit: { name: 'MICHAEL', short: 'Michael', color: '#ce1141', dark: '#8f0a2c', light: '#111111', num: '#ffffff' }, look: { num: 23, skin: '#7a4b30', hair: 'bald', brow: '#1d130c', eyes: '#2f1d12', hairColor: '#2a1a10', hairDark: '#120a05', hairLight: '#5a3a24' } },
 };
 const skinOwned = (id) => !!SKINS[id] && Unlocks.has(id);
@@ -273,18 +282,29 @@ function lookFor(charId, skin) {
   return _skinLooks.get(key);
 }
 
-// Úkoly (postup se ukládá v zařízení).
+// Úkoly (postup se ukládá v zařízení). stat: odkud se bere postup; cups = odměna v pohárech.
 const TASKS = [
-  { id: 'milan', title: 'Odehraj 15 zápasů', goal: 15, reward: 'milan', kind: 'char', char: 'milan', name: 'MILAN VORAČKA', text: 'Rozhodčí jako hráč, schopnost Červená karta.' },
-  { id: 'bikini', title: 'Dej 15 gólů v jednom zápase', goal: 15, reward: 'bikini', kind: 'skin', char: 'kiki', name: 'KIKI V BIKINÁCH', text: 'Plážový skin pro Kiki: plavky a sluneční brýle.' },
-  { id: 'michael', title: 'Dej 30 gólů za Bémiče', goal: 30, reward: 'michael', kind: 'skin', char: 'bemic', name: 'MICHAEL BÉMIČ', text: 'Skin pro Bémiče: holohlavý, tmavá kůže a červený basketbalový dres s číslem 23.' },
+  { id: 'milan', stat: 'played', title: 'Odehraj 15 zápasů', goal: 15, reward: 'milan', kind: 'char', char: 'milan', name: 'MILAN VORAČKA', text: 'Rozhodčí jako hráč, schopnost Červená karta.' },
+  { id: 'bikini', stat: 'best', title: 'Dej 15 gólů v jednom zápase', goal: 15, reward: 'bikini', kind: 'skin', char: 'kiki', name: 'KIKI V BIKINÁCH', text: 'Plážový skin pro Kiki: plavky a sluneční brýle.' },
+  { id: 'michael', stat: 'bemic', title: 'Dej 30 gólů za Bémiče', goal: 30, reward: 'michael', kind: 'skin', char: 'bemic', name: 'MICHAEL BÉMIČ', text: 'Skin pro Bémiče: holohlavý, tmavá kůže a červený basketbalový dres s číslem 23.' },
+  { id: 'bohemka', stat: 'char', title: 'Dej 100 gólů za Šimšu', goal: 100, reward: 'bohemka', kind: 'skin', char: 'simsa', name: 'ŠIMŠA BOHEMKA', text: 'Skin pro Šimšu: zeleno-bílý pruhovaný dres Bohemky s číslem 87.' },
+  { id: 'wins25', stat: 'wins', title: 'Vyhraj 25 zápasů', goal: 25, reward: 'task.wins25', kind: 'cups', cups: 200, char: 'jenda', name: '+200 POHÁRŮ', text: 'Za 25 výher dostaneš 200 pohárů do klubu.' },
+  { id: 'streak5', stat: 'streak', title: 'Vyhraj 5 zápasů v řadě', goal: 5, reward: 'task.streak5', kind: 'cups', cups: 150, char: 'peli', name: '+150 POHÁRŮ', text: 'Série pěti výher za sebou.' },
+  { id: 'kiki40', stat: 'char', title: 'Dej 40 gólů za Kiki', goal: 40, reward: 'task.kiki40', kind: 'cups', cups: 150, char: 'kiki', name: '+150 POHÁRŮ', text: 'Kiki nikdy neprohrává – a teď i střílí.' },
+  { id: 'durcado50', stat: 'char', title: 'Dej 50 gólů za Durcada', goal: 50, reward: 'task.durcado50', kind: 'cups', cups: 200, char: 'durcado', name: '+200 POHÁRŮ', text: 'Hlava je zbraň: 50 gólů za Durcada.' },
+  { id: 'goals300', stat: 'goals', title: 'Dej celkem 300 gólů', goal: 300, reward: 'task.goals300', kind: 'cups', cups: 300, char: 'marsal', name: '+300 POHÁRŮ', text: 'Tři sta gólů za kteroukoli postavu.' },
 ];
 const TASK_KEY = 'hlavouni.ukoly';
 const Tasks = {
+  // ploché číselné hodnoty (účet je slučuje maximem): bestGoals, bemicGoals a g_<postava> = góly za postavu
   get() {
     try {
       const o = JSON.parse(localStorage.getItem(TASK_KEY)) || {};
-      return { bestGoals: Math.max(0, Number(o.bestGoals) || 0), bemicGoals: Math.max(0, Number(o.bemicGoals) || 0) };
+      const out = {};
+      for (const k in o) if (Number(o[k]) > 0) out[k] = Number(o[k]);
+      out.bestGoals = out.bestGoals || 0;
+      out.bemicGoals = out.bemicGoals || 0;
+      return out;
     } catch (e) {
       return { bestGoals: 0, bemicGoals: 0 };
     }
@@ -293,21 +313,32 @@ const Tasks = {
     try { localStorage.setItem(TASK_KEY, JSON.stringify(o)); } catch (e) { /* nevadí */ }
   },
   progress(t) {
-    if (t.id === 'milan') return Profile.get().played;
-    const o = this.get();
-    return t.id === 'bikini' ? o.bestGoals : o.bemicGoals;
+    const o = this.get(), pr = typeof Profile !== 'undefined' ? Profile.get() : {};
+    if (t.stat === 'played') return pr.played || 0;
+    if (t.stat === 'wins') return pr.wins || 0;
+    if (t.stat === 'streak') return pr.bestStreak || 0;
+    if (t.stat === 'goals') return pr.goals || 0;
+    if (t.stat === 'best') return o.bestGoals;
+    if (t.stat === 'bemic') return o.bemicGoals;
+    return o['g_' + t.char] || 0;
   },
   // po zápase: zapsat góly a vrátit nově splněné úkoly
   record(charId, goals) {
     const o = this.get();
     o.bestGoals = Math.max(o.bestGoals, goals);
     if (charId === 'bemic') o.bemicGoals += goals;
+    if (charId) o['g_' + charId] = (o['g_' + charId] || 0) + goals;
     this.save(o);
     const fresh = [];
     for (const t of TASKS) {
       if (Unlocks.has(t.reward) || this.progress(t) < t.goal) continue;
       Unlocks.set(t.reward);
       if (t.kind === 'skin') Unlocks.set('on.' + t.reward);
+      if (t.kind === 'cups' && typeof Profile !== 'undefined') {
+        const pr = Profile.get();
+        pr.trophies += t.cups;
+        Profile.save(pr);
+      }
       fresh.push(t);
     }
     return fresh;
@@ -343,12 +374,27 @@ const STORY = [
 const STORY_REWARDS = {
   moncler: { kind: 'skin', name: 'MONCLER-JENDA', text: 'Luxusní skin pro Jendu: bílá péřová bunda, černé brýle, zlatý řetěz a bílé tenisky. Zapneš ho, když hraješ za Jendu.' },
   truegold: { kind: 'skin', name: 'TRUE GOLD KIKI', text: 'Kiki celá ze zlata se zlatou korunkou. Bonus za 4. úroveň Příběhu – vyhraj a nedostaň žádný gól.' },
-  berry: { kind: 'duo', name: 'BÉMIČ Š. & BERRY', text: 'Nová dvojice: Bémič Š. a jeho mazlíček – králík Berry s dlouhýma ušima. Odměna za 10. úroveň kampaně Točná.' },
-  nikol: { kind: 'duo', name: 'NIKOL & LUĎAN', text: 'Nová dvojice: Nikol a Luďan. Odměna za 17. úroveň kampaně Točná.' },
+  berry: { kind: 'duo', name: 'BÉMIČ Š. & BERRY', text: 'Nová dvojice: Bémič Š. a jeho mazlíček – králík Berry s dlouhýma ušima. Odměna za 9. úroveň kampaně Točná.' },
+  nikol: { kind: 'duo', name: 'NIKOL & LUĎAN', text: 'Nová dvojice: Nikol a Luďan. Odměna za 16. úroveň kampaně Točná.' },
+  spider: { kind: 'skin', name: 'SPIDER BOY', text: 'Skin pro Bémiče: červeno-modrý pavoučí oblek, maska přes celou hlavu s velkýma bílýma očima a pavouk na hrudi. Odměna za 5. úroveň kampaně Točná.' },
+  goldberry: { kind: 'skins', skins: ['tgbemics', 'tgberry'], name: 'TRUE GOLD BÉMIČ Š. & BERRY', text: 'Dva zlaté skiny se zlatými korunkami: True Gold Bémič Š. a True Gold Berry. Bonus za 12. úroveň Točné – vyhraj a nedostaň žádný gól.' },
+  goldnikol: { kind: 'skins', skins: ['tgnikol', 'tgludan'], name: 'TRUE GOLD NIKOL & LUĎAN', text: 'Dva zlaté skiny se zlatými korunkami: True Gold Nikol a True Gold Luďan. Bonus za finále Točné – vyhraj a nedostaň žádný gól.' },
   kuba: { kind: 'duo', name: 'PETR KUBA', text: 'Nový hráč Petr Kuba – rozhodčí se schopností ŽLUTÁ KARTA (soupeři na 5 s zpomalí a skáčou míň). S ním se odemkne dvojice Petr Kuba & Milan.' },
   kubams: { kind: 'skin', name: 'PETR KUBA MS', text: 'Skin pro Petra Kubu: rozhodčí z mistrovství světa – svítivě žlutý dres, sluchátko s mikrofonem a zlatý odznak.' },
   pav: { kind: 'duo', name: 'TLUSTEJ PÁV & SULI', text: 'Nová dvojice hráčů. Páv umí OBŘÍ PÁV (zvětší se a kdo do něj narazí, je omráčený), Suli FLASH (vyhrne triko a soupeři na 3 s ztuhnou). Do té doby mají ve výběru zámeček.' },
 };
+// Udělit odměnu (dvojice, skin nebo balíček skinů); skiny se rovnou zapnou.
+function grantReward(k, wear = true) {
+  Unlocks.set(k);
+  const R = STORY_REWARDS[k];
+  const list = R && R.skins ? R.skins : SKINS[k] ? [k] : [];
+  for (const sk of list) {
+    Unlocks.set(sk);
+    if (!wear) continue;
+    for (const o of ownedSkinsFor(SKINS[sk].char)) Unlocks.set('on.' + o, false);
+    Unlocks.set('on.' + sk);
+  }
+}
 const plural = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
 function storyGoalText(g) {
   if (g.by) return `Vyhraj o ${g.by} ${plural(g.by, 'gól', 'góly', 'gólů')}`;
@@ -376,20 +422,20 @@ const TOCNA = [
   { format: '1v1', opp: 'peli', level: 'easy', boost: 1.05, goal: { by: 2 }, title: 'Pole za vsí', text: 'Peli je rychlý – vyhraj o 2 góly.' },
   { format: '2v2', duo: 2, level: 'easy', boost: 1.05, goal: {}, title: 'Místní derby', text: 'Tóma a Peli spolu. Hraje se 2 na 2.' },
   { format: '1v1', opp: 'kiki', level: 'medium', boost: 1, goal: {}, arena: 'snow', title: 'Zamrzlý rybník', text: 'Kiki na ledu. Pozor, klouže to!' },
-  { format: '1v1', opp: 'marsal', level: 'medium', boost: 1, goal: { goals: 2 }, title: 'Trojky u stodoly', text: 'Marsal střílí trojky. Dej mu aspoň 2 góly.' },
+  { format: '1v1', opp: 'marsal', level: 'medium', boost: 1, goal: { goals: 2 }, title: 'Trojky u stodoly', text: 'Marsal střílí trojky. Dej mu aspoň 2 góly a Bémič dostane skin SPIDER BOY!', reward: 'spider' },
   { format: '2v2', duo: 3, level: 'medium', boost: 1.05, goal: {}, arena: 'wind', title: 'Vítr nad Točnou', text: 'Bémič a Kiki ve vichřici.' },
   { format: '1v1', opp: 'nelcis', level: 'medium', boost: 1.05, goal: { clean: true }, title: 'Hermelínový zápas', text: 'Nelcis zablokuje bránu hermelínem. Vyhraj a nedostaň gól.' },
   { format: '1v1', opp: 'majda', level: 'medium', boost: 1.1, goal: {}, arena: 'beach', title: 'Písečná jáma', text: 'Majda a její gumové ruce. V písku to klouže míč.' },
-  { format: '2v2', duo: 0, level: 'medium', boost: 1.1, goal: { by: 2 }, title: 'Holky z Točné', text: 'Nelcis a Majda – vyhraj o 2 góly.' },
-  { format: '1v1', opp: 'bemic', level: 'hard', boost: 1, goal: { by: 2 }, title: 'Bémičův dvůr', text: 'Porazíš Bémiče o 2 góly a přidá se k tobě Bémič Š. s králíkem Berry!', reward: 'berry' },
+  { format: '2v2', duo: 0, level: 'medium', boost: 1.1, goal: { by: 2 }, title: 'Holky z Točné', text: 'Nelcis a Majda – vyhraj o 2 góly a přidá se k tobě Bémič Š. s králíkem Berry!', reward: 'berry' },
+  { format: '1v1', opp: 'bemic', level: 'hard', boost: 1, goal: { by: 2 }, title: 'Bémičův dvůr', text: 'Bémič doma na dvoře nedá nic zadarmo. Porazíš ho o 2 góly?' },
   { format: '1v1', opp: 'durcado', level: 'hard', boost: 1.05, goal: {}, arena: 'moon', title: 'Noc na Měsíci', text: 'Durcado a jeho tryskáč – na Měsíci se skáče do nebe.' },
-  { format: '2v2', duo: 1, level: 'hard', boost: 1.05, goal: {}, title: 'Jižní supi na Točné', text: 'Marsal a Durcado přijeli na návštěvu.' },
+  { format: '2v2', duo: 1, level: 'hard', boost: 1.05, goal: {}, bonus: { goal: { clean: true }, reward: 'goldberry' }, title: 'Jižní supi na Točné', text: 'Marsal a Durcado přijeli na návštěvu. Na postup stačí vyhrát – a když nedostaneš žádný gól, získáš TRUE GOLD BÉMIČE Š. a TRUE GOLD BERRYHO!' },
   { format: '1v1', opp: 'jenda', level: 'hard', boost: 1.1, goal: { by: 2 }, title: 'JENDA PRIME', text: 'Jenda v bílém dresu. Vyhraj o 2 góly.' },
   { format: '1v1', opp: 'simsa', level: 'hard', boost: 1.1, goal: { goals: 3 }, arena: 'wind', title: 'Běh do kopce', text: 'Šimša má VO2max 67 a fouká vítr. Dej mu aspoň 3 góly.' },
   { format: '2v2', duo: 4, level: 'hard', boost: 1.12, goal: { by: 2 }, title: 'Šimša a Jenda', text: 'Nejrychlejší dvojka okolí. Vyhraj o 2 góly.' },
-  { format: '1v1', opp: 'milan', level: 'hard', boost: 1.15, goal: { by: 3 }, arena: 'snow', title: 'Rozhodčí na ledě', text: 'Milan Voračka a červená karta na ledě. Vyhraj o 3 góly.' },
-  { format: '2v2', duo: 5, level: 'hard', boost: 1.15, goal: { by: 2 }, title: 'Páv a Suli', text: 'Obří páv a flash. Vyhraj o 2 góly a odemkneš Nikol a Luďana!', reward: 'nikol' },
-  { format: '2v2', duo: 12, level: 'hard', boost: 1.2, goal: { by: 3 }, title: 'BOSS: Velké finále na Točné', text: 'Nikol a Luďan hájí Točnou. Poraz je o 3 góly a jsi král Točné!' },
+  { format: '1v1', opp: 'milan', level: 'hard', boost: 1.15, goal: { by: 3 }, arena: 'snow', title: 'Rozhodčí na ledě', text: 'Milan Voračka a červená karta na ledě. Vyhraj o 3 góly a odemkneš Nikol a Luďana!', reward: 'nikol' },
+  { format: '2v2', duo: 5, level: 'hard', boost: 1.15, goal: { by: 2 }, title: 'Páv a Suli', text: 'Obří páv a flash. Vyhraj o 2 góly.' },
+  { format: '2v2', duo: 12, level: 'hard', boost: 1.2, goal: { by: 3 }, bonus: { goal: { clean: true }, reward: 'goldnikol' }, title: 'BOSS: Velké finále na Točné', text: 'Nikol a Luďan hájí Točnou. Poraz je o 3 góly a jsi král Točné – a bez obdrženého gólu získáš TRUE GOLD NIKOL a TRUE GOLD LUĎANA!' },
 ];
 // Kampaň Petr Kuba: 7 zápasů, na 5. se odemkne Petr Kuba (a dvojice s Milanem), na 7. jeho skin
 const KUBA = [

@@ -5,6 +5,7 @@
  */
 
 const CLUB_KEY = 'hlavouni.klub';
+const CLUB_NS = 'fifa67/club/v1/'; // online: kdo je v klubu ve stejnou dobu (MQTT, bez ukládání)
 const CLUB_W = 1500, CLUB_H = 980;
 const CLUB_WALL = 150;    // zadní stěna (y 0..150)
 const CLUB_FLOOR_B = 940; // spodní stěna
@@ -46,7 +47,7 @@ const CLUB_SHOP = {
     items: [{ id: 'vip', icon: '💎', name: 'Vstup do VIP', price: 60, once: true, desc: 'Natrvalo: vířivka s VIP holkami, šampus s prskavkami, ohňostroj, soukromá show, separé a zlatý VIP odznak.' }],
   },
   dealer: {
-    title: 'Dealer u záchodů', who: 'Psst… chceš něco?',
+    title: 'TEMPO u záchodů', who: 'Psst… chceš něco?',
     items: [
       { id: 'pepr', icon: '❄️', name: 'Pepřák', price: 15, trip: 'pepr', t: 20, desc: 'Bílej prášek z dílny podniku (jen ve hře). 20 s jedeš jak raketa, pak dojezd.' },
       { id: 'smajl', icon: '💊', name: 'Smajlík', price: 10, trip: 'smajl', t: 25, desc: 'Barevná pilulka (jen ve hře). 25 s miluješ celej klub, pak únava.' },
@@ -86,7 +87,6 @@ const CLUB_RECTS = [
   { x0: 1104, y0: 150, x1: 1116, y1: 380, kind: 'rope' },
   { x0: 1104, y0: 470, x1: 1116, y1: 770, kind: 'rope' },
   { x0: 1104, y0: 762, x1: 1470, y1: 774, kind: 'rope' },
-  Object.assign({ kind: 'booth' }, CLUB_BOOTH),
 ];
 const CLUB_GATE = { x0: 1100, y0: 380, x1: 1120, y1: 470 };
 const CLUB_TABLES = [{ x: 360, y: 520 }, { x: 390, y: 770 }, { x: 1180, y: 800 }, { x: 1010, y: 770 }, { x: 1300, y: 390, vip: true }];
@@ -99,10 +99,9 @@ const CLUB_ZONES = [
   { id: 'vip', label: 'VIP', x: 1050, y: 425, r: 85 },
   { id: 'lounge', label: 'VIP bar', x: 1300, y: 470, r: 110 },
   { id: 'wardrobe', label: 'Šatna', x: 170, y: 760, r: 100 },
-  { id: 'photo', label: 'Fotka', x: 235, y: 885, r: 70 },
   { id: 'separe', label: 'Separé', x: 1395, y: 475, r: 60 },
   { id: 'tub', label: 'Vířivka', x: 1335, y: 670, r: 140 },
-  { id: 'dealer', label: 'Dealer', x: 950, y: 870, r: 70 },
+  { id: 'dealer', label: 'TEMPO', x: 950, y: 870, r: 70 },
 ];
 
 // Holky v klubu: nejsou ze hry, jen hosté klubu (dospělé, v šatech na večer).
@@ -116,8 +115,8 @@ const CLUB_GIRLS = [
   { id: 'g_mia', name: 'Mia', skin: '#efc6a2', hair: 'longhair', fringe: 'side', wavy: true, hairColor: '#8a5a2c', hairDark: '#4a2c12', hairLight: '#d6a06a', eyes: '#5a6a3e', brow: '#5a3618', lipstick: '#e0405a', shadow: '#c47a3a', hoops: '#ffd24a', dress: { color: '#ff6a3d', dark: '#b83c18', light: '#ffc2a8', style: 'slip', shoe: '#1a0a12' } },
   { id: 'g_kristyna', name: 'Kristýna', skin: '#f3cfb4', hair: 'longhair', fringe: 'curtain', hairColor: '#e9e4dc', hairDark: '#a8a094', hairLight: '#ffffff', eyes: '#4a7aa8', brow: '#b0a890', lipstick: '#ff4d6d', shadow: '#4fc3ff', necklace: '#4fe0ff', dress: { color: '#2fb8ff', dark: '#1a6aa8', light: '#b8ecff', style: 'sequin', shoe: '#e9edf3' } },
 ].map((g) => Object.assign({ girl: true, num: 0, noBow: true, accent: '#ffd24a', lid: 0.22 }, g));
-// dealer u záchodů (není ze hry)
-const CLUB_DEALER = { id: 'dealer', name: 'Dealer', num: '', skin: '#d9a57a', hair: 'buzz', hairColor: '#1a1410', hairDark: '#080604', hairLight: '#3a2e24', eyes: '#3a2a1a', brow: '#1a1410', lid: 0.36, browW: 3.6, mouth: 'smirk', stubble: true };
+// TEMPO u záchodů (není ze hry)
+const CLUB_DEALER = { id: 'dealer', name: 'TEMPO', num: '', skin: '#d9a57a', hair: 'buzz', hairColor: '#1a1410', hairDark: '#080604', hairLight: '#3a2e24', eyes: '#3a2a1a', brow: '#1a1410', lid: 0.36, browW: 3.6, mouth: 'smirk', stubble: true };
 // VIP vířivka a dvě exkluzivní VIP holky (nejsou ze hry)
 const CLUB_TUB = { x: 1335, y: 670, rx: 105, ry: 46 };
 const CLUB_VIP_GIRLS = [
@@ -204,6 +203,7 @@ const Club = {
     });
     click('club-exit', () => this.leave());
     click('club-act', () => this.act());
+    click('club-act2', () => this.act(true));
     click('club-shop-close', () => this.closeShop());
     click('club-age-yes', () => {
       const s = this.state();
@@ -313,6 +313,7 @@ const Club = {
 
   close() {
     Drive.stop();
+    this.netStop();
     this.on = false;
     Sound.quiet = this.quiet0 !== undefined ? this.quiet0 : true;
     this.stopMusic();
@@ -332,7 +333,7 @@ const Club = {
     this.el('club-select').hidden = true;
     this.el('club-garage').hidden = true;
     this.el('club-hud').hidden = false;
-    this.el('club-act').hidden = true;
+    this.hideAct();
     this.el('club-cam').hidden = true;
     this.el('club-skip').hidden = false;
     this._zoneKey = 'drive';
@@ -354,10 +355,12 @@ const Club = {
     this.startMusic(false);
     Sound.whoosh();
     UI.toast('Vítej v HOT PEPPERS! 🌶️');
+    this.netStart();
   },
 
   leave() {
     Drive.stop();
+    this.netStop();
     this.el('club-skip').hidden = true;
     this.el('club-cam').hidden = false;
     this.el('club-photo').hidden = true;
@@ -492,6 +495,8 @@ const Club = {
     this.priv = null;
     this.zoom = 1;
     this.tub = false;
+    this.tubShow = false;
+    this.panak = null;
     this.champ = null;
     this.fw = null;
     const s = this.state();
@@ -511,7 +516,7 @@ const Club = {
     this.npcs = [];
     // obsluha
     this.npcs.push(this.mk(take('peli'), 250, 238, { staff: 'bar', dir: 1, say: CLUB_SHOP.bar.who }));
-    this.npcs.push(this.mk(take('durcado'), 750, 182, { staff: 'dj', dir: 1, dj: true, say: CLUB_SHOP.dj.who }));
+    this.npcs.push(this.mk(take('durcado'), 750, 186, { staff: 'dj', dir: 1, dj: true, lift: 40, say: CLUB_SHOP.dj.who }));
     this.npcs.push(this.mk(take('ludan'), 1072, 352, { staff: 'vip', dir: -1, say: CLUB_SHOP.vip.who, gear: { shades: true } }));
     girl(170, 636, { staff: 'wardrobe', dir: 1, say: CLUB_SHOP.wardrobe.who });
     this.npcs.push(this.mk('dealer', 955, 905, { look: CLUB_DEALER, staff: 'dealer', dir: -1, say: CLUB_SHOP.dealer.who, gear: { shades: true, chain: true }, kit: { color: '#1b1d26', dark: '#0b0c12', light: '#3a3f52' } }));
@@ -634,10 +639,13 @@ const Club = {
     if (this.kick) this.updateKick(dt);
     if (this.separe) this.updateSepare(dt);
     if (this.priv) this.updatePriv(dt);
+    if (this.panak) this.updatePanak(dt);
+    if (this.net || (this.remotes && this.remotes.size)) this.netTick(dt);
     if (this.champ) this.updateChamp(dt);
     if (this.fw) this.updateFw(dt);
     if (this.tub && Math.random() < dt * 10) this.parts.push({ k: 'bub', x: CLUB_TUB.x + rand(-90, 90), y: CLUB_TUB.y + rand(-20, 20), vx: 0, vy: -rand(10, 25), t: 0, life: 0.8, s: rand(2, 4) });
-    else if ((this.zoom || 1) < 1) this.zoom = approach(this.zoom, 1, dt * 1.2);
+    if (this.tub) this.zoom = approach(this.zoom || 1, this.tubShow ? 0.55 : 0.75, dt * 1.2); // ve vířivce se kamera přiblíží
+    else if (!this.priv && (this.zoom || 1) < 1) this.zoom = approach(this.zoom, 1, dt * 1.2);
     const party = this.fx.hit > 0;
     const me = this.me;
     if (me) {
@@ -805,6 +813,12 @@ const Club = {
 
   updateNpc(n, dt, party) {
     n.lineT = Math.max(0, (n.lineT || 0) - dt);
+    n.invite = Math.max(0, (n.invite || 0) - dt);
+    if (this.priv && n === this.priv.n) {
+      this.privDance(n, dt);
+      return;
+    }
+    if (this.panak && n === this.panak.n && this.panakNpc(n, dt)) return;
     n.poseT = Math.max(0, (n.poseT || 0) - dt);
     n.tipT = Math.max(0, (n.tipT || 0) - dt);
     if (n.stunT > 0) {
@@ -861,6 +875,10 @@ const Club = {
         n.line = CLUB_GUY_LINES[Math.floor(Math.random() * CLUB_GUY_LINES.length)];
         n.lineT = 2.2;
         n.cool = rand(9, 16);
+        if (n.line === 'Dáme panáka?' && !this.panak) {
+          n.invite = 9;
+          n.lineT = 4;
+        }
       }
     }
     if (n.lady && !n.staff && this.updateLady(n, dt, party)) return;
@@ -953,16 +971,30 @@ const Club = {
     }
   },
 
+  hideAct() {
+    this.el('club-act').hidden = true;
+    this.el('club-act2').hidden = true;
+  },
+
+  // Druhé (menší) tlačítko nad hlavním: třeba Vylézt z vířivky.
+  syncAct2(z) {
+    const a = z && z.alt, b = this.el('club-act2');
+    b.hidden = !a;
+    if (a && this.el('club-act2-lbl').textContent !== a.label) this.el('club-act2-lbl').textContent = a.label;
+  },
+
   findZone() {
     const me = this.me, vip = this.state().vip;
     let best = null, bd = Infinity;
     if (this.tub) {
-      if (this._zoneKey !== 'tubout') {
-        this._zoneKey = 'tubout';
+      const z = this.tubShow ? { id: 'tubout', label: 'Vylézt' } : { id: 'tubshow', label: 'Plavky dolů · 20 🏆', alt: { id: 'tubout', label: 'Vylézt' } };
+      if (this._zoneKey !== z.id) {
+        this._zoneKey = z.id;
         this.el('club-act').hidden = false;
-        this.el('club-act-lbl').textContent = 'Vylézt';
+        this.el('club-act-lbl').textContent = z.label;
       }
-      this.zone = { id: 'tubout' };
+      this.zone = z;
+      this.syncAct2(z);
       return;
     }
     if (this.priv) {
@@ -973,6 +1005,7 @@ const Club = {
         this.el('club-act-lbl').textContent = 'Hodit 5 🏆';
       }
       this.zone = { id: 'privtip', n: this.priv.n };
+      this.syncAct2(null);
       return;
     }
     for (const z of CLUB_ZONES) {
@@ -1001,6 +1034,18 @@ const Club = {
         if (n.podium && !n.vipPod && Math.hypot(me.x - n.hx, (me.y - n.hy) * 1.4) < 105) best = { id: 'tip', label: 'Hodit 5 🏆', n };
       }
     }
+    if (!best && !this.panak) {
+      // kluk tě zve na panáka
+      let gd = 120;
+      for (const n of this.npcs) {
+        if (n.lady || n.staff || !(n.invite > 0)) continue;
+        const d = Math.hypot(me.x - n.x, (me.y - n.y) * 1.4);
+        if (d < gd) {
+          gd = d;
+          best = { id: 'panak', label: 'Jít na panáka 🥃', n };
+        }
+      }
+    }
     if (!best) {
       let gd = 58;
       for (const n of this.npcs) {
@@ -1021,12 +1066,15 @@ const Club = {
       if (best) this.el('club-act-lbl').textContent = best.label;
     }
     this.zone = best;
+    this.syncAct2(best);
   },
 
-  act() {
-    const z = this.zone;
+  act(alt) {
+    const z = alt ? this.zone && this.zone.alt : this.zone;
     if (!z || this.phase !== 'in') return;
     if (z.id === 'exit') this.leave();
+    else if (z.id === 'tubshow') this.tubStrip();
+    else if (z.id === 'panak') this.startPanak(z.n);
     else if (z.id === 'girl') this.invite(z.n);
     else if (z.id === 'tip') this.tip(z.n);
     else if (z.id === 'tub') this.enterTub();
@@ -1377,7 +1425,7 @@ const Club = {
     this.kick = { t: 0, reason, b, bx: b.x, by: b.y };
     b.line = 'A ven!';
     b.lineT = 3;
-    this.el('club-act').hidden = true;
+    this.hideAct();
     this._zoneKey = 'kick';
     Sound.whistle('long');
   },
@@ -1488,7 +1536,7 @@ const Club = {
         const b = this.npcs.find((x) => x.staff === 'vip');
         b.line = 'Viděl jsem tě!';
         b.lineT = 2;
-        this.kickOut('Ochranka tě načapala u dealera.');
+        this.kickOut('Ochranka tě načapala u Tempa.');
       }, 3500);
     }
   },
@@ -1581,7 +1629,7 @@ const Club = {
     const n = this.npcs.find((x) => x.vipPod);
     if (!n) return;
     const me = this.me;
-    this.priv = { t: 0, dur: 22, n, tips: 0, style0: this.style };
+    this.priv = { t: 0, dur: 24, n, tips: 0, style0: this.style };
     me.x = 1330;
     me.y = 262;
     me.dir = -1;
@@ -1602,15 +1650,14 @@ const Club = {
     const pv = this.priv, n = pv.n;
     pv.t += dt;
     this.zoom = approach(this.zoom || 1, 0.55, dt * 1.2);
-    this.cam.x = lerp(this.cam.x, n.hx + 50, Math.min(1, dt * 4));
-    this.cam.y = lerp(this.cam.y, n.hy - 70, Math.min(1, dt * 4));
+    this.cam.x = lerp(this.cam.x, (n.x + this.me.x) / 2, Math.min(1, dt * 3));
+    this.cam.y = lerp(this.cam.y, Math.min(n.y, this.me.y) - 60, Math.min(1, dt * 3));
     n.tipT = Math.max(n.tipT || 0, 0.4);
-    n.fans = true;
-    if (Math.random() < dt * 26) this.parts.push({ k: 'spark', x: n.hx + rand(-90, 90), y: n.hy - rand(60, 260), vx: rand(-10, 10), vy: rand(20, 60), t: 0, life: 1.4, col: ['#ffd24a', '#ff9ad0', '#ffffff'][Math.floor(Math.random() * 3)] });
-    if (Math.random() < dt * 1.2) this.heart(n);
-    if (Math.random() < dt * 0.35 && n.lineT <= 0) {
-      n.line = ['Líbí?', 'VIP zacházení', 'Nespouštěj ze mě oči', 'Ještě chvilku…'][Math.floor(Math.random() * 4)];
-      n.lineT = 2;
+    if (Math.random() < dt * 14) this.parts.push({ k: 'spark', x: n.x + rand(-80, 80), y: n.y - rand(60, 240), vx: rand(-10, 10), vy: rand(20, 60), t: 0, life: 1.6, col: ['#ff3d7a', '#ff9ad0', '#c084ff'][Math.floor(Math.random() * 3)] });
+    if (Math.random() < dt * 1.6) this.heart(n);
+    if (Math.random() < dt * 0.4 && n.lineT <= 0) {
+      n.line = ['Sedni si a dívej se', 'Ruce k sobě, VIP', 'Líbí se ti to?', 'Nespouštěj ze mě oči', 'Pomalu…', 'Tohle nikdo jiný neuvidí'][Math.floor(Math.random() * 6)];
+      n.lineT = 2.2;
     }
     if (pv.t > 13 && !pv.topOff) {
       pv.topOff = true;
@@ -1631,9 +1678,56 @@ const Club = {
     Sound.fanfare();
   },
 
+  // Choreografie soukromé show: točení na tyči, vlnění, sjede dolů, přijde k tobě a tančí těsně u tebe.
+  privDance(n, dt) {
+    const pv = this.priv, t = pv.t, me = this.me, p = n.pl;
+    n.lineT = Math.max(0, (n.lineT || 0) - dt);
+    let tx = n.hx, ty = n.hy, lift = 34, lean = 0, arms = false, sp = 0;
+    if (t < 5) {
+      n.poleT = (n.poleT || 0) + dt * 1.9;
+      tx = n.hx + Math.sin(n.poleT * 1.4) * 22;
+      n.dir = Math.cos(n.poleT * 1.4) > 0 ? 1 : -1;
+      lift = 70 + Math.sin(t * 1.3) * 34;
+      lean = Math.sin(n.poleT * 1.4) * 0.25;
+      arms = true;
+    } else if (t < 9) {
+      tx = n.hx + 12;
+      n.dir = -1;
+      lean = Math.sin(t * 3.4) * 0.24;
+      arms = Math.sin(t * 1.7) > -0.2;
+    } else if (t < 11.5) {
+      n.dir = me.x >= n.x ? 1 : -1;
+      lean = Math.sin(t * 2.6) * 0.18;
+      arms = true;
+    } else {
+      // sejde z pódia a tančí těsně před tebou
+      tx = me.x + 48;
+      ty = me.y + 8;
+      lift = 0;
+      n.dir = -1;
+      me.dir = 1;
+      lean = Math.sin(t * 3) * 0.22;
+      arms = Math.sin(t * 1.3) > 0;
+      if (Math.floor(t * 0.8) % 3 === 2) n.dir = -1; // otočí se zády
+    }
+    const ox = n.x;
+    n.x = approach(n.x, tx, 220 * dt);
+    n.y = approach(n.y, ty, 160 * dt);
+    n.lift = approach(n.lift || 0, lift, 150 * dt);
+    sp = Math.abs(n.x - ox) / Math.max(dt, 1e-3);
+    this.anim(n, dt, sp > 20 ? sp : 0, true);
+    n.bob = Math.abs(Math.sin(t * 2.6)) * 7;
+    p.lean = lean;
+    p.selfieT = arms ? 0.3 : 0;
+  },
+
   endPriv() {
     const pv = this.priv, n = pv.n;
-    n.fans = false;
+    n.pl.lean = 0;
+    n.pl.selfieT = 0;
+    n.x = n.hx;
+    n.y = n.hy;
+    n.lift = 34;
     n.pl.look.topless = false;
     n.hold = false;
     this.style = pv.style0;
@@ -1671,6 +1765,231 @@ const Club = {
     }
   },
 
+  /* ---------- online: ostatní hráči v klubu ---------- */
+
+  // Připojit se na servery a posílat svou polohu; ostatní hráče v klubu kreslit jako postavy se jménem.
+  netStart() {
+    this.netStop();
+    if (typeof mqttConnect !== 'function') return;
+    this.remotes = new Map();
+    const N = { conns: [], t: 0, id: Board.myId(), on: true, seq: 0 };
+    this.net = N;
+    for (const u of Board.urls()) {
+      mqttConnect(u, 'f67c' + randomId(8), (topic, text) => this.netTake(topic, text)).then((c) => {
+        if (this.net !== N || !N.on) {
+          c.close();
+          return;
+        }
+        N.conns.push(c);
+        c.subscribe(CLUB_NS + 's/#');
+        c.onClose = () => {
+          N.conns = N.conns.filter((x) => x !== c);
+        };
+        this.netSend();
+        this.renderOnline();
+      }).catch(() => {});
+    }
+  },
+
+  netStop() {
+    const N = this.net;
+    this.net = null;
+    if (this.remotes) this.remotes.clear();
+    this.renderOnline();
+    if (!N) return;
+    N.on = false;
+    const bye = JSON.stringify({ id: N.id, bye: 1 });
+    for (const c of N.conns) {
+      try {
+        c.publish(CLUB_NS + 's/' + N.id, bye);
+        setTimeout(() => c.close(), 400);
+      } catch (e) { /* nevadí */ }
+    }
+  },
+
+  netSend() {
+    const N = this.net, me = this.me;
+    if (!N || !N.conns.length || !me || this.phase !== 'in') return;
+    const g = me.gear || {};
+    const msg = {
+      id: N.id, n: (Board.nick() || charById(me.id).name || 'Hráč').slice(0, 16), ch: me.id, sk: me.pl.skin || '', x: Math.round(me.x), y: Math.round(me.y),
+      d: me.dir, v: Math.round(Math.hypot(me.vx, me.vy)), dn: this.dance ? 1 : 0, tub: this.tub ? 1 : 0, vip: this.state().vip ? 1 : 0,
+      g: (g.shades ? 1 : 0) + (g.chain ? 2 : 0) + (g.crown ? 4 : 0), l: me.lineT > 0 ? String(me.line || '').slice(0, 40) : '', q: ++N.seq,
+    };
+    const text = JSON.stringify(msg);
+    for (const c of N.conns) c.publish(CLUB_NS + 's/' + N.id, text);
+  },
+
+  netTake(topic, text) {
+    if (!this.net || !topic.startsWith(CLUB_NS + 's/')) return;
+    let m;
+    try { m = JSON.parse(text); } catch (e) { return; }
+    if (!m || typeof m.id !== 'string' || m.id === this.net.id || !/^[a-z0-9]{6,20}$/.test(m.id)) return;
+    const R = this.remotes;
+    let e = R.get(m.id);
+    if (m.bye) {
+      if (e) {
+        R.delete(m.id);
+        UI.toast(`${e.nick} odešel z klubu`);
+        this.renderOnline();
+      }
+      return;
+    }
+    const ch = ROSTER.some((c) => c.id === m.ch && !c.girl && !c.viet && !c.bunny) ? m.ch : 'jenda';
+    const sk = SKINS[m.sk] && SKINS[m.sk].char === ch ? m.sk : '';
+    if (e && (m.q <= e.q && m.q > e.q - 1000)) return; // stejná zpráva přišla přes jiný server
+    const nick = String(m.n || 'Hráč').replace(/[<>]/g, '').slice(0, 16) || 'Hráč';
+    const x = clamp(Number(m.x) || 750, 40, CLUB_W - 40), y = clamp(Number(m.y) || 800, CLUB_WALL + 10, CLUB_FLOOR_B - 10);
+    if (!e || e.id !== ch || e.pl.skin !== sk) {
+      const fresh = !e;
+      e = this.mk(ch, x, y, { skin: sk, remote: true });
+      R.set(m.id, e);
+      if (fresh) {
+        UI.toast(`${nick} přišel do klubu 🌶️`);
+        this.renderOnline();
+      }
+    }
+    e.nick = nick;
+    e.q = Number(m.q) || 0;
+    e.tx = x;
+    e.ty = y;
+    e.dir = m.d < 0 ? -1 : 1;
+    e.sp = clamp(Number(m.v) || 0, 0, 800);
+    e.dn = !!m.dn;
+    e.inTub = !!m.tub;
+    e.vipTag = !!m.vip;
+    const g = Number(m.g) || 0;
+    e.gear = g ? { shades: !!(g & 1), chain: !!(g & 2), crown: !!(g & 4) } : null;
+    if (m.l) {
+      e.line = String(m.l).slice(0, 40);
+      e.lineT = 0.6;
+    }
+    e.seen = performance.now();
+  },
+
+  netTick(dt) {
+    const N = this.net;
+    if (N) {
+      N.t += dt;
+      if (N.t > 0.2) {
+        N.t = 0;
+        this.netSend();
+      }
+    }
+    if (!this.remotes) return;
+    const now = performance.now();
+    for (const [id, e] of this.remotes) {
+      if (now - e.seen > 7000) {
+        this.remotes.delete(id);
+        this.renderOnline();
+        continue;
+      }
+      const k = Math.min(1, dt * 9);
+      if (Math.hypot(e.tx - e.x, e.ty - e.y) > 300) {
+        e.x = e.tx;
+        e.y = e.ty;
+      } else {
+        e.x += (e.tx - e.x) * k;
+        e.y += (e.ty - e.y) * k;
+      }
+      e.lineT = Math.max(0, (e.lineT || 0) - dt);
+      this.anim(e, dt, e.sp > 20 ? e.sp : 0, e.dn || this.fx.hit > 0);
+    }
+  },
+
+  renderOnline() {
+    const el = this.el('club-online');
+    if (!el) return;
+    const on = !!(this.net && this.net.conns.length) && this.phase === 'in';
+    el.hidden = !on;
+    if (on) this.el('club-online-n').textContent = String((this.remotes ? this.remotes.size : 0) + 1);
+  },
+
+  /* ---------- panák s klukem ---------- */
+
+  startPanak(n) {
+    if (this.panak) return;
+    this.panak = { n, t: 0, stage: 'walk', spot: { x: 330 + rand(-40, 40), y: 340 } };
+    n.invite = 0;
+    n.go = null;
+    n.watch = null;
+    n.line = 'Jdem k baru!';
+    n.lineT = 2.2;
+    if (this.me) {
+      this.me.line = 'Jasně, jdem!';
+      this.me.lineT = 1.8;
+    }
+    UI.toast(`${n.pl.look.name} tě zve na panáka – jdi s ním k baru 🥃`);
+    this._zoneKey = '';
+    Sound.click();
+  },
+
+  // NPC na cestě k baru a u baru (true = pohyb vyřešen tady).
+  panakNpc(n, dt) {
+    const pk = this.panak, me = this.me, sp = pk.spot;
+    const dx = sp.x - n.x, dy = sp.y - n.y, d = Math.hypot(dx, dy);
+    if (d > 12) {
+      const ox = n.x, oy = n.y;
+      this.moveEnt(n, (dx / d) * 190 * dt, (dy / d) * 190 * dt);
+      if (Math.hypot(n.x - ox, n.y - oy) < 0.2) {
+        n.x = sp.x;
+        n.y = sp.y;
+      }
+      n.dir = dx >= 0 ? 1 : -1;
+      this.anim(n, dt, 190, false);
+      return true;
+    }
+    if (me) n.dir = me.x >= n.x ? 1 : -1;
+    this.anim(n, dt, 0, pk.stage === 'drink' && pk.t > 1.2);
+    return true;
+  },
+
+  updatePanak(dt) {
+    const pk = this.panak, n = pk.n, me = this.me;
+    pk.t += dt;
+    if (!me || this.phase !== 'in') {
+      this.panak = null;
+      return;
+    }
+    const at = Math.hypot(n.x - pk.spot.x, n.y - pk.spot.y) < 14;
+    if (pk.stage === 'walk') {
+      if (at && Math.hypot(me.x - n.x, (me.y - n.y) * 1.4) < 95) {
+        pk.stage = 'drink';
+        pk.t = 0;
+        const bar = this.npcs.find((x) => x.staff === 'bar');
+        if (bar) {
+          bar.line = 'Dva panáky, jedou!';
+          bar.lineT = 2;
+        }
+      } else if (pk.t > 30) {
+        n.line = 'Tak nic, no';
+        n.lineT = 2;
+        this.panak = null;
+      }
+      return;
+    }
+    if (!pk.clink && pk.t > 1.2) {
+      pk.clink = true;
+      n.line = 'Na zdraví! 🥃';
+      n.lineT = 2;
+      me.line = 'Na zdraví!';
+      me.lineT = 2;
+      const cx = (me.x + n.x) / 2, cy = Math.min(me.y, n.y) - 62;
+      for (let i = 0; i < 18; i++) this.parts.push({ k: 'spark', x: cx, y: cy, vx: rand(-120, 120), vy: rand(-160, 40), t: 0, life: 0.8, col: ['#ffd24a', '#fff3b0', '#ffffff'][Math.floor(Math.random() * 3)] });
+      this.drink(0.7);
+      UI.toast(`🥃 Na zdraví! Panáka platí ${n.pl.look.name}. Máš ${this.promileText()}.`);
+      Sound.whoosh();
+    }
+    if (pk.t > 3.6) {
+      n.line = Math.random() < 0.5 ? 'Ještě jednu někdy!' : 'Ty jsi borec!';
+      n.lineT = 2.2;
+      n.cool = 20;
+      n.tx = 0;
+      this.panak = null;
+      this._zoneKey = '';
+    }
+  },
+
   /* ---------- VIP prémium: vířivka, šampus, ohňostroj ---------- */
 
   enterTub() {
@@ -1692,9 +2011,48 @@ const Club = {
     Sound.whoosh();
   },
 
+  // Ve vířivce: zaplatíš a VIP holky odhodí vršky plavek (zakryje je mozaika).
+  tubStrip() {
+    const prof = Profile.get(), price = 20;
+    if (prof.trophies < price) {
+      UI.toast('Na to potřebuješ 20 pohárů.');
+      return;
+    }
+    prof.trophies -= price;
+    Profile.save(prof);
+    this.renderTro();
+    this.syncOut();
+    this.tubShow = true;
+    for (const n of this.npcs) {
+      if (!n.inTub) continue;
+      n.pl.look.topless = true;
+      n.hold = true;
+      const D = n.pl.look.dress;
+      this.parts.push({ k: 'top', x: n.x, y: n.y - 60, vx: rand(-120, 120), vy: -rand(280, 360), g: 600, t: 0, life: 2.6, rot: 0, col: D.color, floor: CLUB_TUB.y - CLUB_TUB.ry - 20 + rand(-10, 10) });
+      for (let i = 0; i < 6; i++) this.heart(n);
+      n.line = ['Ups, plavky uletěly', 'Teď je to VIP', 'Pojď blíž, je teplá'][Math.floor(Math.random() * 3)];
+      n.lineT = 2.6;
+    }
+    for (let i = 0; i < 24; i++) this.parts.push({ k: 'bub', x: CLUB_TUB.x + rand(-90, 90), y: CLUB_TUB.y + rand(-15, 15), vx: rand(-40, 40), vy: -rand(50, 110), t: 0, life: 0.9, s: rand(3, 7) });
+    this.pulse = 1;
+    this.whiteT = 0.6;
+    this.me.line = 'To je ale výhled';
+    this.me.lineT = 2.2;
+    this._zoneKey = '';
+    Sound.fanfare();
+  },
+
   exitTub() {
     const me = this.me;
     this.tub = false;
+    if (this.tubShow) {
+      this.tubShow = false;
+      for (const n of this.npcs) {
+        if (!n.inTub) continue;
+        n.pl.look.topless = false;
+        n.hold = false;
+      }
+    }
     me.inTub = false;
     me.x = CLUB_TUB.x - 40;
     me.y = CLUB_TUB.y - CLUB_TUB.ry - 30;
@@ -1839,7 +2197,7 @@ const Club = {
     }
     this.separe = { t: 0, n: f };
     this.dance = false;
-    this.el('club-act').hidden = true;
+    this.hideAct();
     this._zoneKey = 'separe';
     Sound.click();
   },
@@ -2091,6 +2449,7 @@ const Club = {
     for (const q of CLUB_PODIUMS) list.push({ y: q.y - 0.5, f: () => this.drawPodium(ctx, q, now) });
     for (const n of this.npcs) if (n.staff !== 'wardrobe') list.push({ y: n.y, f: () => this.drawChar(ctx, n, now) });
     if (this.me && this.phase === 'in') list.push({ y: this.me.y, f: () => this.drawChar(ctx, this.me, now) });
+    if (this.remotes && this.phase === 'in') for (const e of this.remotes.values()) list.push({ y: e.y, f: () => this.drawChar(ctx, e, now) });
     for (const q of this.parts) if (q.k === 'cup' && q.vy === 0) list.push({ y: q.y, f: () => this.drawPart(ctx, q) });
     list.sort((a, b) => a.y - b.y);
     const tr0 = this.trip;
@@ -2126,6 +2485,9 @@ const Club = {
       if (this.separe && n === this.separe.n) continue;
       const text = n.talk && n.say ? n.say : n.lineT > 0 ? n.line : '';
       if (text) drawSpeech(ctx, text, n.x, n.y - n.lift - (n.pl.R + n.pl.F) * CLUB_K - 34, n.lady ? '#ff4d9a' : '#ff3d5a', 15, 0);
+    }
+    if (this.remotes && this.phase === 'in') {
+      for (const e of this.remotes.values()) if (e.lineT > 0 && e.line) drawSpeech(ctx, e.line, e.x, e.y - (e.pl.R + e.pl.F) * CLUB_K - 40, '#4fc3ff', 15, 0);
     }
   },
 
@@ -2621,18 +2983,18 @@ const Club = {
     sg.addColorStop(0, 'rgba(255,170,90,.35)');
     sg.addColorStop(1, 'rgba(255,170,90,0)');
     ctx.fillStyle = '#120a08';
-    rrect(ctx, 50, 22, 400, 108, 8);
+    rrect(ctx, 50, 22, 320, 108, 8);
     ctx.fill();
     ctx.fillStyle = sg;
-    ctx.fillRect(50, 22, 400, 108);
+    ctx.fillRect(50, 22, 320, 108);
     ctx.strokeStyle = '#b8862b';
     ctx.lineWidth = 2;
-    rrect(ctx, 50, 22, 400, 108, 8);
+    rrect(ctx, 50, 22, 320, 108, 8);
     ctx.stroke();
     for (const sy of [70, 120]) {
       ctx.fillStyle = 'rgba(255,220,170,.6)';
-      ctx.fillRect(60, sy, 380, 3);
-      for (let i = 0; i < 13; i++) {
+      ctx.fillRect(60, sy, 300, 3);
+      for (let i = 0; i < 10; i++) {
         const bx = 72 + i * 28, hue = [30, 45, 120, 200, 0, 280][i % 6];
         ctx.fillStyle = `hsla(${hue},60%,${40 + (i % 3) * 8}%,.9)`;
         rrect(ctx, bx, sy - 30, 14, 30, 4);
@@ -2678,7 +3040,7 @@ const Club = {
       ctx.fillRect(x - 60, -10, 120, 120);
     }
     this.neonText(ctx, 'VIP', 1295, 82, 46, '#ffc93c', beat);
-    this.neonText(ctx, 'BAR', 250, 14, 20, '#ffb46a', beat);
+    this.neonText(ctx, 'BAR', 210, 14, 20, '#ffb46a', beat);
     // spodní stěna s východem
     ctx.fillStyle = '#0a0612';
     ctx.fillRect(0, CLUB_FLOOR_B, CLUB_W, CLUB_H - CLUB_FLOOR_B);
@@ -2716,22 +3078,22 @@ const Club = {
     ctx.save();
     ctx.globalAlpha = flick;
     // nápis kurzívou mezi barem a DJem
-    ctx.font = `italic 44px ${FONT_D}`;
+    ctx.font = `italic 38px ${FONT_D}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineJoin = 'round';
-    for (const [w, a] of [[22, 0.12 + beat * 0.08], [12, 0.28], [6, 0.6]]) {
+    for (const [w, a] of [[20, 0.12 + beat * 0.08], [11, 0.28], [5, 0.6]]) {
       ctx.strokeStyle = `rgba(255,50,110,${a})`;
       ctx.lineWidth = w;
-      ctx.strokeText('Hot', 515, 50);
-      ctx.strokeText('Peppers', 515, 96);
+      ctx.strokeText('Hot', 466, 48);
+      ctx.strokeText('Peppers', 466, 90);
     }
     ctx.fillStyle = '#ffe6ef';
-    ctx.fillText('Hot', 515, 50);
-    ctx.fillText('Peppers', 515, 96);
-    ctx.font = `13px ${FONT_D}`;
+    ctx.fillText('Hot', 466, 48);
+    ctx.fillText('Peppers', 466, 90);
+    ctx.font = `11px ${FONT_D}`;
     ctx.fillStyle = 'rgba(255,215,140,.9)';
-    ctx.fillText('GENTLEMEN\'S CLUB · 18+', 515, 130);
+    ctx.fillText('GENTLEMEN\'S CLUB · 18+', 466, 122);
     // paprička neonem
     ctx.translate(1010, 72);
     ctx.rotate(0.35);
@@ -3099,7 +3461,7 @@ const Club = {
     if (e.fans) this.drawFans(ctx, e, now);
     if (e.dj) {
       // sluchátka DJe
-      const hy = e.y - e.bob - (p.R + p.F) * k;
+      const hy = e.y - e.bob - e.lift - (p.R + p.F) * k;
       ctx.strokeStyle = '#111';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -3110,6 +3472,20 @@ const Club = {
         rrect(ctx, e.x + s * (p.R * k) - 5, hy - 6, 10, 14, 4);
         ctx.fill();
       }
+    }
+    if (e.remote && !this._photo) {
+      // jiný hráč online: jméno nad hlavou
+      ctx.font = `14px ${FONT_D}`;
+      ctx.textAlign = 'center';
+      ctx.strokeStyle = '#0b1220';
+      ctx.lineWidth = 4;
+      const ty = e.y - e.bob - (p.R * 2 + p.F) * k - 10, tag = e.vipTag ? `${e.nick} · VIP` : e.nick;
+      ctx.fillStyle = '#7fe0ff';
+      ctx.strokeText(tag, e.x, ty);
+      ctx.fillText(tag, e.x, ty);
+      ctx.fillStyle = '#3dff7a';
+      circle(ctx, e.x - ctx.measureText(tag).width / 2 - 9, ty - 5, 3.5);
+      ctx.fill();
     }
     if (e.me && this.phase === 'in' && !this._photo && !this._ghost) {
       ctx.font = `14px ${FONT_D}`;

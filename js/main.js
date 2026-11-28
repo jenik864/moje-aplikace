@@ -482,7 +482,7 @@ const Game = {
       return 'viet';
     }
     if (h === MASTER_CODE) {
-      for (const k of ['story', 'moncler', 'on.moncler', 'pav', 'milan', 'bikini', 'michael', 'truegold', 'viet', 'trana']) Unlocks.set(k);
+      for (const k of ['story', 'moncler', 'on.moncler', 'pav', 'milan', 'bikini', 'michael', 'truegold', 'viet', 'trana', 'spider', 'goldberry', 'tgbemics', 'tgberry', 'goldnikol', 'tgnikol', 'tgludan', 'bohemka']) Unlocks.set(k);
       for (const id of Object.keys(CAMPAIGNS)) {
         const C = CAMPAIGNS[id];
         let o = {};
@@ -612,8 +612,7 @@ const Game = {
       }
       const rw = lv.reward;
       if (rw && !Unlocks.has(rw)) {
-        Unlocks.set(rw);
-        if (rw === 'moncler') Unlocks.set('on.moncler');
+        grantReward(rw);
         rewards.push(rw);
       }
     }
@@ -622,11 +621,7 @@ const Game = {
     if (win && lv.bonus && !Unlocks.has(lv.bonus.reward)) {
       if (storyGoalMet(lv.bonus.goal, m.score[t], m.score[1 - t], won)) {
         const rb = lv.bonus.reward;
-        Unlocks.set(rb);
-        if (SKINS[rb]) {
-          for (const o of ownedSkinsFor(SKINS[rb].char)) Unlocks.set('on.' + o, false);
-          Unlocks.set('on.' + rb);
-        }
+        grantReward(rb);
         rewards.push(rb);
       } else {
         bonusMissed = true;
@@ -640,7 +635,7 @@ const Game = {
   storySync() {
     const st = Story.get();
     STORY.forEach((lv, i) => {
-      if (lv.reward && i < st.done && !Unlocks.has(lv.reward)) Unlocks.set(lv.reward);
+      if (lv.reward && i < st.done && !Unlocks.has(lv.reward)) grantReward(lv.reward, false);
     });
   },
 
@@ -3763,7 +3758,7 @@ const UI = {
       } else if (got) {
         const b = document.createElement('span');
         b.className = 'task-got';
-        b.textContent = 'Odemčeno';
+        b.textContent = t.kind === 'cups' ? 'Připsáno ✓' : 'Odemčeno';
         li.appendChild(b);
       }
       list.appendChild(li);
@@ -3785,11 +3780,11 @@ const UI = {
     $('rw-title').textContent = rw.name;
     $('rw-kicker').textContent = got ? 'Odměna · získáno ✓' : `${isBonus ? 'Bonus' : 'Odměna'} za úroveň ${i + 1}`;
     $('rw-text').textContent = rw.text;
-    $('rw-how').textContent = got ? (rw.kind === 'skin' ? `Zapneš ho tlačítkem skinu u postavy ${charById(SKINS[key].char).name}.` : 'Najdeš je ve výběru hráčů.') : `Úkol: ${storyGoalText(isBonus ? lv.bonus.goal : lv.goal)}`;
+    $('rw-how').textContent = got ? (rw.kind === 'skin' ? `Zapneš ho tlačítkem skinu u postavy ${charById(SKINS[key].char).name}.` : rw.kind === 'skins' ? `Zapneš je tlačítkem skinu u postav ${rw.skins.map((k) => charById(SKINS[k].char).name).join(' a ')}.` : 'Najdeš je ve výběru hráčů.') : `Úkol: ${storyGoalText(isBonus ? lv.bonus.goal : lv.goal)}`;
     const box = $('rw-pics');
     box.textContent = '';
-    const list = rw.kind === 'skin' ? [[SKINS[key].char, key]] : DUO_TEAMS.find((t) => t.locked === key).chars.map((c) => [c, '']);
-    const T = rw.kind === 'skin' ? SKINS[key].kit || DUO_TEAMS[Math.max(0, duoOf(SKINS[key].char))] : DUO_TEAMS.find((t) => t.locked === key);
+    const list = rw.kind === 'skin' ? [[SKINS[key].char, key]] : rw.kind === 'skins' ? rw.skins.map((k) => [SKINS[k].char, k]) : DUO_TEAMS.find((t) => t.locked === key).chars.map((c) => [c, '']);
+    const T = rw.kind === 'skin' || rw.kind === 'skins' ? SKINS[list[0][1]].kit || DUO_TEAMS[Math.max(0, duoOf(list[0][0]))] : DUO_TEAMS.find((t) => t.locked === key);
     const cvs = list.map(() => {
       const cv = document.createElement('canvas');
       cv.className = 'rw-pic';

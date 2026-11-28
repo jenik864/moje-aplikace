@@ -944,9 +944,9 @@ kbd {
   pointer-events: none;
 }
 .rotate-screen {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 1000; /* nad vším: hra, klub, FIFAgram i blokace jdou jen na šířku */
   display: grid;
   place-content: center;
   justify-items: center;
@@ -2105,3 +2105,18 @@ body.game-blocked .screen, body.game-blocked #hud, body.game-blocked #touch, bod
 .feat-ico { font-size: clamp(18px, calc(var(--vh, 1vh) * 5), 24px); }
 .feat-txt b { font-size: clamp(14px, calc(var(--vh, 1vh) * 4.2), 20px); text-overflow: clip; }
 .feat-txt small { font-size: 10px; letter-spacing: 0.06em; }
+
+/* druhé akční tlačítko v klubu (nad hlavním) */
+.club-act.club-act2 {
+  width: clamp(64px, calc(var(--vh, 1vh) * 18), 84px);
+  height: clamp(64px, calc(var(--vh, 1vh) * 18), 84px);
+  bottom: calc(max(22px, calc(var(--safe-b) + 10px)) + clamp(100px, calc(var(--vh, 1vh) * 31), 136px));
+  right: max(36px, calc(var(--safe-r) + 24px));
+  font-size: clamp(13px, calc(var(--vh, 1vh) * 3.8), 16px);
+  background: radial-gradient(circle at 35% 28%, #8fd8ff, #2a7bd8 58%, #0b2d6a);
+  box-shadow: 0 5px 0 #000, 0 0 0 3px rgba(232, 195, 122, 0.6), 0 0 22px rgba(80, 170, 255, 0.5);
+}
+/* online hráči v klubu */
+.club-online { gap: 6px; align-items: center; }
+.club-online .club-dot { width: 10px; height: 10px; border-radius: 50%; background: #3dff7a; box-shadow: 0 0 8px #3dff7a; }
+.club-online .club-online-t { font-size: 12px; opacity: 0.75; }

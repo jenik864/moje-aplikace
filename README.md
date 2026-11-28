@@ -22,9 +22,9 @@ Ve 2 v 2 se v lobby šipkami vybírají dvě z pěti dvojic:
 | Tóma & Peli (zelení) | Tóma (střapaté hnědé vlasy), Peli (tmavé vlasy s pěšinkou) |
 | Bémič & Kiki (oranžoví) | Bémič (černý buzzcut), Kiki (dlouhé vlnité vlasy, špinavý blond, ofina a čelenka) |
 | Šimša & Jenda (fialoví) | Šimša (krátké tmavé kudrny, vystříhané strany, číslo 87), Jenda (střapaté hnědé vlasy s ofinou) |
-| Bémič Š. & Berry | Bémič Š. (č. 41, tmavé vlasy na stranu), Berry (králík – mazlíček: dlouhé uši, růžový čumáček, vousky, zoubky, č. 1); odemkne 10. úroveň kampaně Točná |
+| Bémič Š. & Berry | Bémič Š. (č. 41, tmavé vlasy na stranu), Berry (králík – mazlíček: dlouhé uši, růžový čumáček, vousky, zoubky, č. 1); odemkne 9. úroveň kampaně Točná |
 | Petr Kuba & Milan (černí) | dva rozhodčí: Petr Kuba (č. 45, starší, holohlavý se šedivým věncem, lehce šedivé vousy, vrásky) a Milan; odemkne 5. úroveň kampaně Petr Kuba (Milan pak jde hrát i bez úkolu 15 zápasů) |
-| Nikol & Luďan | Nikol (č. 22, dlouhé vlnité hnědé vlasy s ofinou na obě strany, úsměv), Luďan (č. 77, holá hlava, plnovous do zrzava, světlé oči); odemkne 17. úroveň kampaně Točná |
+| Nikol & Luďan | Nikol (č. 22, dlouhé vlnité hnědé vlasy s ofinou na obě strany, úsměv), Luďan (č. 77, holá hlava, plnovous do zrzava, světlé oči); odemkne 16. úroveň kampaně Točná |
 
 Všechny holky mají dlouhé rozpuštěné vlasy až k lopatkám, které vlají při běhu a skoku. Postavy se liší i obličejem: přivřená víčka a vážný pohled, síla obočí a výraz pusy (úsměv, klidný, úšklebek).
 
@@ -110,20 +110,22 @@ Klepnutím na úroveň s dárkem 🎁 a pak na tlačítko odměny uvidíš náhl
 | 2 | Pole za vsí | 1 v 1 | Peli | lehká, +5 % | vyhraj o 2 góly | |
 | 3 | Místní derby | 2 v 2 | Tóma & Peli | lehká, +5 % | vyhraj | |
 | 4 | Zamrzlý rybník | 1 v 1 | Kiki | střední, led | vyhraj | |
-| 5 | Trojky u stodoly | 1 v 1 | Marsal | střední | vyhraj a dej aspoň 2 góly | |
+| 5 | Trojky u stodoly | 1 v 1 | Marsal | střední | vyhraj a dej aspoň 2 góly | **skin Spider Boy** pro Bémiče (červeno-modrý pavoučí oblek, maska s pavučinou a velkýma bílýma očima, pavouk na hrudi) |
 | 6 | Vítr nad Točnou | 2 v 2 | Bémič & Kiki | střední, +5 %, vichřice | vyhraj | |
 | 7 | Hermelínový zápas | 1 v 1 | Nelcis | střední, +5 % | vyhraj bez inkasovaného gólu | |
 | 8 | Písečná jáma | 1 v 1 | Majda | střední, +10 %, pláž | vyhraj | |
-| 9 | Holky z Točné | 2 v 2 | Nelcis & Majda | střední, +10 % | vyhraj o 2 góly | |
-| 10 | Bémičův dvůr | 1 v 1 | Bémič | těžká | vyhraj o 2 góly | **dvojice Bémič Š. & Berry** |
+| 9 | Holky z Točné | 2 v 2 | Nelcis & Majda | střední, +10 % | vyhraj o 2 góly | **dvojice Bémič Š. & Berry** |
+| 10 | Bémičův dvůr | 1 v 1 | Bémič | těžká | vyhraj o 2 góly | |
 | 11 | Noc na Měsíci | 1 v 1 | Durcado | těžká, +5 %, Měsíc | vyhraj | |
-| 12 | Jižní supi na Točné | 2 v 2 | Marsal & Durcado | těžká, +5 % | vyhraj | |
+| 12 | Jižní supi na Točné | 2 v 2 | Marsal & Durcado | těžká, +5 % | vyhraj | ⭐ bonus bez obdrženého gólu: skiny **True Gold Bémič Š.** a **True Gold Berry** |
 | 13 | JENDA PRIME | 1 v 1 | Jenda | těžká, +10 % | vyhraj o 2 góly | |
 | 14 | Běh do kopce | 1 v 1 | Šimša | těžká, +10 %, vichřice | vyhraj a dej aspoň 3 góly | |
 | 15 | Šimša a Jenda | 2 v 2 | Šimša & Jenda | těžká, +12 % | vyhraj o 2 góly | |
-| 16 | Rozhodčí na ledě | 1 v 1 | Milan | těžká, +15 %, led | vyhraj o 3 góly | |
-| 17 | Páv a Suli | 2 v 2 | Tlustej páv & Suli | těžká, +15 % | vyhraj o 2 góly | **dvojice Nikol & Luďan** |
-| 18 | BOSS: Velké finále na Točné | 2 v 2 | Nikol & Luďan | těžká, +20 % | vyhraj o 3 góly | |
+| 16 | Rozhodčí na ledě | 1 v 1 | Milan | těžká, +15 %, led | vyhraj o 3 góly | **dvojice Nikol & Luďan** |
+| 17 | Páv a Suli | 2 v 2 | Tlustej páv & Suli | těžká, +15 % | vyhraj o 2 góly | |
+| 18 | BOSS: Velké finále na Točné | 2 v 2 | Nikol & Luďan | těžká, +20 % | vyhraj o 3 góly | ⭐ bonus bez obdrženého gólu: skiny **True Gold Nikol** a **True Gold Luďan** |
+
+True Gold skiny jsou celé ze zlata se zlatou korunkou (jako True Gold Kiki) a po získání se rovnou zapnou.
 
 Nové dvojice jsou ve výběru hráčů vidět od začátku se zámečkem („Odemkni v Příběhu“) a hrát za ně jde po splnění dané úrovně. Zatím mají obyčejnou superstřelu. Hlavní kód odemkne i celou Točnou a obě dvojice.
 
@@ -179,7 +181,7 @@ Ze hry jsou v klubu jen klučičí postavy (barman, DJ, ochranka, tanečníci a 
 
 Na tanečním parketu jde zdarma *Tančit*; dalším klepnutím se mění pohyb (Pohupování, Robot, Točení, Skoky).
 
-**Fotka** – tlačítko 📸 vlevo nahoře (nebo budka *FOTO* vlevo dole) vyfotí skutečnou scénu z klubu kolem tebe jako z opravdového foťáku: ty s holkou, se kterou tančíš (nebo s tou nejbližší), lidi a světla kolem, blesk, rozmazané pozadí, zrno, viněta, lehce nakřivo a oranžové datum v rohu jako na digitálu. Každá fotka je jiná. Jde *Uložit* nebo *Poslat* (sdílení v telefonu).
+**Fotka** – tlačítko 📸 vlevo nahoře vyfotí skutečnou scénu z klubu kolem tebe jako z opravdového foťáku: ty s holkou, se kterou tančíš (nebo s tou nejbližší), lidi a světla kolem, blesk, rozmazané pozadí, zrno, viněta, lehce nakřivo a oranžové datum v rohu jako na digitálu. Každá fotka je jiná. Jde *Uložit* nebo *Poslat* (sdílení v telefonu).
 
 Klub je vyvedený jako prémiový strip club: černá lesklá mramorová podlaha s odlesky neonů, stěna z prošívané kůže se zlatou lištou a LED páskem, rampa se světly, nápis *Hot Peppers · Gentlemen's Club* v neonové kurzívě, bar z černého mramoru se zlatými lamelami a podsvícenými policemi, kožené boxy u stolků, tmavé skleněné dlaždice na parketu, pódia s LED okrajem a zrcadlem, ve VIP černý koberec se zlatým vzorem, zlaté panely a křišťálový lustr. Výběr postavy, obchody a tlačítka jsou černozlaté.
 
@@ -187,8 +189,8 @@ Klub je vyvedený jako prémiový strip club: černá lesklá mramorová podlaha
 
 **Garáž** (🚗 tlačítko ve výběru postavy): Rezavý hatchback (zdarma), Tuned kombi (150 🏆), Černé SUV (300), Sportovní kupé (600), Zlaté superauto (1200) a Bílá limuzína (2000). Liší se rychlostí, zrychlením, zatáčením a vzhledem; koupená auta se ukládají a synchronizují s účtem.
 
-**VIP (prémium)** – VIP je větší (sahá až dolů k fotokoutku) a má:
-- *Vířivku* se dvěma exkluzivními VIP holkami v plavkách (Diamond a Rubi – nejsou nikde jinde). Tlačítkem *Vířivka* do ní vlezeš, ve vodě je vidět jen to nad hladinou, bublinky, pára, srdíčka a holky kecají („Voda je teplá“, „VIP život“). *Vylézt* tě vrátí ven.
+**VIP (prémium)** – VIP je větší a má:
+- *Vířivku* se dvěma exkluzivními VIP holkami v plavkách (Diamond a Rubi – nejsou nikde jinde). Tlačítkem *Vířivka* do ní vlezeš, ve vodě je vidět jen to nad hladinou, bublinky, pára, srdíčka a holky kecají („Voda je teplá“, „VIP život“), kamera se přiblíží. Velké tlačítko *Plavky dolů · 20 🏆*: holky odhodí vršky plavek (odletí vzduchem), poprsí zakryje mozaika, víc bublinek a srdíček. Menší modré tlačítko nad ním *Vylézt* tě vrátí ven (a holky se zase oblečou).
 - *Šampus s prskavkami* a *VIP ohňostroj* ve VIP baru (viz tabulka), *soukromou show* a *separé*.
 - Zlatý odznak „TY · VIP“ nad postavou a ochranka tě zdraví „Vítejte, pane!“.
 
@@ -198,9 +200,11 @@ Klub je vyvedený jako prémiový strip club: černá lesklá mramorová podlaha
 - *Strčit*: do kluka jde strčit – zapotácí se a někdy ránu vrátí. Po druhé strkanici ochranka varuje, po třetí letíš ven.
 - *Tanečnice u tyče*: na pódiích jsou chromové tyče, holky v třpytivém topu a kraťáskách se kolem nich točí a vyšvihují. *Hodit 5 🏆* – poháry letí na pódium, tanečnice se rozjede a na 2 s flashne jako Suli (záblesk, poprsí zakryté mozaikou).
 - *Show*: zhruba každou minutu DJ ohlásí tanečnici („SHOW · LOLA“), na pódium svítí reflektory a kluci se seběhnou fandit. Ve finále tanečnice odhodí top – poprsí zakrývá mozaika (stejně jako u Suliiny schopnosti).
-- *Soukromá show* ve VIP (VIP bar, 40 🏆): kamera se přiblíží na VIP pódium s tyčí, zbytek klubu potemní a tanečnice tančí jen pro tebe s péřovými vějíři a třpytkami. Během show jde *Hodit 5 🏆*; ve vyvrcholení odhodí top (cenzura mozaikou).
+- *Soukromá show* ve VIP (VIP bar, 40 🏆, 24 s): kamera se přiblíží, zbytek klubu potemní a tanečnice tančí jen pro tebe: točí se vysoko na tyči s rukama nahoře, vlní se u tyče, sjede dolů, pak sejde z pódia a tančí těsně u tebe (vlnění boků, otočky zády), růžové jiskry a srdíčka, svůdné hlášky. Během show jde *Hodit 5 🏆*; ve vyvrcholení odhodí top (cenzura mozaikou).
+- *Panák s klukem*: když ti některý kluk v klubu řekne „Dáme panáka?“, objeví se tlačítko *Jít na panáka 🥃*. Kluk jde k baru, ty za ním, barman nalije dva panáky, ťuknete si „Na zdraví!“ a platí on (+0,7 ‰).
+- *Online*: když jsou v klubu ve stejnou dobu další hráči, vidíš je jako postavy se jménem (modře) a zeleným puntíkem, chodí, tančí, sedí ve vířivce a jejich hlášky jsou v modrých bublinách. Vpravo nahoře je počet lidí online. Přes MQTT servery žebříčku (`fifa67/club/v1/s/<hráč>`, nic se neukládá).
 - *Soukromý tanec* v separé ve VIP: s holkou, která jde s tebou (*Zatančit spolu*) – 25 🏆. Zatáhne se závěs a je vidět jen její stín.
-- *Dealer* u záchodů (WC vedle východu) prodává vymyšlené drogy, které jsou jen ve hře: *Pepřák* (15 🏆, 20 s jízda – duhové barvy, rychlost, tanec samo, pak 15 s šedý dojezd a zpomalení) *Smajlík* (10 🏆, 25 s růžová láska a srdíčka všude, pak únava), *Kouzelná houbička* (12 🏆, 25 s se celý obraz vlní a přelévá v barvách, pak 15 s ovládání naruby), *Zelenáč* (8 🏆, 30 s zpomalený čas, zelený opar a kouř, pak se klíží oči) a *Turbo* (12 🏆, 15 s rychlost ×2,4 s duchy za postavou, pak třes a zpomalení). Ochranka tě u dealera může načapat (vyhazov) a dvě dávky naráz = kolaps a vyhazov.
+- *TEMPO* (dřív Dealer) u záchodů (WC vedle východu) prodává vymyšlené drogy, které jsou jen ve hře: *Pepřák* (15 🏆, 20 s jízda – duhové barvy, rychlost, tanec samo, pak 15 s šedý dojezd a zpomalení) *Smajlík* (10 🏆, 25 s růžová láska a srdíčka všude, pak únava), *Kouzelná houbička* (12 🏆, 25 s se celý obraz vlní a přelévá v barvách, pak 15 s ovládání naruby), *Zelenáč* (8 🏆, 30 s zpomalený čas, zelený opar a kouř, pak se klíží oči) a *Turbo* (12 🏆, 15 s rychlost ×2,4 s duchy za postavou, pak třes a zpomalení). Ochranka tě u Tempa může načapat (vyhazov) a dvě dávky naráz = kolaps a vyhazov.
 - Nic explicitního se ve hře neukazuje – odhalená místa jsou vždy zakrytá mozaikou.
 
 Klub má disco kouli nad parketem s odlesky po podlaze, dým, reflektory a při hitu lasery z DJ pultu. Hudbu klub skládá sám ve Web Audio (u vchodu je slyšet jen přes zeď). Koupené věci a VIP se ukládají v prohlížeči (`hlavouni.klub`) a synchronizují s účtem.
@@ -230,10 +234,18 @@ Tlačítko *Úkoly* dole v hlavním menu. Postup se počítá ze všech zápasů
 | Odehraj 15 zápasů | hráč **Milan Voračka** (do té doby je ve výběru se zámečkem „Úkol: 15 zápasů“) |
 | Dej 15 gólů v jednom zápase | skin **Kiki v bikinách** (sportovní dvoudílné plavky v barvě týmu a sluneční brýle s bílou obroučkou) |
 | Dej 30 gólů za Bémiče | skin **Michael Bémič** (Bémič s tmavou kůží a holou hlavou, červený basketbalový dres bez rukávů s číslem 23, dlouhé trenky) |
+| Dej 100 gólů za Šimšu | skin **Šimša Bohemka** (zeleno-bílý pruhovaný dres s číslem 87) |
+| Vyhraj 25 zápasů | +200 pohárů |
+| Vyhraj 5 zápasů v řadě | +150 pohárů |
+| Dej 40 gólů za Kiki | +150 pohárů |
+| Dej 50 gólů za Durcada | +200 pohárů |
+| Dej celkem 300 gólů | +300 pohárů |
 
 Skiny (Moncler-Jenda, Kiki v bikinách, Michael Bémič) se zapínají v Úkolech, v Příběhu nebo tlačítkem přímo na kartě své postavy v lobby a platí i online.
 
 ## Ovládání
+
+Celá hra (zápasy, menu, Hot Peppers, jízda, FIFAgram i obrazovka STOP) jde na telefonu jen na šířku – na výšku přes všechno vyskočí výzva *Otoč telefon na šířku*.
 
 **Na telefonu** (na šířku, přes celou obrazovku):
 
@@ -359,6 +371,7 @@ Na GitHub Pages si hra při spuštění, po návratu do aplikace a každých 5 m
 Aktuální verze je vidět dole v rohu hlavního menu.
 
 - 1.71 – jízda do klubu s kamerou za autem (3D město), přehlednější úvodní obrazovka (karty Hot Peppers a FIFAgram, menší odkazy)
+- 1.73 – Točná: Spider Boy (5. úroveň), Bémič Š. & Berry už v 9., bonus True Gold Bémič Š. + Berry (12.), Nikol & Luďan v 16., bonus True Gold Nikol + Luďan (finále); úkol 100 gólů za Šimšu = skin Šimša Bohemka a další úkoly za poháry; Peppers online (vidíš ostatní hráče), vířivka s placeným svlékáním (mozaika), smyslnější soukromá show, panák s klukem, dealer přejmenován na TEMPO, pryč fotokoutek, vidět DJ i celý nápis Hot Peppers; celá hra jen na šířku
 - 1.72 – vymazlená grafika jízdy: kabriolety bez střechy (zezadu je vidět tvoje postava za volantem, dres se jménem a číslem, ruce na volantu), tvarovaná karoserie s lakem, koly a disky, koncová a brzdová světla, SPZ, výfuky, spoiler a podsvícení podvozku; domy s okny po patrech, výlohami, markýzami a neonovými cedulemi, reklamy a antény na střechách, lampy a semafory s odlesky na mokré silnici, obrubníky, krajnice, zebry, šipky navigace, mraky a panorama, kouř z výfuku a smyky, kruhový tachometr a nová minimapa; když hra seká, scéna se sama kreslí v nižším rozlišení
 - 1.70 – FIFAgram: profily hráčů, fotky z klubu a textové příspěvky, lajky a komentáře od ostatních
 - 1.69 – jízda autem po nočním městě do Hot Peppers s navigací a provozem, garáž se 6 auty za poháry; kód na +500 pohárů
